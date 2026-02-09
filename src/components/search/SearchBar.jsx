@@ -18,9 +18,23 @@ export default function SearchBar() {
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
 
-  function formatDate(date) {
+  function formatDateFull(date) {
     if (!date) return "--";
-    return date.toLocaleDateString();
+    return date.toLocaleDateString("en-US", {
+      month: "long", // January, February...
+      day: "numeric", // 1, 2, 3...
+      year: "numeric", // 2026
+    });
+  }
+
+  function formatDateWeekday(date) {
+    if (!date) return "--";
+    return date.toLocaleDateString("en-US", { weekday: "long" }); // Monday, Tuesday...
+  }
+
+  function formatDateMonth(date) {
+    if (!date) return "--";
+    return date.toLocaleDateString("en-US", { month: "long" }); // January, February
   }
 
   // Handle guest type change
@@ -75,32 +89,32 @@ export default function SearchBar() {
         <Calendar size={18} />
 
         <button
-          className="flex w-full border rounded-xl overflow-hidden text-left"
+          className="flex w-full overflow-hidden text-left"
           onClick={() =>
             setActiveDropdown(activeDropdown === "calendar" ? null : "calendar")
           }
         >
           <span
             className={`flex-1 px-4 py-3 text-center ${
-              startDate ? "bg-white text-gray-900" : "bg-gray-100 text-gray-500"
+              startDate ? "bg-white text-gray-900" : "bg-white-100 text-gray-500"
             }`}
           >
-            {startDate ? startDate.toLocaleDateString() : "Start"}
+            {startDate ? startDate.toLocaleDateString() : "Check-In"}
           </span>
-
+            
           <span className="w-px bg-gray-300" />
 
           <span
             className={`flex-1 px-4 py-3 text-center ${
-              endDate ? "bg-white text-gray-900" : "bg-gray-100 text-gray-500"
+              endDate ? "bg-white text-gray-900" : "bg-white-100 text-gray-500"
             }`}
           >
-            {endDate ? endDate.toLocaleDateString() : "End"}
+            {endDate ? endDate.toLocaleDateString() : "Check-out"}
           </span>
         </button>
 
         {activeDropdown === "calendar" && (
-          <div className="absolute top-full left-0 mt-2 z-[9999] w-[400px] shadow-lg">
+          <div className="absolute top-full left-0 mt-2 z-[9999] w-[400px] shadow-lg ">
             <RangeCalendar
               startDate={startDate}
               endDate={endDate}
@@ -113,42 +127,64 @@ export default function SearchBar() {
         )}
       </div>
 
-{/* GUEST MENU */}
-<div className="relative flex items-center gap-2 border rounded-xl px-3 py-3 flex-1">
-  <Users size={18} />
-    <button
-    className="text-left w-full flex flex-col"
-    onClick={() =>
-        setActiveDropdown(activeDropdown === "guests" ? null : "guests")
-    }
+      {/* GUEST MENU */}
+      <div className="relative flex items-center gap-2 border rounded-xl px-3 py-3 flex-1">
+        <Users size={18} />
+        <button
+          className="flex-1 flex justify-between items-center text-left"
+          onClick={() =>
+            setActiveDropdown(activeDropdown === "guests" ? null : "guests")
+          }
+        >
+          {/* LEFT HALF: Text */}
+          <div className="flex flex-col">
+            <span className="font-medium">
+              {adults} Adults
+              {children > 1
+                ? `, ${children} Children`
+                : children === 1
+                ? `, ${children} Child`
+                : ``}
+            </span>
+            <span className="text-gray-500 text-sm">Room {rooms}</span>
+          </div>
+
+          {/* RIGHT HALF: Icon */}
+          <div className="flex items-center justify-center">
+            <span className="ml-2 text-gray-500">▼</span>
+          </div>
+        </button>
+            
+
+        {activeDropdown === "guests" && (
+        <div className={`absolute top-full left-0 bg-white shadow rounded-br-xl rounded-bl-xl mt-2 p-4 z-[9999]
+          ${guestType === "Solo Traveler" || guestType === "Couple" ? "w-64" : "w-96"} transition-all duration-300 ease-in-out`}>
+        <div
+      className={`grid gap-4 ${
+        guestType === "Family" || guestType === "Group" ? "grid-cols-2" : "grid-cols-1"
+      }`}
     >
-    {/* First line: Adults + Children */}
-    <span className="font-medium">
-        {adults} Adults 
-        {children > 1 ? `, ${children} Children ` : children > 0 ? `, ${children} Child` : ``}
-    </span>
+      {/* LEFT COLUMN: Guest Types */}
+      <div className="flex flex-col gap-2">
+        {["Solo Traveler", "Couple", "Family", "Group"].map((type) => (
+          <button
+            key={type}
+            className={`text-left px-4 py-2 rounded hover:bg-gray-100 ${
+              guestType === type ? "bg-white-200 font-medium" : ""
+            }`}
+            onClick={() => handleGuestTypeChange(type)}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
 
-    {/* Second line: Rooms (grayed out) */}
-    <span className="text-gray-500 text-sm">Room {rooms}</span>
-    </button>
-
-  {activeDropdown === "guests" && (
-    <div className="absolute top-full left-0 right-0 bg-white shadow rounded-xl mt-2 p-4 space-y-3 z-[9999]">
-      <select
-        className="w-full border rounded p-2"
-        value={guestType}
-        onChange={(e) => handleGuestTypeChange(e.target.value)}
-      >
-        <option>Solo Traveler</option>
-        <option>Couple</option>
-        <option>Family</option>
-      </select>
-
+      {/* RIGHT COLUMN: Inputs */}
       {(guestType === "Family" || guestType === "Group") && (
-        <>
+        <div className="flex flex-col gap-3">
           {/* Rooms */}
           <div className="flex justify-between items-center">
-            Rooms
+            <span>Rooms</span>
             <div className="flex items-center gap-2">
               <button
                 className="px-2 py-1 bg-white-200 rounded"
@@ -168,7 +204,7 @@ export default function SearchBar() {
 
           {/* Adults */}
           <div className="flex justify-between items-center">
-            Adults
+            <span>Adults</span>
             <div className="flex items-center gap-2">
               <button
                 className="px-2 py-1 bg-white-200 rounded"
@@ -188,7 +224,7 @@ export default function SearchBar() {
 
           {/* Children */}
           <div className="flex justify-between items-center">
-            Children
+            <span>Children</span>
             <div className="flex items-center gap-2">
               <button
                 className="px-2 py-1 bg-white-200 rounded"
@@ -205,11 +241,12 @@ export default function SearchBar() {
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
-  )}
-</div>
+  </div>
+)}
+      </div>
 
 
       {/* SEARCH BUTTON */}
