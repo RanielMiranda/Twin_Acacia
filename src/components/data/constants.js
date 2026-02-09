@@ -5,4 +5,4 @@ export const heroImages = [
 ];
 
 
-export const areaSuggestions = ["Boracay", "Palawan", "Siargao"];
+export const areaSuggestions = ["Location 1", "Location 2", "Location 3"];

@@ -10,11 +10,9 @@ function addMonths(date, count) {
 
 function isSameDay(a, b) {
   if (!a || !b) return false;
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth() === b.getMonth() &&
+         a.getDate() === b.getDate();
 }
 
 function isBetween(date, start, end) {
@@ -22,7 +20,7 @@ function isBetween(date, start, end) {
   return date > start && date < end;
 }
 
-export default function RangeCalendar({ startDate, endDate, onChange }) {
+export default function RangeCalendar({ startDate, endDate, onChange, activeDropdown }) {
   const today = new Date();
   const [baseMonth] = useState(startOfMonth(today));
 
@@ -34,7 +32,6 @@ export default function RangeCalendar({ startDate, endDate, onChange }) {
     const days = [];
     const firstDay = start.getDay();
 
-    // Add empty placeholders for alignment
     for (let i = 0; i < firstDay; i++) days.push(null);
 
     let d = new Date(year, month, 1);
@@ -44,22 +41,18 @@ export default function RangeCalendar({ startDate, endDate, onChange }) {
     }
 
     return (
-      <div className="p-3 w-[200px]">
-        {/* Month title */}
-        <div className="font-semibold mb-2 text-center">{start.toLocaleString("default", { month: "long" })} {year}</div>
-
-        {/* Weekday headers */}
+      <div className="w-[200px]">
+        <div className="font-semibold mb-2 text-center">
+          {start.toLocaleString("default", { month: "long" })} {year}
+        </div>
         <div className="grid grid-cols-7 gap-1 text-sm text-center font-medium mb-2">
           {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => (
             <div key={d} className="h-8 flex items-center justify-center">{d}</div>
           ))}
         </div>
-
-        {/* Days */}
         <div className="grid grid-cols-7 gap-1 text-center">
           {days.map((date, i) => {
-            if (!date) return <div key={i} className="h-10" />; // empty cell with same height
-
+            if (!date) return <div key={i} className="h-10" />;
             const isStart = isSameDay(date, startDate);
             const isEnd = isSameDay(date, endDate);
             const inRange = isBetween(date, startDate, endDate);
@@ -69,9 +62,9 @@ export default function RangeCalendar({ startDate, endDate, onChange }) {
                 key={i}
                 onClick={() => {
                   if (!startDate || (startDate && endDate)) {
-                    onChange(date, null);
-                  } else if (date < startDate) {
-                    onChange(date, startDate);
+                    onChange(date, null); // Start new range
+                  } else if (activeDropdown === "end" && date < startDate) {
+                    onChange(date, startDate); // swap if end < start
                   } else {
                     onChange(startDate, date);
                   }
