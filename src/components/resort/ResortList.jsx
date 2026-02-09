@@ -98,7 +98,7 @@ const [price, setPrice] = useState(5000);
                     ₱{resort.price.toLocaleString()}
                 </p>
 
-                <Button className="w-full rounded-xl text-lg">
+                <Button className="w-full rounded-xl text-lg hover:scale-102 transition-transform">
                 Check Availability
                 </Button>
             </div>
