@@ -94,7 +94,7 @@ const [price, setPrice] = useState(5000);
                 <p className="text-2sm font-bold text-black-600 mb-4 ">
                 Average pricing per night
                 </p>
-                <p className ="text-2xl font-bold text-red-600 mb-4">
+                <p className ="text-2xl font-bold text-blue-600 mb-4">
                     ₱{resort.price.toLocaleString()}
                 </p>
 
