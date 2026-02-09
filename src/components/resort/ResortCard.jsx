@@ -19,6 +19,16 @@ export default function ResortCard({ resort }) {
         {resort.rating} Rating
     </div>
 
+    <div className="flex flex-wrap gap-2 mt-3">
+        {resort.tags?.map((tag, index) => (
+            <span
+            key={index}
+            className="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-full"
+            >
+            {tag}
+            </span>
+        ))}
+    </div>
 
     <div className="mt-4 flex flex-col gap-2">
         <a href={`tel:${resort.contactPhone}`} className="text-blue-600">
