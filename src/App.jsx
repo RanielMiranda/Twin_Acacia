@@ -1,11 +1,13 @@
 import React from "react";
 import HeroBanner from "./components/hero/HeroBanner";
 import ResortList from "./components/resort/ResortList";
+import TopBar from "./components/ui/TopBar";
 
 
 export default function App() {
 return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+        <TopBar />
         <HeroBanner />
         <ResortList />
 
