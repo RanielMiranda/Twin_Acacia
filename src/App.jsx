@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import HeroBanner from "./components/HomePage/Hero/HeroBanner";
-import ResortList from "./components/HomePage/Property/PropertyList";
-import ResortDetailPage from "./components/PropertyPages/PropertyDetailPage";
+import HeroBanner from "./components/homepage/hero/HeroBanner";
+import ResortList from "./components/homepage/property/PropertyList";
+import ResortDetailPage from "./components/propertypages/PropertyDetailPage";
 import TopBar from "./components/ui/TopBar";
 
 function HomePage() {
