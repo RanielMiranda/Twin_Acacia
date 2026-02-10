@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { heroImages } from "../../data/constants";
 import SearchBar from "../../search/SearchBar";
 
-
 export default function HeroBanner() {
   const [heroIndex, setHeroIndex] = useState(0);
 
@@ -31,7 +30,7 @@ export default function HeroBanner() {
 
       <div className="absolute inset-0 flex flex-col justify-center items-center px-4">
         <h1 className="text-5xl font-bold text-white mb-10 text-center">
-          Find The Ideal Apartment 
+          Find Your Perfect Resort Getaway
         </h1>
 
         <SearchBar />
