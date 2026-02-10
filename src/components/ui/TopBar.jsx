@@ -15,13 +15,13 @@ export default function TopBar() {
           </Link>
 
           <div className="hidden md:flex gap-8 font-medium text-gray-700">
-            {/* Resorts Button (uses HashLink) */}
+            {/* Buildings Button (uses HashLink) */}
             <HashLink
               smooth
-              to="/#resorts"
+              to="/#Properties"
               className="hover:text-blue-600 transition"
             >
-              Resorts
+              Buildings
             </HashLink>
 
             {/* About scroll */}
