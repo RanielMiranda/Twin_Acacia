@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { HashLink } from "react-router-hash-link";
-import ContactModal from "./Modals/ContactModal";
+import ContactModal from "./modals/ContactModal";
 
 export default function TopBar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
