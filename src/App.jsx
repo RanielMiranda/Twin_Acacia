@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HeroBanner from "./components/homepage/hero/HeroBanner";
-import PropertyList from "./components/HomePage/property/PropertyList";
+import PropertyList from "./components/homepage/property/PropertyList";
 import PropertyDetailpage from "./components/propertypages/PropertyDetailPage";
 import TopBar from "./components/ui/TopBar";
 
