@@ -4,6 +4,7 @@ import { resorts } from "../data/resorts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, MapPin, Users, BedDouble, Wifi, Car, Utensils } from "lucide-react";
+import StarFill from "../ui/StarFill";
 
 /*
   =========================================================
@@ -35,7 +36,7 @@ export default function ResortDetailPage() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen mt-10">
       {/* ================= HERO IMAGE SECTION ================= */}
       <div className="w-full max-w-6xl mx-auto px-4 pt-8">
         <div className="grid grid-cols-4 grid-rows-2 gap-2 h-[380px] rounded-2xl overflow-hidden">
@@ -90,11 +91,11 @@ export default function ResortDetailPage() {
           <h1 className="text-3xl font-bold">{resort.name}</h1>
 
           <div className="flex items-center gap-4 text-gray-600">
-            <div className="flex items-center gap-1">
-              <Star size={16} className="text-yellow-500" />
-              <span className="font-medium">{resort.rating}</span>
-              <span>({resort.reviews} reviews)</span>
-            </div>
+          <div className="flex items-center gap-2 mt-3">
+            <StarFill rating={4.5} size={16} />
+            <span className="text-sm text-gray-600">4.5</span>
+            <span className="text-sm text-gray-500">(200 reviews)</span>
+          </div>
 
             <div className="flex items-center gap-1">
               <MapPin size={16} />

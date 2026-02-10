@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import StarFill from "@/components/ui/StarFill";;
 
 export default function ResortCard({ resort }) {
   return (
@@ -42,10 +42,10 @@ export default function ResortCard({ resort }) {
         <div className="font-semibold text-lg">{resort.name}</div>
         <div className="text-sm text-gray-500">{resort.location}</div>
 
-        <div className="flex items-center gap-3 mt-3 text-gray-600 text-sm">
-          <Star size={16} className="text-yellow-500" />
-          <span>{resort.rating}</span>
-          <span>({resort.reviews} reviews)</span>
+        <div className="flex items-center gap-2 mt-3">
+          <StarFill rating={resort.rating} size={16} /> 
+          <span className="text-sm text-gray-600">{resort.rating}</span>
+          <span className="text-sm text-gray-500">({resort.reviews} reviews)</span>
         </div>
 
         <div className="flex flex-wrap gap-2 -3">

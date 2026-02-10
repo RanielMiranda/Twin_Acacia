@@ -26,7 +26,15 @@ export const resorts = [
         beds: "2 Double Beds",
         price: 6700,
         tags: ["Balcony", "Pool View"],
-      }
+      },
+      {
+        id: 3,
+        name: "Three Bedroom Suite",
+        guests: 6,
+        beds: "3 Double Beds",
+        price: 6700,
+        tags: ["Balcony", "Pool View"],
+      }      
     ]
 
 },
@@ -41,6 +49,28 @@ export const resorts = [
     contactPhone: "+63 111 111 1111",
     contactEmail: "name@example.com",
     tags: ["Pool", "Restaurant", "Aircon Rooms"],
+    rooms: [
+      {
+        id: 1,
+        name: "Budget Room",
+        guests: 2,
+        beds: "1 Bed",
+        price: 4100,
+        tags: ["Wifi", "Fan"],
+      }
+    ]
+},
+{
+    name: "Resort 3",
+    location: "Laguna, Philippines",
+    rating: 4.6,
+    reviews: 210,
+    price: 4100,
+    image:
+    "https://pix10.agoda.net/hotelImages/30650764/-1/996f3295b88f5b8079a7e0d61a896f1c.jpg?ce=0&s=702x392",
+    contactPhone: "+63 111 111 1111",
+    contactEmail: "name@example.com",
+    tags: ["Pool", "Restaurant", "Aircon Rooms", "Room Service", "Bar"],
     rooms: [
       {
         id: 1,
