@@ -14,7 +14,7 @@ export default function HeroBanner() {
   }, []);
 
   return (
-    <div className="relative h-[800px] overflow-visible">
+    <div className="relative h-[600px] overflow-visible">
       <AnimatePresence>
         <motion.img
           key={heroIndex}
@@ -29,11 +29,15 @@ export default function HeroBanner() {
       <div className="absolute inset-0 bg-black/40" />
 
       <div className="absolute inset-0 flex flex-col justify-center items-center px-4">
+      <div className="absolute inset-0 flex flex-col justify-center items-center px-4">
         <h1 className="text-5xl font-bold text-white mb-10 text-center">
           Find Your Perfect Resort Getaway
         </h1>
+      </div>
 
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4">
         <SearchBar />
+      </div>
 
         {/* --- DOT INDICATOR --- */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
