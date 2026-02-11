@@ -8,7 +8,11 @@ export const resorts = [
     description: {
       summary:  "Kasbah Villa Private Resort - Based in Calamba, Laguna offers an elegant, luxurious experience within reach filled with amenities designed to provide comfort and exclusivity. An experience one wouldn’t want to forget, but would rather share.",
     },
-    image: "https://scontent.fmnl9-6.fna.fbcdn.net/v/t39.30808-6/495541849_122114971262836693_6151526954222791016_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=cc71e4&_nc_ohc=FbQ4RdOPyZMQ7kNvwEpa9QJ&_nc_oc=AdmLpVMMpgV9S8jFpZ4bSR_f3gK3XUVus5rqslaWnfWsIkMZL7g1jnPDSpbHoungtyo&_nc_zt=23&_nc_ht=scontent.fmnl9-6.fna&_nc_gid=5ekMqfqLarRIdpc2qSsn7A&oh=00_AfsxHXyOncU0iQYdkaOk_yVeBmCcKDpd1ehPCloHId0rBA&oe=6991AB83",
+      extraServices: [
+        { name: "Catering", description: "Food avail for discussion", cost: 3500 },
+        { name: "Sound System", description: "Speakers for playing music", cost: 1500 },
+        { name: "Food Carts", description: "Food Available for discussion", cost: 1200 }
+      ],    
     facilities: [
       {
         name: "Swimming Pool",

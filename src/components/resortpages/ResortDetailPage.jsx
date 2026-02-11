@@ -58,13 +58,13 @@ export default function ResortDetailPage() {
       )}
 
       {facilityOpen && (
-  <FacilityModal
-    facilities={resort.facilities}
-    activeIndex={facilityIndex}
-    setActiveIndex={setFacilityIndex}
-    onClose={() => setFacilityOpen(false)}
-  />
-)}
+        <FacilityModal
+          facilities={resort.facilities}
+          activeIndex={facilityIndex}
+          setActiveIndex={setFacilityIndex}
+          onClose={() => setFacilityOpen(false)}
+        />
+      )}
     </div>
   );
 }

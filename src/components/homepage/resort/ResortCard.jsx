@@ -4,9 +4,9 @@ import { MapPin } from "lucide-react";
 
 export default function ResortCard({ resort }) {
   const gallery = resort.gallery || [];
-  const mainImage = gallery[0] || resort.image;
-  const topMini = gallery[1] || resort.image;
-  const bottomMini = gallery[2] || resort.image;
+  const mainImage = gallery[0];
+  const topMini = gallery[1];
+  const bottomMini = gallery[2];
   const extraCount = gallery.length > 3 ? gallery.length - 2 : 0;
 
   return (

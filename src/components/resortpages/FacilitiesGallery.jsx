@@ -16,7 +16,7 @@ export default function FacilitiesGallery({ facilities }) {
 
   return (
     <div id="amenities" className="mt-8">
-      <h2 className="text-2xl font-semibold mb-4">Facilities</h2>
+      <h2 className="text-2xl font-semibold mb-4">Amenities</h2>
 
       {/* Horizontal Gallery */}
       <div className="flex gap-4 overflow-x-auto py-2">
