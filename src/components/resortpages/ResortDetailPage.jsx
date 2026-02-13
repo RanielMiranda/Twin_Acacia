@@ -17,6 +17,9 @@ export default function ResortDetailPage() {
   const [facilityOpen, setFacilityOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [roomGalleryOpen, setRoomGalleryOpen] = useState(false);
+  const [roomActiveIndex, setRoomActiveIndex] = useState(0);
+  const [roomImages, setRoomImages] = useState([]);
 
   if (!resort) {
     return (
@@ -36,7 +39,7 @@ export default function ResortDetailPage() {
         }}
       />
 
-      <ShortcutBar />
+    <ShortcutBar />
 
     <ResortInfo
       resort={resort}
@@ -46,25 +49,41 @@ export default function ResortDetailPage() {
       }}
     />
 
-      <RoomsSection resort={resort} />
+    <RoomsSection
+      resort={resort}
+      onOpenRoomGallery={(images, index = 0) => {
+        setRoomImages(images);
+        setRoomActiveIndex(index);
+        setRoomGalleryOpen(true);
+      }}
+    />
 
-      {galleryOpen && (
-        <GalleryModal
-          images={resort.gallery}
-          activeIndex={activeIndex}
-          setActiveIndex={setActiveIndex}
-          onClose={() => setGalleryOpen(false)}
-        />
-      )}
+    {galleryOpen && (
+      <GalleryModal
+        images={resort.gallery}
+        activeIndex={activeIndex}
+        setActiveIndex={setActiveIndex}
+        onClose={() => setGalleryOpen(false)}
+      />
+    )}
 
-      {facilityOpen && (
-        <FacilityModal
-          facilities={resort.facilities}
-          activeIndex={facilityIndex}
-          setActiveIndex={setFacilityIndex}
-          onClose={() => setFacilityOpen(false)}
-        />
-      )}
-    </div>
+    {facilityOpen && (
+      <FacilityModal
+        facilities={resort.facilities}
+        activeIndex={facilityIndex}
+        setActiveIndex={setFacilityIndex}
+        onClose={() => setFacilityOpen(false)}
+      />
+    )}
+
+    {roomGalleryOpen && (
+      <GalleryModal
+        images={roomImages}
+        activeIndex={roomActiveIndex}
+        setActiveIndex={setRoomActiveIndex}
+        onClose={() => setRoomGalleryOpen(false)}
+      />
+    )}
+  </div>
   );
 }

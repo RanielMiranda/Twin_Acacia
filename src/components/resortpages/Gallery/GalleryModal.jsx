@@ -18,7 +18,7 @@ export default function GalleryModal({
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-6 right-6 text-white text-3xl"
+        className="absolute top-6 right-6 text-white text-3xl cursor-pointer rounded-full bg-black hover:bg-gray-600 transition p-3"
       >
         <X className="w-5 h-5" />
       </button>
@@ -40,6 +40,7 @@ export default function GalleryModal({
             hover:bg-gray-600
             transition
             backdrop-blur-sm
+            cursor-pointer
           "
         >
           <ChevronLeft className="w-6 h-6 text-white" />
@@ -65,6 +66,7 @@ export default function GalleryModal({
             hover:bg-gray-600
             transition
             backdrop-blur-sm
+            cursor-pointer
           "
         >
           <ChevronRight className="w-6 h-6 text-white" />

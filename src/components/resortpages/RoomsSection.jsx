@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, BedDouble, Flag } from "lucide-react";
 
-export default function RoomsSection({ resort }) {
+export default function RoomsSection({ resort, onOpenRoomGallery }) {
   return (
     <div id="rooms" className="max-w-6xl mx-auto px-4 pb-16">
       <h2 className="text-2xl font-semibold mb-6">Available Rooms</h2>
@@ -17,13 +17,15 @@ export default function RoomsSection({ resort }) {
             <div className="md:w-1/2 h-[260px] grid grid-cols-2 grid-rows-2 gap-1">
               <img
                 src={room.gallery?.[0] || resort.gallery[0]}
-                className="col-span-1 row-span-2 object-cover w-full h-full"
+                onClick={() => onOpenRoomGallery(room.gallery, 0)}
+                className="col-span-1 row-span-2 object-cover w-full h-full cursor-pointer"
               />
 
               {room.gallery?.[1] && (
                 <img
                   src={room.gallery[1]}
-                  className="object-cover w-full h-full"
+                  onClick={() => onOpenRoomGallery(room.gallery, 1)}
+                  className="object-cover w-full h-full cursor-pointer"
                 />
               )}
 
@@ -31,7 +33,8 @@ export default function RoomsSection({ resort }) {
                 <div className="relative">
                   <img
                     src={room.gallery[2]}
-                    className="object-cover w-full h-full"
+                    onClick={() => onOpenRoomGallery(room.gallery, 2)}
+                    className="object-cover w-full h-full cursor-pointer"
                   />
                   {room.gallery.length > 3 && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-semibold">
