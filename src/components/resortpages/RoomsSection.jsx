@@ -18,14 +18,14 @@ export default function RoomsSection({ resort, onOpenRoomGallery }) {
               <img
                 src={room.gallery?.[0] || resort.gallery[0]}
                 onClick={() => onOpenRoomGallery(room.gallery, 0)}
-                className="col-span-1 row-span-2 object-cover w-full h-full cursor-pointer"
+                className="col-span-1 row-span-2 object-cover w-full h-full cursor-pointer rounded-bl-xl rounded-tl-xl"
               />
 
               {room.gallery?.[1] && (
                 <img
                   src={room.gallery[1]}
                   onClick={() => onOpenRoomGallery(room.gallery, 1)}
-                  className="object-cover w-full h-full cursor-pointer"
+                  className="object-cover w-full h-full cursor-pointer rounded-tr-xl"
                 />
               )}
 
@@ -34,10 +34,10 @@ export default function RoomsSection({ resort, onOpenRoomGallery }) {
                   <img
                     src={room.gallery[2]}
                     onClick={() => onOpenRoomGallery(room.gallery, 2)}
-                    className="object-cover w-full h-full cursor-pointer"
+                    className="object-cover w-full h-full cursor-pointer rounded-br-xl"
                   />
                   {room.gallery.length > 3 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-semibold">
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-semibold rounded-br-xl">
                       +{room.gallery.length - 2} more
                     </div>
                   )}
