@@ -74,11 +74,37 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
               <button
                 key={i}
                 onClick={() => {
-                  if (isPast) return; // prevent past dates
+                  if (isPast) return;
+
+                  // ===== SAME DAY selected as both start & end =====
+                  if (isStart && isEnd) {
+                    onChange(null, null);
+                    return;
+                  }
+
+                  // ===== CLICKING START =====
+                  if (isStart) {
+                    if (endDate) {
+                      // Shift range forward (end becomes new start)
+                      onChange(endDate, null);
+                    } else {
+                      // Only start existed → clear
+                      onChange(null, null);
+                    }
+                    return;
+                  }
+
+                  // ===== CLICKING END =====
+                  if (isEnd) {
+                    onChange(startDate, null);
+                    return;
+                  }
+
+                  // ===== NORMAL SELECTION FLOW =====
                   if (!startDate || (startDate && endDate)) {
-                    onChange(date, null); // start new range
+                    onChange(date, null);
                   } else if (activeDropdown === "end" && date < startDate) {
-                    onChange(date, startDate); // swap if end < start
+                    onChange(date, startDate);
                   } else {
                     onChange(startDate, date);
                   }

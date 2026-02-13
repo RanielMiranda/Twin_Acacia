@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { resorts } from "../data/resorts";
 
-import HeroGallery from "./HeroGallery";
+import HeroGallery from "./Gallery/HeroGallery";
 import ShortcutBar from "./ShortcutBar";
 import ResortInfo from "./ResortInfo";
 import RoomsSection from "./RoomsSection";
-import GalleryModal from "./GalleryModal";
+import GalleryModal from "./Gallery/GalleryModal";
 import FacilityModal from "./FacilityModal";
 
 export default function ResortDetailPage() {

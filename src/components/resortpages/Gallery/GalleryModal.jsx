@@ -23,37 +23,59 @@ export default function GalleryModal({
         <X className="w-5 h-5" />
       </button>
 
-      {/* Main Image with Arrows */}
-      <div className="relative w-full flex items-center justify-between px-4 h-[70vh]">
+      {/* Main Image with Overlay Arrows */}
+      <div className="relative w-full h-[70vh] flex items-center justify-center">
+
+        {/* LEFT ARROW */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             setActiveIndex((i) => (i - 1 + images.length) % images.length);
           }}
-          className="text-white text-4xl"
+          className="
+            absolute left-50
+            p-3
+            rounded-full
+            bg-black            
+            hover:bg-gray-600
+            transition
+            backdrop-blur-sm
+          "
         >
-          <ChevronLeft className="w-6 h-6 ml-20" />
+          <ChevronLeft className="w-6 h-6 text-white" />
         </button>
 
+        {/* IMAGE */}
         <img
           src={images[activeIndex]}
           className="max-h-full max-w-full object-contain"
         />
 
+        {/* RIGHT ARROW */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             setActiveIndex((i) => (i + 1) % images.length);
           }}
-          className="text-white text-4xl"
+          className="
+            absolute right-50
+            p-3
+            rounded-full
+            bg-black
+            hover:bg-gray-600
+            transition
+            backdrop-blur-sm
+          "
         >
-          <ChevronRight className="w-6 h-6 mr-20" />
+          <ChevronRight className="w-6 h-6 text-white" />
         </button>
+
       </div>
+
 
       {/* Optional Name for current image */}
       {names && names[activeIndex] && (
-        <p className="mt-4 text-white font-semibold text-lg text-center">
+        <p className="my-4 text-white font-semibold text-lg text-center">
           {names[activeIndex]}
         </p>
       )}

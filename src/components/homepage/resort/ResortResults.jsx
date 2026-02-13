@@ -16,9 +16,10 @@ export default function ResortResults({ resorts }) {
           {/* MAIN CARD */}
           <div
             className="flex-1 cursor-pointer"
-            onClick={() =>
-              navigate(`/resort/${encodeURIComponent(resort.name)}`)
-            }
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              navigate(`/resort/${encodeURIComponent(resort.name)}`);
+            }}
           >
             <ResortCard resort={resort} />
           </div>

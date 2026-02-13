@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ResortResults from "../homepage/resort/ResortResults";
-import HeroGallery from "../resortpages/HeroGallery";
+import HeroGallery from "../resortpages/Gallery/HeroGallery";
 import ShortcutBar from "../resortpages/ShortcutBar";
 import ResortInfo from "../resortpages/ResortInfo";
 import RoomsSection from "../resortpages/RoomsSection";

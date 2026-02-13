@@ -1,4 +1,4 @@
-import FacilitiesGallery from "./FacilitiesGallery";
+import FacilitiesGallery from "./Gallery/FacilitiesGallery";
 import ServicesTable from "./ServicesTable";
 import { MapPin, Mails, Phone } from "lucide-react";
 
