@@ -3,11 +3,15 @@ import { useParams } from "react-router-dom";
 import { resorts } from "../data/resorts";
 
 import HeroGallery from "./Gallery/HeroGallery";
-import ShortcutBar from "./ShortcutBar";
-import ResortInfo from "./ResortInfo";
-import RoomsSection from "./RoomsSection";
-import GalleryModal from "./Gallery/GalleryModal";
-import FacilityModal from "./FacilityModal";
+import ShortcutBar from "./rooms/ShortcutBar";
+import ResortInfo from "./rooms/ResortInfo";
+import RoomsSection from "./rooms/RoomsSection";
+import GalleryModal from "./components/GalleryModal";
+import FacilityModal from "./components/FacilityModal";
+
+import ContactModal from "../ui/modals/ContactModal";
+import InquiryForm from "./components/InquiryForm";
+import RoomContactModal from "./components/RoomContactModal";
 
 export default function ResortDetailPage() {
   const { name } = useParams();
@@ -20,6 +24,8 @@ export default function ResortDetailPage() {
   const [roomGalleryOpen, setRoomGalleryOpen] = useState(false);
   const [roomActiveIndex, setRoomActiveIndex] = useState(0);
   const [roomImages, setRoomImages] = useState([]);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
 
   if (!resort) {
     return (
@@ -56,6 +62,10 @@ export default function ResortDetailPage() {
         setRoomActiveIndex(index);
         setRoomGalleryOpen(true);
       }}
+      onViewRoomDetails={(room) => {
+        setSelectedRoom(room);
+        setContactOpen(true);
+      }}
     />
 
     {galleryOpen && (
@@ -84,6 +94,16 @@ export default function ResortDetailPage() {
         onClose={() => setRoomGalleryOpen(false)}
       />
     )}
+
+    {contactOpen && selectedRoom && (
+      <RoomContactModal
+        isOpen={contactOpen}
+        onClose={() => setContactOpen(false)}
+        resort={resort}
+        room={selectedRoom}
+      />
+    )}
+
   </div>
   );
 }

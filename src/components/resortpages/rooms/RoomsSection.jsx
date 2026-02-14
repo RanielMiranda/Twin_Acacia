@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, BedDouble, Flag } from "lucide-react";
 
-export default function RoomsSection({ resort, onOpenRoomGallery }) {
+export default function RoomsSection({ resort, onOpenRoomGallery, onViewRoomDetails }) {
   return (
     <div id="rooms" className="max-w-6xl mx-auto px-4 pb-16">
       <h2 className="text-2xl font-semibold mb-6">Available Rooms</h2>
@@ -85,7 +85,10 @@ export default function RoomsSection({ resort, onOpenRoomGallery }) {
                   </p>
                 </div>
 
-                <Button className="flex items-center gap-2 hover:scale-105 transition">
+                <Button
+                  className="flex items-center gap-2 hover:scale-105 transition"
+                  onClick={() => onViewRoomDetails(room)}
+                >
                   <Flag className="w-4 h-4" />
                   View Details
                 </Button>

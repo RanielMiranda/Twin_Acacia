@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import ResortResults from "../homepage/resort/ResortResults";
 import HeroGallery from "../resortpages/Gallery/HeroGallery";
-import ShortcutBar from "../resortpages/ShortcutBar";
-import ResortInfo from "../resortpages/ResortInfo";
-import RoomsSection from "../resortpages/RoomsSection";
+import ShortcutBar from "../resortpages/rooms/ShortcutBar";
+import ResortInfo from "../resortpages/rooms/ResortInfo";
+import RoomsSection from "../resortpages/rooms/RoomsSection";
 
 export default function ResortJsBuilder() {
   const [resort, setResort] = useState({

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import GalleryModal from "./GalleryModal";
+import GalleryModal from "../components/GalleryModal";
 
 export default function FacilitiesGallery({ facilities }) {
   const maxVisible = 10;
