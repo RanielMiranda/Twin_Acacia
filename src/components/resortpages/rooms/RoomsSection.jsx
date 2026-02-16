@@ -5,7 +5,6 @@ import { Users, BedDouble, Flag } from "lucide-react";
 export default function RoomsSection({ resort, onOpenRoomGallery, onViewRoomDetails }) {
   return (
     <div id="rooms" className="max-w-6xl mx-auto px-4 pb-16">
-      <h2 className="text-2xl font-semibold mb-6">Available Rooms</h2>
 
       <div className="flex flex-col gap-6">
         {resort.rooms?.map((room) => (
