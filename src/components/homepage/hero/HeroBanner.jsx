@@ -46,7 +46,7 @@ export default function HeroBanner() {
             key={index}
             onClick={() => setHeroIndex(index)} // jump to clicked image
             className={`
-                w-3 h-3 rounded-full transition-all duration-300
+                w-4 h-2 rounded-full transition-all duration-300
                 ${heroIndex === index ? "bg-white scale-100" : "bg-white/50 scale-75"}
                 cursor-pointer
             `}
