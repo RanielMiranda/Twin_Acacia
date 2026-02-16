@@ -28,7 +28,7 @@ export default function DateRangeField({
             {startDate ? formatFullDate(startDate) : "Check-in date"}
           </div>
           <div className="text-xs text-gray-400">
-            {startDate ? formatWeekday(startDate) : ""}
+            {startDate ? formatWeekday(startDate) : "Start"}
           </div>
         </button>
 
@@ -43,7 +43,7 @@ export default function DateRangeField({
             {endDate ? formatFullDate(endDate) : "Check-out date"}
           </div>
           <div className="text-xs text-gray-400">
-            {endDate ? formatWeekday(endDate) : ""}
+            {endDate ? formatWeekday(endDate) : "End"}
           </div>
         </button>
 
