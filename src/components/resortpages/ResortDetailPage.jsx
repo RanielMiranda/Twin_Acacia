@@ -24,6 +24,7 @@ export default function ResortDetailPage() {
   const [roomGalleryOpen, setRoomGalleryOpen] = useState(false);
   const [roomActiveIndex, setRoomActiveIndex] = useState(0);
   const [roomImages, setRoomImages] = useState([]);
+
   const [contactOpen, setContactOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
 
@@ -60,10 +61,19 @@ export default function ResortDetailPage() {
         }}
       />
 
-      <div className ="max-w-6xl mx-auto px-4">
-        <h2 className="text-2xl font-semibold mb-6 px-auto">Available Rooms</h2>
+      {/* Available Rooms Heading + Contact Owner */}
+      <div className="max-w-6xl mx-auto px-4 mb-6 flex flex-col md:flex-row items-center justify-between">
+        <h2 className="text-2xl font-semibold mb-4 md:mb-0">Available Rooms</h2>
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+          onClick={() => {
+            setSelectedRoom(null); // no room preselected
+            setContactOpen(true);  // open modal
+          }}
+        >
+          Contact Owner
+        </button>
       </div>
-
 
       {/* Rooms + Filter Panel */}
       <div className="flex flex-col lg:flex-row gap-8 px-4 lg:px-0 max-w-7xl mx-auto">
@@ -73,7 +83,6 @@ export default function ResortDetailPage() {
 
         {/* Rooms Section */}
         <div className="flex-1 w-full">
-          
           <RoomsSection
             resort={resort}
             price={price} // pass price to filter rooms if needed
@@ -81,10 +90,6 @@ export default function ResortDetailPage() {
               setRoomImages(images);
               setRoomActiveIndex(index);
               setRoomGalleryOpen(true);
-            }}
-            onViewRoomDetails={(room) => {
-              setSelectedRoom(room);
-              setContactOpen(true);
             }}
           />
         </div>
@@ -118,12 +123,12 @@ export default function ResortDetailPage() {
         />
       )}
 
-      {contactOpen && selectedRoom && (
+      {contactOpen && (
         <RoomContactModal
           isOpen={contactOpen}
           onClose={() => setContactOpen(false)}
           resort={resort}
-          room={selectedRoom}
+          room={resort || resort.price} // default to first room if none selected
         />
       )}
     </div>

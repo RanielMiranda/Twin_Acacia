@@ -2,7 +2,7 @@ export const resorts = [
   {
     name: "Kasbah Villa - Hot Spring Resort",
     location: "National Highway, Brgy. Bagong Kalsada, Calamba, Philippines, 4027, Calamba, Philippines, 4027",
-    price: 5200,
+    price: 28000,
     contactPhone: "+63 111 111 1111",
     contactEmail: "kasbahvilla@gmail.com",
     contactMedia: "https://www.facebook.com/profile.php?id=61575100816613",
@@ -85,7 +85,7 @@ export const resorts = [
           "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/498592227_122117818088836693_9140900381154017019_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeF4lZkdZhWys-pQH-ag6Nvik9tX7s1IdPeT21fuzUh09zPSbul6G08NmJllzzr8bjxrOY4x9Qg0OKEs72PQsPFf&_nc_ohc=GONi8HGZfr8Q7kNvwE8rOpz&_nc_oc=AdmB1nIUl1CkMj8eZ9-1rCS00dXiVykVW_L0UJDDEVyZolRc-8Rcgc5Kh7S9RL7NEfA&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=ovbGRdkxjFSTGENylqTwMw&oh=00_Afuzkxq7o_Jz2Y8CXwszH9ynT9jpFrAhkM598qgLWT0Juw&oe=69987AF1"
         ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770794495174
       },
@@ -99,7 +99,7 @@ export const resorts = [
           "https://scontent.fmnl9-6.fna.fbcdn.net/v/t39.30808-6/514039707_24645923878329996_6147084731116776519_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=f727a1&_nc_eui2=AeHRGno3JS3ZTwp8zl3Jp4pawNjAtAJeruXA2MC0Al6u5ULPCag_9xd-DqzueWoFQZZu4LzeC7nv_R9jsmueISfP&_nc_ohc=468KPsSxQ-MQ7kNvwE-Lc8D&_nc_oc=AdlE2Rah_Dh3og6LplH8FOpgxb9mKI9LRmQ1dWEIOJChEURTjIwVtOJ--XSu51UnaYs&_nc_zt=23&_nc_ht=scontent.fmnl9-6.fna&_nc_gid=qmftAJU3ZJYmuH5MGz70aA&oh=00_AfvZq3rh5tzlQ_fl46bBBkzNIh24BCx8auDlIDUQgUNCJg&oe=69985A7E"
         ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770794547509
       },
@@ -116,7 +116,7 @@ export const resorts = [
           "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/498592227_122117818088836693_9140900381154017019_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeF4lZkdZhWys-pQH-ag6Nvik9tX7s1IdPeT21fuzUh09zPSbul6G08NmJllzzr8bjxrOY4x9Qg0OKEs72PQsPFf&_nc_ohc=GONi8HGZfr8Q7kNvwE8rOpz&_nc_oc=AdmB1nIUl1CkMj8eZ9-1rCS00dXiVykVW_L0UJDDEVyZolRc-8Rcgc5Kh7S9RL7NEfA&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=ovbGRdkxjFSTGENylqTwMw&oh=00_Afuzkxq7o_Jz2Y8CXwszH9ynT9jpFrAhkM598qgLWT0Juw&oe=69987AF1",
         ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770794620207
       },
@@ -131,7 +131,7 @@ export const resorts = [
           "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/498592227_122117818088836693_9140900381154017019_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeF4lZkdZhWys-pQH-ag6Nvik9tX7s1IdPeT21fuzUh09zPSbul6G08NmJllzzr8bjxrOY4x9Qg0OKEs72PQsPFf&_nc_ohc=GONi8HGZfr8Q7kNvwE8rOpz&_nc_oc=AdmB1nIUl1CkMj8eZ9-1rCS00dXiVykVW_L0UJDDEVyZolRc-8Rcgc5Kh7S9RL7NEfA&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=ovbGRdkxjFSTGENylqTwMw&oh=00_Afuzkxq7o_Jz2Y8CXwszH9ynT9jpFrAhkM598qgLWT0Juw&oe=69987AF1"
         ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770794671574
       },
@@ -145,7 +145,7 @@ export const resorts = [
           "https://scontent.fmnl9-6.fna.fbcdn.net/v/t39.30808-6/499782038_122117818082836693_7953430741353795184_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGCWcrlbkfu9CFnBSIhgfIum6saRY1Z6lqbqxpFjVnqWmGOEFPBRRYweUHot_FSgJ5nq1wA9S7-qJhsv_Z9E_MR&_nc_ohc=Ef8j5UGVg5gQ7kNvwHUQKW0&_nc_oc=AdnxsSlI2clDfOGS1Vbwx8mYSmZvgufW-MVAbu3LAuq31etwXO-QN0iulTdrd4BcA-Q&_nc_zt=23&_nc_ht=scontent.fmnl9-6.fna&_nc_gid=rzfGQvce4ugP4MpYL1fbRg&oh=00_Afvfti4F6XddLoCMmJGPSVrdJw3Lmf5yXE5hkIzPgCYPTg&oe=69988B49"
         ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770794789646
       }
@@ -154,7 +154,7 @@ export const resorts = [
   {
     name: "Céleste Resort",
     location: "National Highway, Brgy. Bagong Kalsada, Calamba, Philippines, 4027",
-    price: 5200,
+    price: 22000,
     contactPhone: "0993 053 7495  ",
     contactEmail: "resortceleste@gmail.com",
     contactMedia: "https://www.facebook.com/profile.php?id=61570554086379",
@@ -208,7 +208,7 @@ export const resorts = [
           "https://scontent.fmnl9-2.fna.fbcdn.net/v/t39.30808-6/528317340_122146669406685136_6833857937558859318_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFlQ8HJQPkVGvoT_VPnjCVib4sh7VNCtLFviyHtU0K0sbDUE5-XFirOvfMNrWCtiIX2k11SPFTtA96C7v6kW8Fg&_nc_ohc=m3YqSMO-BI4Q7kNvwHs6Gbf&_nc_oc=AdkvurImo9-yS2tQGIuh-CAABt1CQuwM4_sMMcq3hThsh-2s9gRzE7cfF0mcvINPwnk&_nc_zt=23&_nc_ht=scontent.fmnl9-2.fna&_nc_gid=KCPez04hAx-0RyU__n92Gg&oh=00_AftV0nDFn0czDrgvw_sMjALIEmtkN3P3_Puvrr6tzg97bA&oe=699864DB"
         ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770796708158
       },
@@ -222,7 +222,7 @@ export const resorts = [
           "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/529331863_122146668938685136_689059720528739878_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHPL-8TXBNMgHeiQA_ZrRxfQqVd2PmsA3pCpV3Y-awDevPqqHHyYxkgjjg4xaMahAlcGAjLQ7NVVDO2HyUZGIyi&_nc_ohc=dE91yWyGN4gQ7kNvwGdlkgS&_nc_oc=Adn-XXXbaMSOZA1e4Nm7ALbv9ci9tWgwP3HDfhH7RDvmqUfaULS4Szjy8RK8K4rulg4&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=-KKRMp17BYPO0hZG2Z-NWw&oh=00_Afv3cutt9qSjTk-51jzycfOMvkupbbKCV1m4oLwOP_rTyQ&oe=69987F80"
         ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770796747716
       },
@@ -253,7 +253,7 @@ export const resorts = [
   {
     name: "LuxVille Resort",
     location: "Brgy, National Highway Purok 3, Manila S Rd, Calamba, Philippines, 4027",
-    price: 5199,
+    price: 18000,
     contactPhone: "0917 820 1091  ",
     contactEmail: "luxville.resort@gmail.com",
     contactMedia: "https://www.facebook.com/profile.php?id=61558978768296",
@@ -321,7 +321,7 @@ export const resorts = [
           "https://scontent.fmnl9-2.fna.fbcdn.net/v/t39.30808-6/514767741_122193002414299292_4039556344201196982_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEGe9LNwAoyc8IMNsHChvG3QZxyVxxC0X9BnHJXHELRf8nl1Vp0O4lg41SjwAZ-RptnEV5bUIK7sy4mTUExnznU&_nc_ohc=zG6TeQG-Da8Q7kNvwHPG4gU&_nc_oc=AdlooYdK_QJ2H2VVoheNoJigtinnFscvQ5-sOUxXSd0bIHPwV0lz7F-Gt3CcxOwOnsw&_nc_zt=23&_nc_ht=scontent.fmnl9-2.fna&_nc_gid=XPiqEBjnW3BhWXcUObkw7w&oh=00_AfvH5oskWn6LQSRvb7QWLQwtUhOt89uR7l5F6zqOBzUhig&oe=6998761C",
           ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770799082933
       },
@@ -335,7 +335,7 @@ export const resorts = [
           "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514408098_122193002528299292_3055049987307261310_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHiekbrW1LeDQ7o7d8JkgVlF4Dsr48im1IXgOyvjyKbUt0UtPnp0P1sJeVQBkVuF_qqcbPPHe2i9BG3FgXM_uVC&_nc_ohc=aQZOBikNe3IQ7kNvwGJk_h4&_nc_oc=AdkB-6CPCh-0Qkj_7Y7C-T1SNonkQZyp8HExN_ECS9UnYXpYmeyq_i9cuBeXONjn2ZA&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=2rNcpx4J3pN5ZNUKNM4ibQ&oh=00_AfvjjUTUEBcpQd_UosNbh8HXQflaUpB7f47Mifep31E8Ig&oe=6998825C"
         ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770799141460
       },
@@ -351,7 +351,7 @@ export const resorts = [
 
           ],
         tags: [
-          "Airconditioned"
+          "Airconditioned", "Toilet", "Bath", "Blankets"
         ],
         id: 1770799332348
       }
