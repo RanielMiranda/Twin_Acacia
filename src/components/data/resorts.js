@@ -248,7 +248,7 @@ export const resorts = [
       "Kitchen"
     ]
   },
-    {
+  {
     name: "LuxVille Resort",
     location: "Brgy, National Highway Purok 3, Manila S Rd, Calamba, Philippines, 4027",
     price: 5199,
@@ -259,36 +259,37 @@ export const resorts = [
     },
     profileImage: "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-1/473691376_122167841522299292_5579231035805664781_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=100&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=xq2U1b6PjZ4Q7kNvwHyGGic&_nc_oc=Adm7FNgE8GXJgkdsL9cCSJDvot6r6RlbZEv4DgEUVvL5L8vpjkkPmTzsYa_9VdWBC6Q&_nc_zt=24&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=-zKQgwuDR3m6xpKX95gI_g&oh=00_Afua6lXe1PzRHJUNI7o7REfNKLT6Db0NHoFURpV4rQwOyQ&oe=69921469",
     gallery: [
-      "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514471803_122193001154299292_7492133386656575758_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_ohc=ClbFEk1RY4UQ7kNvwGWmrV7&_nc_oc=AdkkNK-4tRh5tdQO9JyHLJ0H0xYHxbwAH3HXWqm2ZuLihNrrkLmLtEnpUCuwKiZjXRk&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=P2UcBAmfPa3KrCsqXuFIzg&oh=00_AfsQyzLW7tuHct9xQdLbjtI8DakMXMxHPZzwbnYHJ-fXtA&oe=69920439",
-      "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/515011495_122193002552299292_3220684764115277086_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_ohc=rACGFdQyxtwQ7kNvwEsXNHk&_nc_oc=AdnkOxMNtPR6yd_bF2FV7QCqALWQWXXOv906MGwYeFdaAaEM7GHwVDpouZXqVR961mU&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=lPFRx9NUBLaAC_c3bDcDbA&oh=00_Afu9OY4BLheGZF0MShJOYRTOYOU3fgZUrhMP5gavmBgLog&oe=69920B4D",
-      "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/514445662_122193002588299292_3738232452656492664_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_ohc=ikOvWRkbhWoQ7kNvwEptQ9I&_nc_oc=AdkSOs1H2-wBHSTldxIZOwg4HZ0njRHXWDcUJ_9J6Wcu738PhZhaSIfzwJtO_uNG5wY&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=WLbUMT1Iuwqr-6-VIOTTsQ&oh=00_AfuvNN_OFy7FLpE8af42rT8dequcnquhr2rgqFlgm6anfw&oe=699219C5",
-      "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514527948_122193002336299292_1437859975081125915_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_ohc=VWyHmApRH6gQ7kNvwEl7cpd&_nc_oc=AdmXow7s2I6NflTFU3moWEMea-CAlmWl47QLnXrcJ0E9tu3ZWoLe9z5fv4x1eqJrLow&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=tvDcqht9PpFH9sPZVivOfA&oh=00_AfvbHc2eZXIiU6Vu7IXromTi5CuO31nXaleZ1tXmWxrqNA&oe=69921883",
-      "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/469593504_122162147420299292_2250946729353198043_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_ohc=K2h3aG3jHFYQ7kNvwEqdwzN&_nc_oc=Adm2p7sV9HW9SHVBel3ns7o2L68TzXZNLo18RIVBNJhg2uO16xqlyvPRrK3BgASDNk8&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=AfXCMp--44z_1sjROUekog&oh=00_AfvFIHYiX5B4MuDUsQIGkzB3rDyHx5X6E9JL6J1joFI0BQ&oe=69921B24"
+            "https://scontent.fmnl9-7.fna.fbcdn.net/v/t39.30808-6/469658627_122162143538299292_4430710771603924646_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeFeZoGkpofPZji_wvAIw7UReCKUhBSwHVV4IpSEFLAdVQYeJslaYB2k5noG4hQK0TqDyFDU5IVa2qwLj9r8mZUK&_nc_ohc=p7cyu-q5mOsQ7kNvwF1QqKP&_nc_oc=AdmXkO75nxXbRjP7hgYdL56AU02M8FHLLcnnDS94B4UTIgt7Ov-iHRwkqQH-dN8899Y&_nc_zt=23&_nc_ht=scontent.fmnl9-7.fna&_nc_gid=0wz3APIeivtOutXivmAUSA&oh=00_AftWKW0ja3FGWvPvLNQxsxilV6tv5uw8N24CxAYlMuMuUw&oe=69986214",
+      "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514318442_122193002270299292_2327958192619198233_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHYuVg4itjUv0CyYRm6hDgoOcDbK3Zvj2g5wNsrdm-PaOxNELEHHYpbNEib9UWcZvGohZnScTVL9gSHr8tNlKWj&_nc_ohc=W99WdM9P6uwQ7kNvwFj2S1E&_nc_oc=Adl26FCQ2amRTwIIhRXzLsYGCB2wOR-lMDuptIaHxcDc8D04jUzhqZ9gh8pJDMvRI3g&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=2z74_mdPogfFAqAVtiAJOg&oh=00_AfvP1YKwNq_RSiOES_V6P4pp7bGqWQa5RlyL4t4R408aag&oe=69986580",
+      "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/514445662_122193002588299292_3738232452656492664_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGwUH2EcNCT7iBFXKIlVyVS6U80ChW5YYHpTzQKFblhgcjt5m7ftBmzDRt5pklZ7BWRUNpmrl5jVraXNQ16XrhH&_nc_ohc=kFM3N7JzaQoQ7kNvwHPSoGM&_nc_oc=AdmBCiFQIptaVLFtTKVGBqrp6PcKJmolxgvCOqLXF-Ktk6F0i9ZRp-dzxE1F34vT_oY&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=FJswLPb04G_Y6PqPqWTmZA&oh=00_AfuCcf8PdxLIvTQCMTpRINvclXhXlhBItMrqZnHiUmdwuA&oe=69987905",
+      "https://scontent.fmnl9-2.fna.fbcdn.net/v/t39.30808-6/514418307_122193002564299292_8844247822691967845_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGV73FnCaYBK1j4N9y1uDw0B9qPTkR-WVAH2o9ORH5ZUCiD5kblfy4VU7SXX58qYtqLDpQMJkJIkil6V69wgZEs&_nc_ohc=Jdb6ObimTEcQ7kNvwGthLsM&_nc_oc=AdnggQe7-FnInxVlOKQ7Z8OzPafVXwxuekWtxMZbCE5zytlI749CmvMThm8ftNW993c&_nc_zt=23&_nc_ht=scontent.fmnl9-2.fna&_nc_gid=AyyvYJy5itsU_vztyBt40w&oh=00_AfviEnc3PozBPxKnotfEOlMVNXU_KhDAdpdmAOYIB1-LBg&oe=69989325",
+      "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514527948_122193002336299292_1437859975081125915_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGh5B-clejmstMt562lCluKuaSGo6j9ghe5pIajqP2CF3PLML-WzfVF_PLwVso-GZzk5LeZYH-_FUcMaRpfRW_c&_nc_ohc=z6wzzf6cTPoQ7kNvwHbfMRW&_nc_oc=AdnK76CHkHLDl_coYTm3xMvIDtJMYFrFiYTusnunnn_fM-AYmjCe52uYxKuyWEP83WY&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=_3ULGnY1F4aeibf95hIrOQ&oh=00_AftRHQsGp08RwQqIBIN-9mtm0kXHANkASyoEQxRlMIHuOQ&oe=699877C3",
+      "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/515011495_122193002552299292_3220684764115277086_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFjDtbt1SrJAGbMKsYlHmes7-wvYovCTk7v7C9ii8JOTndVv7KgUS6fkIxuMsNbP6Beigu4wDlw3gTxcgUhfISa&_nc_ohc=feri6HB4wIMQ7kNvwE_ZngI&_nc_oc=AdkPPkklhvEzWQtpPdkjeN4RMSBu938_VaJwNmEH4xUPGVH2ZKnYQyNogTO9vF6mtTg&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=_CJpW_Tquw9O1Q5xEjU5nw&oh=00_Aftac-Q4_mQQbHi5Jk1syc31CFv7I3yUWAF_gyzDSe3fAQ&oe=69986A8D",
     ],
     facilities: [
       {
         name: "Sun Lounge",
-        image: "https://scontent.fmnl9-2.fna.fbcdn.net/v/t39.30808-6/514418307_122193002564299292_8844247822691967845_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=vu1Vhz_NqJcQ7kNvwGqijYK&_nc_oc=Adn-C7IS1DFjnAe5V42MrONWraWdbvwUynDE3ULXCtnQHfnE3zwJA5C5fsxgal12OWY&_nc_zt=23&_nc_ht=scontent.fmnl9-2.fna&_nc_gid=ujKWSvDdJUdIfWnUlMn5aQ&oh=00_Aftxo5l_Nd3gHn1EpeboGSptLNQPIJdWnD6_sCudMI69PA&oe=6991FBA5"
+        image: "https://scontent.fmnl9-2.fna.fbcdn.net/v/t39.30808-6/514418307_122193002564299292_8844247822691967845_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGV73FnCaYBK1j4N9y1uDw0B9qPTkR-WVAH2o9ORH5ZUCiD5kblfy4VU7SXX58qYtqLDpQMJkJIkil6V69wgZEs&_nc_ohc=Jdb6ObimTEcQ7kNvwGthLsM&_nc_oc=AdnggQe7-FnInxVlOKQ7Z8OzPafVXwxuekWtxMZbCE5zytlI749CmvMThm8ftNW993c&_nc_zt=23&_nc_ht=scontent.fmnl9-2.fna&_nc_gid=AyyvYJy5itsU_vztyBt40w&oh=00_AfviEnc3PozBPxKnotfEOlMVNXU_KhDAdpdmAOYIB1-LBg&oe=69989325"
       },
       {
         name: "Daybeds",
-        image: "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514713862_122193002492299292_4422255574685717521_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_ohc=pME9J91qIMcQ7kNvwGKVdqv&_nc_oc=AdkjIthm-Sufvh3IFP-8Yn2guVoK_FhKBChBN0S6tY-_FsmEktQR9TL2zVekSRZ22ms&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=o5WTH0DiQuU7RfnZeNpxcQ&oh=00_AfvEP6xtqcsDQjtb54hwVYDFAGOlwbQi6UqRSOQpDMidcA&oe=69921073"
+        image: "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514713862_122193002492299292_4422255574685717521_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEGMiacwhNUvgLooTsItzwKhzgvGxjreDqHOC8bGOt4OtORWHsLR3LyYCbe9e-BnH3el3mjqCk1-cw7r31ey0SW&_nc_ohc=kKeJ3y3wm_4Q7kNvwFTAR7e&_nc_oc=Admbx14yrlB_eQ4T5qvrNXNsiXXq566-qT8089aByd6ZAQXH8WXsTdlOrDnRR5D8GwE&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=4spe6NoxsWgJgUmJXX_jHA&oh=00_AfvmA28ssnCTcxrtM_Zov9mybu_zyn0szh4gjecbfeWwsA&oe=69986FB3"
       },
       {
         name: "Sofa Lounge",
-        image: "https://scontent.fmnl9-6.fna.fbcdn.net/v/t39.30808-6/514441827_122193001202299292_239536063603057162_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=833d8c&_nc_ohc=FIQ_eIMlqPkQ7kNvwGSrbXG&_nc_oc=AdlVZnY7zxFayImHg9ucNXX-eg9yRBXfzeyzz6mc6KMLsltCWvr17uCPADBCtsYsqMA&_nc_zt=23&_nc_ht=scontent.fmnl9-6.fna&_nc_gid=aA30RA_n5ISRMWZ6Ms47Zg&oh=00_Afu9qeJVoNUItShjLRsUWt5P0Qbf9ZPNS5zLOZM5DPAGrw&oe=69920E77"
+        image: "https://scontent.fmnl9-6.fna.fbcdn.net/v/t39.30808-6/514441827_122193001202299292_239536063603057162_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFLEaOSV4duCQ7PyCU66MCUUXuICZOiWBlRe4gJk6JYGSVk-0WodSDoUVAYAfYsS3WkFeALrfe0RRxCCUl41mF4&_nc_ohc=Pcf1lGvTgycQ7kNvwH7iPwn&_nc_oc=AdnuUqnJwBGHthfHrUbm7_uHuATgV1yEl3wACMQfvnIhJ15Uhv9Xar-WRA33b0_mGqE&_nc_zt=23&_nc_ht=scontent.fmnl9-6.fna&_nc_gid=cWlJHcE1tTQIcpsm5XkbVA&oh=00_Aft5INiBUTTbxtrYuBus-tIwICI0hJcXDJPWSGmyvgiMXg&oe=69986DB7"
       },
       {
         name: "Jacuzzi",
-        image: "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/514504724_122193002072299292_942920408924602819_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_ohc=oYytKd_7WvUQ7kNvwE4UcR5&_nc_oc=AdkD07mEKHPR8U70IBuu-puZ8UcEO7analJMncgXtgOlhSr0eTcAUU1gGkoFsU0M3as&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=zeAci5fb3p5ijqY5OaZ7yg&oh=00_AfuHEU-zBdLmwTdS3815R4kksEebXfzuTi6vUnfDS-ZYtw&oe=699221A9"
+        image: "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/514504724_122193002072299292_942920408924602819_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeE_iLEQfgPCy2dmRNelPCyNSZ1zK02ScDVJnXMrTZJwNVQKaGE1LCTIUk0K4AMEPvxZdKUSi1ChEmwTl0n5TmGF&_nc_ohc=DSbImvyiOwwQ7kNvwHUz8YD&_nc_oc=AdlScKnSRuGpzLM76-ct8XW0xNcdZS43CyYJalP5hyPTjEuPNs5t2Gp1Il8YFhWA5BY&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=hHi7pSkYBB7Inr3YysKzjA&oh=00_AftkfVjpk5MOeX_BcHIfRmW7qwIA_G_bwZuPq4Pzd528Gg&oe=699880E9"
       },
       {
         name: "Toilet & Shower Room",
-        image: "https://scontent.fmnl9-6.fna.fbcdn.net/v/t39.30808-6/514757453_122193001346299292_1365752146250029765_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_ohc=FlnpieN3GkoQ7kNvwHfV9wK&_nc_oc=AdmnYwMDaCIjDKO0ydIZlJ2_Re6ULc26r8hDIfoLyiBiitH_76m-8C_2Eti8jvzuwZ8&_nc_zt=23&_nc_ht=scontent.fmnl9-6.fna&_nc_gid=FDV5MgKAxj2-HrZFh6DkYg&oh=00_AfuhXBxn7budChgZlVmHIcaD34lGF4_3Svv5L-38mgx3lg&oe=69920CA7"
+        image: "https://scontent.fmnl9-6.fna.fbcdn.net/v/t39.30808-6/514757453_122193001346299292_1365752146250029765_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFhTyD_EoHzFDZp5_OakYHKXvUZr-AW9Ple9Rmv4Bb0-QrwfbJTeJVZA6-qbZZDUSwMADDlfSOiI_mQBgquARGQ&_nc_ohc=X16uvyA3lycQ7kNvwHrRy6s&_nc_oc=AdkVLP-V7iv2932W0ogP4qBdBzDp4n3cekEfIBdfS13HFgNTvi2PohPUbIiS-xvuZ7k&_nc_zt=23&_nc_ht=scontent.fmnl9-6.fna&_nc_gid=Il6hESp82qvLvbLGqfbbfQ&oh=00_AfsJ0EbHitchSJssHXJBOmkTCr1A6Aor8UUG5Z04woSMvg&oe=69986BE7"
       },
       {
         name: "Billiard Table",
-        image: "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/515327508_122193002000299292_7133843968787928784_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_ohc=IZ9u0_AAScYQ7kNvwHDDkZT&_nc_oc=AdnBBj4zuLhIr3wTVLP0d3Y2o5-QylNBNRbWwXW8jGXmZGalrcDc3OOtzEMH9F2pXbQ&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=Qfp8wXoJXLuAa1ydVK3vvQ&oh=00_Aftq0pDmXaUrAlSxrt-SP6HxTaZrOTeQhB4Pm7UzgAra7w&oe=699208BA"
+        image: "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/515327508_122193002000299292_7133843968787928784_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeH4TkQBWNOXMb3Ec4rshJS7ASRysPb0m7YBJHKw9vSbtjPypvWeow61XZOlXoemuwVGZf1naJeuhMgiqWOpA889&_nc_ohc=eXDUjlPnE9oQ7kNvwGM1cOL&_nc_oc=AdmhvXKe21wrW9np3XwcB8Fc9XeawHz7qu8t2EhEMnQFQanzJO9ECwXWZoqwoRLRacw&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=-dzP0Kjw0r1b8XWPsLExWw&oh=00_AfutSvVHd1c8d8FcZKHS2pm8aOAMwCeAMPxpKjAqG08yTg&oe=699867FA"
       }
     ],
     extraServices: [
@@ -311,10 +312,11 @@ export const resorts = [
         price: 5200,
         details: "Room Detail",
         gallery: [
-          "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/515306703_122193001400299292_7045431086017023679_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_ohc=xSH_3Q-MwucQ7kNvwGBjNUZ&_nc_oc=AdkVgy70ZCs7OfFQrFUxn8KaHeDVqePMSQPblSNdMhX2rtB9pmN2VhN4P4zBWm0ZPEY&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=WajbGdsDGXnuUpvU8OGjqg&oh=00_AfsVPz0ZmZmTE45M97LQ2W7Mi04mM22RPoVUpC490INIhg&oe=69921928",
-          "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/515628073_122193002606299292_8700372404881253880_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_ohc=OPABh-GKkaEQ7kNvwEcri3e&_nc_oc=AdkCqzRu9AoZq8qtzmHuxSfllHQc8kVPswGiaf5QQk4b4Z-gKnECE-kVQQgSm7wqXRg&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=b-IlmCCs5wNvApybBhH-7A&oh=00_AfuKxrz4LzG35VCb4WLueR6f1bwc8jMaE6ahLS_dwILaRw&oe=699204C8",
-          "https://scontent.fmnl9-2.fna.fbcdn.net/v/t39.30808-6/514767741_122193002414299292_4039556344201196982_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_ohc=bImHT3fpRH8Q7kNvwGSJWy3&_nc_oc=AdnJj6mze6nc1Ui65Ox7WOYad2kGqsDrsib29-133ogeivxmLFZuqXumBuGfWmfZ2pk&_nc_zt=23&_nc_ht=scontent.fmnl9-2.fna&_nc_gid=cSiUBAzDPKO8HPUGDUUj9Q&oh=00_AfvMC1kgYOW-ZS635frd5k7urGtLp9_WZr0L3QcD6cNBdg&oe=699216DC"
-        ],
+          "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/513866699_122193001868299292_8158271946805934928_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGUaBD6DgyRRkKDxGLlvNHxST9QFVVVzLlJP1AVVVXMucb45iUjePoeOUjeHEqD4r_aahF0xlOcppdv5IdBE3KL&_nc_ohc=fZAReWnGYi8Q7kNvwHfmfHO&_nc_oc=AdkB2a3LBj5k0yMTV_5mXzjCzS3QrNGHylJJR-6uyY5CJc3lS8fiFfngkPNNihm9UDc&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=5H_TUP6YH_RsSSpBIh5JZw&oh=00_Afvcmut6A23vHBVOEOh5dp5_IHtJ27HSHpskFnxFYanzag&oe=6998953D",
+          "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/515086995_122193002186299292_671216175008107816_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeE2TjY7gccC1mLAwGAjCYzMEEIVlBQeXF4QQhWUFB5cXvRMq2o-64qblKQLi--ZvUfvYBykWPBAg5QquJOi2nO2&_nc_ohc=VFnln1BK49AQ7kNvwE3CSKe&_nc_oc=Adm2FEOTM3zEmeJSpjm4NribpwtUcwQFZL90-Cx0sB2Cs1biSehO64WHdzPGGwqITgQ&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=cn2KExjtT8KTRzoQDPZlzw&oh=00_AftmQM2rKtE_TyCngwGo7DZ18OhoeUaza3oGEcY0zUSP-Q&oe=699868B8",
+          "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/515628073_122193002606299292_8700372404881253880_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFPtTqZhwoBtQA4Fzwt-r1b1_uw10IuFp_X-7DXQi4Wn-KJPvTLJ9bLS2HFo4iDrx6Hfa50vChXEI0fmg6xhs8R&_nc_ohc=PnHkNpoamZgQ7kNvwEf0-Az&_nc_oc=Adk5JCtt29x8qWfAogcSms1iv-GIn-Sow5L3Cm5sLyqn-XC-lJQY55Fwh8d7wssBZYw&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=diD6iGc-NrVnEMYg1fJMIg&oh=00_Afv08S4T8A1roiX9xUIMd0kAVpcUT_EyMOLWqE2atObnCA&oe=69986408",
+          "https://scontent.fmnl9-2.fna.fbcdn.net/v/t39.30808-6/514767741_122193002414299292_4039556344201196982_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEGe9LNwAoyc8IMNsHChvG3QZxyVxxC0X9BnHJXHELRf8nl1Vp0O4lg41SjwAZ-RptnEV5bUIK7sy4mTUExnznU&_nc_ohc=zG6TeQG-Da8Q7kNvwHPG4gU&_nc_oc=AdlooYdK_QJ2H2VVoheNoJigtinnFscvQ5-sOUxXSd0bIHPwV0lz7F-Gt3CcxOwOnsw&_nc_zt=23&_nc_ht=scontent.fmnl9-2.fna&_nc_gid=XPiqEBjnW3BhWXcUObkw7w&oh=00_AfvH5oskWn6LQSRvb7QWLQwtUhOt89uR7l5F6zqOBzUhig&oe=6998761C",
+          ],
         tags: [
           "Airconditioned"
         ],
@@ -327,9 +329,7 @@ export const resorts = [
         price: 5800,
         details: "3 Queen sized beds slightly elevated above the ground",
         gallery: [
-          "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514408098_122193002528299292_3055049987307261310_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_ohc=9psnujgKvgQQ7kNvwExgJtW&_nc_oc=Admmaxr5X3ZYHkNWVJoKX3vWx_RjmiejeOHo0oqfnXOOm5whvV42xumE-5OME8sfII4&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=fNAF6dNjQSevdy5ldy0U2g&oh=00_AfvNTyFY85GzdR4ThBKOMkO1bmmxxDDBcK5uLOgMGo60ag&oe=6992231C",
-          "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/513866699_122193001868299292_8158271946805934928_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_ohc=WBbEeF9mfOUQ7kNvwGjuhl8&_nc_oc=AdkgSco8hWqdbSJTs5oD3t2xm8SMfMEUi3AlpDClkorzxYcrWMWhMs-R58rvA3c_ARc&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=XUFDGOMA6vPGujpqpBfICw&oh=00_AfuyZXMXfPxZqxLjhPgzkYn76nLI4PcxKEk_hPFjDsvfCA&oe=6991FDBD",
-          "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/514662507_122193001730299292_9062205110958178764_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_ohc=EF-LMeqWbZ4Q7kNvwE_sMvi&_nc_oc=Admi2ZfQ2wK4BJ5xb-1wN9XsmyUBIMsBRbkXk-DqLeVhQ_z9HMYbaxNe_z3-_XPT6ug&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=BqxtFyQwKiMJWtEEIASCcQ&oh=00_Afs8iUGXXoOYehru0kkk4q1t21BUVoDOGM4BLlvkvv8-Xw&oe=69922AA3",
+          "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/514408098_122193002528299292_3055049987307261310_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHiekbrW1LeDQ7o7d8JkgVlF4Dsr48im1IXgOyvjyKbUt0UtPnp0P1sJeVQBkVuF_qqcbPPHe2i9BG3FgXM_uVC&_nc_ohc=aQZOBikNe3IQ7kNvwGJk_h4&_nc_oc=AdkB-6CPCh-0Qkj_7Y7C-T1SNonkQZyp8HExN_ECS9UnYXpYmeyq_i9cuBeXONjn2ZA&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=2rNcpx4J3pN5ZNUKNM4ibQ&oh=00_AfvjjUTUEBcpQd_UosNbh8HXQflaUpB7f47Mifep31E8Ig&oe=6998825C"
         ],
         tags: [
           "Airconditioned"
@@ -343,9 +343,10 @@ export const resorts = [
         price: 6400,
         details: "Room details example",
         gallery: [
-          "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/515281900_122193002060299292_4215899123374760964_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_ohc=05thopStiCYQ7kNvwE_e16J&_nc_oc=AdkH9Vr6kOt4_RzPxPY5OONn-CDFvkeGkU6XjfQp8VSaAkhSulvuqsRtK-Q6EwTFC08&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=EAaHe3qBQzr0d_w5c-FsKA&oh=00_Afsz5RETs5S8hzncwlKYh3j0Ehx0gCwllICA4uZ8NiScww&oe=69921B37",
-          "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/514599484_122193002426299292_5071840696250778667_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_ohc=I0on10_WsPUQ7kNvwF114EA&_nc_oc=AdnoYIcycia1uOVYKK1vEaBQ7sizDfF1Yo9pTrSPGv8p1FSfvKCxJCVWK5s44RsUAD4&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=YES3YtncELA4EV9khnfAHQ&oh=00_AfsTeXlTnLfElspZ4IHOw37LRK7kvlwu2IgdV9j4C3Cehw&oe=6991FB1D"
-        ],
+          "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/515281900_122193002060299292_4215899123374760964_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHwdb2nnri3LUDWmFgGF5wyyPHsEOMeMtzI8ewQ4x4y3MemvKqie5m8QRkrPerGyq_O8TDPiZwvnn3ve_75XQpy&_nc_ohc=H9fgcm7DcvQQ7kNvwEQXRFe&_nc_oc=AdmL33TWjEPWXGr2O1lGEKqai7utrsbsEEPbN1l21TRZJ-CGAuhPs5vIVwPlgusgbgM&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=y_27F80Xo8inbD0Hglv42A&oh=00_AfuuSB73_Bcr_uaMbWIiQNwjBUNuBtz1DuNR14CGSEit-g&oe=69987A77",
+          "https://scontent.fmnl9-3.fna.fbcdn.net/v/t39.30808-6/514599484_122193002426299292_5071840696250778667_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHzKAVdmIG3FI3DZQxAtHSqZgs-7gSvKz9mCz7uBK8rP4kBuL7xX6-qziNW1juMe1NnuMKV1RjkT5opXC7qogDc&_nc_ohc=a8crezQNPFgQ7kNvwGvteGs&_nc_oc=Adlt77EsH9CK8itRDSEjkQ-fCtsp0zDnPC38N26IvkebBfnKJBAR9nBcLTQ9f39CwLo&_nc_zt=23&_nc_ht=scontent.fmnl9-3.fna&_nc_gid=wokdrXbR6kYOhrvhMciRhQ&oh=00_Afv8T45QlvNOJ0xYyHRjASexTp18GCrNn2vWiSx8I8g6NA&oe=6998929D",
+
+          ],
         tags: [
           "Airconditioned"
         ],
