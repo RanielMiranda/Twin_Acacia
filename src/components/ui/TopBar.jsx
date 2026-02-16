@@ -22,7 +22,10 @@ export default function TopBar() {
           <Link
             to="/"
             className="text-2xl font-bold text-blue-600 cursor-pointer"
-            onClick={() => setIsMenuOpen(false)}
+            onClick={(e) => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              setIsMenuOpen(false);
+            }}
           >
             🍃 Twin Acacia
           </Link>
