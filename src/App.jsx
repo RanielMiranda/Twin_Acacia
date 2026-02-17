@@ -7,6 +7,8 @@ import HomePage from "./components/homepage/HomePage";
 import ResortDetailPage from "./components/resortpages/ResortDetailPage";
 import ResortBuilder from "./components/adminpage/ResortBuilder/ResortBuilder";
 import Dashboard from "./components/adminpage/Dashboard/Dashboard";
+import AccountManagement from "./components/adminpage/Accountmanager/AccountManagement";
+
 
 export default function App() {
   return (
@@ -23,6 +25,7 @@ export default function App() {
         <Route element={<AdminLayout />}>
           <Route path="/resort-builder" element={<ResortBuilder />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path ="/accounts" element = {<AccountManagement />} />
         </Route>
 
       </Routes>

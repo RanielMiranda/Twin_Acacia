@@ -129,19 +129,12 @@ export default function TopBar() {
       </div>
 
       {/* ================= CONTACT MODAL ================= */}
-      <ContactModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      >
-        <h2 className="text-xl font-bold mb-4">Contact Us</h2>
-        <p className="text-gray-600 mb-2">
-          Feel free to reach out via email or phone!
-        </p>
-        <p className="text-gray-600 mb-2">+63 9XX-XXX-XXXX</p>
-        <a href="mailto:name@example.com" className="text-blue-600">
-          name@example.com
-        </a>
-      </ContactModal>
+        <ContactModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          panelClass="bg-gray-200 text-black"
+          overlayClass="bg-black/70 backdrop-blur-sm"
+        />
     </>
   );
 }

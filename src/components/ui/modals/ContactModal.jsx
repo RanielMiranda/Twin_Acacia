@@ -1,23 +1,58 @@
-import React from "react";
-
-export default function ContactModal({ isOpen, onClose, children }) {
-  if (!isOpen) return null;
+export default function ContactFormModal({
+  open,
+  onClose,
+  panelClass = "bg-gray-900 text-white",
+  overlayClass = "bg-black/60 backdrop-blur-sm",
+}) {
+  if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-xl shadow-lg w-11/12 max-w-md relative flex flex-col max-h-[90vh]">
-        {/* Close Button - Fixed at top */}
+    <div
+      className={`fixed inset-0 ${overlayClass} flex justify-center items-center z-50`}
+      onClick={onClose}
+    >
+      <div
+        className={`${panelClass} rounded-xl w-full max-w-lg p-8 relative shadow-2xl`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10 bg-white rounded-full p-1"
+          className="absolute top-4 right-4 text-gray-400 hover:text-white"
         >
           ✕
         </button>
 
-        {/* Scrollable Content Area */}
-        <div className="p-6 overflow-y-auto custom-scrollbar">
-          {children}
-        </div>
+        <h2 className="text-2xl font-semibold mb-6">
+          Send Us a Message
+        </h2>
+
+        <form className="space-y-4">
+          <input
+            type="text"
+            placeholder="Your Name"
+            className="w-full bg-black/20 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+          />
+
+          <input
+            type="email"
+            placeholder="Your Email"
+            className="w-full bg-black/20 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+          />
+
+          <textarea
+            placeholder="Your Message"
+            rows="4"
+            className="w-full bg-black/20 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+          />
+
+          <button
+            type="submit"
+            className="w-full bg-sky-500 hover:bg-sky-600 text-white py-3 rounded-lg transition font-medium"
+          >
+            Send Message
+          </button>
+        </form>
       </div>
     </div>
   );

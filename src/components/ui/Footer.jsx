@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ContactModal from "./modals/ContactModal";
 
 export default function Footer() {
   const [open, setOpen] = useState(false);
@@ -73,43 +74,13 @@ export default function Footer() {
       {/* --- MODAL --- */}
       {open && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-gray-900 rounded-xl w-full max-w-lg p-8 relative shadow-2xl">
-            
-            <button
-              onClick={() => setOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white"
-            >
-              ✕
-            </button>
+          <ContactModal
+            open={open}
+            onClose={() => setOpen(false)}
+            panelClass="bg-gray-900 text-white"
+            overlayClass="bg-black/70 backdrop-blur-md"
+          />
 
-            <h2 className="text-white text-2xl font-semibold mb-6">
-              Send Us a Message
-            </h2>
-
-            <form className="space-y-4">
-              <input
-                type="text"
-                placeholder="Your Name"
-                className="w-full bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />
-              <input
-                type="email"
-                placeholder="Your Email"
-                className="w-full bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />
-              <textarea
-                placeholder="Your Message"
-                rows="4"
-                className="w-full bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />
-              <button
-                type="submit"
-                className="w-full bg-sky-500 hover:bg-sky-600 text-white py-3 rounded-lg transition font-medium"
-              >
-                Send Message
-              </button>
-            </form>
-          </div>
         </div>
       )}
     </>

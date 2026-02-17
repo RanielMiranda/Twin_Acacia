@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Hammer, Menu, X, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Hammer, Users, Menu, X, ArrowLeft } from "lucide-react";
 
 export default function AdminTopBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -8,6 +8,7 @@ export default function AdminTopBar() {
 
   const isAdminDashboard = location.pathname === "/admin" || location.pathname === "/dashboard";
   const isResortBuilder = location.pathname === "/resort-builder";
+  const isAccountManager = location.pathname === "/accounts";
 
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -32,7 +33,7 @@ export default function AdminTopBar() {
         </div>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex gap-4 font-medium items-center">
+        <div className="hidden md:flex gap-2 font-medium items-center">
           <Link
             to="/dashboard"
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
@@ -46,22 +47,22 @@ export default function AdminTopBar() {
           </Link>
 
           <Link
-            to="/resort-builder"
+            to="/accounts"
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isResortBuilder 
+              isAccountManager 
                 ? "bg-blue-50 text-blue-600" 
                 : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
             }`}
           >
-            <Hammer size={18} />
-            Resort Builder
+            <Users size={18} />
+            Accounts
           </Link>
           
           <div className="w-[1px] h-6 bg-slate-200 mx-2" />
           
           <Link 
             to="/"
-            className="text-sm text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors"
+            className="text-sm text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors px-2"
           >
             <ArrowLeft size={14} />
             View Site
@@ -98,8 +99,8 @@ export default function AdminTopBar() {
                 isResortBuilder ? "bg-blue-50 text-blue-600 font-bold" : "text-slate-600"
               }`}
             >
-              <Hammer size={20} />
-              Resort Builder
+              <Users size={20} />
+              Accounts
             </Link>
             <div className="h-[1px] bg-slate-100 my-2" />
             <Link
