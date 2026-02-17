@@ -118,11 +118,11 @@ export default function TopBar() {
             </button>
 
             <Link
-              to="/resort-builder"
+              to="/dashboard"
               onClick={() => setIsMenuOpen(false)}
               className="hover:text-blue-600 transition"
             >
-              Resort Builder
+              Admin Page
             </Link>
           </div>
         </div>
