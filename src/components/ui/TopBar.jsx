@@ -61,10 +61,10 @@ export default function TopBar() {
             </button>
 
             <Link
-              to="/resort-builder"
+              to="/dashboard"
               className="hover:text-blue-600 transition"
             >
-              Resort Builder
+              Admin page
             </Link>
           </div>
 

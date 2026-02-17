@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Save, Image, CheckCircle
-} from "lucide-react";
+import { Save, Image, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useLocation } from "react-router-dom";
+
 
 import AmenitiesEditor from "./components/AmenitiesEditor";
 import HeroGalleryEditor from "./components/HeroGalleryEditor";
@@ -33,7 +34,13 @@ const FloatingAdminControls = ({ isSaved, onSave }) => (
 // --- MAIN APP COMPONENT ---
 
 export default function ResortBuilder() {
-  const [resort, setResort] = useState(ResortInitialData);
+  const location = useLocation();
+
+  const initialResort =
+    location.state?.resort || ResortInitialData;
+
+  const [resort, setResort] = useState(initialResort);
+
 
   const [isSaved, setIsSaved] = useState(false);
 

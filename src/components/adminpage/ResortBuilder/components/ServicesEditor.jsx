@@ -33,7 +33,7 @@ export default function ServicesEditor({ services, onUpdate }) {
 
         <Button
           onClick={addService}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
         >
           <Plus size={16} className="mr-2" />
           Add Service

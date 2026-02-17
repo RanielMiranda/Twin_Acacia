@@ -1,0 +1,67 @@
+import React from "react";
+import { MapPin, Globe, Edit2, Trash2 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+
+export default function ResortCard({ resort, onDelete }) {
+  const navigate = useNavigate();
+
+  const handleEdit = () => {
+    navigate("/resort-builder", { state: { resort } });
+  };
+
+  return (
+    <Card className="p-4 bg-white border-none shadow-sm hover:shadow-md transition-shadow group rounded-2xl">
+      <div className="flex items-center gap-4">
+
+        {/* Image */}
+        <div className="h-20 w-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+          <img 
+            src={resort.profileImage || (resort.gallery && resort.gallery[0]) || "https://via.placeholder.com/150"} 
+            alt={resort.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-slate-900 truncate">{resort.name}</h2>
+          <div className="flex items-center gap-4 mt-1 text-sm text-slate-500">
+            <span className="flex items-center gap-1">
+              <MapPin size={14} /> {resort.location || "No location set"}
+            </span>
+            <span className="flex items-center gap-1">
+              <Globe size={14} /> {resort.rooms?.length || 0} Room Types
+            </span>
+            <span className="font-semibold text-blue-600">
+              ₱{resort.price?.toLocaleString() || 0} / night
+            </span>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleEdit}
+            className="rounded-lg border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 flex items-center justify-center"
+          >
+            <Edit2 className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onDelete(resort.name)}
+            className="rounded-lg border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+
+      </div>
+    </Card>
+  );
+}
