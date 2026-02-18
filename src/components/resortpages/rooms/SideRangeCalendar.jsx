@@ -114,10 +114,12 @@ export default function SideRangeCalendar({ startDate, endDate, onChange, active
                   }
                 }}
                 className={`
-                  h-10 flex items-center justify-center rounded-lg text-sm transition-colors
-                  ${isPast ? "text-gray-200 cursor-not-allowed" : "hover:bg-blue-100 text-gray-700"}
-                  ${isStart || isEnd ? "bg-blue-600 text-white font-semibold hover:bg-blue-700" : ""}
-                  ${inRange ? "bg-blue-100 text-blue-800" : ""}
+                  h-10 flex items-center justify-center text-sm px-3
+                  ${isPast ? "text-gray-300 cursor-not-allowed" : "hover:bg-blue-100 hover:rounded-md hover:-translate-y-1/16"}
+                  ${isStart || isEnd ? "bg-blue-600 text-white font-semibold hover:bg-blue-300" : ""}
+                  ${isStart ? "rounded-bl-md rounded-tl-md" : ""}
+                  ${isEnd ? "rounded-tr-md rounded-br-md" : ""}
+                  ${inRange ? "bg-blue-100" : ""}
                 `}
               >
                 {date.getUTCDate()}
