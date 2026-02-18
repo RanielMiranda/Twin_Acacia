@@ -61,7 +61,7 @@ export default function AdminTopBar() {
           <div className="w-[1px] h-6 bg-slate-200 mx-2" />
           
           <Link 
-            to="/dashboard"
+            to="/"
             className="text-sm text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors px-2"
           >
             <ArrowLeft size={14} />

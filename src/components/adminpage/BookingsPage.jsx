@@ -119,7 +119,7 @@ export default function BookingsPage() {
   };
 
   return (
-    <Card className="max-w-4xl mx-auto p-6 bg-white shadow-xl rounded-3xl mt-8 pt-10">
+    <Card className="max-w-4xl mx-auto p-6 bg-white shadow-xl rounded-3xl mt-8 pt-12">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2">
