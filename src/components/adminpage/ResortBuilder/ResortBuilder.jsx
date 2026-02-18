@@ -9,6 +9,7 @@ import HeroGalleryEditor from "./components/HeroGalleryEditor";
 import ProfileEditor from "./components/ProfileEditor";
 import RoomsEditor from "./components/RoomsEditor";
 import ServicesEditor from "./components/ServicesEditor";
+import BookingCalendar from "./components/BookingCalendar";
 
 export default function ResortBuilder() {
   const { resort, setResort } = useResort();
@@ -37,6 +38,7 @@ export default function ResortBuilder() {
 
       <HeroGalleryEditor />
       <ProfileEditor />
+      <BookingCalendar />
       <AmenitiesEditor />
       <ServicesEditor />
       <RoomsEditor />
