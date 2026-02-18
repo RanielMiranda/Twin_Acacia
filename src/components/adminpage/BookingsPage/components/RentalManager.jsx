@@ -12,13 +12,13 @@ export default function RentalManager() {
   // Mock data - In a real app, you'd filter your 'bookings' array based on dates
   const mockData = {
     inbox: [
-      { id: 1, guest: "Juan Dela Cruz", room: "Room A", dates: "Feb 20 - 22", email: "juan@example.com" }
+      { id: 1, guest: "Name 1", room: "Room A", dates: "Feb 20 - 22", email: "name1@example.com" }
     ],
     confirmed: [
-      { id: 2, guest: "Maria Clara", room: "Room C", dates: "Feb 18 - 25", email: "clara@example.com" }
+      { id: 2, guest: "Name 2", room: "Room C", dates: "Feb 18 - 25", email: "name2@example.com" }
     ],
     overdue: [
-      { id: 3, guest: "Sisa Lopez", room: "Room B", dates: "Feb 10 - 15", email: "sisa@example.com" }
+      { id: 3, guest: "Name 3", room: "Room B", dates: "Feb 10 - 15", email: "name3@example.com" }
     ]
   };
 
@@ -28,7 +28,7 @@ export default function RentalManager() {
     { id: "overdue", label: "Pending Checkout", icon: AlertCircle, count: mockData.overdue.length },
   ];
 
-  return (
+return (
     <Card className="border-slate-200 shadow-xl rounded-3xl overflow-hidden bg-white">
       {/* Panel Header / Tabs */}
       <div className="flex border-b border-slate-100 bg-slate-50/50">
@@ -39,7 +39,7 @@ export default function RentalManager() {
             className={`
               flex-1 flex items-center justify-center gap-2 py-4 px-6 text-sm font-bold transition-all
               ${activeTab === tab.id 
-                ? "bg-white text-blue-600 border-b-2 border-blue-600 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]" 
+                ? "bg-white text-blue-600 border-b-2 border-blue-600" 
                 : "text-slate-400 hover:text-slate-600 hover:bg-slate-100/50"}
             `}
           >
@@ -59,35 +59,49 @@ export default function RentalManager() {
         {mockData[activeTab].length > 0 ? (
           <div className="space-y-3">
             {mockData[activeTab].map((item) => (
-              <div key={item.id} className="group flex items-center justify-between p-4 rounded-2xl border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all">
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${activeTab === 'overdue' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
+              <div key={item.id} className="group flex flex-col md:flex-row items-center justify-between p-4 rounded-2xl border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all gap-4">
+                
+                {/* 1. Left: Guest & Room Info */}
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className={`p-3 rounded-xl shrink-0 ${activeTab === 'overdue' ? 'bg-rose-100 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
                     <Calendar size={20} />
                   </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900">{item.guest}</h4>
+                  <div className="truncate">
+                    <h4 className="font-bold text-slate-900 truncate">{item.guest}</h4>
                     <p className="text-xs text-slate-500 flex items-center gap-2">
                       <span className="font-semibold text-blue-600">{item.room}</span> 
-                      • {item.dates}
+                      <span className="text-slate-300">•</span>
+                      {item.dates}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* 2. Center: Email Address */}
+                <div className="flex-1 flex justify-center items-center">
+                  <div className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 rounded-full group-hover:bg-white transition-colors border border-transparent group-hover:border-slate-200">
+                    <Mail size={14} className="text-slate-400" />
+                    <span className="text-sm font-medium text-slate-600 lowercase">{item.email}</span>
+                  </div>
+                </div>
+
+                {/* 3. Right: Contextual Actions */}
+                <div className="flex items-center gap-2 flex-1 justify-end">
                   {activeTab === "inbox" && (
                     <>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 rounded-xl">Approve</Button>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-4 shadow-sm shadow-emerald-100">Approve</Button>
                       <Button size="sm" variant="ghost" className="text-slate-400 hover:text-rose-600 rounded-xl">Decline</Button>
                     </>
                   )}
                   {activeTab === "confirmed" && (
-                    <Button size="sm" variant="outline" className="rounded-xl border-slate-200 text-slate-600">Send Reminder</Button>
+                    <Button size="sm" variant="outline" className="rounded-xl border-slate-200 text-slate-600 hover:bg-white">Send Reminder</Button>
                   )}
                   {activeTab === "overdue" && (
-                    <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl">Process Checkout</Button>
+                    <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-4">Process Checkout</Button>
                   )}
-                  <div className="h-8 w-px bg-slate-100 mx-2" />
-                  <button className="p-2 text-slate-300 hover:text-blue-600 transition-colors">
+                  
+                  <div className="h-8 w-px bg-slate-200/60 mx-1 hidden md:block" />
+                  
+                  <button className="p-2 text-slate-300 hover:text-blue-600 transition-colors" title="Contact Guest">
                     <Mail size={18} />
                   </button>
                 </div>
@@ -95,8 +109,10 @@ export default function RentalManager() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Inbox size={48} className="mb-4 opacity-20" />
+          <div className="flex flex-col items-center justify-center py-24 text-slate-400">
+            <div className="bg-slate-50 p-6 rounded-full mb-4">
+               <Inbox size={48} className="opacity-20" />
+            </div>
             <p className="font-medium">No {activeTab} records found.</p>
           </div>
         )}

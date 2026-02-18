@@ -1,7 +1,7 @@
 export const resorts = [
   {
     name: "Kasbah Villa - Hot Spring Resort",
-    location: "National Highway, Brgy. Bagong Kalsada, Calamba, Philippines, 4027, Calamba, Philippines, 4027",
+    location: "National Highway, Brgy. Bagong Kalsada, Calamba, Philippines, 4027",
     price: 28000,
     contactPhone: "+63 111 111 1111",
     contactEmail: "kasbahvilla@gmail.com",
