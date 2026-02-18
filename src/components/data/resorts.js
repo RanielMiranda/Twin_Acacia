@@ -360,7 +360,7 @@ export const resorts = [
       "Natural Hot Spring",
       "Swimming Pool",
       "Jacuzzi",
-      "Free Wifi",
+      "Wifi",
       "Kitchen",
       "Billiard Table"
     ]
