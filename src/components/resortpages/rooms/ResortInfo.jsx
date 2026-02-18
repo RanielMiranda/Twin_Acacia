@@ -28,7 +28,36 @@ export default function ResortInfo({ onFacilityOpen }) {
               <MapPin size={16} />
               <span className="font-medium">{resort.location}</span>
             </div>
-            {/* ... other contact info mapping resort properties ... */}
+                        {resort.contactMedia && (
+              <div className="flex items-center gap-2">
+                <Facebook size={16} />
+                <a
+                  href={resort.contactMedia}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline font-medium"
+                >
+                  Visit our Facebook Page
+                </a>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Mail size={16} />
+              <span>{resort.contactEmail}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Phone size={16} />
+              <span>{resort.contactPhone}</span>
+            </div>
+
+            {resort.price && (
+              <div className="flex items-center gap-2 font-semibold text-blue-600">
+                <DollarSign size={16} />
+                ₱{resort.price?.toLocaleString()}
+              </div>
+            )}
           </div>
         </div>
       </div>
