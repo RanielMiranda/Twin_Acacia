@@ -1,5 +1,6 @@
+import React from "react";
+
 export default function InquiryForm({
-  room,
   resort,
   name,
   setName,
@@ -8,9 +9,8 @@ export default function InquiryForm({
   contactNumber,
   setContactNumber,
   dates,
-  setDates,
   message,
-  setMessage
+  setMessage,
 }) {
   return (
     <div className="space-y-3">

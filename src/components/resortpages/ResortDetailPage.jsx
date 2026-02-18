@@ -10,7 +10,7 @@ import ShortcutBar from "./rooms/ShortcutBar";
 
 import GalleryModal from "./components/GalleryModal";
 import FacilityModal from "./components/FacilityModal";
-import RoomContactModal from "./components/RoomContactModal";
+import ContactOwnerModal from "./components/ContactOwnerModal";
 import RoomFilterPanel from "./components/RoomFilterPanel";
 
 export default function ResortDetailPage() {
@@ -113,14 +113,13 @@ export default function ResortDetailPage() {
         />
       )}
 
-      {contactOpen && (
-        <RoomContactModal
-          isOpen={contactOpen}
-          onClose={() => setContactOpen(false)}
-          resort={resort}
-          room={resort} 
-        />
-      )}
+    {contactOpen && (
+      <ContactOwnerModal
+        isOpen={contactOpen}
+        onClose={() => setContactOpen(false)}
+        resort={resort}
+      />
+    )}
     </div>
   );
 }

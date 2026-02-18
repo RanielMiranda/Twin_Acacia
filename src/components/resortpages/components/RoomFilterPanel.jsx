@@ -7,7 +7,7 @@ export default function RoomFilterPanel() {
   const { selectedTags, setSelectedTags } = useFilters();
   
   // Define the master list of tags available for rooms
-  const availableTags = ["Wifi", "Kitchen", "Pool View", "Aircon", "Pet Friendly", "Breakfast Included"];
+  const availableTags = ["Wifi", "Bath", "Pool View", "Aircon", "Toilet", "Airconditioned"];
 
   const handleTagToggle = (tag) => {
     if (selectedTags.includes(tag)) {
