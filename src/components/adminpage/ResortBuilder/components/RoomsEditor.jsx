@@ -72,7 +72,7 @@ export default function RoomsEditor() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 mt-8 pb-32">
+    <div id="rooms" className="max-w-6xl mx-auto px-4 mt-8 pb-32 ">
        <div className="flex items-center gap-4 mb-6">
         <h2 className="text-2xl font-semibold">Available Rooms</h2>
         <Button onClick={addRoom} className="rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center">

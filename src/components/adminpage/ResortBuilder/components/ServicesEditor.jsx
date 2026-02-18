@@ -39,7 +39,7 @@ export default function ServicesEditor() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto mt-10 px-4">
+    <div id="extra-services" className="max-w-5xl mx-auto mt-10 px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Extra Services</h2>

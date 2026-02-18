@@ -33,7 +33,7 @@ export default function AmenitiesEditor() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 mt-8">
+    <div id="amenities" className="max-w-6xl mx-auto px-4 mt-8">
       <div className="flex items-center gap-4 mb-4">
         <h2 className="text-2xl font-semibold">Amenities</h2>
       </div>

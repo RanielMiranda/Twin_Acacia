@@ -10,6 +10,8 @@ import ProfileEditor from "./components/ProfileEditor";
 import RoomsEditor from "./components/RoomsEditor";
 import ServicesEditor from "./components/ServicesEditor";
 
+import ShortcutBar from "@/components/resortpages/rooms/ShortcutBar";
+
 export default function ResortBuilder() {
   const { resort, setResort } = useResort();
   const location = useLocation();
@@ -36,8 +38,9 @@ export default function ResortBuilder() {
     <div className="min-h-screen bg-slate-50 pb-20 pt-10">
 
       <HeroGalleryEditor />
+      <ShortcutBar />
       <ProfileEditor />
-      <AmenitiesEditor />
+      <AmenitiesEditor/>
       <ServicesEditor />
       <RoomsEditor />
 
