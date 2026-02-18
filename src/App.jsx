@@ -9,9 +9,12 @@ import ResortBuilder from "./components/adminpage/ResortBuilder/ResortBuilder";
 import Dashboard from "./components/adminpage/Dashboard/Dashboard";
 import AccountManagement from "./components/adminpage/Accountmanager/AccountManagement";
 
+import { ResortProvider } from "./components/context/ContextEditor";
+
 
 export default function App() {
   return (
+    <ResortProvider>
     <BrowserRouter>
       <Routes>
 
@@ -30,5 +33,6 @@ export default function App() {
 
       </Routes>
     </BrowserRouter>
+    </ResortProvider>
   );
 }

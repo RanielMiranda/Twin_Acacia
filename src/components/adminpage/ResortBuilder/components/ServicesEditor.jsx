@@ -1,42 +1,45 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
-export default function ServicesEditor({ services, onUpdate }) {
+import { useRef, useState, useEffect } from "react";
+import { useResort } from "@/components/context/ContextEditor";
 
+export default function ServicesEditor() {
+  const { resort, updateResort } = useResort();
+  const [localServices, setLocalServices] = useState(resort.extraServices || []);
   const servicesEndRef = useRef(null);
+
+  // Sync if context changes externally
+  useEffect(() => setLocalServices(resort.extraServices || []), [resort.extraServices]);
 
   const scrollToBottom = () => {
     servicesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const addService = () => {
-    onUpdate([
-      ...services,
-      {
-        name: "New Service",
-        description: "Service description",
-        cost: 0
-      }
-    ]);
+    const updated = [...localServices, { name: "New Service", description: "", cost: 0 }];
+    setLocalServices(updated);
+    updateResort("extraServices", updated);
     setTimeout(scrollToBottom, 100);
   };
 
-  const updateService = (index, field, value) => {
-    const updated = [...services];
+  const updateServiceLocal = (index, field, value) => {
+    const updated = [...localServices];
     updated[index] = { ...updated[index], [field]: value };
-    onUpdate(updated);
+    setLocalServices(updated);
+  };
+
+  const commitService = () => {
+    updateResort("extraServices", localServices);
   };
 
   const removeService = (index) => {
-      const serviceName = services[index].name;
-      if (window.confirm(`Are you sure you want to remove ${serviceName}?`)) {
-        onUpdate(services.filter((_, i) => i !== index));
-      }
-    };
+    const updated = localServices.filter((_, i) => i !== index);
+    setLocalServices(updated);
+    updateResort("extraServices", updated);
+  };
 
   return (
     <div className="max-w-5xl mx-auto mt-10 px-4">
-      
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Extra Services</h2>
@@ -52,7 +55,6 @@ export default function ServicesEditor({ services, onUpdate }) {
 
       {/* Table Container */}
       <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
-
         {/* Column Header */}
         <div className="grid grid-cols-12 bg-slate-50 text-sm font-semibold text-slate-600 px-6 py-4">
           <div className="col-span-3">Service</div>
@@ -62,20 +64,18 @@ export default function ServicesEditor({ services, onUpdate }) {
         </div>
 
         {/* Editable Rows */}
-        {services.map((service, i) => (
+        {localServices.map((service, i) => (
           <div
             key={i}
             className="grid grid-cols-12 px-6 py-4 border-t border-slate-100 hover:bg-blue-50/40 transition group"
           >
-
             {/* Name */}
             <div className="col-span-3">
               <input
                 className="w-full font-semibold bg-transparent border-none p-0 focus:ring-0 focus:text-blue-600"
                 value={service.name}
-                onChange={(e) =>
-                  updateService(i, "name", e.target.value)
-                }
+                onChange={(e) => updateServiceLocal(i, "name", e.target.value)}
+                onBlur={commitService}
               />
             </div>
 
@@ -84,9 +84,8 @@ export default function ServicesEditor({ services, onUpdate }) {
               <input
                 className="w-full text-sm text-slate-500 bg-transparent border-none p-0 focus:ring-0 focus:text-slate-700"
                 value={service.description}
-                onChange={(e) =>
-                  updateService(i, "description", e.target.value)
-                }
+                onChange={(e) => updateServiceLocal(i, "description", e.target.value)}
+                onBlur={commitService}
               />
             </div>
 
@@ -97,9 +96,8 @@ export default function ServicesEditor({ services, onUpdate }) {
                 type="number"
                 className="w-24 text-right bg-transparent border-none p-0 focus:ring-0 font-bold text-blue-600"
                 value={service.cost}
-                onChange={(e) =>
-                  updateService(i, "cost", Number(e.target.value))
-                }
+                onChange={(e) => updateServiceLocal(i, "cost", Number(e.target.value))}
+                onBlur={commitService}
               />
             </div>
 
@@ -124,7 +122,8 @@ export default function ServicesEditor({ services, onUpdate }) {
             + Add another service
           </button>
         </div>
-<div ref={servicesEndRef} />
+
+        <div ref={servicesEndRef} />
       </div>
     </div>
   );
