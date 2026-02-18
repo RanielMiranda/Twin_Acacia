@@ -23,7 +23,7 @@ export const resorts = [
         image: "https://scontent.fmnl9-1.fna.fbcdn.net/v/t39.30808-6/498547850_122117817632836693_7998456246975160758_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeEq4HTZcO2-6Qk96gntZZQLyOPfHIHyEv3I498cgfIS_ZLHxfxADQjr-jlKMOhj-i_estQukGIGke2IiK1ZEh-s&_nc_ohc=neHTceG8y7UQ7kNvwF2ob1_&_nc_oc=AdnRWNA2XVX2zJag-CbKrmATa0B5mpC5LCMX02SqFRE9yKVCz6BdSIT5WMQWu6SG2oc&_nc_zt=23&_nc_ht=scontent.fmnl9-1.fna&_nc_gid=B7KAOSb9MHlgNayCRulojQ&oh=00_AfuGCS6V_gymnW0HVt3ozEMN8xlMZcqIpWsg8WKx27MJ7w&oe=69988E47"
       },
       {
-        name: "Karaoke",
+        name: "Videoke",
         image: "https://scontent.fmnl9-6.fna.fbcdn.net/v/t39.30808-6/499242179_122117818958836693_7468403097476560593_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeFeNMw8boqSsiBg1U_UqKl2jduMboBa2m-N24xugFrab-lLK0s5Mv8nyL2VD55X5PZdrjqt-SRiKE9ZmujUMyAT&_nc_ohc=0g8IWMKiPaYQ7kNvwHkViRG&_nc_oc=Adn18pgZaCAfS5bOwrt-Y4LEV8ITmJgqCwolRM2YBrwNo_blKI2KQm8g9TcMr39UV9w&_nc_zt=23&_nc_ht=scontent.fmnl9-6.fna&_nc_gid=j5LN8A1X50M0QscVKEHBAQ&oh=00_AfvJufcW8Va3zDbwUcnFz6u3uNUu4xLmTosXh0p0LsLXDQ&oe=69987645"
       },
       {
@@ -45,19 +45,7 @@ export const resorts = [
       {
         name: "Pool Table",
         image: "https://scontent.fmnl9-7.fna.fbcdn.net/v/t39.30808-6/499470453_122117818460836693_3881452310068939149_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGLBcmXtOOyQpC2ExOEPWY8Q3yA6lzwi7JDfIDqXPCLsuVn7A00zVUW4AhHajjUyk1vRVE2Hi0wngwAE6JgWcJU&_nc_ohc=d9YkJNMwxdIQ7kNvwEkg5q9&_nc_oc=Admg_ZlsaZvy5W0FcS_0RU8oeo-BslF3Je5mpIUsCXjx3AnqXzoMOHaaNT71OVIyZ-8&_nc_zt=23&_nc_ht=scontent.fmnl9-7.fna&_nc_gid=455EoNIgKuD7PpLdxxU-pA&oh=00_AfuboPyo-bw4Uhf2QZWFfnTbLlGtHCZx62p13vvfwXOrVA&oe=69988E9A"
-      },      
-      {
-        name: "Toilet",
-        image: "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/499030862_122117818130836693_1622926753752641040_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGLOwS4RybRmNdbeNBLqIFrZCJ7Qbu4ucpkIntBu7i5yt3dLsrDk3EIIppFQpatJ9UGosXCWq5RFfICWmF6eEgX&_nc_ohc=IWc_l4uInOYQ7kNvwE0ac0F&_nc_oc=AdkT4LG6EZtHHIAv74riQnrNDxFFs9972KsZXktews9SwV7fjRO6_F9oJFpt1BAvJ3Q&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=eQBE7vpukTTB7d5u53LNHQ&oh=00_AfshiFFJDb8hdGa7ycZi9PFBL-Rn_4nNy9cHqtPmDnQmnw&oe=69988E6E",
-      },
-      {
-        name: "Sofa",
-        image: "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/498588112_122117818934836693_2593623401048603365_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeH7KuGHvTPB2ouWQZuUquqO8qOrGJEaI5Xyo6sYkRojlTbyfZxGu8fwOwGrXbF2SoV9sbxvINDVqdDdc0I5cqle&_nc_ohc=DoWWnpL8LzEQ7kNvwGH3rK6&_nc_oc=Admb-a6Rdd8VLFvZPmgra-T9xmhhiwDvL2tDq3HyIU5pWEAKZe1v0lENUT7mIL2svDw&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=F12dsZvZEcolYiCHfohxpg&oh=00_AfvCWKlAuhqkA_BlUrKTXciHeE-frG5V7_mBpvK47PpcSQ&oe=69988A63",
-      },
-      {
-        name: "Toilet",
-        image: "https://scontent.fmnl9-4.fna.fbcdn.net/v/t39.30808-6/499030862_122117818130836693_1622926753752641040_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=127cfc&_nc_eui2=AeGLOwS4RybRmNdbeNBLqIFrZCJ7Qbu4ucpkIntBu7i5yt3dLsrDk3EIIppFQpatJ9UGosXCWq5RFfICWmF6eEgX&_nc_ohc=IWc_l4uInOYQ7kNvwE0ac0F&_nc_oc=AdkT4LG6EZtHHIAv74riQnrNDxFFs9972KsZXktews9SwV7fjRO6_F9oJFpt1BAvJ3Q&_nc_zt=23&_nc_ht=scontent.fmnl9-4.fna&_nc_gid=eQBE7vpukTTB7d5u53LNHQ&oh=00_AfshiFFJDb8hdGa7ycZi9PFBL-Rn_4nNy9cHqtPmDnQmnw&oe=69988E6E",
-      }            
+      }      
     ],
     tags: [
       "Swimming Pool",

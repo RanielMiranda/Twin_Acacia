@@ -4,35 +4,26 @@ import { resorts as allResorts } from "../data/resorts";
 const FilterContext = createContext();
 
 export function FilterProvider({ children }) {
-  const [price, setPrice] = useState(10000);
+  // Filter States
+  const [price, setPrice] = useState(25000);
   const [selectedTags, setSelectedTags] = useState([]);
   const [guests, setGuests] = useState({ adults: 2, children: 0, rooms: 1 });
 
-  // 1. First, filter by hard requirements (Tags and Capacity)
-  // We still want to REMOVE resorts that don't fit the people or amenities
-  const availableResorts = allResorts.filter((resort) => {
+  // Filtering Logic
+  const filteredResorts = allResorts.filter((resort) => {
+    // 1. Price Filter (matches resort average price)
+    const matchesPrice = resort.price <= price;
+
+    // 2. Tag Filter (checks if resort has all selected tags)
     const matchesTags = selectedTags.length === 0 || 
       selectedTags.every(tag => resort.tags?.includes(tag));
 
+    // 3. Guest Capacity Filter
+    // Checks if any room in the resort can fit the total guests
     const totalNeeded = guests.adults + guests.children;
     const hasFittingRoom = resort.rooms.some(room => room.guests >= totalNeeded);
 
-    return matchesTags && hasFittingRoom;
-  });
-
-  // 2. Then, SORT by price preference
-  const sortedResorts = [...availableResorts].sort((a, b) => {
-    const aMatchesPrice = a.price <= price;
-    const bMatchesPrice = b.price <= price;
-
-    // Logic: If one matches the price and the other doesn't, 
-    // the one that matches comes first.
-    if (aMatchesPrice && !bMatchesPrice) return -1;
-    if (!aMatchesPrice && bMatchesPrice) return 1;
-
-    // If both are in range (or both are out of range), 
-    // sort them by cheapest price first.
-    return a.price - b.price;
+    return matchesPrice && matchesTags && hasFittingRoom;
   });
 
   return (
@@ -40,7 +31,7 @@ export function FilterProvider({ children }) {
       price, setPrice,
       selectedTags, setSelectedTags,
       guests, setGuests,
-      filteredResorts: sortedResorts // Provide the sorted list
+      filteredResorts
     }}>
       {children}
     </FilterContext.Provider>
