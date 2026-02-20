@@ -1,19 +1,27 @@
+"use client";
+
 import React from "react";
-import { MapPin, Globe, Edit2, Trash2, Calendar } from "lucide-react";
+import { MapPin, Globe, Edit2, Trash2, Calendar, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 export default function ResortCard({ resort, onDelete }) {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleViewBookings = () => {
-    navigate("/bookings", { state: { resort } });
+    router.push(`/admin/bookings/${resort.id}`);
   };
 
   const handleEdit = () => {
-    navigate("/resort-builder", { state: { resort } });
+    router.push(`/admin/resortbuilder/${resort.id}`);
   };
+  
+  const handleViewResort = (resortName) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    router.push(`/resort/${encodeURIComponent(resortName)}`);
+  };
+
 
   return (
     <Card className="p-4 bg-white border-none shadow-sm hover:shadow-md transition-shadow group rounded-2xl">
@@ -46,6 +54,16 @@ export default function ResortCard({ resort, onDelete }) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handleViewResort(resort.name)}
+            className="rounded-xl text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 h-10 px-4 flex items-center justify-center"
+          >
+            <ExternalLink size={16} className="mr-2" />
+            View Resort
+          </Button>
+
           <Button 
             variant="outline" 
             size="sm"

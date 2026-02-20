@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 import { Plus, LayoutDashboard } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -12,7 +14,7 @@ import { resorts as resortsData } from "@/components/data/resorts";
 export default function Dashboard() {
   const [resorts, setResorts] = useState(resortsData);
   const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // Filter resorts based on search
   const filteredResorts = resorts.filter((r) =>
@@ -21,7 +23,7 @@ export default function Dashboard() {
   );
 
   const handleAddNew = () => {
-    navigate("/resort-builder", { state: { resort: null } });
+    router.push("/admin/resort-builder");
   };
 
   const handleDelete = (name) => {

@@ -2,11 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import ContactModal from "../modals/ContactModal";
 
 export default function TopBar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const scrollToResorts = () => {
+    if (pathname === "/") {
+      const element = document.getElementById("resorts");
+      if (element) element.scrollIntoView({ behavior: "smooth" });
+    } else {
+      router.push("/#resorts");
+    }
+    setIsMenuOpen(false);
+  };
 
   return (
     <>
@@ -27,13 +41,12 @@ export default function TopBar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex gap-8 font-medium text-gray-700 items-center">
-            
-            <Link
-              href="/#resorts"
+            <button
+              onClick={scrollToResorts}
               className="hover:text-blue-600 transition"
             >
               Resorts
-            </Link>
+            </button>
 
             <button
               onClick={() => {
@@ -54,15 +67,12 @@ export default function TopBar() {
             
             <div className="w-[1px] h-6 bg-slate-200 mx-2" />
 
-            <Link
-              href="/login"
-              className="hover:text-blue-600 transition"
-            >
+            <Link href="/auth/login" className="hover:text-blue-600 transition">
               Admin Page
             </Link>
           </div>
 
-          {/* Mobile Button */}
+          {/* Mobile Menu Button */}
           <button
             className="md:hidden text-3xl text-gray-700"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -78,14 +88,12 @@ export default function TopBar() {
           }`}
         >
           <div className="flex flex-col gap-4 px-4 font-medium text-gray-700">
-            
-            <Link
-              href="/#resorts"
-              onClick={() => setIsMenuOpen(false)}
-              className="hover:text-blue-600 transition"
+            <button
+              onClick={scrollToResorts}
+              className="text-left hover:text-blue-600 transition"
             >
               Resorts
-            </Link>
+            </button>
 
             <button
               onClick={() => {
@@ -109,7 +117,7 @@ export default function TopBar() {
             </button>
 
             <Link
-              href="/login"
+              href="/auth/login"
               onClick={() => setIsMenuOpen(false)}
               className="hover:text-blue-600 transition"
             >

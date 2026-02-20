@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { 
   Users, UserPlus, Search, MoreVertical, 
@@ -6,11 +8,11 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { resorts as resortsData } from "@/components/data/resorts";
 
 export default function AccountManagement() {
-  const navigate = useNavigate();
+  const router = useRouter();
   
   // Transform resort data into "Account" data for this view
   const [accounts, setAccounts] = useState(resortsData.map((resort, index) => ({
@@ -43,11 +45,6 @@ export default function AccountManagement() {
       }
       return acc;
     }));
-  };
-
-  const handleViewResort = (resortName) => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    navigate(`/resort/${encodeURIComponent(resortName)}`);
   };
 
   return (
@@ -174,15 +171,6 @@ export default function AccountManagement() {
 
                   {/* Right: Actions (Uniform alignment) */}
                   <div className="flex items-center gap-3 border-t lg:border-t-0 pt-4 lg:pt-0 shrink-0">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleViewResort(account.originalName)}
-                      className="rounded-xl text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 h-10 px-4 flex items-center justify-center"
-                    >
-                      <ExternalLink size={16} className="mr-2" />
-                      View Resort
-                    </Button>
                     
                     {account.status !== "Pending" ? (
                       <Button 

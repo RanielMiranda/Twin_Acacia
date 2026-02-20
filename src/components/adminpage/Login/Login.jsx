@@ -1,65 +1,49 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ShieldCheck, Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function Login() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
   });
-
-  // --- LOCAL CACHE CHECK DISABLED ---
-  /* useEffect(() => {
-    const adminSession = localStorage.getItem("admin_session");
-    if (adminSession) {
-      navigate("/dashboard");
-    }
-  }, [navigate]); 
-  */
 
   const handleLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate navigation delay
     setTimeout(() => {
-      // --- LOCAL CACHE STORAGE DISABLED ---
-      /*
-      const sessionData = {
-        token: "dev-access-token",
-        user: "Admin",
-        loginTime: new Date().toISOString()
-      };
-      localStorage.setItem("admin_session", JSON.stringify(sessionData));
-      */
-      
-      // Still navigates to dashboard on click
-      navigate("/dashboard");
+      router.push("/admin/dashboard");
     }, 800);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        {/* Branding consistent with AdminTopBar */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-xl shadow-blue-200 mb-4">
             <ShieldCheck className="text-white" size={32} />
           </div>
           <h1 className="text-3xl font-bold text-slate-900">Twin Acacia</h1>
-          <p className="text-slate-500 mt-2 font-medium">Internal Admin Portal</p>
+          <p className="text-slate-500 mt-2 font-medium">
+            Internal Admin Portal
+          </p>
         </div>
 
         <Card className="p-8 bg-white border-slate-200 shadow-xl rounded-3xl">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Email Address</label>
+              <label className="text-sm font-semibold text-slate-700 ml-1">
+                Email Address
+              </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
@@ -67,13 +51,17 @@ export default function Login() {
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none focus:bg-white transition-all"
                   placeholder="admin@twinacacia.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Password</label>
+              <label className="text-sm font-semibold text-slate-700 ml-1">
+                Password
+              </label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
@@ -81,7 +69,9 @@ export default function Login() {
                   className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none focus:bg-white transition-all"
                   placeholder="Click enter to login"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                 />
                 <button
                   type="button"
@@ -99,7 +89,9 @@ export default function Login() {
             >
               {isLoading ? (
                 <Loader2 className="animate-spin mr-2" />
-              ) : "Enter Dashboard"}
+              ) : (
+                "Enter Dashboard"
+              )}
             </Button>
           </form>
         </Card>

@@ -29,7 +29,7 @@ export default function ResortResults({ resorts }) {
           </div>
 
           {/* RIGHT INFO PANEL */}
-          <div className="w-full sm:w-72 border-t sm:border-t-0 sm:border-l flex flex-col">
+          <div className="w-full sm:w-72 flex flex-col">
             <div className="flex-1 p-4 sm:p-6">
               <p className="font-semibold mb-2">Available Rooms</p>
               <div className="flex flex-wrap gap-2">
@@ -63,7 +63,7 @@ export default function ResortResults({ resorts }) {
               </div>
             </div>
 
-            <div className="p-4 sm:p-6 border-t bg-gray-50/50">
+            <div className="p-4 sm:p-6 bg-white">
               <p className="text-sm font-medium text-gray-600 mb-1">
                 Average pricing
               </p>

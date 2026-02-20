@@ -64,7 +64,7 @@ export default function FacilitiesGallery({ facilities }) {
                 <img
                   src={facility.image}
                   alt={facility.name}
-                  className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${
+                  className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${
                     isLast ? "brightness-50" : ""
                   }`}
                 />

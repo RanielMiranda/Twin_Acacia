@@ -1,14 +1,17 @@
+"use client";
+
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, Menu, X, ArrowLeft } from "lucide-react";
 
 export default function AdminTopBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
+  const pathname = usePathname();
 
-  const isAdminDashboard = location.pathname === "/admin" || location.pathname === "/dashboard";
-  const isResortBuilder = location.pathname === "/resort-builder";
-  const isAccountManager = location.pathname === "/accounts";
+  const isAdminDashboard = pathname === "/admin/dashboard";
+  const isResortBuilder = pathname === "/admin/resortbuilder";
+  const isAccountManager = pathname === "/admin/accounts";
 
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -16,10 +19,9 @@ export default function AdminTopBar() {
     <div className="w-full bg-white shadow-sm border-b border-slate-200 fixed top-0 left-0 z-[100]">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         
-        {/* Logo & Brand */}
         <div className="flex items-center gap-6">
           <Link
-            to="/dashboard"
+            href="/admin/dashboard"
             className="text-2xl font-bold text-blue-600 cursor-pointer flex items-center gap-2"
           >
             🍃 Twin Acacia
@@ -32,14 +34,11 @@ export default function AdminTopBar() {
           </span>
         </div>
 
-        {/* Desktop Nav */}
         <div className="hidden md:flex gap-2 font-medium items-center">
           <Link
-            to="/dashboard"
+            href="/admin/dashboard"
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isAdminDashboard 
-                ? "bg-blue-50 text-blue-600" 
-                : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+              isAdminDashboard ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
             }`}
           >
             <LayoutDashboard size={18} />
@@ -47,11 +46,9 @@ export default function AdminTopBar() {
           </Link>
 
           <Link
-            to="/accounts"
+            href="/admin/accounts"
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isAccountManager 
-                ? "bg-blue-50 text-blue-600" 
-                : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
+              isAccountManager ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
             }`}
           >
             <Users size={18} />
@@ -61,14 +58,13 @@ export default function AdminTopBar() {
           <div className="w-[1px] h-6 bg-slate-200 mx-2" />
           
           <Link 
-            to="/"
+            href="/"
             className="text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors px-2"
           >
             Back to Site
           </Link>
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           className="md:hidden p-2 text-slate-600"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -77,12 +73,11 @@ export default function AdminTopBar() {
         </button>
       </div>
 
-      {/* Mobile Menu Drawer */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-slate-100 p-4 absolute w-full shadow-xl animate-in fade-in slide-in-from-top-2">
           <div className="flex flex-col gap-2">
             <Link
-              to="/dashboard"
+              href="/admin/dashboard"
               onClick={closeMenu}
               className={`flex items-center gap-3 p-3 rounded-xl ${
                 isAdminDashboard ? "bg-blue-50 text-blue-600 font-bold" : "text-slate-600"
@@ -92,10 +87,10 @@ export default function AdminTopBar() {
               Dashboard
             </Link>
             <Link
-              to="/accounts"
+              href="/admin/accounts"
               onClick={closeMenu}
               className={`flex items-center gap-3 p-3 rounded-xl ${
-                isResortBuilder ? "bg-blue-50 text-blue-600 font-bold" : "text-slate-600"
+                isAccountManager ? "bg-blue-50 text-blue-600 font-bold" : "text-slate-600"
               }`}
             >
               <Users size={20} />
@@ -103,7 +98,7 @@ export default function AdminTopBar() {
             </Link>
             <div className="h-[1px] bg-slate-100 my-2" />
             <Link
-              to="/"
+              href="/"
               onClick={closeMenu}
               className="flex items-center gap-3 p-3 text-slate-500"
             >

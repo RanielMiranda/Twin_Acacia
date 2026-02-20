@@ -48,7 +48,7 @@ export default function ResortDetailPage({ name }) {
   }
   
   return (
-    <div className="bg-gray-50 min-h-screen mt-10">
+    <div className="bg-white min-h-screen mt-10">
       <HeroGallery
         onOpen={(index) => {
           setActiveIndex(index);

@@ -1,5 +1,6 @@
 export const resorts = [
   {
+    id: 1,
     name: "Kasbah Villa - Hot Spring Resort",
     location: "National Highway, Brgy. Bagong Kalsada, Calamba, Philippines, 4027",
     price: 28000,
@@ -140,6 +141,7 @@ export const resorts = [
     ],
   },
   {
+    id: 2,
     name: "Céleste Resort",
     location: "National Highway, Brgy. Bagong Kalsada, Calamba, Philippines, 4027",
     price: 22000,
@@ -239,6 +241,7 @@ export const resorts = [
     ]
   },
   {
+    id: 3,
     name: "LuxVille Resort",
     location: "Brgy, National Highway Purok 3, Manila S Rd, Calamba, Philippines, 4027",
     price: 18000,

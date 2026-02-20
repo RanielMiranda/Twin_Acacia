@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import BookingCalendar from "./components/BookingsCalendar";
 import RentalManager from "./components/RentalManager";
