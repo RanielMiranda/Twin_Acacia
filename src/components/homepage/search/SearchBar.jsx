@@ -5,13 +5,21 @@ import DestinationField from "./destination/DestinationField";
 import DateRangeField from "./calendar/DateRangeField";
 import GuestField from "./guest/GuestField";
 
+import { useFilters } from "@/components/useclient/ContextFilter";
 export default function SearchBar() {
-  const [destination, setDestination] = useState("");
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  const { 
+    guests, 
+    setGuests, 
+    startDate, 
+    setStartDate, 
+    endDate, 
+    setEndDate 
+  } = useFilters();
 
+  const [destination, setDestination] = useState("");
+  const [activeDropdown, setActiveDropdown] = useState(null);
   const [guestType, setGuestType] = useState("Solo Traveler");
+
   const [rooms, setRooms] = useState(1);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
@@ -36,13 +44,9 @@ export default function SearchBar() {
     setGuestType(type);
 
     if (type === "Solo Traveler") {
-      setAdults(1);
-      setChildren(0);
-      setRooms(1);
+      setGuests({ adults: 1, children: 0, rooms: 1 });
     } else if (type === "Couple") {
-      setAdults(2);
-      setChildren(0);
-      setRooms(1);
+      setGuests({ adults: 2, children: 0, rooms: 1 });
     }
   }
 

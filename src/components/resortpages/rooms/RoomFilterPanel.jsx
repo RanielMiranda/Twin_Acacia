@@ -4,9 +4,15 @@ import SideRangeCalendar from "./SideRangeCalendar";
 import { useFilters } from "../../useclient/ContextFilter"; 
 
 export default function RoomFilterPanel() {
-  const { selectedTags, setSelectedTags } = useFilters();
+  const { 
+    selectedTags, 
+    setSelectedTags, 
+    startDate, 
+    setStartDate, 
+    endDate, 
+    setEndDate 
+  } = useFilters();
   
-  // Define the master list of tags available for rooms
   const availableTags = ["Wifi", "Bath", "Pool View", "Aircon", "Toilet", "Airconditioned"];
 
   const handleTagToggle = (tag) => {
@@ -17,9 +23,6 @@ export default function RoomFilterPanel() {
     }
   };
 
-  // DATE RANGE STATE
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const formatFullDate = (date) =>

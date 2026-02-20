@@ -54,7 +54,7 @@ export default function ResortResults({ resorts }) {
                   {resort.tags?.map((tag, index) => (
                     <span
                       key={index}
-                      className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md"
+                      className="text-[2vh] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md"
                     >
                       {tag}
                     </span>

@@ -34,8 +34,10 @@ export default function ResortContent({ resort }) {
         </div>
       </div>
 
-      {/* Facilities Section */}
-      <div className="flex flex-wrap gap-2 mt-4">
+      {/* Amenities Section */}
+      <h1 className = "pt-2 ml-[1vh]"> Amenities</h1>
+      <div className="flex flex-wrap gap-2">
+        
         {facilities.map((facility, index) => (
           <span
             key={index}

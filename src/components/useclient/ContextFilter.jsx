@@ -4,21 +4,18 @@ import { resorts as allResorts } from "../data/resorts";
 const FilterContext = createContext();
 
 export function FilterProvider({ children }) {
-  // Global Filter States
   const [price, setPrice] = useState(25000);
   const [selectedTags, setSelectedTags] = useState([]);
   const [guests, setGuests] = useState({ adults: 2, children: 0, rooms: 1 });
+  
+  // New Global Date States
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
-  // Filtering Logic for the Main Resort Results Page
   const filteredResorts = allResorts.filter((resort) => {
-    // 1. Price Filter (matches resort average price)
     const matchesPrice = resort.price <= price;
-
-    // 2. Tag Filter (checks if resort has all selected tags)
     const matchesTags = selectedTags.length === 0 || 
       selectedTags.every(tag => resort.tags?.includes(tag));
-
-    // 3. Guest Capacity Filter
     const totalNeeded = guests.adults + guests.children;
     const hasFittingRoom = resort.rooms.some(room => room.guests >= totalNeeded);
 
@@ -30,6 +27,8 @@ export function FilterProvider({ children }) {
       price, setPrice,
       selectedTags, setSelectedTags,
       guests, setGuests,
+      startDate, setStartDate, // Pass to consumers
+      endDate, setEndDate,     // Pass to consumers
       filteredResorts
     }}>
       {children}
