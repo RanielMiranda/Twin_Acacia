@@ -14,7 +14,7 @@ export default function ResortCard({ resort, onDelete }) {
   };
 
   const handleEdit = () => {
-    router.push(`/admin/resortbuilder/${resort.id}`);
+    router.push(`/admin/resort-builder/${resort.id}`);
   };
   
   const handleViewResort = (resortName) => {

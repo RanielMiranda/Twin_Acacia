@@ -32,17 +32,17 @@ export default function BookingConfirmation({ data, onBack }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 print:m-0 print:p-0">
+    <div className="max-w-4xl mx-auto space-y-6 print:m-0 print:p-0 mt-[10vh]">
       <div className="flex justify-between items-center no-print">
         <Button variant="ghost" onClick={onBack}>← Back to Manager</Button>
         <div className="flex gap-2">
-           <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
+           <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2 flex items-center justify-center">
              <Printer size={16} /> Print
            </Button>
         </div>
       </div>
 
-      <Card className="p-8 bg-white border-slate-200 shadow-2xl rounded-none md:rounded-3xl border-t-8 border-t-blue-600">
+      <Card className="p-8 bg-white border-slate-200 shadow-2xl rounded-md">
         {/* Header */}
         <div className="text-center mb-10">
           <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Booking Confirmation</h1>
