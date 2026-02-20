@@ -57,7 +57,7 @@ export default function ResortCard({ resort, onDelete }) {
             variant="outline" 
             size="sm" 
             onClick={() => handleViewResort(resort.name)}
-            className="rounded-xl text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 h-10 px-4 flex items-center justify-center"
+            className="rounded-lg border-slate-200 hover:bg-emerald-50 hover:text-blue-600 hover:border-blue-200 flex justify-center items-center"
           >
             <ExternalLink size={16} className="mr-2" />
             View Resort

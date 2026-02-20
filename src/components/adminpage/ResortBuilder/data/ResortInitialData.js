@@ -10,7 +10,7 @@ const resortInitialData = {
 
   description: {
     summary:
-      "Elegant, luxurious experience within reach filled with amenities designed to provide comfort and exclusivity."
+      "description."
   },
 
   extraServices: [

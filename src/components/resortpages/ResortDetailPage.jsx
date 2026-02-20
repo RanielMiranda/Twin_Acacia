@@ -68,7 +68,7 @@ export default function ResortDetailPage({ name }) {
       <div className="max-w-6xl mx-auto px-4 mb-6 flex flex-col md:flex-row items-center justify-between">
         <h2 className="text-2xl font-semibold mb-4 md:mb-0">Available Rooms</h2>
         <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition hover:scale-105"
+          className="bg-blue-600 text-white px-4 py-2 rounded-2xl hover:bg-blue-700 transition hover:scale-105"
           onClick={() => setContactOpen(true)}
         >
           Contact Owner

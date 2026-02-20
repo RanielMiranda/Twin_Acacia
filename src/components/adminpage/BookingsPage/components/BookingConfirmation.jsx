@@ -22,7 +22,7 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
           </div>
           
           <Button onClick={() => window.print()} className="bg-blue-600">
-            <Printer size={16} className="mr-2" /> Print Form
+            <Printer size={16} className="mr-2 flex items-center justify-center" /> Print Form
           </Button>
         </div>
       </div>
@@ -39,7 +39,7 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b pb-1">Section 1: Details</h3>
           <div className="grid grid-cols-2 gap-x-12 gap-y-3">
              <DetailRow label="Guest Name" value={data?.guestName || "________________"} />
-             <DetailRow label="Area" value={data?.area || "Resort Grounds"} />
+             <DetailRow label="Area" value={data?.area || "Location 1"} />
              <DetailRow label="Address" value={data?.address || "N/A"} />
              <DetailRow label="# of Pax" value={data?.pax || "0"} />
              <DetailRow label="Location" value={data?.location} />

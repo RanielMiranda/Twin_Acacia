@@ -10,7 +10,7 @@ export default function DestinationField({
   setActiveDropdown
 }) {
   return (
-    <div className="relative flex items-center gap-2 border rounded-xl px-3 py-2 flex-1">
+    <div className="relative flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 flex-1">
       <MapPin size={16} />
 
       <Input
