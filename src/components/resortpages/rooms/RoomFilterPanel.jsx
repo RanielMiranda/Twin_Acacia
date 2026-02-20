@@ -28,8 +28,8 @@ export default function RoomFilterPanel() {
     date.toLocaleDateString("default", { weekday: "short" });
 
   return (
-    <div className="w-full lg:w-80 bg-white shadow rounded-2xl p-6 h-fit lg:sticky lg:top-24 flex flex-col gap-6">
-      <h3 className="font-semibold text-lg border-b pb-2">Filters</h3>
+    <div className="w-full lg:w-80 bg-white shadow-md rounded-2xl p-6 h-fit lg:sticky lg:top-24 flex flex-col gap-6">
+      <h3 className="font-semibold text-lg pb-2">Filters</h3>
 
       {/* DATE RANGE */}
       <div className="flex flex-col gap-2">
@@ -89,7 +89,7 @@ function DateRangeField({
   activeDropdown, setActiveDropdown, formatFullDate, formatWeekday
 }) {
   return (
-    <div className="relative flex items-center gap-2 border rounded-xl px-3 py-2 flex-1 bg-gray-50">
+    <div className="relative flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 flex-1">
       <Calendar size={16} className="text-gray-500" />
       <button className="flex-1 text-center outline-none" onClick={() => setActiveDropdown("start")}>
         <div className="text-sm font-semibold">{startDate ? formatFullDate(startDate) : "Check-in"}</div>

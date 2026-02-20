@@ -1,4 +1,5 @@
 "use client";
+
 import TopBar from "@/components/ui/layouts/TopBar";
 import Footer from "@/components/ui/layouts/Footer";
 

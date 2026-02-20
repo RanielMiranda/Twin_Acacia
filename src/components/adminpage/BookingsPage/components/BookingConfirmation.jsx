@@ -21,8 +21,8 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
             {data?.status || "Pending Inquiry"}
           </div>
           
-          <Button onClick={() => window.print()} className="bg-blue-600">
-            <Printer size={16} className="mr-2 flex items-center justify-center" /> Print Form
+          <Button onClick={() => window.print()} className="bg-blue-600 flex items-center justify-center">
+            <Printer size={16} className="mr-2 " /> Print Form
           </Button>
         </div>
       </div>
@@ -36,7 +36,7 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
 
         {/* Section 1: Details */}
         <div className="mb-10">
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b pb-1">Section 1: Details</h3>
+          <h3 className="text-[10px] font-black text-black uppercase tracking-widest mb-4 border-b pb-1">Section 1: Details</h3>
           <div className="grid grid-cols-2 gap-x-12 gap-y-3">
              <DetailRow label="Guest Name" value={data?.guestName || "________________"} />
              <DetailRow label="Area" value={data?.area || "Location 1"} />
@@ -54,7 +54,7 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
 
         {/* Section 2: Additional Services */}
         <div className="mb-10">
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 border-b pb-1">Section 2: Additional Services</h3>
+          <h3 className="text-[10px] font-black text-black uppercase tracking-widest mb-4 border-b pb-1">Section 2: Additional Services</h3>
           <div className="grid grid-cols-2 gap-x-10 gap-y-2">
             {data?.resortServices?.map((s, i) => (
               <div key={i} className="flex justify-between text-sm border-b border-dotted pb-1">
@@ -77,7 +77,7 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
                   <span>Downpayment:</span>
                   <span className="font-bold">₱{data?.downpayment || 0}</span>
                 </div>
-                <div className="flex justify-between text-blue-600">
+                <div className="flex justify-between">
                   <span>Channel:</span>
                   <span className="font-bold uppercase text-[10px]">{data?.paymentMethod || "Pending"}</span>
                 </div>
@@ -107,9 +107,9 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
 
 function DetailRow({ label, value }) {
   return (
-    <div className="flex justify-between text-sm">
-      <span className="text-slate-500 font-medium">{label}:</span>
-      <span className="text-slate-900 font-bold">{value}</span>
+    <div className="flex justify-between text-sm gap-4"> {/* added gap to prevent overlap */}
+      <span className="text-slate-500 font-medium whitespace-nowrap">{label}:</span>
+      <span className="text-slate-900 font-bold text-right">{value}</span>
     </div>
   );
 }
