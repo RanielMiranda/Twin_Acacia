@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Save, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useResort } from "@/components/context/ContextEditor";
+import { useResort } from "@/components/useclient/ContextEditor";
 
 import AmenitiesEditor from "./components/AmenitiesEditor";
 import HeroGalleryEditor from "./components/HeroGalleryEditor";

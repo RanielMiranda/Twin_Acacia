@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Users, BedDouble } from "lucide-react";
-import { useResort } from "../../context/ContextEditor"; 
-import { useFilters } from "../../context/ContextFilter"; 
+import { useResort } from "../../useclient/ContextEditor"; 
+import { useFilters } from "../../useclient/ContextFilter"; 
 
 export default function RoomsSection({ onOpenRoomGallery }) {
   const { resort } = useResort(); 

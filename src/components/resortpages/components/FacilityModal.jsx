@@ -1,5 +1,5 @@
 import React from "react";
-import { useResort } from "../../context/ContextEditor";
+import { useResort } from "../../useclient/ContextEditor";
 
 export default function FacilityModal({ activeIndex, onClose }) {
   const { resort } = useResort();

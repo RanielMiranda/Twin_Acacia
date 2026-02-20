@@ -6,7 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useState, useRef, useEffect } from "react";
-import { useResort } from "@/components/context/ContextEditor";
+import { useResort } from "@/components/useclient/ContextEditor";
 
 export default function RoomsEditor() {
   const { resort, updateResort, safeSrc } = useResort();

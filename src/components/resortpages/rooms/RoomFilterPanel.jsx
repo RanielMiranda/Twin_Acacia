@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Calendar, Tag } from "lucide-react";
 import SideRangeCalendar from "./SideRangeCalendar";
-import { useFilters } from "../../context/ContextFilter"; 
+import { useFilters } from "../../useclient/ContextFilter"; 
 
 export default function RoomFilterPanel() {
   const { selectedTags, setSelectedTags } = useFilters();

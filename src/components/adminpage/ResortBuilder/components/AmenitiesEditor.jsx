@@ -1,5 +1,5 @@
 import { Plus, Trash2, Image as ImageIcon } from "lucide-react";
-import { useResort } from "@/components/context/ContextEditor";
+import { useResort } from "@/components/useclient/ContextEditor";
 import { useState, useEffect } from "react";
 
 export default function AmenitiesEditor() {

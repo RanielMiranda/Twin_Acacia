@@ -1,5 +1,5 @@
 import { Camera, Trash2, Edit3 } from "lucide-react";
-import { useResort } from "@/components/context/ContextEditor";
+import { useResort } from "@/components/useclient/ContextEditor";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 

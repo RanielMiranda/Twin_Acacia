@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Calendar as CalendarIcon, Pen, Trash2, ChevronLeft, ChevronRight, Check } from "lucide-react";
-import { useResort } from "@/components/context/ContextEditor";
+import { useResort } from "@/components/useclient/ContextEditor";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 

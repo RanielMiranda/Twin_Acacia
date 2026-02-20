@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ContactModal from "./modals/ContactModal";
+import ContactModal from "../modals/ContactModal";
 
 export default function Footer() {
   const [open, setOpen] = useState(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { resorts } from "../data/resorts";
-import { useResort } from "../context/ContextEditor"
+import { useResort } from "../useclient/ContextEditor"
 
 import HeroGallery from "./Gallery/HeroGallery";
 import ResortInfo from "./rooms/ResortInfo";

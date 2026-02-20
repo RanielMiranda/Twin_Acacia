@@ -1,4 +1,4 @@
-import { useResort } from "../../context/ContextEditor"; // Adjust path as needed
+import { useResort } from "../../useclient/ContextEditor"; // Adjust path as needed
 
 export default function HeroGallery({ onOpen }) {
   const { resort } = useResort();

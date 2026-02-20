@@ -1,11 +1,12 @@
-import React from "react";
+"use client"; // important since we're using hooks
+
+import { useRouter } from "next/navigation";
 import ResortGallery from "./ResortGallery";
 import ResortContent from "./ResortContent";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 
 export default function ResortResults({ resorts }) {
-  const navigate = useNavigate();
+  const router = useRouter(); // Next.js hook
 
   return (
     <div className="flex-1 flex flex-col gap-6 w-full">
@@ -15,13 +16,13 @@ export default function ResortResults({ resorts }) {
           className="flex flex-col sm:flex-row bg-white shadow rounded-2xl overflow-hidden"
         >
           <div className="flex-1 max-w-full">
-            <div 
+            <div
               className="cursor-pointer"
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
-                navigate(`/resort/${encodeURIComponent(resort.name)}`);
+                router.push(`/resort/${encodeURIComponent(resort.name)}`);
               }}
-            >   
+            >
               <ResortGallery resort={resort} />
             </div>
             <ResortContent resort={resort} />
@@ -45,7 +46,6 @@ export default function ResortResults({ resorts }) {
                 ))}
               </div>
 
-              {/* AMENITIES / TAGS MOVED HERE */}
               <div className="mt-4">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                   Tags
@@ -74,7 +74,7 @@ export default function ResortResults({ resorts }) {
                 className="w-full rounded-xl text-lg hover:scale-105 transition"
                 onClick={() => {
                   window.scrollTo({ top: 0, behavior: "smooth" });
-                  navigate(`/resort/${encodeURIComponent(resort.name)}`);
+                  router.push(`/resort/${encodeURIComponent(resort.name)}`);
                 }}
               >
                 Check Availability

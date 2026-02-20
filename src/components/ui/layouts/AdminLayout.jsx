@@ -1,5 +1,5 @@
 // layouts/AdminLayout.jsx
-import AdminTopBar from "./AdminTopBar"; // ← make this
+import AdminTopBar from "./AdminTopBar";
 import { Outlet } from "react-router-dom";
 
 export default function AdminLayout() {

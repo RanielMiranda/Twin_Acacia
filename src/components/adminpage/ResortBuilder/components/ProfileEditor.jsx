@@ -3,7 +3,7 @@ import {
   Plus, Image as ImageIcon, 
   X, DollarSign, MapPin, Phone, Mail, Facebook
 } from "lucide-react";
-import { useResort } from "@/components/context/ContextEditor";
+import { useResort } from "@/components/useclient/ContextEditor";
 
 export default function ProfileEditor() {
   const { resort, updateResort, safeSrc } = useResort();
