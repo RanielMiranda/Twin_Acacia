@@ -30,9 +30,11 @@ export default function ResortDetailPage({ name }) {
   useEffect(() => {
     if (!name) return;
 
-    const found = resorts.find(
-      (r) => r.name === decodeURIComponent(name)
-    );
+    // 1. Clear current resort so we don't show old data
+    setResort(null); 
+
+    const decodedName = decodeURIComponent(name);
+    const found = resorts.find((r) => r.name === decodedName);
 
     if (found) {
       setResort(found);
@@ -41,7 +43,7 @@ export default function ResortDetailPage({ name }) {
 
   if (!resort) {
     return (
-      <div className="p-10 text-center text-gray-500">
+      <div className="mt-10 p-10 text-center text-gray-500">
         Resort not found
       </div>
     );

@@ -4,7 +4,7 @@ import { resorts } from "@/components/data/resorts";
 const ResortContext = createContext();
 
 export const ResortProvider = ({ children }) => {
-  const [resort, setResort] = useState(resorts[0]); // default or empty template
+  const [resort, setResort] = useState(null); // default or empty template
 
   const updateResort = (field, value) => {
     setResort(prev => ({

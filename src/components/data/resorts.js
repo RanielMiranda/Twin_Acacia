@@ -358,10 +358,6 @@ export const resorts = [
   },
 ];
 /* 
-the resort variable has the data for some of the stuff like resort. and there's also a filter in the parent that can/asks for the checkin out date. is it possible to pass them on?
-
-
-
   {
 
     id: 1,
