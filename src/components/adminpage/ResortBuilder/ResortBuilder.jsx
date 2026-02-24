@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useResort } from "@/components/useclient/ContextEditor";
@@ -12,9 +12,25 @@ import RoomsEditor from "./components/RoomsEditor";
 import ServicesEditor from "./components/ServicesEditor";
 import ShortcutBar from "@/components/resortpages/rooms/ShortcutBar";
 
-export default function ResortBuilder() {
-  const { resort } = useResort();
+import resortInitialData from "./data/ResortInitialData";
+
+export default function ResortBuilder({ resortId }) {
+  const { resort, setResort, loadResortById, loading } = useResort();
   const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    if (resortId) {
+      // Use the global context to load the data
+      loadResortById(resortId);
+    } else {
+      setResort(resortInitialData);
+    }
+    
+    return () => setResort(null);
+  }, [resortId, loadResortById, setResort]);
+  
+  if (loading) return <div className="mt-10 p-20 text-center">Fetching Resort Data...</div>;
+  if (!resort) return <div className="mt-10 p-20 text-center">No resort found.</div>;
 
   const handleSave = () => {
     if (!resort) return;
