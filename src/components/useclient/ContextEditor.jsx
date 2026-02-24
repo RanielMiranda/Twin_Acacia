@@ -70,7 +70,7 @@ export const ResortProvider = ({ children }) => {
       const rName = resort.name;
       
       const updatedProfileImage = resort.profileImage instanceof File 
-        ? await uploadImage(resort.profileImage, rName, "profile") 
+        ? await uploadImage(resort.profileImage, rName, "profileImage") 
         : resort.profileImage;
 
       const updatedGallery = await Promise.all(

@@ -58,12 +58,10 @@ export default function RoomsEditor() {
 
   useEffect(() => setLocalRooms(resort.rooms || []), [resort.rooms]);
 
-  // --- Scroll Logic ---
   const scrollToLatestRoom = () => {
     roomsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  // --- Refactored Add Method ---
   const addRoom = () => {
     const newRoom = { 
         id: Date.now(), 
@@ -77,8 +75,6 @@ export default function RoomsEditor() {
     const updated = [...localRooms, newRoom];
     setLocalRooms(updated);
     updateResort("rooms", updated);
-    
-    // Trigger scroll after state update
     setTimeout(scrollToLatestRoom, 100);
   };
 
@@ -132,42 +128,100 @@ export default function RoomsEditor() {
         {localRooms.map(room => (
           <Card key={room.id} className="rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-sm border border-slate-100 bg-white">
             
-            {/* IMAGE MOSAIC */}
-            <div className="md:w-1/2 h-[280px] grid grid-cols-2 grid-rows-2 gap-1 relative group bg-slate-100">
-              {[0, 1, 2].map((idx) => (
-                <div key={idx} className={`relative group/item ${idx === 0 ? "col-span-1 row-span-2" : "col-span-1"}`}>
-                  {room.gallery?.[idx] ? (
-                    <>
-                      <img src={safeSrc(room.gallery[idx])} className="object-cover w-full h-full" alt="" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition flex items-center justify-center gap-2">
-                         <button onClick={() => { setActiveRoomId(room.id); setReplacingIdx(idx); replaceInputRef.current.click(); }} className="p-2 bg-white rounded-full text-slate-700 hover:scale-110 transition">
-                            <Edit3 size={16} />
-                         </button>
-                         <button onClick={() => updateRoomLocal(room.id, { gallery: room.gallery.filter((_, i) => i !== idx) })} className="p-2 bg-white rounded-full text-red-500 hover:scale-110 transition">
-                            <Trash2 size={16} />
-                         </button>
-                      </div>
-                    </>
-                  ) : (
-                    idx === 0 && (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-2">
-                        <ImageIcon size={40} strokeWidth={1}/>
-                        <button onClick={() => { setActiveRoomId(room.id); fileInputRef.current.click(); }} className="text-xs font-bold text-blue-500 underline">Add Photos</button>
-                      </div>
-                    )
-                  )}
+            {/* DYNAMIC IMAGE MOSAIC */}
+            <div className="md:w-1/2 h-[280px] relative group p-1">
+              {/* Case 1: Only 1 Image */}
+              {room.gallery?.length === 1 && (
+                <div className="w-full h-full relative group/item overflow-hidden rounded-2xl bg-slate-100">
+                  <img src={safeSrc(room.gallery[0])} className="object-cover w-full h-full" alt="" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition flex items-center justify-center gap-2">
+                    <button onClick={() => { setActiveRoomId(room.id); setReplacingIdx(0); replaceInputRef.current.click(); }} className="p-2 bg-white rounded-full text-slate-700 hover:scale-110 transition">
+                      <Edit3 size={16} />
+                    </button>
+                    <button onClick={() => updateRoomLocal(room.id, { gallery: [] })} className="p-2 bg-white rounded-full text-red-500 hover:scale-110 transition">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
 
+              {/* Case 2: Exactly 2 Images */}
+              {room.gallery?.length === 2 && (
+                <div className="grid grid-cols-2 gap-1 h-full">
+                  {room.gallery.map((img, idx) => (
+                    <div key={idx} className={`relative group/item overflow-hidden bg-slate-100 ${idx === 0 ? "rounded-l-2xl" : "rounded-r-2xl"}`}>
+                      <img src={safeSrc(img)} className="object-cover w-full h-full" alt="" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition flex items-center justify-center gap-2">
+                        <button onClick={() => { setActiveRoomId(room.id); setReplacingIdx(idx); replaceInputRef.current.click(); }} className="p-2 bg-white rounded-full text-slate-700 hover:scale-110 transition">
+                          <Edit3 size={16} />
+                        </button>
+                        <button onClick={() => updateRoomLocal(room.id, { gallery: room.gallery.filter((_, i) => i !== idx) })} className="p-2 bg-white rounded-full text-red-500 hover:scale-110 transition">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Case 3: 3 or More Images (Current Mosaic) */}
+              {(room.gallery?.length >= 3 || !room.gallery?.length) && (
+                <div className="grid grid-cols-2 grid-rows-2 gap-1 h-full">
+                  {[0, 1, 2].map((idx) => (
+                    <div 
+                      key={idx} 
+                      className={`relative group/item overflow-hidden bg-slate-100
+                        ${idx === 0 ? "col-span-1 row-span-2 rounded-tl-2xl rounded-bl-2xl" : "col-span-1"}
+                        ${idx === 1 ? "rounded-tr-2xl" : ""}
+                        ${idx === 2 ? "rounded-br-2xl" : ""}
+                      `}
+                    >
+                      {room.gallery?.[idx] ? (
+                        <>
+                          <img src={safeSrc(room.gallery[idx])} className="object-cover w-full h-full" alt="" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition flex items-center justify-center gap-2">
+                             <button onClick={() => { setActiveRoomId(room.id); setReplacingIdx(idx); replaceInputRef.current.click(); }} className="p-2 bg-white rounded-full text-slate-700 hover:scale-110 transition">
+                                <Edit3 size={16} />
+                             </button>
+                             <button onClick={() => updateRoomLocal(room.id, { gallery: room.gallery.filter((_, i) => i !== idx) })} className="p-2 bg-white rounded-full text-red-500 hover:scale-110 transition">
+                                <Trash2 size={16} />
+                             </button>
+                          </div>
+                        </>
+                      ) : (
+                        idx === 0 && (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-2">
+                            <ImageIcon size={40} strokeWidth={1}/>
+                            <button onClick={() => { setActiveRoomId(room.id); fileInputRef.current.click(); }} className="text-xs font-bold text-blue-500 underline">Add Photos</button>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             {/* ROOM INFO */}
             <div className="md:w-1/2 p-6 flex flex-col">
               <div className="flex justify-between items-start mb-2">
                 <input className="text-xl font-semibold w-full bg-transparent border-none p-0 focus:ring-0" 
                   value={room.name} onChange={(e) => updateRoomLocal(room.id, { name: e.target.value })} placeholder="Room Name" />
-                <button onClick={() => { if(confirm(`Remove ${room.name}?`)) updateResort("rooms", localRooms.filter(r => r.id !== room.id)) }} className="p-2 text-slate-400 hover:text-red-500">
-                  <Trash2 size={18}/>
-                </button>
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={() => { setActiveRoomId(room.id); fileInputRef.current.click(); }}
+                    className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
+                    title="Add Images"
+                  >
+                    <Camera size={18}/>
+                  </button>
+                  <button 
+                    onClick={() => { if(confirm(`Remove ${room.name}?`)) updateResort("rooms", localRooms.filter(r => r.id !== room.id)) }} 
+                    className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={18}/>
+                  </button>
+                </div>
               </div>
 
               {/* STATS */}
@@ -239,7 +293,6 @@ export default function RoomsEditor() {
             </div>
           </Card>
         ))}
-        {/* Scroll Anchor */}
         <div ref={roomsEndRef} className="h-1" />
       </div>
     </div>

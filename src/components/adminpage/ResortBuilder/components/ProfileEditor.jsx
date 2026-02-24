@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Plus, X, DollarSign, MapPin, Phone, Mail, Facebook, Camera, Image as ImageIcon, GripVertical, Check } from "lucide-react";
+import { Plus, X, DollarSign, MapPin, Phone, Mail, Facebook, Camera, Image as ImageIcon, GripVertical, Check, ExternalLink } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 // --- DND Kit Imports ---
@@ -26,12 +26,10 @@ function SortableTag({ tag, index, onRemove, onRename }) {
       style={style}
       className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1 border border-blue-100 shadow-sm group"
     >
-      {/* Drag Handle */}
       <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-blue-300 hover:text-blue-500">
         <GripVertical size={14} />
       </button>
 
-      {/* Inline Edit Input */}
       <input
         value={tag}
         onChange={(e) => onRename(index, e.target.value)}
@@ -49,7 +47,6 @@ export default function ProfileEditor() {
   const { resort, updateResort, safeSrc } = useResort();
   const fileInputRef = useRef(null);
   
-  // Local state for the "Add New" inline input
   const [isAdding, setIsAdding] = useState(false);
   const [newTagValue, setNewTagValue] = useState("");
 
@@ -59,6 +56,15 @@ export default function ProfileEditor() {
   );
 
   if (!resort) return null;
+
+  // Helper to ensure Facebook links are valid URLs
+  const formatFacebookLink = (val) => {
+    let link = val.trim();
+    if (link && !/^https?:\/\//i.test(link)) {
+      link = 'https://' + link;
+    }
+    return link;
+  };
 
   const handleTagAction = (action, index, newValue) => {
     const tags = [...(resort.tags || [])];
@@ -87,8 +93,8 @@ export default function ProfileEditor() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* ... (Previous Profile Image & Contact Inputs code remains same) ... */}
       <div className="flex flex-col md:flex-row gap-8 items-start">
+        {/* Profile Image */}
         <div className="relative group shrink-0">
           <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-200 border-4 border-white shadow-md flex items-center justify-center">
             {resort.profileImage ? (
@@ -103,24 +109,60 @@ export default function ProfileEditor() {
           <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => updateResort("profileImage", e.target.files[0])} />
         </div>
 
+        {/* Info & Inputs */}
         <div className="flex-1 w-full space-y-4">
-          <input className="text-4xl font-black w-full bg-transparent border-none focus:ring-0 p-0 hover:bg-slate-50 rounded transition" value={resort.name || ""} onChange={(e) => updateResort("name", e.target.value)} placeholder="Resort Name" />
+          <input 
+            className="text-4xl font-black w-full bg-transparent border-none focus:ring-0 p-0 hover:bg-slate-50 rounded transition" 
+            value={resort.name || ""} 
+            onChange={(e) => updateResort("name", e.target.value)} 
+            placeholder="Resort Name" 
+          />
+          
           <div className="flex flex-col gap-2 text-gray-800">
-             {/* Render your contact inputs here as before */}
-             {[{ icon: MapPin, field: "location" }, { icon: Facebook, field: "contactMedia" }, { icon: Mail, field: "contactEmail" }, { icon: Phone, field: "contactPhone" }].map(item => (
-                <div key={item.field} className="flex items-center gap-1">
-                  <item.icon size={16} />
-                  <input className="bg-transparent border-none p-1 focus:ring-0 hover:bg-slate-50 rounded w-full" value={resort[item.field] || ""} onChange={(e) => updateResort(item.field, e.target.value)} placeholder={item.field} />
+             {[
+                { icon: MapPin, field: "location", placeholder: "Location" },
+                { icon: DollarSign, field: "price", placeholder: "Average Price (e.g. 15000)", type: "number" },
+                { icon: Facebook, field: "contactMedia", placeholder: "Facebook Page Link" }, 
+                { icon: Mail, field: "contactEmail", placeholder: "Email" }, 
+                { icon: Phone, field: "contactPhone", placeholder: "Phone" }
+             ].map(item => (
+                <div key={item.field} className="flex items-center gap-2 group/input relative">
+                  <item.icon size={16} className={resort[item.field] ? "text-blue-600" : "text-slate-400"} />
+                  <div className="flex-1 relative">
+                    <input 
+                      type={item.type || "text"}
+                      className="bg-transparent border-none p-1 focus:ring-0 hover:bg-slate-50 rounded w-full pr-8" 
+                      value={resort[item.field] || ""} 
+                      onChange={(e) => updateResort(item.field, item.type === "number" ? Number(e.target.value) : e.target.value)}
+                      onBlur={(e) => {
+                        if(item.field === "contactMedia") {
+                           updateResort(item.field, formatFacebookLink(e.target.value));
+                        }
+                      }}
+                      placeholder={item.placeholder} 
+                    />
+                    
+                    {/* Facebook Test Link Button */}
+                    {item.field === "contactMedia" && resort[item.field] && (
+                      <a 
+                        href={resort[item.field]} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/input:opacity-100 transition p-1 hover:bg-blue-100 rounded text-blue-600"
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                  </div>
                 </div>
              ))}
           </div>
         </div>
       </div>
 
-      {/* --- Tags Section --- */}
+      {/* Tags Section */}
       <div className="mt-8">
         <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">tags — order draggable</p>
-        
         <div className="flex flex-wrap gap-2 items-center">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={resort.tags || []} strategy={horizontalListSortingStrategy}>
@@ -136,7 +178,6 @@ export default function ProfileEditor() {
             </SortableContext>
           </DndContext>
 
-          {/* Inline Add Input */}
           {isAdding ? (
             <div className="flex items-center gap-1 bg-white border border-blue-400 rounded-md px-2 py-1">
               <input
