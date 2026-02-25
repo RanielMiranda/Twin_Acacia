@@ -36,13 +36,16 @@ export default function RentalManager({ onOpenForm }) {
         downpayment: "5,000",
         paymentMethod: "GCash",
         checkInDate: "Feb 18, 2024",
+        checkInTime: "2:00 PM",
         checkOutDate: "Feb 25, 2024",
+        checkOutTime: "5:00 PM"
       }
     ],
     overdue: [
       { id: 3, 
         guestName: "User 3", 
         room: "Room B", 
+        status: "Checkout",
         dates: "Feb 10 - 15", 
         email: "User3@example.com" }
     ]
@@ -117,9 +120,6 @@ export default function RentalManager({ onOpenForm }) {
                       <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-4 shadow-sm shadow-emerald-100">Approve</Button>
                       <Button size="sm" variant="ghost" className="text-slate-400 hover:text-rose-600 rounded-xl">Decline</Button>
                     </>
-                  )}
-                  {activeTab === "confirmed" && (
-                    <Button size="sm" variant="outline" className="rounded-xl border-slate-200 text-slate-600 hover:bg-white">Send Reminder</Button>
                   )}
                   {activeTab === "overdue" && (
                     <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-4">Process Checkout</Button>

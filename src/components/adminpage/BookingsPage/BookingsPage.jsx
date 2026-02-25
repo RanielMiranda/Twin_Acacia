@@ -11,16 +11,14 @@ export default function BookingsPage() {
   const [view, setView] = useState("manager");
   const [selectedBookingData, setSelectedBookingData] = useState(null);
 
-  // Find the specific resort data
   const currentResort = resorts.find((r) => r.id.toString() === id.toString());
 
   const openForm = (guestData) => {
-    // Merge Guest data with the specific Resort data
     setSelectedBookingData({
       ...guestData,
       location: currentResort?.location,
       rates: currentResort?.price,
-      resortServices: currentResort?.extraServices, // Pass the services list
+      resortServices: currentResort?.extraServices,
       resortName: currentResort?.name
     });
     setView("form");

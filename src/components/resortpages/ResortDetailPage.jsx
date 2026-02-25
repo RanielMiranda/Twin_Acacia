@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { resorts } from "../data/resorts";
 import { useResort } from "../useclient/ContextEditor";
 
 import HeroGallery from "./Gallery/HeroGallery";
@@ -15,7 +14,7 @@ import ContactOwnerModal from "./components/ContactOwnerModal";
 import RoomFilterPanel from "./rooms/RoomFilterPanel";
 
 export default function ResortDetailPage({ name }) {
-  const { resort, setResort } = useResort();
+  const { resort, setResort, loadResort, loading } = useResort();
 
   const [facilityIndex, setFacilityIndex] = useState(0);
   const [facilityOpen, setFacilityOpen] = useState(false);
@@ -29,17 +28,22 @@ export default function ResortDetailPage({ name }) {
 
   useEffect(() => {
     if (!name) return;
-
-    // 1. Clear current resort so we don't show old data
-    setResort(null); 
-
+    
+    // Only load if the current resort in context doesn't match the URL name
     const decodedName = decodeURIComponent(name);
-    const found = resorts.find((r) => r.name === decodedName);
-
-    if (found) {
-      setResort(found);
+    if (!resort || resort.name !== decodedName) {
+      loadResort(decodedName, false);
     }
-  }, [name, setResort]);
+  }, [name, loadResort, resort]);
+
+  // Show loading only if we don't have the resort yet
+  if (loading && !resort) {
+    return (
+      <div className="mt-10 p-20 text-center text-gray-500">
+        Fetching Resort Details...
+      </div>
+    );
+  }
 
   if (!resort) {
     return (
@@ -48,7 +52,7 @@ export default function ResortDetailPage({ name }) {
       </div>
     );
   }
-  
+
   return (
     <div className="bg-white min-h-screen mt-10">
       <HeroGallery
@@ -94,7 +98,6 @@ export default function ResortDetailPage({ name }) {
         </div>
       </div>
 
-      {/* Modals remain mostly the same but reference 'resort' from context */}
       {galleryOpen && (
         <GalleryModal
           images={resort.gallery}
@@ -122,13 +125,13 @@ export default function ResortDetailPage({ name }) {
         />
       )}
 
-    {contactOpen && (
-      <ContactOwnerModal
-        isOpen={contactOpen}
-        onClose={() => setContactOpen(false)}
-        resort={resort}
-      />
-    )}
+      {contactOpen && (
+        <ContactOwnerModal
+          isOpen={contactOpen}
+          onClose={() => setContactOpen(false)}
+          resort={resort}
+        />
+      )}
     </div>
   );
 }

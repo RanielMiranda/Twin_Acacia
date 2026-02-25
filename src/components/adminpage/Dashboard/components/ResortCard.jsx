@@ -1,13 +1,16 @@
 "use client";
 
-import React from "react";
-import { MapPin, Globe, Edit2, Trash2, Calendar, ExternalLink } from "lucide-react";
+import React, { useState } from "react";
+import { MapPin, Globe, Edit2, Trash2, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useResort } from "@/components/useclient/ContextEditor";
 
-export default function ResortCard({ resort, onDelete }) {
+export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
   const router = useRouter();
+  const { setVisibility, setResort } = useResort();
+  const [updating, setUpdating] = useState(false);
 
   const handleViewBookings = () => {
     router.push(`/admin/bookings/${resort.id}`);
@@ -15,11 +18,6 @@ export default function ResortCard({ resort, onDelete }) {
 
   const handleEdit = () => {
     router.push(`/admin/resort-builder/${resort.id}`);
-  };
-  
-  const handleViewResort = (resortName) => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    router.push(`/resort/${encodeURIComponent(resortName)}`);
   };
 
 
@@ -55,16 +53,6 @@ export default function ResortCard({ resort, onDelete }) {
         <div className="flex flex-col md:flex-row gap-2 md:ml-auto w-full md:w-auto mt-4 md:mt-0">
           <Button 
             variant="outline" 
-            size="sm" 
-            onClick={() => handleViewResort(resort.name)}
-            className="rounded-lg border-slate-200 hover:bg-emerald-50 hover:text-blue-600 hover:border-blue-200 flex justify-center items-center"
-          >
-            <ExternalLink size={16} className="mr-2" />
-            View Resort
-          </Button>
-
-          <Button 
-            variant="outline" 
             size="sm"
             onClick={handleViewBookings}
             className="rounded-lg border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 flex justify-center items-center"
@@ -82,11 +70,26 @@ export default function ResortCard({ resort, onDelete }) {
             <Edit2 className="h-4 w-4 mr-2" />
             Edit
           </Button>
+
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => onDelete(resort.name)}
-            className="rounded-lg border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+            onClick={() => onToggleVisibility(resort.id, resort.visible)}
+            className={`rounded-lg flex items-center justify-center px-3 ${
+              resort.visible 
+                ? "border-green-400 text-green-600 hover:bg-green-50 hover:border-green-500"
+                : "border-slate-300 text-slate-500 hover:bg-slate-100"
+            }`}
+            disabled={updating}
+          >
+            {resort.visible ? "Visible" : "Hidden"}
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onDelete(resort.id, resort.name)}
+            className="rounded-lg border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex items-center justify-center"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, CheckCircle } from "lucide-react";
+import { Save, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useResort } from "@/components/useclient/ContextEditor";
+import { useResort } from "@/components/useclient/ContextEditor"; // Import only the hook
 
 import AmenitiesEditor from "./components/AmenitiesEditor";
 import HeroGalleryEditor from "./components/HeroGalleryEditor";
@@ -15,37 +15,35 @@ import ShortcutBar from "@/components/resortpages/rooms/ShortcutBar";
 import resortInitialData from "./data/ResortInitialData";
 
 export default function ResortBuilder({ resortId }) {
-  const { resort, setResort, loadResortById, loading } = useResort();
+  // saveResort must be destructured from useResort()
+  const { resort, setResort, loadResort, saveResort, loading } = useResort();
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     if (resortId) {
-      // Use the global context to load the data
-      loadResortById(resortId);
-    } else {
+      loadResort(resortId);
+    } else if (!resort) {
       setResort(resortInitialData);
-    }
-    
-    return () => setResort(null);
-  }, [resortId, loadResortById, setResort]);
+    } 
+  }, [resortId, loadResort, setResort]);
   
-  if (loading) return <div className="mt-10 p-20 text-center">Fetching Resort Data...</div>;
+  if (loading && !resort) return <div className="mt-10 p-20 text-center">Fetching Resort Data...</div>;
   if (!resort) return <div className="mt-10 p-20 text-center">No resort found.</div>;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!resort) return;
 
-    const jsonString = JSON.stringify(resort, null, 2);
-    const cleanJs = jsonString.replace(/"([^"]+)":/g, "$1:");
-    navigator.clipboard.writeText(cleanJs);
+    // Trigger the Supabase upload and save logic
+    const success = await saveResort(); 
 
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    if (success) {
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 pt-10">
-
       <HeroGalleryEditor />
       <ShortcutBar />
       <ProfileEditor />
@@ -53,13 +51,28 @@ export default function ResortBuilder({ resortId }) {
       <ServicesEditor />
       <RoomsEditor />
 
-      <div className="fixed bottom-6 right-6 flex items-center justify-center">
+      <div className="fixed bottom-6 right-6 z-100 flex items-center justify-center">
         <Button
           onClick={handleSave}
-          className="flex items-center gap-2 px-4 py-2 shadow-lg rounded-full"
+          disabled={loading} // Disable button while uploading images
+          className="flex items-center hover:scale-105 gap-2 px-6 py-2 shadow-lg rounded-full transition-all active:scale-95"
         >
-          {isSaved ? <CheckCircle size={20} /> : <Save size={20} />}
-          <span>{isSaved ? "Changes Saved" : "Save Changes"}</span>
+          {loading ? (
+            <>
+              <Loader2 className="animate-spin" size={20} />
+              <span>Saving...</span>
+            </>
+          ) : isSaved ? (
+            <>
+              <CheckCircle size={20} className="text-white" />
+              <span>Changes Saved</span>
+            </>
+          ) : (
+            <>
+              <Save size={20} />
+              <span>Save Changes</span>
+            </>
+          )}
         </Button>
       </div>
     </div>

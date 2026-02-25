@@ -8,27 +8,10 @@ export default function ServicesEditor() {
   const [localServices, setLocalServices] = useState(resort.extraServices || []);
   const servicesEndRef = useRef(null);
 
-  // Sync if context changes externally
   useEffect(() => setLocalServices(resort.extraServices || []), [resort.extraServices]);
 
   const scrollToCenter = () => {
-    if (!servicesEndRef.current) return;
-
-    const element = servicesEndRef.current;
-    const rect = element.getBoundingClientRect();
-
-    const elementTop = rect.top + window.scrollY;
-    const elementHeight = rect.height;
-    const viewportHeight = window.innerHeight;
-
-    // Scroll so the element is centered vertically
-    const scrollPosition =
-      elementTop - viewportHeight / 2 + elementHeight / 2;
-
-    window.scrollTo({
-      top: scrollPosition,
-      behavior: "smooth",
-    });
+    servicesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   const addService = () => {
@@ -50,8 +33,7 @@ export default function ServicesEditor() {
 
   const removeService = (index) => {
     const serviceName = localServices[index]?.name;
-
-    if (window.confirm(`Are you sure you want to remove "${serviceName}"?`)) {
+    if (window.confirm(`Remove "${serviceName}"?`)) {
       const updated = localServices.filter((_, i) => i !== index);
       setLocalServices(updated);
       updateResort("extraServices", updated);
@@ -59,37 +41,24 @@ export default function ServicesEditor() {
   };
 
   return (
-    <div id="extra-services" className="max-w-5xl mx-auto mt-10 px-4">
-      {/* Header */}
+    <div id="extra-services" className="max-w-6xl mx-auto mt-10 px-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Extra Services</h2>
-
-        <Button
-          onClick={addService}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
-        >
-          <Plus size={16} className="mr-2" />
-          Add Service
+        <Button onClick={addService} className="rounded-full hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center">
+          <Plus size={16} className="mr-2" /> Add Service
         </Button>
       </div>
 
-      {/* Table Container */}
       <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
-        {/* Column Header */}
         <div className="grid grid-cols-12 bg-slate-50 text-sm font-semibold text-slate-600 px-6 py-4">
           <div className="col-span-3">Service</div>
           <div className="col-span-6">Description</div>
-          <div className="col-span-2 text-right">Price</div>
-          <div className="col-span-1 text-right"> </div>
+          <div className="col-span-2 text-right">Price (₱)</div>
+          <div className="col-span-1"></div>
         </div>
 
-        {/* Editable Rows */}
         {localServices.map((service, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-12 px-6 py-4 border-t border-slate-100 hover:bg-blue-50/40 transition group"
-          >
-            {/* Name */}
+          <div key={i} className="grid grid-cols-12 px-6 py-4 border-t border-slate-100 hover:bg-blue-50/40 transition group items-center">
             <div className="col-span-3">
               <input
                 className="w-full font-semibold bg-transparent border-none p-0 focus:ring-0 focus:text-blue-600"
@@ -98,51 +67,38 @@ export default function ServicesEditor() {
                 onBlur={commitService}
               />
             </div>
-
-            {/* Description */}
             <div className="col-span-6">
               <input
-                className="w-full text-sm text-slate-500 bg-transparent border-none p-0 focus:ring-0 focus:text-slate-700"
+                className="w-full text-sm text-slate-500 bg-transparent border-none p-0 focus:ring-0"
                 value={service.description}
                 onChange={(e) => updateServiceLocal(i, "description", e.target.value)}
                 onBlur={commitService}
+                placeholder="Description..."
               />
             </div>
-
-            {/* Price */}
-            <div className="col-span-2 text-right font-bold text-blue-600 flex justify-end">
-              ₱
+            <div className="col-span-2 text-right flex justify-end items-center font-bold text-blue-600">
+              <span className="mr-1">₱</span>
               <input
                 type="number"
-                className="w-24 text-right bg-transparent border-none p-0 focus:ring-0 font-bold text-blue-600"
+                className="w-20 text-right bg-transparent border-none p-0 focus:ring-0"
                 value={service.cost}
-                onChange={(e) => updateServiceLocal(i, "cost", Number(e.target.value))}
+                onChange={(e) => updateServiceLocal(i, "cost", parseInt(e.target.value) || 0)}
                 onBlur={commitService}
               />
             </div>
-
-            {/* Delete */}
             <div className="col-span-1 flex justify-end">
-              <button
-                onClick={() => removeService(i)}
-                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition"
-              >
+              <button onClick={() => removeService(i)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition">
                 <Trash2 size={16} />
               </button>
             </div>
           </div>
         ))}
 
-        {/* Add Row Footer */}
         <div className="border-t border-slate-100 px-6 py-3">
-          <button
-            onClick={addService}
-            className="text-sm text-blue-600 font-semibold hover:text-blue-800 transition"
-          >
+          <button onClick={addService} className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-800 transition">
             + Add another service
           </button>
         </div>
-
         <div ref={servicesEndRef} />
       </div>
     </div>

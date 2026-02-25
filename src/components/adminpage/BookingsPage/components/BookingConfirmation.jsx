@@ -39,16 +39,16 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
           <h3 className="text-[10px] font-black text-black uppercase tracking-widest mb-4 border-b pb-1">Section 1: Details</h3>
           <div className="grid grid-cols-2 gap-x-12 gap-y-3">
              <DetailRow label="Guest Name" value={data?.guestName || "________________"} />
-             <DetailRow label="Area" value={data?.area || "Location 1"} />
-             <DetailRow label="Address" value={data?.address || "N/A"} />
-             <DetailRow label="# of Pax" value={data?.pax || "0"} />
+             <DetailRow label="Area" value={data?.area || ""} />
+             <DetailRow label="Address" value={data?.address || ""} />
+             <DetailRow label="# of Pax" value={data?.pax || ""} />
              <DetailRow label="Location" value={data?.location} />
              <DetailRow label="Rates (PHP)" value={data?.rates?.toLocaleString()} />
              <DetailRow label="Check-In" value={data?.checkInDate} />
-             <DetailRow label="Check-In Time" value="2:00 PM" />
+             <DetailRow label="Check-In Time" value={data?.checkInTime} />
              <DetailRow label="Check-Out" value={data?.checkOutDate} />
-             <DetailRow label="Check-Out Time" value="12:00 PM" />
-             <DetailRow label="Agent" value={data?.agent || "Direct"} />
+             <DetailRow label="Check-Out Time" value={data?.checkOutTime} />
+             <DetailRow label="Agent" value={data?.agent || ""} />
           </div>
         </div>
 

@@ -31,19 +31,19 @@ export default function ContactFormModal({
           <input
             type="text"
             placeholder="Your Name"
-            className="w-full bg-black/20 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
           />
 
           <input
             type="email"
             placeholder="Your Email"
-            className="w-full bg-black/20 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
           />
 
           <textarea
             placeholder="Your Message"
             rows="4"
-            className="w-full bg-black/20 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
           />
 
           <button
