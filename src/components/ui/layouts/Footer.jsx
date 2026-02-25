@@ -73,12 +73,12 @@ export default function Footer() {
 
       {/* --- MODAL --- */}
       {open && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50">
+        <div className="fixed inset-0 flex justify-center items-center z-50">
           <ContactModal
             open={open}
             onClose={() => setOpen(false)}
-            panelClass="bg-gray-900 text-white"
-            overlayClass="bg-black/70 backdrop-blur-md"
+            panelClass="bg-white text-black"
+            overlayClass="bg-black/70 backdrop-blur-sm"
           />
 
         </div>
