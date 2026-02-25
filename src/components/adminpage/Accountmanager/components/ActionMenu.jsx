@@ -71,7 +71,7 @@ export default function ActionMenu({ account, onViewResort }) {
             <div className="md:hidden w-10 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
             
             <div className="p-2 md:border-b md:border-slate-100">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 px-2">
                 Owner Actions
               </p>
             </div>
@@ -79,20 +79,20 @@ export default function ActionMenu({ account, onViewResort }) {
             <div className="p-1">
               <button 
     onClick={() => router.push(`/admin/accounts/${account.id}/edit`)}
-    className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold"
+    className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold"
   >
                 <Edit3 size={16} /> Edit Profile
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold">
+              <button className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold">
                 <KeyRound size={16} /> Reset Password
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold">
+              <button className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold">
                 <Mail size={16} /> Send Message
               </button>
             </div>
 
             <div className="p-2 md:border-t md:border-slate-100">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 px-2">
                 Platform
               </p>
             </div>

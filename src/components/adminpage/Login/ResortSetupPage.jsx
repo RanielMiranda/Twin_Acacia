@@ -47,7 +47,7 @@ export default function ResortSetupPage() {
             <TermsCheckbox />
 
 {/* Add a wrapper div with these classes */}
-<div className="sticky bottom-0 bg-slate-50 pt-4 pb-6 mt-auto">
+<div className="bottom-0 bg-slate-50 pt-4 pb-6 mt-auto">
   <Button 
     disabled={isSubmitting}
     className="w-full h-16 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-lg font-bold shadow-xl transition-all flex items-center justify-center gap-3"
@@ -162,7 +162,7 @@ function SuccessState({ resortName, onGoHome }) {
         </div>
         <h1 className="text-3xl font-black text-slate-900 mb-4">You're all set!</h1>
         <p className="text-slate-500 mb-8 font-medium">
-          Your account is verified and {resortName} is now live.
+          Your account is verified has been verified.
         </p>
         <Button 
           onClick={onGoHome}

@@ -63,22 +63,37 @@ export default function Dashboard() {
     }
   };
 
-  const handleToggleVisibility = async (id, currentValue) => {
+const handleToggleVisibility = async (id, currentValue) => {
+    // 1. Browser confirmation popup
+    const action = currentValue ? "hide" : "show";
+    const confirmed = window.confirm(`Are you sure you want to ${action} this resort?`);
+
+    // Guard clause: stop if user clicks 'Cancel'
+    if (!confirmed) return;
+
     try {
+      console.log(`Attempting to toggle visibility for ID: ${id}...`);
+
       const { error } = await supabase
         .from("resorts")
         .update({ visible: !currentValue })
         .eq("id", id);
+
       if (error) throw error;
 
       // Update local state so the card re-renders immediately
       setResorts(prev =>
         prev.map(r => (r.id === id ? { ...r, visible: !currentValue } : r))
       );
+      
+      console.log("Visibility updated successfully.");
+
     } catch (err) {
+      console.error("Supabase Update Error:", err.message);
       alert("Failed to toggle visibility: " + err.message);
     }
   };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto pt-10">
