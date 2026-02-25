@@ -65,35 +65,75 @@ export const ResortProvider = ({ children }) => {
 
   const saveResort = useCallback(async () => {
     if (!resort) return;
+
     setLoading(true);
+
     try {
       const rName = resort.name;
-      
-      const updatedProfileImage = resort.profileImage instanceof File 
-        ? await uploadImage(resort.profileImage, rName, "profileImage") 
-        : resort.profileImage;
+      const safeResortName = rName.replace(/\s+/g, "-").toLowerCase();
 
+      // Fetch existing resort to compare old images
+      const { data: existingResort } = await supabase
+        .from("resorts")
+        .select("gallery")
+        .eq("id", resort.id)
+        .single();
+
+      const oldGallery = existingResort?.gallery || [];
+
+      // Upload profile image
+      const updatedProfileImage =
+        resort.profileImage instanceof File
+          ? await uploadImage(resort.profileImage, rName, "profileImage")
+          : resort.profileImage;
+
+      // Upload hero/gallery images
       const updatedGallery = await Promise.all(
-        (resort.gallery || []).map(async (item) => 
-          item instanceof File ? await uploadImage(item, rName, "hero") : item
+        (resort.gallery || []).map(async (item) =>
+          item instanceof File
+            ? await uploadImage(item, rName, "hero")
+            : item
         )
       );
 
+      // Delete removed gallery images from storage
+      const removedImages = oldGallery.filter(
+        (img) => !updatedGallery.includes(img)
+      );
+
+      if (removedImages.length > 0) {
+        const pathsToDelete = removedImages.map((url) => {
+          const urlParts = url.split(
+            `/storage/v1/object/public/${BUCKET_NAME}/`
+          );
+          return urlParts[1];
+        });
+
+        await supabase.storage.from(BUCKET_NAME).remove(pathsToDelete);
+      }
+
+      // Facilities
       const updatedFacilities = await Promise.all(
         (resort.facilities || []).map(async (f) => ({
           ...f,
-          image: f.image instanceof File ? await uploadImage(f.image, rName, "facilities") : f.image
+          image:
+            f.image instanceof File
+              ? await uploadImage(f.image, rName, "facilities")
+              : f.image,
         }))
       );
 
+      // Rooms
       const updatedRooms = await Promise.all(
         (resort.rooms || []).map(async (room) => ({
           ...room,
           gallery: await Promise.all(
-            (room.gallery || []).map(async (img) => 
-              img instanceof File ? await uploadImage(img, rName, "rooms", room.name) : img
+            (room.gallery || []).map(async (img) =>
+              img instanceof File
+                ? await uploadImage(img, rName, "rooms", room.name)
+                : img
             )
-          )
+          ),
         }))
       );
 
@@ -102,14 +142,18 @@ export const ResortProvider = ({ children }) => {
         profileImage: updatedProfileImage,
         gallery: updatedGallery,
         facilities: updatedFacilities,
-        rooms: updatedRooms
+        rooms: updatedRooms,
       };
 
-      const { error } = await supabase.from("resorts").upsert(finalPayload);
+      const { error } = await supabase
+        .from("resorts")
+        .upsert(finalPayload);
+
       if (error) throw error;
 
       setResort(finalPayload);
       localStorage.removeItem("resort_builder_draft");
+
       return true;
     } catch (err) {
       alert("Error saving: " + err.message);

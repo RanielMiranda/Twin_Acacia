@@ -51,11 +51,11 @@ export default function ResortBuilder({ resortId }) {
       <ServicesEditor />
       <RoomsEditor />
 
-      <div className="fixed bottom-6 right-6 flex items-center justify-center">
+      <div className="fixed bottom-6 right-6 z-100 flex items-center justify-center">
         <Button
           onClick={handleSave}
           disabled={loading} // Disable button while uploading images
-          className="flex items-center gap-2 px-6 py-2 shadow-lg rounded-full transition-all active:scale-95"
+          className="flex items-center hover:scale-105 gap-2 px-6 py-2 shadow-lg rounded-full transition-all active:scale-95"
         >
           {loading ? (
             <>

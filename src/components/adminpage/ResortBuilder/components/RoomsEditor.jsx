@@ -148,7 +148,7 @@ export default function RoomsEditor() {
 
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold text-slate-800">Available Rooms</h2>
-        <Button onClick={addRoom} className="rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center">
+        <Button onClick={addRoom} className="rounded-full hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center">
           <Plus size={16} className="mr-2"/> Add Room
         </Button>
       </div>

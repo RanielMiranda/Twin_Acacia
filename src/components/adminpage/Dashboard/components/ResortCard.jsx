@@ -70,8 +70,8 @@ export default function ResortCard({ resort, onDelete }) {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => onDelete(resort.name)}
-            className="rounded-lg border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+            onClick={() => onDelete(resort.id, resort.name)} // Pass both ID and Name
+            className="rounded-lg border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex items-center justify-center"
           >
             <Trash2 className="h-4 w-4" />
           </Button>

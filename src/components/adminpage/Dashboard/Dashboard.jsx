@@ -1,30 +1,49 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
-import { Plus, LayoutDashboard } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Plus, LayoutDashboard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import ResortCard from "./components/ResortCard";
 import ResortStats from "./components/ResortStats";
-import { resorts as resortsData } from "@/components/data/resorts";
 
 import { useResort } from "@/components/useclient/ContextEditor";
+import { supabase } from "@/lib/supabase"; // Import your supabase client
 import resortInitialData from "@/components/adminpage/ResortBuilder/data/ResortInitialData";
 
-
 export default function Dashboard() {
-  const [resorts, setResorts] = useState(resortsData);
+  const [resorts, setResorts] = useState([]);
+  const [fetching, setFetching] = useState(true); // Track initial load
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const { resetResort } = useResort();
 
-  // Filter resorts based on search
+  // Fetch data from Database on mount
+  useEffect(() => {
+    const fetchResorts = async () => {
+      setFetching(true);
+      try {
+        const { data, error } = await supabase
+          .from("resorts")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setResorts(data || []);
+      } catch (err) {
+        console.error("Error fetching resorts:", err.message);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchResorts();
+  }, []);
+
   const filteredResorts = resorts.filter((r) =>
-    r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.location.toLowerCase().includes(searchTerm.toLowerCase())
+    r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddNew = () => {
@@ -32,24 +51,30 @@ export default function Dashboard() {
     router.push("/admin/resort-builder");
   };
 
-  const handleDelete = (name) => {
+  const handleDelete = async (id, name) => {
     if (window.confirm(`Are you sure you want to remove ${name}?`)) {
-      setResorts(resorts.filter(r => r.name !== name));
+      try {
+        const { error } = await supabase.from("resorts").delete().eq("id", id);
+        if (error) throw error;
+        setResorts(resorts.filter((r) => r.id !== id));
+      } catch (err) {
+        alert("Failed to delete: " + err.message);
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto pt-10">
-
-        {/* Header + Add New */}
+        
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
               <LayoutDashboard className="text-blue-600" />
               Resort Management
             </h1>
-            <p className="text-slate-500 mt-1">Manage, edit, and add new properties to your directory.</p>
+            <p className="text-slate-500 mt-1">Manage live properties from your database.</p>
           </div>
 
           <Button 
@@ -61,30 +86,33 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Stats + Search */}
         <ResortStats 
           total={resorts.length} 
           searchTerm={searchTerm} 
           setSearchTerm={setSearchTerm} 
         />
 
-        {/* Resort Cards */}
+        {/* Resort Cards Grid */}
         <div className="grid grid-cols-1 gap-4 mt-4">
-          {filteredResorts.length > 0 ? (
+          {fetching ? (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+              <Loader2 className="animate-spin mb-2" />
+              <p>Loading resorts...</p>
+            </div>
+          ) : filteredResorts.length > 0 ? (
             filteredResorts.map((resort) => (
               <ResortCard 
-                key={resort.name} 
+                key={resort.id} 
                 resort={resort} 
-                onDelete={handleDelete} 
+                onDelete={() => handleDelete(resort.id, resort.name)} 
               />
             ))
           ) : (
             <div className="text-center py-20 bg-white rounded-2xl shadow-sm border-2 border-dashed border-slate-200">
-              <p className="text-slate-400">No resorts found matching your search.</p>
+              <p className="text-slate-400">No resorts found in the database.</p>
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

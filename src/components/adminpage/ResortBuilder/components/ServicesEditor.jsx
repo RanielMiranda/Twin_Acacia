@@ -41,10 +41,10 @@ export default function ServicesEditor() {
   };
 
   return (
-    <div id="extra-services" className="max-w-5xl mx-auto mt-10 px-4">
+    <div id="extra-services" className="max-w-6xl mx-auto mt-10 px-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Extra Services</h2>
-        <Button onClick={addService} className="rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center">
+        <Button onClick={addService} className="rounded-full hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center">
           <Plus size={16} className="mr-2" /> Add Service
         </Button>
       </div>
@@ -95,7 +95,7 @@ export default function ServicesEditor() {
         ))}
 
         <div className="border-t border-slate-100 px-6 py-3">
-          <button onClick={addService} className="text-sm text-blue-600 font-semibold hover:text-blue-800 transition">
+          <button onClick={addService} className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-800 transition">
             + Add another service
           </button>
         </div>
