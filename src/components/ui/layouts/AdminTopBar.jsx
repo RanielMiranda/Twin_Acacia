@@ -3,72 +3,48 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Menu, X, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, Menu, X, ArrowLeft, Settings2 } from "lucide-react";
 
 export default function AdminTopBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  const isAdminDashboard = pathname === "/admin/dashboard";
-  const isResortBuilder = pathname === "/admin/resortbuilder";
-  const isAccountManager = pathname === "/admin/accounts";
-
-  const closeMenu = () => setIsMenuOpen(false);
+  const navLinks = [
+    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Accounts", href: "/admin/accounts", icon: Users },
+    { name: "Setup Preview", href: "/auth/setup-resort", icon: Settings2 }, // Added Link
+  ];
 
   return (
     <div className="w-full bg-white shadow-sm border-b border-slate-200 fixed top-0 left-0 z-[100]">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        
         <div className="flex items-center gap-6">
-          <Link
-            href="/admin/dashboard"
-            className="text-2xl font-bold text-blue-600 cursor-pointer flex items-center gap-2"
-          >
+          <Link href="/admin/dashboard" className="text-2xl font-bold text-blue-600 flex items-center gap-2">
             🍃 Twin Acacia
           </Link>
-          
-          <div className="hidden md:block h-6 w-[1px] bg-slate-200" />
-          
           <span className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded">
             Admin Portal
           </span>
         </div>
 
         <div className="hidden md:flex gap-2 font-medium items-center">
-          <Link
-            href="/admin/dashboard"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isAdminDashboard ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
-            }`}
-          >
-            <LayoutDashboard size={18} />
-            Dashboard
-          </Link>
-
-          <Link
-            href="/admin/accounts"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isAccountManager ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
-            }`}
-          >
-            <Users size={18} />
-            Accounts
-          </Link>
-          
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                pathname === link.href ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <link.icon size={18} />
+              {link.name}
+            </Link>
+          ))}
           <div className="w-[1px] h-6 bg-slate-200 mx-2" />
-          
-          <Link 
-            href="/"
-            className="text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors px-2"
-          >
-            Back to Site
-          </Link>
+          <Link href="/" className="text-slate-500 hover:text-blue-600 text-sm font-bold">Back to Site</Link>
         </div>
 
-        <button
-          className="md:hidden p-2 text-slate-600"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
+        <button className="md:hidden p-2 text-slate-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>

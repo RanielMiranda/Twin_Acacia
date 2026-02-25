@@ -29,7 +29,7 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
       // 3. Logic: In production, this calls your API. 
       // For now, let's close the modal and go to the setup page.
       onClose();
-      router.push("/auth/setup-resort"); 
+      router.push("/owner/dashboard/"); 
     } else {
       nextStep();
     }
