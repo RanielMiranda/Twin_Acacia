@@ -13,7 +13,7 @@ export default function AccountCard({ account, onToggleStatus, onApprove, onView
   };
 
   return (
-    <Card className="p-4 bg-white border-none hover:shadow-xl transition-all duration-300 rounded-3xl group relative">
+    <Card className="p-4 bg-white shadow-md  hover:shadow-xl transition-all duration-300 rounded-3xl group relative">
       <div className="flex flex-col lg:flex-row lg:items-center gap-6">
         
         {/* 1. Identity Section */}

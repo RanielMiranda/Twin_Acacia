@@ -88,7 +88,7 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
               <div className="space-y-1">
                 <label className="text-xs font-black uppercase text-slate-400 ml-1">Resort Name</label>
-                <input type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Seaside Serenity Resort" />
+                <input type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none" placeholder="kasbah Villa" />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-black uppercase text-slate-400 ml-1">Business Address</label>

@@ -31,6 +31,10 @@ export default function OwnerDashboard() {
     router.push("/resort/Kasbah%20Villa%20-%20Hot%20Spring%20Resort")
   }
 
+  const handleBookings = () => {
+    router.push("/edit/bookings/1");
+  }
+
   const statusColor = {
     Draft: "bg-amber-100 text-amber-700",
     "Pending Approval": "bg-blue-100 text-blue-700",
@@ -143,7 +147,9 @@ export default function OwnerDashboard() {
                 Bookings
               </h3>
 
-              <Button className="w-full mt-4 rounded-xl h-11 font-semibold flex items-center justify-center">
+              <Button 
+              onClick={handleBookings}
+              className="w-full mt-4 rounded-xl h-11 font-semibold flex items-center justify-center">
                 <CalendarDays size={18} className="mr-2" />
                 Manage Bookings
               </Button>

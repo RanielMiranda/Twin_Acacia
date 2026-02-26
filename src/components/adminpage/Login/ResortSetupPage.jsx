@@ -57,8 +57,6 @@ export default function ResortSetupPage() {
             </Button>
           </div>
           </form>
-
-          <SecurityFooter />
         </div>
       </main>
     </div>
@@ -79,7 +77,7 @@ function BrandingSidebar({ resortName }) {
         </div>
         <h1 className="text-4xl font-black mb-6 leading-tight">Welcome to the <br />Partner Network.</h1>
         <p className="text-blue-100 text-lg font-medium max-w-xs">
-          Just a few more steps to secure your account and start managing {resortName}.
+          Just a few more steps to secure your account and start managing your resort.
         </p>
       </div>
       <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-50" />
@@ -143,15 +141,6 @@ function TermsCheckbox() {
   );
 }
 
-{/* Section: Security Message */}
-function SecurityFooter() {
-  return (
-    <div className="mt-12 flex items-center justify-center gap-2 text-slate-400">
-      <ShieldCheck size={16} />
-      <span className="text-xs font-bold uppercase tracking-widest">End-to-End Encrypted Setup</span>
-    </div>
-  );
-}
 
 {/* Section: Success State Screen */}
 function SuccessState({ resortName, onGoHome }) {
