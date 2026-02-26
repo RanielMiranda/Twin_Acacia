@@ -9,7 +9,7 @@ export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
   const router = useRouter();
 
   return (
-    <div className="p-4 bg-white border-none hover:shadow-xl transition-all duration-300 rounded-3xl group relative mb-4 font-sans">
+    <div className="p-4 bg-white border-none shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl group relative mb-4 font-sans">
       <div className="flex flex-col lg:flex-row lg:items-center gap-6">
         
         {/* 1. Identity Section */}
@@ -56,22 +56,10 @@ export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
             <Calendar size={14} /> Bookings
           </button>
 
-          {/* Visibility Toggle (With Background Colors) */}
-          <button 
-            onClick={() => onToggleVisibility(resort.id, resort.visible)}
-            className={`hover:scale-105 transition-all h-10 px-4 font-bold text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-sm ${
-              resort.visible 
-                ? 'bg-green-500 hover:bg-green-600 text-white' 
-                : 'bg-amber-500 hover:bg-amber-600 text-white'
-            }`}
-          >
-            {resort.visible ? "Visible" : "Hidden"}
-          </button>
-
           <div className="w-[2px] h-6 bg-slate-100 mx-1" />
 
           {/* Triple Dot Menu (Assign & Delete) */}
-          <ResortActionMenu resort={resort} onDelete={onDelete} />
+          <ResortActionMenu resort={resort} onDelete={onDelete} onToggleVisibility={onToggleVisibility} />
         </div>
       </div>
     </div>

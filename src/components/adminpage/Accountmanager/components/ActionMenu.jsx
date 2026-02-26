@@ -51,7 +51,7 @@ export default function ActionMenu({ account, onViewResort }) {
         <>
           {/* Mobile backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/30 md:hidden"
+            className="fixed inset-0 z-40 font-bold/30 md:hidden"
             onClick={() => setIsOpen(false)}
           />
           
@@ -71,7 +71,7 @@ export default function ActionMenu({ account, onViewResort }) {
             <div className="md:hidden w-10 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
             
             <div className="p-2 md:border-b md:border-slate-100">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 px-2">
+              <p className="text-[10px] font-bold uppercase text-slate-600 px-2">
                 Owner Actions
               </p>
             </div>
@@ -92,7 +92,7 @@ export default function ActionMenu({ account, onViewResort }) {
             </div>
 
             <div className="p-2 md:border-t md:border-slate-100">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 px-2">
+              <p className="text-[10px] font-bold uppercase text-slate-600 px-2">
                 Platform
               </p>
             </div>

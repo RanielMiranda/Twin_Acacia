@@ -12,7 +12,7 @@ export default function AdminTopBar() {
   const navLinks = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Accounts", href: "/admin/accounts", icon: Users },
-    { name: "Setup Preview", href: "/auth/setup-resort", icon: Settings2 }, // Added Link
+    { name: "Owner Dashboard", href: "/owner/dashboard", icon: Settings2 }, // Added Link
   ];
 
   return (

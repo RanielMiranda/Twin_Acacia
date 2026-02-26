@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Edit2, Trash2, UserPlus, Check, X, MoreVertical } from "lucide-react";
+import { Eye, Trash2, UserPlus, Check, X, MoreVertical } from "lucide-react";
 
-export default function ResortActionMenu({ resort, onDelete }) {
+export default function ResortActionMenu({ resort, onDelete, onToggleVisibility }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const dropdownRef = useRef(null);
@@ -45,16 +45,22 @@ export default function ResortActionMenu({ resort, onDelete }) {
       {/* Custom Dropdown Menu */}
       {showDropdown && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 p-2 animate-in fade-in zoom-in duration-200">
-          
           <button 
-            className="w-full flex items-center gap-2 p-3 text-left hover:bg-blue-50 rounded-xl font-medium text-blue-600 text-sm"
+            className="w-full flex items-center gap-2 p-3 text-left hover:bg-blue-50 rounded-xl font-bold text-green-600 text-sm"
+            onClick={() => { setShowModal(true); setShowDropdown(false); }}
+          >
+            <Eye size={16} /> Set Visibility
+          </button>
+
+          <button 
+            className="w-full flex items-center gap-2 p-3 text-left hover:bg-blue-50 rounded-xl font-bold text-blue-600 text-sm"
             onClick={() => { setShowModal(true); setShowDropdown(false); }}
           >
             <UserPlus size={16} /> Assign Owner
           </button>
           
           <button 
-            className="w-full flex items-center gap-2 p-3 text-left hover:bg-red-50 rounded-xl font-medium text-red-500 text-sm"
+            className="w-full flex items-center gap-2 p-3 text-left hover:bg-red-50 rounded-xl font-bold text-red-500 text-sm"
             onClick={() => { onDelete(resort.id, resort.name); setShowDropdown(false); }}
           >
             <Trash2 size={16} /> Delete Resort
