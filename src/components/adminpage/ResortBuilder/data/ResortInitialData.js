@@ -42,7 +42,7 @@ const resortInitialData = {
       gallery: [
         ""
       ],
-      tags: ["Airconditioned", "Toilet"]
+      tags: ["Air Conditioning", "Toilet", "Bath", "Blanket"] 
     }
   ]
 };
