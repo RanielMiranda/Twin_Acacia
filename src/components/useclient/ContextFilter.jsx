@@ -23,6 +23,7 @@ export function FilterProvider({ children }) {
       const { data, error } = await supabase
         .from("resorts")
         .select("*")
+        .eq("visible", true)
         .order("created_at", { ascending: false });
 
       if (error) console.error("Filter fetch error:", error.message);

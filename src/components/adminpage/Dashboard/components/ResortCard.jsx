@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MapPin, Edit2, Calendar } from "lucide-react";
+import { MapPin, Edit2, Calendar, Eye, EyeOff } from "lucide-react";
 import ResortActionMenu from "./ResortActionMenu";
 import { useRouter } from "next/navigation";
 
@@ -38,7 +38,18 @@ export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
           </div>
         </div>
 
-        {/* 3. Action Bar*/}
+        {/* 3. Actions Bar*/}
+        {/* Visibility */}
+        <div className="min-w-0 flex items-center">
+          {resort.visible ? (
+            <Eye size={16} className="text-slate-500" />
+          ) : (
+            <EyeOff size={16} className="text-slate-500" />
+          )}
+        </div>        
+
+        <div className="w-[2px] h-6 bg-slate-100 mx-1" />
+                  
         <div className="flex items-center justify-end gap-2 border-t lg:border-t-0 pt-4 lg:pt-0 shrink-0">
           {/* Edit Button */}
           <button 

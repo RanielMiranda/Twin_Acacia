@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, LayoutDashboard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast/useToast";
 
 import ResortCard from "./components/ResortCard";
 import SearchBar from "./components/SearchBar"; // Import
@@ -81,6 +82,37 @@ export default function Dashboard() {
       r.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleToggleVisibility = async (id, currentValue) => {
+    // 1. Browser confirmation popup
+    const action = currentValue ? "hide" : "show";
+    const confirmed = window.confirm(`Are you sure you want to ${action} this resort?`);
+
+    // Guard clause: stop if user clicks 'Cancel'
+    if (!confirmed) return;
+
+    try {
+      console.log(`Attempting to toggle visibility for ID: ${id}...`);
+
+      const { error } = await supabase
+        .from("resorts")
+        .update({ visible: !currentValue })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // Update local state so the card re-renders immediately
+      setResorts(prev =>
+        prev.map(r => (r.id === id ? { ...r, visible: !currentValue } : r))
+      );
+      
+      console.log("Visibility updated successfully.");
+
+    } catch (err) {
+      console.error("Supabase Update Error:", err.message);
+      alert("Failed to toggle visibility: " + err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto pt-10">
@@ -138,7 +170,7 @@ export default function Dashboard() {
               </div>
             ) : filteredResorts.length > 0 ? (
               filteredResorts.map((resort) => (
-                <ResortCard key={resort.id} resort={resort} onDelete={fetchResorts} onToggleVisibility={fetchResorts} />
+                <ResortCard key={resort.id} resort={resort} onDelete={fetchResorts} onToggleVisibility={handleToggleVisibility} />
               ))
             ) : (
               <div className="text-center py-20 bg-white rounded-2xl shadow-sm border-2 border-dashed border-slate-200">
