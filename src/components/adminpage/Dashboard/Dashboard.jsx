@@ -14,7 +14,7 @@ import resortInitialData from "@/components/adminpage/ResortBuilder/data/ResortI
 
 export default function Dashboard() {
   const [resorts, setResorts] = useState([]);
-  const [fetching, setFetching] = useState(true); // Track initial load
+  const [fetching, setFetching] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const { resetResort } = useResort();

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { X, User, Building2, Shield, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/toast/useToast";
 
 export default function InviteOwnerModal({ isOpen, onClose }) {
   const router = useRouter();
@@ -131,9 +132,17 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
             </Button>
           )}
           <Button 
-            onClick={step === 3 ? onClose : nextStep}
+            onClick={() => {
+            if(step === 3){
+              toast(`New email link has been sent to name@email.com`),
+              "green";
+              onClose();
+            } else {
+              nextStep();
+            }
+            }}
             className={`flex items-center justify-center h-12 rounded-2xl font-bold shadow-lg transition-all ${
-              step === 3 ? "bg-green-500 hover:bg-green-600" : "bg-blue-600 hover:bg-blue-700"
+            step === 3 ? "bg-green-500 hover:bg-green-600" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {step === 3 ? "Send Invitation" : "Continue"} 

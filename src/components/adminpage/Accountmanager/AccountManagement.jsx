@@ -9,6 +9,8 @@ import { resorts as resortsData } from "@/components/data/resorts";
 import AccountCard from "./components/AccountCard";
 import InviteOwnerModal from "./components/InviteOwnerModal";
 
+import Toast from "@/components/ui/toast/Toast";
+
 export default function AccountManagement() {
   const router = useRouter();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -53,6 +55,10 @@ export default function AccountManagement() {
     const matchesFilter = filterStatus === "All" || acc.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  const pendingCount = accounts.filter(
+    acc => acc.status === "Pending"
+  ).length;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 pt-20 my-20">
@@ -106,15 +112,35 @@ export default function AccountManagement() {
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex p-1.5 bg-slate-200/50 rounded-2xl gap-1">
+          <div className="flex p-1.5 bg-white shadow-md rounded-2xl gap-1">
             {["All", "Active", "Pending", "Suspended"].map((status) => (
               <button
-                key={status} onClick={() => setFilterStatus(status)}
-                className={`px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-tighter transition-all ${
-                  filterStatus === status ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`relative px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-tighter transition-all ${
+                  filterStatus === status
+                    ? "bg-slate-200 text-blue-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700 "
                 }`}
               >
+
                 {status}
+
+                {/* Pending Notification Badge */}
+                {status === "Pending" && pendingCount > 0 && (
+                  <span className="
+                    absolute -top-1 -right-1
+                    min-w-[18px] h-[18px]
+                    px-1
+                    flex items-center justify-center
+                    text-[10px] font-bold
+                    text-white
+                    bg-red-500
+                    rounded-full
+                  ">
+                    {pendingCount}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -140,6 +166,7 @@ export default function AccountManagement() {
           )}
         </div>
       </div>
+      <Toast />
     </div>
   );
 }
