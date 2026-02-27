@@ -9,7 +9,7 @@ export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
   const router = useRouter();
 
   return (
-    <div className="p-4 bg-white border-none shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl group relative mb-4 font-sans">
+    <div className="p-4 bg-white border-none shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl group relative mb-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-6">
         
         {/* 1. Identity Section */}
@@ -22,7 +22,7 @@ export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
             />
           </div>
           <div className="min-w-0">
-            <h3 className="font-bold text-slate-900 truncate tracking-tight text-lg ">
+            <h3 className="font-bold text-slate-900 tracking-tight text-lg ">
               {resort.name}
             </h3>
           </div>
@@ -32,7 +32,7 @@ export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-slate-500">
             <MapPin size={16} className="shrink-0 text-slate-400" />
-            <span className="text-sm font-semibold truncate leading-none">
+            <span className="text-sm font-semibold leading-none">
               {resort.location || "No location set"}
             </span>
           </div>
@@ -54,7 +54,7 @@ export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
           {/* Edit Button */}
           <button 
             onClick={() => router.push(`/edit/resort-builder/${resort.id}`)}
-            className="hover:scale-105 flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl h-10 px-4 font-bold text-[10px] uppercase tracking-widest transition-all"
+            className="hover:scale-105 flex items-center gap-2 bg-slate-300 hover:bg-slate-400 text-slate-700 rounded-xl h-10 px-4 font-bold text-[10px] uppercase transition-all"
           >
             <Edit2 size={14} /> Edit
           </button>
@@ -62,7 +62,7 @@ export default function ResortCard({ resort, onDelete, onToggleVisibility }) {
           {/* Bookings Button */}
           <button 
             onClick={() => router.push(`/edit/bookings/${resort.id}`)}
-            className="hover:scale-105 flex items-center gap-2 bg-blue-600 hover:bg-blue-800 text-white rounded-xl h-10 px-4 font-bold text-[10px] uppercase tracking-widest shadow-md transition-all"
+            className="hover:scale-105 flex items-center gap-2 bg-blue-600 hover:bg-blue-800 text-white rounded-xl h-10 px-4 font-bold text-[10px] uppercase shadow-md transition-all"
           >
             <Calendar size={14} /> Bookings
           </button>

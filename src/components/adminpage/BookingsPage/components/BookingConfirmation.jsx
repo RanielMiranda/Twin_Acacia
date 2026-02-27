@@ -10,7 +10,7 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
   return (
     <div className="max-w-4xl mx-auto space-y-6 mt-[10vh]">
       <div className="flex justify-between items-center no-print">
-        <Button variant="ghost" onClick={onBack}>← Back to List</Button>
+        <Button variant="default" className = "hover:scale-105"onClick={onBack}>← Back to List</Button>
         
         <div className="flex gap-3 items-center">
           {/* Status Badge */}
@@ -21,8 +21,8 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
             {data?.status || "Pending Inquiry"}
           </div>
           
-          <Button onClick={() => window.print()} className="bg-blue-600 flex items-center justify-center">
-            <Printer size={16} className="mr-2 " /> Print Form
+          <Button onClick={() => window.print()} className="bg-blue-600 hover:scale-105 flex items-center justify-center">
+            <Printer size={16} className="mr-2" /> Print Form
           </Button>
         </div>
       </div>
@@ -101,6 +101,20 @@ export default function BookingConfirmation({ data, resortName, onBack }) {
            </div>
         </div>
       </Card>
+
+    {data?.status === "Inquiry" && (
+      <div className="flex items-center justify-center gap-4 mt-6">
+        <Button className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-6 shadow-sm shadow-emerald-100">
+          Approve
+        </Button>
+        <Button
+          variant=""
+          className="rounded-xl px-6"
+        >
+          Decline
+        </Button>
+      </div>
+    )}
     </div>
   );
 }

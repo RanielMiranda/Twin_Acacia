@@ -73,9 +73,9 @@ export default function AccountCard({ account, onToggleStatus, onApprove, onView
           {account.status !== "Pending" ? (
           <Button 
             onClick={() => onToggleStatus(account.id)}
-            className={`rounded-xl h-10 px-4 font-bold text-[10px] uppercase text-white ${
+            className={`rounded-xl h-10 px-4 font-bold text-[10px] hover:scale-105 uppercase text-white ${
               account.status === 'Active'
-                ? 'bg-red-400 hover:bg-red-500'
+                ? 'bg-red-500 hover:bg-red-600'
                 : 'bg-green-500 hover:bg-green-600'
             }`}
           >
@@ -84,7 +84,8 @@ export default function AccountCard({ account, onToggleStatus, onApprove, onView
           ) : (
             <Button 
               onClick={() => onApprove(account.id)} 
-              className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl h-10 px-4 font-bold text-[10px] flex items-center justify-center uppercase shadow-md">
+              variant = ""
+              className="bg-amber-500 hover:bg-amber-600 hover:scale-105 text-white rounded-xl h-10 px-4 font-bold text-[10px] flex items-center justify-center uppercase shadow-md">
               Approve
             </Button>
           )}

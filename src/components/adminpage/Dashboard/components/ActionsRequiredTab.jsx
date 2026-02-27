@@ -34,7 +34,7 @@ export default function ActionsRequiredTab({
     support: [{ 
       id: "fake-3", 
       title: "Booking Issue", 
-      content: "Customer reported a double charge on reservation #4412", 
+      content: "Customer reported a double charge on reservation #1", 
       requestedBy: "Celeste Resort",
       isFake: true 
     }]

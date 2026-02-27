@@ -118,7 +118,7 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
               <div className="mt-6 p-4 bg-blue-50 rounded-2xl text-left border border-blue-100">
                 <p className="text-xs font-bold text-blue-600 uppercase mb-1">Summary</p>
                 <p className="text-sm font-medium text-slate-700">Owner: John Doe</p>
-                <p className="text-sm font-medium text-slate-700">Resort: Seaside Serenity</p>
+                <p className="text-sm font-medium text-slate-700">Resort: Kasbah Villa</p>
               </div>
             </div>
           )}

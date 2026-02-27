@@ -60,7 +60,6 @@ export default function BookingsPage() {
       </section>
 
       <section>
-        {/* Pass the openForm function to RentalManager */}
         <RentalManager onOpenForm={openForm} />
       </section>
     </div>

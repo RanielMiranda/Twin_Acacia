@@ -1,7 +1,8 @@
+"use client";
 import React, { useState } from "react";
 import { 
   Inbox, CheckCircle2, AlertCircle, 
-  Mail, Calendar, FileText
+  Mail, Calendar, FileText, Edit2
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,7 +121,16 @@ export default function RentalManager({ onOpenForm }) {
                   {activeTab === "inbox" && (
                     <>
                       <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-4 shadow-sm shadow-emerald-100">Approve</Button>
-                      <Button size="sm" variant="ghost" className="text-slate-400 hover:text-rose-600 rounded-xl">Decline</Button>
+                      <Button size="sm" variant="" className="bg-red-500 text-white hover:bg-red-600 rounded-xl">Decline</Button>
+                    </>
+                  )}
+                  {activeTab === "confirmed" && (
+                    <>
+                    <Button size="sm" variant = "" 
+                     className="hover:scale-105 flex items-center gap-2 bg-slate-200 hover:bg-slate-400 text-slate-700 rounded-xl h-10 px-4 font-bold transition-all"
+                    >
+                      <Edit2 size={14} /> Edit Details
+                    </Button>
                     </>
                   )}
                   {activeTab === "overdue" && (
