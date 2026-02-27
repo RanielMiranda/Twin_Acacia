@@ -21,9 +21,9 @@ export default function ResortActionMenu({ resort, onDelete, onToggleVisibility 
   const dropdownRef = useRef(null);
 
   const [owners, setOwners] = useState([
-    { id: 1, name: "John Doe", assigned: true },
-    { id: 2, name: "Sarah Smith", assigned: false },
-    { id: 3, name: "Mike Ross", assigned: false },
+    { id: 1, name: "Owner 1", assigned: true },
+    { id: 2, name: "Owner 2", assigned: false },
+    { id: 3, name: "Owner 3", assigned: false },
   ]);
 
   useEffect(() => {
