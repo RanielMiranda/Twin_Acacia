@@ -43,7 +43,7 @@ export default function ResortBuilder({ resortId }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 pt-10">
+    <div className="min-h-screen bg-white pb-20 pt-10">
       <HeroGalleryEditor />
       <ShortcutBar />
       <ProfileEditor />

@@ -8,7 +8,7 @@ export default function ResortCard({ onEdit, onPreview }) {
       <div className="h-56 relative overflow-hidden">
         <img
           src="https://cibirdplhynnpqctcjzj.supabase.co/storage/v1/object/public/resort-images/kasbah-villa---hot-spring-resort/hero/1771915023358-gallery-1.jpg"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover rounded-md"
           alt="Resort"
         />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg text-sm font-semibold">
