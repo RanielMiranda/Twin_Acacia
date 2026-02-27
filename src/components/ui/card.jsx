@@ -4,7 +4,6 @@ export function Card({ className = "", children, ...props }) {
   return (
     <div
       className={`
-        bg-white
         p-4
         ${className}
       `}

@@ -4,7 +4,6 @@ import {
   Inbox, CheckCircle2, AlertCircle, 
   Mail, Calendar, FileText, Edit2
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function RentalManager({ onOpenForm }) {
@@ -73,7 +72,7 @@ export default function RentalManager({ onOpenForm }) {
   ];
 
   return (
-    <Card className="border-slate-200 shadow-xl rounded-3xl overflow-hidden bg-white">
+    <div className="rounded-3xl overflow-hidden bg-white-500 border-2 border-slate-50 shadow-xl">
       {/* Panel Header / Tabs */}
       <div className="flex border-b border-slate-100 bg-slate-50/50">
         {tabs.map((tab) => (
@@ -172,6 +171,6 @@ export default function RentalManager({ onOpenForm }) {
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

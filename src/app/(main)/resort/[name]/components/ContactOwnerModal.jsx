@@ -139,16 +139,20 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
 
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+              
+              {/* Row 1: 2 Columns */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-in</label>
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-in Date</label>
                   <input name="checkInDate" value={formData.checkInDate} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-out</label>
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-out Date</label>
                   <input name="checkOutDate" value={formData.checkOutDate} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
+
+              {/* Row 2: 3 Columns */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time In</label>
@@ -160,12 +164,24 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Total Pax</label>
-                  <input name="pax" value={formData.pax} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="guestCount" value={formData.guestCount} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
                 </div>
               </div>
+
+              {/* Row 3: 2 Columns */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Sleeping Guests</label>
+                  <input name="sleepingGuests" value={formData.sleepingGuests} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Number of Rooms</label>
+                  <input name="roomCount" value={formData.roomCount} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                </div>
+              </div>
+
             </div>
           )}
-
           {/* NEW STEP 3: Extra Services */}
           {step === 3 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">

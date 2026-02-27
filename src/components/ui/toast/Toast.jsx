@@ -60,8 +60,10 @@ function SingleToast({ data, remove }) {
 
         <div className="h-1 bg-slate-200">
           <div
-            key={progressKey}
-            className={`h-full ${colors[color] || colors.green} animate-[toastBar_4s_linear_forwards]`}
+            className={`h-full ${colors[color] || colors.green}`}
+            style={{
+              animation: `toastBar ${duration}ms linear forwards`
+            }}
           />
         </div>
       </div>
@@ -77,13 +79,6 @@ export default function ToastContainer() {
       {toasts.map((toast) => (
         <SingleToast key={toast.id} data={toast} remove={remove} />
       ))}
-
-      <style jsx>{`
-        @keyframes toastBar {
-          from { width: 100%; }
-          to { width: 0%; }
-        }
-      `}</style>
     </div>
   );
 }
