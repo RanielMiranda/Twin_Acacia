@@ -174,7 +174,7 @@ export default function AmenitiesEditor() {
           ))}
         <button
           onClick={() => bulkInputRef.current?.click()}
-          className="flex-shrink-0 w-24 h-24 aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 transition hover:bg-blue-50"
+          className="flex w-28 max-h-36 aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 transition hover:bg-blue-50"
         >
           <Plus size={24} />
           <span className="text-xs font-bold mt-1">Add</span>

@@ -11,7 +11,7 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    firstName: "", lastName: "", email: "",
+    firstName: "", email: "",
     resortName: "", location: "", plan: "Standard"
   });
 
@@ -68,14 +68,10 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
           {/* Step 1: Personal Info */}
           {step === 1 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">First Name</label>
                   <input type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none" placeholder="John" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Last Name</label>
-                  <input type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Doe" />
                 </div>
               </div>
               <div className="space-y-1">

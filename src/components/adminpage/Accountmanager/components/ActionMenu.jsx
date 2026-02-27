@@ -1,11 +1,10 @@
-// components/admin/account/ActionMenu.jsx
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import { MoreVertical, Edit3, KeyRound, Mail, Eye, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function ActionMenu({ account, onViewResort }) {
+export default function ActionMenu({ account, onViewResort, onResetPassword, onDeleteAccount }) {
   const [isOpen, setIsOpen] = useState(false);
   const [menuLeft, setMenuLeft] = useState(true);
   const menuRef = useRef(null);
@@ -83,7 +82,9 @@ export default function ActionMenu({ account, onViewResort }) {
               >
                 <Edit3 size={16} /> Edit Profile
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold">
+              <button 
+                onClick={onResetPassword}
+                className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold">
                 <KeyRound size={16} /> Reset Password
               </button>
               <button className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold">
@@ -107,7 +108,9 @@ export default function ActionMenu({ account, onViewResort }) {
               >
                 <Eye size={16} /> View Resort Page
               </button>
-              <button className="w-full flex items-center gap-3 px-3 py-3 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left font-bold">
+              <button 
+                onClick={onDeleteAccount}
+                className="w-full flex items-center gap-3 px-3 py-3 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors text-left font-bold">
                 <Trash2 size={16} /> Delete Account
               </button>
             </div>

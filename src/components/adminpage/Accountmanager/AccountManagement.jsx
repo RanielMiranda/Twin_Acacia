@@ -76,6 +76,26 @@ export default function AccountManagement() {
     });
   };
 
+  const handleResetPassword = () => {
+    if (window.confirm(`Are you sure you want to reset the password?`)) {
+      toast({
+        message: "Password has been Reset",
+        color: "green",
+        icon: ShieldCheck,
+      });
+    }
+  }
+
+  const handleDeleteAccount = () => {
+    if (window.confirm(`Are you sure you want to delete the account?`)) {
+      toast({
+        message: "Account has been deleted",
+        color: "red",
+        icon: ShieldAlert,
+      });
+    }
+  }
+
   const filteredAccounts = accounts.filter(acc => {
     const matchesSearch = acc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           acc.resortName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -183,6 +203,8 @@ export default function AccountManagement() {
                 onToggleStatus={toggleStatus} 
                 onApprove={handleApprove} // Add this
                 onViewResort={handleViewResort} 
+                onResetPassword={handleResetPassword}
+                onDeleteAccount={handleDeleteAccount}
               />
             ))
           ) : (

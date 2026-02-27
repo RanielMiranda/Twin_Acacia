@@ -186,16 +186,24 @@ export default function ProfileEditor() {
           </DndContext>
 
           {isAdding ? (
-            <div className="flex items-center gap-1 bg-white border border-blue-400 rounded-md px-2 py-1">
-              <input
-                autoFocus
-                className="text-xs font-semibold outline-none w-20"
-                value={newTagValue}
-                onChange={(e) => setNewTagValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleTagAction("add", null, newTagValue)}
-                onBlur={() => !newTagValue && setIsAdding(false)}
-                placeholder="New tag..."
-              />
+            <div className="flex flex-wrap items-center gap-1 bg-white border border-blue-400 rounded-md px-2 py-1 relative">
+              <div className="relative inline-grid items-center">
+                {/* This invisible span forces the container to the correct width */}
+                <span className="invisible whitespace-pre text-xs font-semibold px-1 col-start-1 row-start-1">
+                  {newTagValue || "New tag..."}
+                </span>
+                
+                <input
+                  autoFocus
+                  className="text-xs font-semibold outline-none bg-transparent absolute inset-0 w-full px-1"
+                  value={newTagValue}
+                  onChange={(e) => setNewTagValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleTagAction("add", null, newTagValue)}
+                  onBlur={() => !newTagValue && setIsAdding(false)}
+                  placeholder="New tag..."
+                />
+              </div>
+              
               <button onClick={() => handleTagAction("add", null, newTagValue)}>
                 <Check size={14} className="text-green-500" />
               </button>

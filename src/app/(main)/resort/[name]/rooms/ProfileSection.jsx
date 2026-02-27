@@ -64,7 +64,7 @@ export default function ProfileSection() {
         {resort.tags?.map((tag, index) => (
           <span
             key={index}
-            className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-100 rounded-full shadow-sm"
+            className="px-3 py-1 text-[11px] font-bold uppercase text-blue-700 bg-blue-50 border border-blue-100 rounded-full shadow-sm"
           >
             {tag}
           </span>
