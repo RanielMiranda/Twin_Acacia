@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Users, UserPlus, Search, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Users, UserPlus, Search, ShieldCheck, ShieldAlert, ShieldX, CheckCircle2  } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -10,9 +10,11 @@ import AccountCard from "./components/AccountCard";
 import InviteOwnerModal from "./components/InviteOwnerModal";
 
 import Toast from "@/components/ui/toast/Toast";
+import { useToast } from "@/components/ui/toast/ToastProvider";
 
 export default function AccountManagement() {
   const router = useRouter();
+  const { toast } = useToast();  
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const [accounts, setAccounts] = useState(resortsData.map((resort, index) => ({
@@ -34,19 +36,44 @@ export default function AccountManagement() {
   };
 
   const toggleStatus = (id) => {
-    setAccounts(accounts.map(acc => {
-      if (acc.id === id) {
-        return { ...acc, status: acc.status === "Active" ? "Suspended" : "Active" };
-      }
-      return acc;
-    }));
+    // 1. Find the account to determine what the new status WILL be
+    const account = accounts.find((acc) => acc.id === id);
+    if (!account) return;
+
+    const newStatus = account.status === "Active" ? "Suspended" : "Active";
+
+    // 2. Trigger the toast ONCE
+    if (newStatus === "Active") {
+      toast({
+        message: "Account Restored",
+        color: "green",
+        icon: ShieldCheck,
+      });
+    } else {
+      toast({
+        message: "Account Suspended",
+        color: "red",
+        icon: ShieldX,
+      });
+    }
+
+    // 3. Update the state purely
+    setAccounts((prev) =>
+      prev.map((acc) =>
+        acc.id === id ? { ...acc, status: newStatus } : acc
+      )
+    );
   };
 
   const handleApprove = (id) => {
     setAccounts(prev => prev.map(acc => 
       acc.id === id ? { ...acc, status: 'Active' } : acc
     ));
-    toast.success("Account approved successfully");
+    toast({
+      message: "Account Approved",
+      color: "green",
+      icon: CheckCircle2
+    });
   };
 
   const filteredAccounts = accounts.filter(acc => {

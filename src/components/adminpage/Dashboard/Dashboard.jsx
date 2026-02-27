@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, LayoutDashboard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast/useToast";
 
 import ResortCard from "./components/ResortCard";
 import SearchBar from "./components/SearchBar"; // Import

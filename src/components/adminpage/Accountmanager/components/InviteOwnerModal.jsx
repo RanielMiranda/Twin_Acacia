@@ -4,10 +4,11 @@ import React, { useState } from "react";
 import { X, User, Building2, Shield, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { toast } from "@/components/ui/toast/useToast";
+import { useToast } from "@/components/ui/toast/ToastProvider";
 
 export default function InviteOwnerModal({ isOpen, onClose }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: "", lastName: "", email: "",
@@ -134,8 +135,11 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
           <Button 
             onClick={() => {
             if(step === 3){
-              toast(`New email link has been sent to name@email.com`),
-              "green";
+              toast({
+                message: "New email link has been sent to name@email.com",
+                color: "green",
+                icon: CheckCircle2
+              });              
               onClose();
             } else {
               nextStep();

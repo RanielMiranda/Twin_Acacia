@@ -1,36 +1,28 @@
 "use client";
 
-import { CheckCircle2, X } from "lucide-react";
-import { useToast } from "./useToast";
+import { X } from "lucide-react";
+import { useToast } from "./ToastProvider";
 import { useEffect, useState } from "react";
 
-export default function Toast() {
-  const { toastData, close } = useToast();
-
+function SingleToast({ data, remove }) {
+  const { id, message, color, icon: Icon, duration } = data;
   const [visible, setVisible] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
 
   useEffect(() => {
-    if (toastData) {
-      setVisible(true);
-      setProgressKey(prev => prev + 1);
+    setVisible(true);
+    setProgressKey((prev) => prev + 1);
 
-      const timer = setTimeout(() => {
-        setVisible(false); // start exit animation
+    const timer = setTimeout(() => {
+      setVisible(false); // start exit animation
 
-        setTimeout(() => {
-          close(); // remove toast after animation
-        }, 300); // animation duration
+      setTimeout(() => {
+        remove(id); // remove after animation
+      }, 300);
+    }, duration);
 
-      }, 4000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [toastData]);
-
-  if (!toastData) return null;
-
-  const { message, color } = toastData;
+    return () => clearTimeout(timer);
+  }, [id, duration, remove]);
 
   const colors = {
     green: "bg-green-500",
@@ -42,7 +34,6 @@ export default function Toast() {
   return (
     <div
       className={`
-        fixed bottom-6 right-6 z-[200]
         transition-all duration-300
         ${visible
           ? "translate-y-0 opacity-100"
@@ -50,13 +41,10 @@ export default function Toast() {
         }
       `}
     >
-      
       <div className="bg-white shadow-xl rounded-2xl overflow-hidden min-w-[320px]">
-
-        {/* Content */}
         <div className="p-4 flex items-center gap-3">
 
-          <CheckCircle2 className="text-green-500" size={22} />
+          {Icon && <Icon size={22} />}
 
           <div className="text-sm font-medium text-slate-700">
             {message}
@@ -68,18 +56,27 @@ export default function Toast() {
           >
             <X size={18}/>
           </button>
-
         </div>
 
-        {/* Progress Bar */}
         <div className="h-1 bg-slate-200">
           <div
             key={progressKey}
             className={`h-full ${colors[color] || colors.green} animate-[toastBar_4s_linear_forwards]`}
           />
         </div>
-
       </div>
+    </div>
+  );
+}
+
+export default function ToastContainer() {
+  const { toasts, remove } = useToast();
+
+  return (
+    <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-3">
+      {toasts.map((toast) => (
+        <SingleToast key={toast.id} data={toast} remove={remove} />
+      ))}
 
       <style jsx>{`
         @keyframes toastBar {
@@ -87,7 +84,6 @@ export default function Toast() {
           to { width: 0%; }
         }
       `}</style>
-
     </div>
   );
 }
