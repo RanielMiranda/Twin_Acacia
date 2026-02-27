@@ -13,7 +13,7 @@ export default function VisibilityCard({ status, onRequestPublish }) {
   const isPending = status === "Pending Approval";
 
   return (
-    <Card className="p-6 mb-10 rounded-2xl shadow-md bg-white flex flex-col md:flex-row justify-between items-center gap-6">
+    <Card className="p-6 rounded-2xl shadow-md bg-white flex flex-col md:flex-row justify-between items-center gap-6">
       <div className="flex items-center gap-4">
         <div className="p-3 bg-slate-100 rounded-xl">
           <AlertCircle size={24} className={`text-slate-600 ${isPending ? "animate-pulse" : ""}`} />
