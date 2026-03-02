@@ -31,6 +31,8 @@ export default function RentalManager({ onOpenForm }) {
       { 
         id: 2, 
         guestName: "User 2",
+        room: "Room A", 
+        dates: "Feb 24 - March 3",        
         address: "123 Mahogany St., Forbes Park, Makati City",
         email: "name@email.com",
         phoneNumber: "+63 917 123 4567",
