@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, LayoutDashboard, Loader2, Eye, EyeOff } from "lucide-react";
+import { Plus, LayoutDashboard, Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast/Toast";
 import { useToast } from "@/components/ui/toast/ToastProvider";
@@ -11,6 +11,7 @@ import ResortCard from "./components/ResortCard";
 import SearchBar from "./components/SearchBar";
 import ActionsRequiredTab from "./components/ActionsRequiredTab"; 
 
+import { fakeData } from "./components/data/data";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { supabase } from "@/lib/supabase";
 import resortInitialData from "@/app/edit/resort-builder/[id]/data/ResortInitialData";
@@ -22,19 +23,19 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("resorts");
   const [activeActionTab, setActiveActionTab] = useState("resort");
   const { toast } = useToast();
-
-  const [messages, setMessages] = useState({
-    resort: [],
-    account: [],
-    support: [],
-  });
-
+  const [messages, setMessages] = useState(fakeData);
+  
   const router = useRouter();
   const { resetResort } = useResort();
 
+  const [archives, setArchives] = useState({
+    resort: [],
+    account: [],
+    support: []
+  });
+
   useEffect(() => {
     fetchResorts();
-    fetchMessages();
   }, []);
 
   const fetchResorts = async () => {
@@ -69,13 +70,26 @@ export default function Page() {
     }
   };
 
-  const handleResolve = async (id) => {
-    try {
-      await supabase.from(activeActionTab + "_messages").delete().eq("id", id);
-      fetchMessages();
-    } catch (err) {
-      alert("Failed to resolve message: " + err.message);
-    }
+  const handleResolve = (id) => {
+    const resolvedMsg = messages[activeActionTab].find(msg => msg.id === id);
+
+    // Move message to archives
+    setArchives(prev => ({
+      ...prev,
+      [activeActionTab]: [...prev[activeActionTab], resolvedMsg]
+    }));
+
+    // Remove from active messages
+    setMessages(prev => ({
+      ...prev,
+      [activeActionTab]: prev[activeActionTab].filter(msg => msg.id !== id)
+    }));
+
+    toast({
+      message: "Request resolved and archived",
+      color: "green",
+      icon: CheckCircle2,
+    });
   };
 
   const filteredResorts = resorts.filter(
@@ -159,7 +173,7 @@ export default function Page() {
                 {/* 🔴 Notification Badge (design only) */}
                 {tab === "actions" && (
                   <span className="absolute -top-1 -right-5 flex items-center justify-center text-[10px] font-bold text-white bg-red-600 rounded-full h-5 min-w-5 px-1">
-                    3
+                    {Object.values(messages).reduce((acc, arr) => acc + arr.length, 0)}
                   </span>
                 )}
               </button>
@@ -197,6 +211,7 @@ export default function Page() {
             setActiveActionTab={setActiveActionTab}
             messages={messages}
             onResolve={handleResolve}
+            archives={archives} 
           />
         )}
       </div>
