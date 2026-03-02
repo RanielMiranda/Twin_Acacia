@@ -218,6 +218,25 @@ export default function ProfileEditor() {
           )}
         </div>
       </div>
+      
+      {/* Clipboard / Styling Symbols */}
+      <div className="mt-8">
+        <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Clipboard — copy symbols / bullets</p>
+        <div className="flex flex-wrap gap-2">
+          {["•", "—", "→", "★", "✓"].map((symbol) => (
+            <button
+              key={symbol}
+              onClick={() => {
+                // Copy the symbol to the clipboard
+                navigator.clipboard.writeText(symbol);
+              }}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-md text-xs font-semibold transition-colors"
+            >
+              {symbol === "\n" ? "↵ Line Break" : symbol}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Description */}
       <div className="mt-8">
