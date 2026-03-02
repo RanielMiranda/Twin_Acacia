@@ -51,11 +51,6 @@ export default function InboxCard({ messages = [] }) {
       </div>
 
       {/* Footer Action */}
-      <div className="p-3 border-t border-slate-100 text-center">
-        <Button variant="ghost" className="text-xs text-blue-600 hover:bg-blue-50 w-full rounded-lg">
-          View All History
-        </Button>
-      </div>
     </Card>
   );
 }

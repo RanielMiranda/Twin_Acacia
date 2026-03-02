@@ -38,7 +38,8 @@ export default function Page() {
 
   const adminMessages = [
     { id: 1, type: "admin_notice", text: "Please upload a higher resolution image...", date: "Today", unread: true },
-    { id: 2, type: "update", text: "Password has been successfully reset.", date: "Yesterday", unread: false }
+    { id: 2, type: "update", text: "Password has been successfully reset.", date: "Yesterday", unread: false },
+    { id: 3, type: "greetings", text: "Make sure to set up your resort", date: "Today", unread: false },
   ];
 
   return (
