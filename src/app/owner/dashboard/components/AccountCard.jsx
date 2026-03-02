@@ -4,7 +4,7 @@ import { User, Settings, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default function AccountCard({ onEditProfile }) {
+export default function AccountCard({ onEditProfile, onContactAdmin }) {
   const profileImg = "https://cibirdplhynnpqctcjzj.supabase.co/storage/v1/object/public/resort-images/kasbah-villa---hot-spring-resort/profile.jpg";
 
   return (
@@ -29,8 +29,13 @@ export default function AccountCard({ onEditProfile }) {
         <Button variant="outline" onClick={onEditProfile} className="w-full mt-4 rounded-xl h-11 flex items-center justify-center">
           <Settings size={18} className="mr-2" /> Edit Profile
         </Button>
-        <Button variant="outline" className="w-full mt-2 h-11 text-slate-800 font-medium flex items-center justify-center hover:bg-slate-50">
-          <MessageSquare size={18} className="mr-2" /> Contact Support
+        <Button
+          variant="outline"
+          onClick={onContactAdmin}
+          className="w-full mt-2 h-11 text-slate-800 font-medium flex items-center justify-center hover:bg-slate-50"
+        >
+          <MessageSquare size={18} className="mr-2" />
+          Contact Support
         </Button>
       </Card>
     </div>

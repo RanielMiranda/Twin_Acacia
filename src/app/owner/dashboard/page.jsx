@@ -11,9 +11,11 @@ import BookingsCard from "./components/BookingsCard";
 import Toast from "@/components/ui/toast/Toast";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import AccountCard from "./components/AccountCard";
+import MessageAdminModal from "./components/MessageAdminModal";
 
 export default function Page() {
   const [resortStatus, setResortStatus] = useState("Draft");
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -21,6 +23,14 @@ export default function Page() {
     setResortStatus("Pending Approval");
     toast({
       message: `Kasbah Villa publication request sent!`,
+      color: "blue",
+      icon: CheckCircle,
+    });
+  };
+
+  const handleSendAdminMessage = (data) => {
+    toast({
+      message: "Message sent to Admin",
       color: "blue",
       icon: CheckCircle,
     });
@@ -75,12 +85,20 @@ export default function Page() {
 
           {/* 4. Sidebar Items: These stack naturally under Bookings */}
           <div className="lg:col-span-1 space-y-6">
-            <AccountCard />
-            <InboxCard messages={adminMessages} />
+          <AccountCard 
+            onEditProfile={() => router.push("/edit/accounts/1")}
+            onContactAdmin={() => setIsAdminModalOpen(true)}
+          />
+           <InboxCard messages={adminMessages} />
           </div>
 
         </div>
       </div>
+      <MessageAdminModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onSendMessage={handleSendAdminMessage}
+      />      
       <Toast />
     </div>
   );
