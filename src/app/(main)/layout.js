@@ -1,6 +1,7 @@
 "use client";
 import TopBar from "./layout/TopBar";
 import Footer from "./layout/Footer";
+import { Analytics } from "@vercel/analytics/react";
 
 export default function MainLayout({ children }) {
   return (
@@ -8,6 +9,7 @@ export default function MainLayout({ children }) {
       <TopBar />
       <main>{children}</main>
       <Footer />
+      <Analytics />
     </>
   );
 }
