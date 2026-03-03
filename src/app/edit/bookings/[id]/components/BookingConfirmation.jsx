@@ -21,6 +21,7 @@ const DEFAULT_FORM = {
   bookingAgent: "Direct",
   turnoverAuthorizedPerson: "",
   paymentMethod: "Pending",
+  bookingMode: "full_day",
   downpayment: 0,
   totalAmount: 0,
   notes: "",
@@ -33,6 +34,7 @@ export default function BookingConfirmation({
   title = "Booking Form",
   onSave,
   onCancel,
+  onDelete,
 }) {
   const [formData, setFormData] = useState(() => ({ ...DEFAULT_FORM, ...(data || {}) }));
 
@@ -53,6 +55,16 @@ export default function BookingConfirmation({
   const handleSubmit = (event) => {
     event.preventDefault();
     if (readOnly || !onSave) return;
+
+    const sameDay =
+      formData.checkInDate &&
+      formData.checkOutDate &&
+      formData.checkInDate === formData.checkOutDate;
+    if (sameDay && formData.checkInTime && formData.checkOutTime && formData.checkOutTime <= formData.checkInTime) {
+      alert("For same-day bookings, check-out time must be later than check-in time.");
+      return;
+    }
+
     onSave(formData);
   };
 
@@ -100,6 +112,13 @@ export default function BookingConfirmation({
               <Field label="Guests"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.guestCount} onChange={(e) => handleNumberChange("guestCount", e.target.value)} /></Field>
               <Field label="Rooms"><input disabled={readOnly} className={inputClass} type="number" min="1" value={formData.roomCount} onChange={(e) => handleNumberChange("roomCount", e.target.value)} /></Field>
               <Field label="Base Rate"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.baseRate} onChange={(e) => handleNumberChange("baseRate", e.target.value)} /></Field>
+              <Field label="Booking Mode">
+                <select disabled={readOnly} className={inputClass} value={formData.bookingMode || "full_day"} onChange={(e) => handleChange("bookingMode", e.target.value)}>
+                  <option value="full_day">Full Day</option>
+                  <option value="half_day">Half Day</option>
+                  <option value="hourly">Hourly</option>
+                </select>
+              </Field>
               <Field label="Payment Method"><input disabled={readOnly} className={inputClass} value={formData.paymentMethod || ""} onChange={(e) => handleChange("paymentMethod", e.target.value)} /></Field>
               <Field label="Total Amount"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.totalAmount} onChange={(e) => handleNumberChange("totalAmount", e.target.value)} /></Field>
               <Field label="Downpayment"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.downpayment} onChange={(e) => handleNumberChange("downpayment", e.target.value)} /></Field>
@@ -129,6 +148,11 @@ export default function BookingConfirmation({
           {!readOnly && (
             <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
               Save Booking Form
+            </Button>
+          )}
+          {!readOnly && onDelete && (
+            <Button type="button" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={onDelete}>
+              Delete Form
             </Button>
           )}
         </div>

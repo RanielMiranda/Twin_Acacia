@@ -6,11 +6,13 @@ import { resorts } from "@/components/data/resorts";
 import BookingCalendar from "./components/BookingsCalendar";
 import RentalManager from "./components/RentalManager";
 import { useResort } from "@/components/useclient/ContextEditor";
+import { useBookings } from "@/components/useclient/BookingsClient";
 
 export default function Page() {
   const { id } = useParams();
   const router = useRouter();
   const { resort, setResort, loadResort } = useResort();
+  const { bookings } = useBookings();
 
   useEffect(() => {
     if (!id) return;
@@ -30,7 +32,12 @@ export default function Page() {
 
   const currentResort = resort?.id?.toString() === id?.toString() ? resort : fallbackResort;
 
-  const openForm = (guestData = {}) => {
+  const openForm = (guestData = {}, targetBookingId = null) => {
+    if (targetBookingId) {
+      router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}/form`);
+      return;
+    }
+
     const payload = {
       ...guestData,
       location: currentResort?.location,
@@ -41,7 +48,28 @@ export default function Page() {
 
     const draftKey = `booking-form:${Date.now()}`;
     sessionStorage.setItem(draftKey, JSON.stringify(payload));
-    router.push(`/edit/bookings/${id}/booking-form?draft=${encodeURIComponent(draftKey)}`);
+    router.push(`/edit/bookings/${id}/booking-details/new/form?draft=${encodeURIComponent(draftKey)}`);
+  };
+
+  const openDetails = (guestData = {}, targetBookingId = null) => {
+    if (targetBookingId) {
+      router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}`);
+      return;
+    }
+
+    const existing = (bookings || []).find(
+      (booking) =>
+        booking.bookingForm?.email &&
+        guestData?.email &&
+        booking.bookingForm.email.toLowerCase() === guestData.email.toLowerCase()
+    );
+
+    if (existing) {
+      router.push(`/edit/bookings/${id}/booking-details/${existing.id}`);
+      return;
+    }
+
+    openForm(guestData);
   };
 
   if (!currentResort) return <div className="p-20 text-center">Resort not found.</div>;
@@ -69,7 +97,7 @@ export default function Page() {
       </section>
 
       <section>
-        <RentalManager onOpenForm={openForm} />
+        <RentalManager onOpenForm={openForm} onOpenDetails={openDetails} />
       </section>
     </div>
   );

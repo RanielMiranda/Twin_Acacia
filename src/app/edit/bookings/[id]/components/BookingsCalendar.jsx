@@ -13,13 +13,15 @@ import {
   Edit2,
 } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
+import { useBookings } from "@/components/useclient/BookingsClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const GROUP_COLORS = ["bg-blue-600", "bg-emerald-600", "bg-amber-500", "bg-rose-500", "bg-violet-600", "bg-cyan-500"];
 
 export default function BookingCalendar() {
-  const { resort, updateResort } = useResort();
+  const { resort } = useResort();
+  const { bookings, createBooking, updateBookingById, deleteBookingById } = useBookings();
   const router = useRouter();
   const params = useParams();
 
@@ -29,7 +31,7 @@ export default function BookingCalendar() {
   const [isRangeMode, setIsRangeMode] = useState(false);
 
   const rooms = resort?.rooms || [];
-  const bookings = useMemo(() => resort?.bookings || [], [resort?.bookings]);
+  const bookingList = useMemo(() => bookings || resort?.bookings || [], [bookings, resort?.bookings]);
   const selectedRooms = selectedRoomIds.length > 0 ? selectedRoomIds : rooms[0]?.id ? [rooms[0].id] : [];
 
   const toggleRoomSelection = (id) => {
@@ -38,10 +40,10 @@ export default function BookingCalendar() {
   };
 
   const getDateBooking = (dateString) =>
-    bookings.find((booking) => {
+    bookingList.find((booking) => {
       const roomMatch = booking.roomIds?.some((rid) => selectedRooms.includes(rid));
-      const hasRange = booking.startDate && booking.endDate;
-      if (!roomMatch || !hasRange) return false;
+      if (!roomMatch || !booking.startDate) return false;
+      if (!booking.endDate) return booking.startDate === dateString;
       return (
         booking.startDate === dateString ||
         booking.endDate === dateString ||
@@ -55,24 +57,22 @@ export default function BookingCalendar() {
       return;
     }
 
-    const newId = Date.now();
-    const newBooking = {
+    const newId = Date.now().toString();
+    createBooking({
       id: newId,
       roomIds: [...selectedRooms],
       startDate: null,
       endDate: null,
       checkInTime: "14:00",
       checkOutTime: "11:00",
-      colorClass: GROUP_COLORS[bookings.length % GROUP_COLORS.length],
+      colorClass: GROUP_COLORS[bookingList.length % GROUP_COLORS.length],
       bookingForm: {
         status: "Inquiry",
         roomCount: selectedRooms.length,
         checkInTime: "14:00",
         checkOutTime: "11:00",
       },
-    };
-
-    updateResort("bookings", [...bookings, newBooking]);
+    });
     setActiveRangeId(newId);
   };
 
@@ -81,13 +81,8 @@ export default function BookingCalendar() {
     setIsRangeMode((prev) => !prev);
   };
 
-  const navigateToDetails = (bookingId) => {
-    router.push(`/edit/bookings/${params.id}/booking-details/${bookingId}`);
-  };
-
-  const navigateToForm = (bookingId) => {
-    router.push(`/edit/bookings/${params.id}/booking-form?bookingId=${bookingId}`);
-  };
+  const navigateToDetails = (bookingId) => router.push(`/edit/bookings/${params.id}/booking-details/${bookingId}`);
+  const navigateToForm = (bookingId) => router.push(`/edit/bookings/${params.id}/booking-details/${bookingId}/form`);
 
   const handleDateClick = (dateString) => {
     const clickedBooking = getDateBooking(dateString);
@@ -98,43 +93,41 @@ export default function BookingCalendar() {
     }
 
     if (!activeRangeId) {
-      if (clickedBooking) setActiveRangeId(clickedBooking.id);
+      if (clickedBooking) setActiveRangeId(clickedBooking.id.toString());
       return;
     }
 
-    const updatedBookings = bookings.map((booking) => {
-      if (booking.id !== activeRangeId) return booking;
+    const current = bookingList.find((entry) => entry.id.toString() === activeRangeId.toString());
+    if (!current) return;
 
-      if (!booking.startDate || (booking.startDate && booking.endDate)) {
-        return {
-          ...booking,
-          startDate: dateString,
-          endDate: null,
-          roomIds: [...selectedRooms],
-          bookingForm: {
-            ...(booking.bookingForm || {}),
-            checkInDate: dateString,
-            checkOutDate: "",
-          },
-        };
-      }
-
-      const nextStart = dateString < booking.startDate ? dateString : booking.startDate;
-      const nextEnd = dateString < booking.startDate ? booking.startDate : dateString;
-
-      return {
-        ...booking,
-        startDate: nextStart,
-        endDate: nextEnd,
+    if (!current.startDate || (current.startDate && current.endDate)) {
+      updateBookingById(activeRangeId, {
+        ...current,
+        startDate: dateString,
+        endDate: null,
+        roomIds: [...selectedRooms],
         bookingForm: {
-          ...(booking.bookingForm || {}),
-          checkInDate: nextStart,
-          checkOutDate: nextEnd,
+          ...(current.bookingForm || {}),
+          checkInDate: dateString,
+          checkOutDate: "",
         },
-      };
-    });
+      });
+      return;
+    }
 
-    updateResort("bookings", updatedBookings);
+    const nextStart = dateString < current.startDate ? dateString : current.startDate;
+    const nextEnd = dateString < current.startDate ? current.startDate : dateString;
+
+    updateBookingById(activeRangeId, {
+      ...current,
+      startDate: nextStart,
+      endDate: nextEnd,
+      bookingForm: {
+        ...(current.bookingForm || {}),
+        checkInDate: nextStart,
+        checkOutDate: nextEnd,
+      },
+    });
   };
 
   const getBookingTooltip = (booking) => {
@@ -153,24 +146,18 @@ export default function BookingCalendar() {
 
     return (
       <div className="flex-1 min-w-[280px]">
-        <h4 className="text-center font-bold text-slate-700 mb-4">
-          {monthNames[month]} {year}
-        </h4>
+        <h4 className="text-center font-bold text-slate-700 mb-4">{monthNames[month]} {year}</h4>
         <div className="grid grid-cols-7 gap-1">
           {["S", "M", "T", "W", "T", "F", "S"].map((dayName) => (
-            <div key={dayName} className="text-center text-[10px] font-bold text-slate-400">
-              {dayName}
-            </div>
+            <div key={dayName} className="text-center text-[10px] font-bold text-slate-400">{dayName}</div>
           ))}
-          {Array.from({ length: firstDay }).map((_, index) => (
-            <div key={`empty-${index}`} />
-          ))}
+          {Array.from({ length: firstDay }).map((_, index) => <div key={`empty-${index}`} />)}
 
           {Array.from({ length: days }).map((_, index) => {
             const day = index + 1;
             const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const booking = getDateBooking(dateString);
-            const isActive = booking?.id === activeRangeId;
+            const isActive = booking?.id?.toString() === activeRangeId?.toString();
 
             return (
               <button
@@ -237,26 +224,16 @@ export default function BookingCalendar() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8 bg-slate-50 p-6 rounded-2xl border border-slate-100 relative">
-          <button
-            onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-            className="absolute left-2 top-1/2 -translate-y-1/2 p-2 hover:bg-white rounded-full z-10"
-          >
-            <ChevronLeft size={18} />
-          </button>
+          <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))} className="absolute left-2 top-1/2 -translate-y-1/2 p-2 hover:bg-white rounded-full z-10"><ChevronLeft size={18} /></button>
           {renderMonth(0)}
           {renderMonth(1)}
-          <button
-            onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-white rounded-full z-10"
-          >
-            <ChevronRight size={18} />
-          </button>
+          <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-white rounded-full z-10"><ChevronRight size={18} /></button>
         </div>
 
         <div className="space-y-2">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Ranges for these rooms</p>
           <div className="flex flex-wrap gap-3">
-            {bookings
+            {bookingList
               .filter((booking) => booking.roomIds?.some((rid) => selectedRooms.includes(rid)))
               .map((booking) => {
                 const checkIn = booking?.checkInTime || booking?.bookingForm?.checkInTime || "--:--";
@@ -266,41 +243,19 @@ export default function BookingCalendar() {
                   <div
                     key={booking.id}
                     title={!isRangeMode ? getBookingTooltip(booking) : ""}
-                    onClick={() => (isRangeMode ? setActiveRangeId(booking.id) : navigateToDetails(booking.id))}
+                    onClick={() => (isRangeMode ? setActiveRangeId(booking.id.toString()) : navigateToDetails(booking.id))}
                     className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer border transition-all ${
-                      activeRangeId === booking.id ? "border-slate-400 bg-white shadow-sm" : "border-transparent bg-slate-50 opacity-70"
+                      activeRangeId?.toString() === booking.id?.toString() ? "border-slate-400 bg-white shadow-sm" : "border-transparent bg-slate-50 opacity-70"
                     }`}
                   >
                     <div className={`w-3 h-3 rounded-full ${booking.colorClass}`} />
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black text-slate-400 uppercase">{booking.roomIds?.length || 0} Rooms</span>
-                      <span className="text-xs font-bold text-slate-700">
-                        {booking.startDate || "..."} - {booking.endDate || "..."}
-                      </span>
-                      <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                        <Clock3 size={10} /> {checkIn} to {checkOut}
-                      </span>
+                      <span className="text-xs font-bold text-slate-700">{booking.startDate || "..."} - {booking.endDate || "..."}</span>
+                      <span className="text-[10px] text-slate-500 flex items-center gap-1"><Clock3 size={10} /> {checkIn} to {checkOut}</span>
                     </div>
-                    <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        navigateToForm(booking.id);
-                      }}
-                      className="ml-1 text-slate-400 hover:text-blue-600"
-                      title="Edit booking form"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        updateResort("bookings", bookings.filter((entry) => entry.id !== booking.id));
-                      }}
-                      className="text-slate-400 hover:text-red-500"
-                      title="Delete booking range"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <button onClick={(event) => { event.stopPropagation(); navigateToForm(booking.id); }} className="ml-1 text-slate-400 hover:text-blue-600" title="Edit booking form"><Edit2 size={14} /></button>
+                    <button onClick={(event) => { event.stopPropagation(); deleteBookingById(booking.id); }} className="text-slate-400 hover:text-red-500" title="Delete booking range"><Trash2 size={14} /></button>
                   </div>
                 );
               })}
