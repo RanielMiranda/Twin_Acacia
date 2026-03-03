@@ -22,6 +22,8 @@ const DEFAULT_FORM = {
   turnoverAuthorizedPerson: "",
   paymentMethod: "Pending",
   bookingMode: "full_day",
+  paymentDeadline: "",
+  confirmationStub: null,
   downpayment: 0,
   totalAmount: 0,
   notes: "",
@@ -166,6 +168,22 @@ export default function BookingConfirmation({
                   ))}
                 </select>
               </Field>
+              <Field label="Payment Deadline">
+                <input
+                  disabled={readOnly}
+                  className={inputClass}
+                  type="datetime-local"
+                  value={toDateTimeLocalValue(formData.paymentDeadline)}
+                  onChange={(e) => handleChange("paymentDeadline", e.target.value ? new Date(e.target.value).toISOString() : "")}
+                />
+              </Field>
+              <Field label="Confirmation Stub">
+                <input
+                  disabled
+                  className={`${inputClass} bg-slate-50`}
+                  value={formData.confirmationStub?.code || "Auto-generated on confirmation"}
+                />
+              </Field>
               <Field label="Balance Due"><input disabled className={`${inputClass} bg-slate-50`} value={balanceDue} /></Field>
             </div>
           </section>
@@ -221,4 +239,13 @@ function toDateValue(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
   return d.toISOString().slice(0, 10);
+}
+
+function toDateTimeLocalValue(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 16);
 }

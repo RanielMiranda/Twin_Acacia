@@ -28,6 +28,7 @@ import { resorts } from "@/components/data/resorts";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
+import { generateConfirmationStub } from "@/lib/bookingFlow";
 const STATUS_PHASES = [
   "Inquiry",
   "Pending Payment",
@@ -185,6 +186,7 @@ function BookingModernEditor({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
   const inlineDraftKey = `booking_inline_draft:${booking.id}`;
 
   const [draft, setDraft] = useState(() => {
@@ -211,7 +213,9 @@ function BookingModernEditor({
       paymentMethod: form.paymentMethod || "Pending",
       downpayment: Number(form.downpayment || 0),
       totalAmount: Number(form.totalAmount || 0),
+      paymentDeadline: form.paymentDeadline || booking.paymentDeadline || null,
       paymentProofUrl: form.paymentProofUrl || null,
+      confirmationStub: form.confirmationStub || null,
       resortServices: form.resortServices || [],
     };
   });
@@ -224,6 +228,9 @@ function BookingModernEditor({
   const status = draft.status || "Inquiry";
   const hasProof = !!draft.paymentProofUrl;
   const balance = Math.max(0, Number(draft.totalAmount || 0) - Number(draft.downpayment || 0));
+  const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;
+  const hasDeadline = paymentDeadlineDate && !Number.isNaN(paymentDeadlineDate.getTime());
+  const isDeadlineExpired = hasDeadline && paymentDeadlineDate.getTime() < renderedAt;
 
   const setField = (field, value) => setDraft((prev) => ({ ...prev, [field]: value }));
 
@@ -235,6 +242,7 @@ function BookingModernEditor({
       endDate: nextDraft.checkOutDate || booking.endDate,
       checkInTime: nextDraft.checkInTime || booking.checkInTime,
       checkOutTime: nextDraft.checkOutTime || booking.checkOutTime,
+      paymentDeadline: nextDraft.paymentDeadline || null,
       bookingForm: {
         ...(booking.bookingForm || {}),
         ...nextDraft,
@@ -252,6 +260,20 @@ function BookingModernEditor({
 
   const handleSetStatus = (nextStatus) => {
     const next = { ...draft, status: nextStatus };
+    if (nextStatus === "Confirmed" && !next.confirmationStub?.code) {
+      next.confirmationStub = generateConfirmationStub(booking.id, resortName, draft.guestName);
+    }
+    setDraft(next);
+    persist(next);
+  };
+
+  const handleRequestPayment = () => {
+    const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const next = {
+      ...draft,
+      status: "Pending Payment",
+      paymentDeadline: deadline,
+    };
     setDraft(next);
     persist(next);
   };
@@ -294,13 +316,17 @@ function BookingModernEditor({
           Booking sync: {lastFetchedAt ? new Date(lastFetchedAt).toLocaleString() : "Never"}
         </p>
 
-        {(status === "Inquiry" || status === "Pending Payment") && (
+        {status === "Pending Payment" && (
           <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-center justify-between">
             <div className="flex items-center gap-3 text-amber-700">
               <AlertCircle size={18} />
-              <p className="text-xs font-bold uppercase tracking-wider">Payment Deadline: 24 Hours from Approval</p>
+              <p className="text-xs font-bold uppercase tracking-wider">
+                Payment Deadline: {hasDeadline ? paymentDeadlineDate.toLocaleString() : "Not set"}
+              </p>
             </div>
-            <span className="text-[10px] font-black text-amber-500 bg-white px-3 py-1 rounded-full border border-amber-100">AUTO-CANCEL ACTIVE</span>
+            <span className="text-[10px] font-black text-amber-500 bg-white px-3 py-1 rounded-full border border-amber-100">
+              {isDeadlineExpired ? "EXPIRED" : "AUTO-CANCEL ACTIVE"}
+            </span>
           </div>
         )}
 
@@ -443,6 +469,12 @@ function BookingModernEditor({
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Balance to Pay</p>
                   <p className="text-2xl font-black">PHP {balance.toLocaleString()}</p>
                 </div>
+                <div className="bg-white/5 p-4 rounded-2xl mt-4">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Confirmation Stub</p>
+                  <p className="text-sm font-black tracking-wider">
+                    {draft.confirmationStub?.code || "Generated on confirmation"}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -503,10 +535,17 @@ function BookingModernEditor({
         <Button variant="ghost" className="rounded-full px-8 h-12 text-slate-400 hover:text-rose-600 font-bold" onClick={() => handleSetStatus("Declined")}>
           Decline
         </Button>
+        {status === "Inquiry" ? (
+          <Button className="rounded-full flex items-center justify-center px-10 h-12 font-bold shadow-lg transition-all flex gap-2 bg-amber-600 hover:bg-amber-700 text-white" onClick={handleRequestPayment}>
+            <Clock size={18} />
+            Request Payment
+          </Button>
+        ) : (
         <Button className="rounded-full flex items-center justify-center px-10 h-12 font-bold shadow-lg transition-all flex gap-2 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleSetStatus("Confirmed")}>
           <CheckCircle size={18} />
-          Approve
+          {status === "Pending Payment" ? "Confirm Stay" : "Approve"}
         </Button>
+        )}
         {!isEditing ? (
           <Button onClick={() => setIsEditing(true)} className="items-center justify-center bg-slate-900 hover:bg-black text-white rounded-full px-10 h-12 font-bold shadow-lg flex gap-2">
             <Edit3 size={18} /> Edit Inline

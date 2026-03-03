@@ -12,6 +12,7 @@ const RESORT_LIST_COLUMNS = [
   "location",
   "visible",
   "price",
+  "description",
   "tags",
   "rooms",
   "facilities",

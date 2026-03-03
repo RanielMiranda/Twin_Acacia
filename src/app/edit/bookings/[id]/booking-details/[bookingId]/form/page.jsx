@@ -64,6 +64,7 @@ export default function BookingDetailsFormPage() {
         endDate: formData.checkOutDate || booking.endDate,
         checkInTime: formData.checkInTime || booking.checkInTime,
         checkOutTime: formData.checkOutTime || booking.checkOutTime,
+        paymentDeadline: formData.paymentDeadline || booking.paymentDeadline || null,
         bookingForm: formData,
         status: formData.status || booking.status,
       }));
@@ -79,6 +80,7 @@ export default function BookingDetailsFormPage() {
       endDate: formData.checkOutDate || null,
       checkInTime: formData.checkInTime || "14:00",
       checkOutTime: formData.checkOutTime || "11:00",
+      paymentDeadline: formData.paymentDeadline || null,
       colorClass: GROUP_COLORS[bookingList.length % GROUP_COLORS.length],
       status: formData.status || "Inquiry",
       bookingForm: formData,

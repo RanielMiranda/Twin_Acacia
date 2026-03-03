@@ -1,19 +1,19 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Inbox, CheckCircle2, AlertCircle, Mail, User, FileText, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Inbox, CheckCircle2, AlertCircle, User, FileText, ChevronRight, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 const TABS = [
-  { id: "inbox", label: "Inbox", icon: Inbox, color: "text-blue-600", bg: "bg-blue-50" },
-  { id: "confirmed", label: "Confirmed", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-  { id: "overdue", label: "Action Needed", icon: AlertCircle, color: "text-rose-600", bg: "bg-rose-50" },
+  { id: "inquiry", label: "Inquiries", icon: Inbox, color: "text-blue-600", bg: "bg-blue-50" },
+  { id: "confirmed", label: "Confirmed Stays", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+  { id: "checkout", label: "Pending Checkout", icon: AlertCircle, color: "text-rose-600", bg: "bg-rose-50" },
 ];
 
 export default function RentalManager({ onOpenForm, onOpenDetails }) {
-  const [activeTab, setActiveTab] = useState("inbox");
+  const [activeTab, setActiveTab] = useState("inquiry");
   const { bookings } = useBookings();
   const { resort } = useResort();
 
@@ -27,7 +27,8 @@ export default function RentalManager({ onOpenForm, onOpenDetails }) {
         guestName: form.guestName || "Guest",
         room: roomName,
         email: form.email || "No email",
-        status: (form.status || booking.status || "Inquiry").toLowerCase(),
+        status: form.status || booking.status || "Inquiry",
+        normalizedStatus: (form.status || booking.status || "Inquiry").toLowerCase(),
         checkInDate: booking.startDate || form.checkInDate || "",
         checkOutDate: booking.endDate || form.checkOutDate || "",
       };
@@ -35,9 +36,9 @@ export default function RentalManager({ onOpenForm, onOpenDetails }) {
   }, [bookings, resort?.rooms]);
 
   const grouped = useMemo(() => ({
-    inbox: rows.filter((r) => r.status.includes("inquiry") || r.status.includes("pending")),
-    confirmed: rows.filter((r) => r.status.includes("confirm")),
-    overdue: rows.filter((r) => r.status.includes("checkout") || r.status.includes("overdue") || r.status.includes("decline")),
+    inquiry: rows.filter((r) => r.normalizedStatus.includes("inquiry") || r.normalizedStatus.includes("pending payment")),
+    confirmed: rows.filter((r) => r.normalizedStatus.includes("confirm") || r.normalizedStatus.includes("ongoing")),
+    checkout: rows.filter((r) => r.normalizedStatus.includes("pending checkout")),
   }), [rows]);
 
   return (
@@ -75,35 +76,39 @@ export default function RentalManager({ onOpenForm, onOpenDetails }) {
           grouped[activeTab].map((item) => (
             <div
               key={item.bookingId}
-              className="group flex flex-col md:flex-row items-center justify-between p-4 rounded-2xl border border-slate-50 bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-900/5 transition-all"
+              className="group grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 items-center p-3 rounded-xl border border-slate-100 bg-white hover:border-blue-200 transition-all"
             >
-              <div className="flex items-center gap-4 flex-1">
-                <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                  <User size={20} />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
+                  <User size={16} />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-black text-slate-900">{item.guestName}</h3>
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-500 uppercase tracking-tighter">{item.room}</span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-black text-slate-900 truncate">{item.guestName}</h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-500 uppercase tracking-tight">{item.room}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 uppercase tracking-tight">
+                      {item.status}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1">
-                     <p className="text-[11px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                     <p className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
                        {item.checkInDate} <ChevronRight size={10}/> {item.checkOutDate}
                      </p>
+                     <span className="text-[11px] text-slate-400 truncate">{item.email}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mt-4 md:mt-0">
+              <div className="flex items-center gap-2 justify-end">
                 <Button 
                   variant="ghost" 
-                  className="items-center justify-center rounded-xl font-bold text-xs h-10 hover:bg-slate-50 flex gap-2"
+                  className="items-center justify-center rounded-xl font-bold text-xs h-9 hover:bg-slate-50 flex gap-2"
                   onClick={() => onOpenDetails(item, item.bookingId)}
                 >
                   Manage <ArrowUpRight size={14}/>
                 </Button>
                 <Button 
-                  className="rounded-xl bg-blue-600 items-center justify-center hover:bg-blue-700 h-10 px-6 font-bold text-xs flex gap-2"
+                  className="rounded-xl bg-blue-600 items-center justify-center hover:bg-blue-700 h-9 px-4 font-bold text-xs flex gap-2"
                   onClick={() => onOpenForm(item, item.bookingId)}
                 >
                   <FileText size={14} /> Full Form

@@ -18,6 +18,7 @@ import resortInitialData from "@/app/edit/resort-builder/[id]/data/ResortInitial
 
 const ADMIN_RESORT_COLUMNS = ["id", "name", "location", "visible", "profileImage", "gallery", "created_at"].join(", ");
 const ADMIN_MESSAGE_COLUMNS = ["id", "title", "content", "requestedBy", "status", "created_at"].join(", ");
+const OWNER_ADMIN_COLUMNS = ["id", "resort_id", "sender_name", "subject", "message", "status", "created_at"].join(", ");
 
 export default function Page() {
   const [resorts, setResorts] = useState([]);
@@ -39,6 +40,7 @@ export default function Page() {
 
   useEffect(() => {
     fetchResorts();
+    fetchMessages();
   }, []);
 
   const fetchResorts = async () => {
@@ -61,20 +63,61 @@ export default function Page() {
     try {
       const { data: resortMsgs } = await supabase.from("resort_messages").select(ADMIN_MESSAGE_COLUMNS).eq("status", "pending");
       const { data: accountMsgs } = await supabase.from("account_messages").select(ADMIN_MESSAGE_COLUMNS).eq("status", "pending");
-      const { data: supportMsgs } = await supabase.from("support_messages").select(ADMIN_MESSAGE_COLUMNS).eq("status", "pending");
+      const { data: ownerMsgs } = await supabase
+        .from("owner_admin_messages")
+        .select(OWNER_ADMIN_COLUMNS)
+        .eq("sender_role", "owner")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      const supportMsgs = (ownerMsgs || []).map((row) => ({
+        id: row.id,
+        resort_id: row.resort_id,
+        title: row.subject || "Owner Support Message",
+        content: row.message,
+        requestedBy: row.sender_name || `Resort #${row.resort_id || "Unknown"}`,
+        status: row.status,
+        created_at: row.created_at,
+      }));
 
       setMessages({
         resort: resortMsgs || [],
         account: accountMsgs || [],
-        support: supportMsgs || [],
+        support: supportMsgs,
       });
     } catch (err) {
       console.error(err.message);
     }
   };
 
-  const handleResolve = (id) => {
+  const handleResolve = async (id) => {
     const resolvedMsg = messages[activeActionTab].find(msg => msg.id === id);
+    if (!resolvedMsg) return;
+
+    if (activeActionTab === "support") {
+      const { error: updateError } = await supabase
+        .from("owner_admin_messages")
+        .update({ status: "resolved" })
+        .eq("id", id);
+
+      if (updateError) {
+        toast({
+          message: `Failed to resolve support message: ${updateError.message}`,
+          color: "red",
+        });
+        return;
+      }
+
+      // Send simple admin acknowledgement so owner sees a response in inbox.
+      await supabase.from("owner_admin_messages").insert({
+        resort_id: resolvedMsg.resort_id || null,
+        sender_role: "admin",
+        sender_name: "Admin",
+        subject: resolvedMsg.title || "Support Request",
+        message: `Resolved: ${resolvedMsg.content || "Request acknowledged by admin."}`,
+        status: "resolved",
+      });
+    }
 
     // Move message to archives
     setArchives(prev => ({

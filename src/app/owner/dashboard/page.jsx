@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle } from "lucide-react"; 
 
@@ -12,12 +12,15 @@ import Toast from "@/components/ui/toast/Toast";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import AccountCard from "./components/AccountCard";
 import MessageAdminModal from "./components/MessageAdminModal";
+import { supabase } from "@/lib/supabase";
 
 export default function Page() {
   const [resortStatus, setResortStatus] = useState("Draft");
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+  const [adminMessages, setAdminMessages] = useState([]);
   const router = useRouter();
   const { toast } = useToast();
+  const OWNER_RESORT_ID = 1;
 
   const handleRequestPublish = () => {
     setResortStatus("Pending Approval");
@@ -28,19 +31,59 @@ export default function Page() {
     });
   };
 
-  const handleSendAdminMessage = (data) => {
+  const loadOwnerAdminMessages = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("owner_admin_messages")
+      .select("id, sender_role, subject, message, created_at, status")
+      .eq("resort_id", OWNER_RESORT_ID)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (error) {
+      console.error("Failed to load owner-admin messages:", error.message);
+      return;
+    }
+
+    const rows = (data || []).map((row) => ({
+      id: row.id,
+      type: row.sender_role === "admin" ? "admin_notice" : "owner_message",
+      text: row.subject ? `${row.subject} - ${row.message}` : row.message,
+      date: new Date(row.created_at).toLocaleString(),
+      unread: row.sender_role === "admin" && row.status !== "resolved",
+    }));
+    setAdminMessages(rows);
+  }, [OWNER_RESORT_ID]);
+
+  const handleOpenAdminModal = async () => {
+    await loadOwnerAdminMessages();
+    setIsAdminModalOpen(true);
+  };
+
+  const handleSendAdminMessage = async (data) => {
+    const payload = {
+      resort_id: OWNER_RESORT_ID,
+      sender_role: "owner",
+      sender_name: "Owner",
+      subject: data.subject || "Owner Support Request",
+      message: data.message,
+      status: "pending",
+    };
+    const { error } = await supabase.from("owner_admin_messages").insert(payload);
+    if (error) {
+      toast({
+        message: `Failed to send message: ${error.message}`,
+        color: "red",
+      });
+      return;
+    }
+
     toast({
       message: "Message sent to Admin",
       color: "blue",
       icon: CheckCircle,
     });
+    loadOwnerAdminMessages();
   };
-
-  const adminMessages = [
-    { id: 1, type: "admin_notice", text: "Please upload a higher resolution image...", date: "Today", unread: true },
-    { id: 2, type: "update", text: "Password has been successfully reset.", date: "Yesterday", unread: false },
-    { id: 3, type: "greetings", text: "Make sure to set up your resort", date: "Today", unread: false },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 pt-24 pb-12 px-4 md:px-8">
@@ -88,7 +131,7 @@ export default function Page() {
           <div className="lg:col-span-1 space-y-6">
           <AccountCard 
             onEditProfile={() => router.push("/edit/accounts/1")}
-            onContactAdmin={() => setIsAdminModalOpen(true)}
+            onContactAdmin={handleOpenAdminModal}
           />
            <InboxCard messages={adminMessages} />
           </div>

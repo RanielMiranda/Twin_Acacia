@@ -261,6 +261,7 @@ export default function ClientTicketPage() {
   const totalAmount = Number(form.totalAmount || 0);
   const paid = Number(form.downpayment || 0);
   const balance = Math.max(0, totalAmount - paid);
+  const entryCode = form.confirmationStub?.code || `TKT-${String(booking.id).slice(-6).toUpperCase()}`;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-8 mt-16 pb-20">
@@ -297,7 +298,7 @@ export default function ClientTicketPage() {
           <TicketRow label="Check-In" value={booking.start_date || form.checkInDate} subValue={booking.check_in_time || form.checkInTime} />
           <TicketRow label="Check-Out" value={booking.end_date || form.checkOutDate} subValue={booking.check_out_time || form.checkOutTime} />
           <TicketRow label="Location" value={resort?.location} />
-          <TicketRow label="Entry Code" value={`TKT-${String(booking.id).slice(-6).toUpperCase()}`} />
+          <TicketRow label="Entry Code" value={entryCode} />
         </div>
       </Card>
 

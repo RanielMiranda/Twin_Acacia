@@ -11,21 +11,28 @@ import {
   ClipboardList, 
   LayoutDashboard,
   ChevronRight,
-  Database
+  Database,
+  MessageCircleWarning,
+  AlertTriangle,
+  Clock4,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 // Components
 import BookingCalendar from "./components/BookingsCalendar";
 import RentalManager from "./components/RentalManager";
+import LiveConcernsPanel from "./components/LiveConcernsPanel";
 
 export default function BookingManagementPage() {
   const { id } = useParams();
   const router = useRouter();
   const { resort, setResort, loadResort } = useResort();
   const { bookings, refreshBookings, loadingBookings, lastFetchedAt } = useBookings();
+  const [concerns, setConcerns] = useState([]);
+  const [loadingConcerns, setLoadingConcerns] = useState(false);
   
-  const [activeTab, setActiveTab] = useState("workflow"); // "workflow" | "calendar"
+  const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -41,6 +48,70 @@ export default function BookingManagementPage() {
   }, [resort, fallbackResort, setResort]);
 
   const currentResort = resort?.id?.toString() === id?.toString() ? resort : fallbackResort;
+  const resortId = Number(currentResort?.id || id || 0);
+
+  const workflowCounts = useMemo(() => {
+    const source = bookings || [];
+    const inquiry = source.filter((entry) => {
+      const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
+      return status.includes("inquiry") || status.includes("pending payment");
+    }).length;
+    const checkout = source.filter((entry) => {
+      const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
+      return status.includes("pending checkout");
+    }).length;
+    return { inquiry, checkout };
+  }, [bookings]);
+
+  const loadConcerns = async () => {
+    if (!resortId) return;
+    setLoadingConcerns(true);
+    try {
+      const cutoffIso = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+      await supabase
+        .from("ticket_issues")
+        .delete()
+        .eq("resort_id", resortId)
+        .eq("status", "resolved")
+        .lt("created_at", cutoffIso);
+
+      const { data, error } = await supabase
+        .from("ticket_issues")
+        .select("id, booking_id, guest_name, guest_email, subject, message, status, created_at")
+        .eq("resort_id", resortId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setConcerns(data || []);
+    } catch (error) {
+      console.error("Concerns load error:", error.message);
+    } finally {
+      setLoadingConcerns(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!resortId) return;
+    loadConcerns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resortId]);
+
+  const handleResolveConcern = async (issueId) => {
+    const { error } = await supabase.from("ticket_issues").update({ status: "resolved" }).eq("id", issueId);
+    if (error) {
+      console.error("Resolve concern error:", error.message);
+      return;
+    }
+    setConcerns((prev) => prev.map((entry) => (entry.id === issueId ? { ...entry, status: "resolved" } : entry)));
+  };
+
+  const handleReopenConcern = async (issueId) => {
+    const { error } = await supabase.from("ticket_issues").update({ status: "open" }).eq("id", issueId);
+    if (error) {
+      console.error("Reopen concern error:", error.message);
+      return;
+    }
+    setConcerns((prev) => prev.map((entry) => (entry.id === issueId ? { ...entry, status: "open" } : entry)));
+  };
 
   const openForm = (guestData = {}, targetBookingId = null) => {
     if (targetBookingId) {
@@ -80,12 +151,14 @@ export default function BookingManagementPage() {
 
           <div className="flex items-center gap-3">
             <Button
-              onClick={refreshBookings}
+              onClick={async () => {
+                await Promise.all([refreshBookings(), loadConcerns()]);
+              }}
               variant="outline"
               className="items-center justify-center rounded-2xl px-6 h-14 font-black flex gap-2"
             >
               <Database size={18} />
-              {loadingBookings ? "Querying..." : "Query DB"}
+              {loadingBookings ? "Reloading..." : "Refresh Tables"}
             </Button>
             <Button 
               onClick={() => openForm({ status: "Inquiry" })}
@@ -95,11 +168,41 @@ export default function BookingManagementPage() {
             </Button>
           </div>
         </header>
-        <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-4">
-          Booking cache sync: {lastFetchedAt ? new Date(lastFetchedAt).toLocaleString() : "Never"}
-        </p>
 
-        {/* ADMIN STYLE TABS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Priority Workflow</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><Clock4 size={16} className="text-blue-600" /> Pending Inquiries</p>
+                <p className="text-2xl font-black text-blue-600">{workflowCounts.inquiry}</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><AlertTriangle size={16} className="text-rose-600" /> Pending Checkout</p>
+                <p className="text-2xl font-black text-rose-600">{workflowCounts.checkout}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm">
+            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Live Concerns</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><MessageCircleWarning size={16} className="text-rose-600" /> Open Tickets</p>
+                <p className="text-2xl font-black text-rose-600">
+                  {concerns.filter((item) => item.status !== "resolved").length}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="rounded-xl text-xs font-bold"
+                onClick={() => setActiveTab("concerns")}
+              >
+                View Concerns
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <div className="flex items-center gap-8 border-b border-slate-200 mb-8">
           <button
             onClick={() => setActiveTab("workflow")}
@@ -122,17 +225,38 @@ export default function BookingManagementPage() {
             Availability Calendar
             {activeTab === "calendar" && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-full" />}
           </button>
+
+          <button
+            onClick={() => setActiveTab("concerns")}
+            className={`flex items-center gap-2 pb-4 text-sm font-bold uppercase tracking-widest transition-all relative ${
+              activeTab === "concerns" ? "text-rose-600" : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <MessageCircleWarning size={18} />
+            Live Concerns
+            {activeTab === "concerns" && <div className="absolute bottom-0 left-0 w-full h-1 bg-rose-600 rounded-t-full" />}
+          </button>
         </div>
 
-        {/* DYNAMIC CONTENT AREA */}
         <main className="pb-20">
           {activeTab === "workflow" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <RentalManager onOpenForm={openForm} onOpenDetails={(item, id) => openDetails(id)} />
             </div>
-          ) : (
+          ) : activeTab === "calendar" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <BookingCalendar fullWidth />
+            </div>
+          ) : (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <LiveConcernsPanel
+                concerns={concerns}
+                loading={loadingConcerns}
+                onRefresh={loadConcerns}
+                onResolve={handleResolveConcern}
+                onReopen={handleReopenConcern}
+                onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
+              />
             </div>
           )}
         </main>

@@ -2,14 +2,13 @@ import { MapPin, Mail, Phone, Facebook, DollarSign } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 export default function ProfileSection() {
-  const { resort } = useResort(); 
+  const { resort } = useResort();
 
   if (!resort) return null;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="flex flex-col md:flex-row gap-8 items-start">
-        {/* Profile Image using context data */}
         {resort.profileImage && (
           <img
             src={resort.profileImage}
@@ -20,13 +19,13 @@ export default function ProfileSection() {
 
         <div className="flex-1 space-y-4">
           <h1 className="text-4xl font-black text-slate-900">{resort.name}</h1>
-          
+
           <div className="flex flex-col gap-2 text-gray-800">
             <div className="flex items-center gap-2">
               <MapPin size={16} />
               <span className="font-medium">{resort.location}</span>
             </div>
-                        {resort.contactMedia && (
+            {resort.contactMedia && (
               <div className="flex items-center gap-2">
                 <Facebook size={16} />
                 <a
@@ -53,7 +52,20 @@ export default function ProfileSection() {
             {resort.price && (
               <div className="flex items-center gap-2 font-semibold text-blue-600">
                 <DollarSign size={16} />
-                ₱{resort.price?.toLocaleString()}
+                PHP {Number(resort.price || 0).toLocaleString()}
+              </div>
+            )}
+            {Number(resort.description?.meta?.pricing?.forAsLowAs || 0) > 0 && (
+              <div className="text-sm font-semibold text-emerald-600">
+                For as low as PHP {Number(resort.description?.meta?.pricing?.forAsLowAs || 0).toLocaleString()}
+              </div>
+            )}
+            {resort.description?.meta?.pricing?.customOfferLabel && (
+              <div className="text-xs text-slate-500">
+                {resort.description?.meta?.pricing?.customOfferLabel}
+                {Number(resort.description?.meta?.pricing?.customOfferPrice || 0) > 0
+                  ? `: PHP ${Number(resort.description?.meta?.pricing?.customOfferPrice || 0).toLocaleString()}`
+                  : ""}
               </div>
             )}
           </div>
