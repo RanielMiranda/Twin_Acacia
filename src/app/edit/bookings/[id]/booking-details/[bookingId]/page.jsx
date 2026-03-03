@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Printer,
@@ -24,7 +24,9 @@ import { Button } from "@/components/ui/button";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { resorts } from "@/components/data/resorts";
-
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/toast/ToastProvider";
+import Toast from "@/components/ui/toast/Toast";
 const STATUS_PHASES = [
   "Inquiry",
   "Pending Payment",
@@ -41,8 +43,12 @@ const PAYMENT_CHANNELS = ["Pending", "GCash", "Bank", "Cash"];
 export default function BookingDetailsPage() {
   const { id, bookingId } = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const { resort } = useResort();
   const { bookings, updateBookingById, deleteBookingById } = useBookings();
+  const [messages, setMessages] = useState([]);
+  const [issues, setIssues] = useState([]);
+  const [ownerReply, setOwnerReply] = useState("");
 
   const fallbackResort = useMemo(
     () => resorts.find((entry) => entry.id.toString() === id?.toString()),
@@ -54,6 +60,36 @@ export default function BookingDetailsPage() {
     (entry) => entry.id.toString() === bookingId?.toString()
   );
 
+  useEffect(() => {
+    if (!booking?.id) return;
+    loadSupportData(booking.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking?.id]);
+
+  const loadSupportData = async (activeBookingId) => {
+    try {
+      const [{ data: messageRows, error: messageError }, { data: issueRows, error: issueError }] = await Promise.all([
+        supabase
+          .from("ticket_messages")
+          .select("*")
+          .eq("booking_id", activeBookingId)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("ticket_issues")
+          .select("*")
+          .eq("booking_id", activeBookingId)
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (messageError) throw messageError;
+      if (issueError) throw issueError;
+      setMessages(messageRows || []);
+      setIssues(issueRows || []);
+    } catch (err) {
+      toast({ message: `Unable to load support data: ${err.message}`, color: "red" });
+    }
+  };
+
   if (!booking) {
     return (
       <div className="p-10 text-center">
@@ -64,6 +100,26 @@ export default function BookingDetailsPage() {
       </div>
     );
   }
+
+  const handleSendReply = async () => {
+    if (!ownerReply.trim()) return;
+    try {
+      const payload = {
+        booking_id: booking.id,
+        resort_id: booking.resortId || booking.resort_id || Number(id),
+        sender_role: "owner",
+        sender_name: "Owner",
+        message: ownerReply.trim(),
+      };
+      const { error } = await supabase.from("ticket_messages").insert(payload);
+      if (error) throw error;
+      setOwnerReply("");
+      await loadSupportData(booking.id);
+      toast({ message: "Reply sent to client.", color: "green" });
+    } catch (err) {
+      toast({ message: `Reply failed: ${err.message}`, color: "red" });
+    }
+  };
 
   return (
     <BookingModernEditor
@@ -79,6 +135,11 @@ export default function BookingDetailsPage() {
       onOpenForm={() => router.push(`/edit/bookings/${id}/booking-details/${booking.id}/form`)}
       onOpenTicket={() => router.push(`/ticket/${booking.id}`)}
       onPrint={() => window.print()}
+      messages={messages}
+      issues={issues}
+      ownerReply={ownerReply}
+      setOwnerReply={setOwnerReply}
+      onSendReply={handleSendReply}
     />
   );
 }
@@ -92,6 +153,11 @@ function BookingModernEditor({
   onOpenForm,
   onOpenTicket,
   onPrint,
+  messages,
+  issues,
+  ownerReply,
+  setOwnerReply,
+  onSendReply,
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -339,6 +405,56 @@ function BookingModernEditor({
             </div>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-3">
+            <SectionLabel icon={<AlertCircle size={14} />} label="Client Issues" />
+            <div className="max-h-52 overflow-auto space-y-2">
+              {issues.length === 0 ? (
+                <p className="text-xs text-slate-400">No complaints filed.</p>
+              ) : (
+                issues.map((issue) => (
+                  <div key={issue.id} className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                    <p className="text-[10px] font-black uppercase text-amber-700">{issue.subject || "Issue"}</p>
+                    <p className="text-xs text-slate-700 mt-1">{issue.message}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-3">
+            <SectionLabel icon={<Mail size={14} />} label="Client Messaging" />
+            <div className="max-h-44 overflow-auto space-y-2">
+              {messages.length === 0 ? (
+                <p className="text-xs text-slate-400">No thread messages yet.</p>
+              ) : (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`p-2.5 rounded-xl text-xs ${
+                      msg.sender_role === "owner"
+                        ? "bg-blue-50 text-blue-700 ml-8"
+                        : "bg-slate-50 text-slate-700 mr-8"
+                    }`}
+                  >
+                    <p className="font-black uppercase text-[9px] mb-1">{msg.sender_role}</p>
+                    <p>{msg.message}</p>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                placeholder="Reply to client"
+                value={ownerReply}
+                onChange={(e) => setOwnerReply(e.target.value)}
+              />
+              <Button onClick={onSendReply}>Send</Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-2xl no-print">
@@ -360,6 +476,7 @@ function BookingModernEditor({
           </>
         )}
       </div>
+      <Toast/>
     </div>
   );
 }

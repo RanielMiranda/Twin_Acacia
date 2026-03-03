@@ -148,8 +148,8 @@ export default function BookingCalendar() {
       <div className="flex-1 min-w-[280px]">
         <h4 className="text-center font-bold text-slate-700 mb-4">{monthNames[month]} {year}</h4>
         <div className="grid grid-cols-7 gap-1">
-          {["S", "M", "T", "W", "T", "F", "S"].map((dayName) => (
-            <div key={dayName} className="text-center text-[10px] font-bold text-slate-400">{dayName}</div>
+          {["S", "M", "T", "W", "T", "F", "S"].map((dayName, index) => (
+            <div key={`${dayName}-${index}`} className="text-center text-[10px] font-bold text-slate-400">{dayName}</div>
           ))}
           {Array.from({ length: firstDay }).map((_, index) => <div key={`empty-${index}`} />)}
 

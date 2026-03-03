@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { 
   Printer, Mail, Phone, MessageSquare, 
   CreditCard, Upload, Ticket, ShieldCheck, 
-  Loader2, CheckCircle2, AlertCircle, ExternalLink 
+  Loader2, CheckCircle2
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BUCKET_NAME } from "@/lib/utils";
@@ -25,15 +25,13 @@ export default function ClientTicketPage() {
 
   const [issueSubject, setIssueSubject] = useState("");
   const [issueMessage, setIssueMessage] = useState("");
+  const [chatMessage, setChatMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState("GCash");
   const [downpayment, setDownpayment] = useState(0);
   const [proofFile, setProofFile] = useState(null);
-
-  useEffect(() => {
-    if (!bookingId) return;
-    fetchTicket();
-  }, [bookingId]);
 
   const form = useMemo(() => booking?.booking_form || {}, [booking?.booking_form]);
 
@@ -43,7 +41,24 @@ export default function ClientTicketPage() {
     setDownpayment(Number(form.downpayment || 0));
   }, [form]);
 
-  const fetchTicket = async () => {
+  const fetchMessages = useCallback(async (activeBookingId) => {
+    setLoadingMessages(true);
+    try {
+      const { data, error } = await supabase
+        .from("ticket_messages")
+        .select("*")
+        .eq("booking_id", activeBookingId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (err) {
+      toast({ message: `Unable to load messages: ${err.message}`, color: "red" });
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, [toast]);
+
+  const fetchTicket = useCallback(async () => {
     setLoading(true);
     try {
       const { data: bookingData, error: bookingError } = await supabase
@@ -64,12 +79,19 @@ export default function ClientTicketPage() {
         if (resortError) throw resortError;
         setResort(resortData);
       }
+
+      await fetchMessages(bookingData.id);
     } catch (err) {
       toast({ message: `Unable to load ticket: ${err.message}`, color: "red" });
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId, fetchMessages, toast]);
+
+  useEffect(() => {
+    if (!bookingId) return;
+    fetchTicket();
+  }, [bookingId, fetchTicket]);
 
   const uploadProof = async () => {
     if (!proofFile) return null;
@@ -157,6 +179,26 @@ export default function ClientTicketPage() {
       toast({ message: "Issue sent to owner support.", color: "green" });
     } catch (err) {
       toast({ message: `Issue send failed: ${err.message}`, color: "red" });
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!chatMessage.trim() || !booking) return;
+    try {
+      const payload = {
+        booking_id: booking.id,
+        resort_id: booking.resort_id,
+        sender_role: "client",
+        sender_name: form.guestName || "Client",
+        message: chatMessage.trim(),
+      };
+      const { error } = await supabase.from("ticket_messages").insert(payload);
+      if (error) throw error;
+      setChatMessage("");
+      await fetchMessages(booking.id);
+      toast({ message: "Message sent to owner.", color: "green" });
+    } catch (err) {
+      toast({ message: `Message send failed: ${err.message}`, color: "red" });
     }
   };
 
@@ -305,6 +347,42 @@ export default function ClientTicketPage() {
         </div>
 
         <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 max-h-56 overflow-auto space-y-2">
+            {loadingMessages ? (
+              <p className="text-xs text-slate-400">Loading conversation...</p>
+            ) : messages.length === 0 ? (
+              <p className="text-xs text-slate-400">No messages yet.</p>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`p-2.5 rounded-xl text-xs ${
+                    msg.sender_role === "client"
+                      ? "bg-blue-50 text-blue-700 ml-8"
+                      : "bg-white text-slate-700 mr-8 border border-slate-100"
+                  }`}
+                >
+                  <p className="font-black uppercase tracking-wider text-[9px] mb-1">
+                    {msg.sender_role} {msg.sender_name ? `- ${msg.sender_name}` : ""}
+                  </p>
+                  <p>{msg.message}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              className="flex-1 rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
+              placeholder="Send a message to owner"
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+            />
+            <Button className="rounded-2xl h-12" onClick={handleSendMessage}>
+              Send
+            </Button>
+          </div>
+
           <input
             className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
             placeholder="Subject of concern"
