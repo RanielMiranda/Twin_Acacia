@@ -11,7 +11,6 @@ import {
   ClipboardList, 
   LayoutDashboard,
   ChevronRight,
-  Database,
   MessageCircleWarning,
   AlertTriangle,
   Clock4,
@@ -28,7 +27,7 @@ export default function BookingManagementPage() {
   const { id } = useParams();
   const router = useRouter();
   const { resort, setResort, loadResort } = useResort();
-  const { bookings, refreshBookings, loadingBookings, lastFetchedAt } = useBookings();
+  const { bookings } = useBookings();
   const [concerns, setConcerns] = useState([]);
   const [loadingConcerns, setLoadingConcerns] = useState(false);
   
@@ -150,16 +149,6 @@ export default function BookingManagementPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              onClick={async () => {
-                await Promise.all([refreshBookings(), loadConcerns()]);
-              }}
-              variant="outline"
-              className="items-center justify-center rounded-2xl px-6 h-14 font-black flex gap-2"
-            >
-              <Database size={18} />
-              {loadingBookings ? "Reloading..." : "Refresh Tables"}
-            </Button>
             <Button 
               onClick={() => openForm({ status: "Inquiry" })}
               className="bg-blue-600 items-center justify-center hover:bg-blue-700 text-white rounded-2xl px-8 h-14 font-black shadow-lg shadow-blue-100 transition-all hover:scale-105 flex gap-3"

@@ -24,6 +24,7 @@ const BOOKING_COLUMNS = [
 function toModel(row) {
   return {
     id: row.id,
+    resortId: row.resort_id,
     roomIds: row.room_ids || [],
     startDate: row.start_date,
     endDate: row.end_date,
@@ -33,6 +34,7 @@ function toModel(row) {
     bookingForm: row.booking_form || {},
     status: row.status || row.booking_form?.status || "Inquiry",
     paymentDeadline: row.payment_deadline || row.booking_form?.paymentDeadline || null,
+    updatedAt: row.updated_at || null,
   };
 }
 
@@ -65,6 +67,8 @@ export function BookingsProvider({ children }) {
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingsError, setBookingsError] = useState(null);
   const [lastFetchedAt, setLastFetchedAt] = useState(null);
+  const [hasHydratedCache, setHasHydratedCache] = useState(false);
+  const [autoFetchedResortId, setAutoFetchedResortId] = useState(null);
 
   const getCacheKey = (resortId) => `bookings_cache:${resortId}`;
 
@@ -178,8 +182,17 @@ export function BookingsProvider({ children }) {
       if (cachedTs) setLastFetchedAt(cachedTs);
     } catch (err) {
       console.error("Bookings cache read error:", err.message);
+    } finally {
+      setHasHydratedCache(true);
     }
-  }, [resort?.id, resort?.bookings, updateResort]);
+  }, [resort?.id, updateResort]);
+
+  useEffect(() => {
+    if (!resort?.id || !hasHydratedCache) return;
+    if (autoFetchedResortId === resort.id) return;
+    setAutoFetchedResortId(resort.id);
+    refreshBookings();
+  }, [autoFetchedResortId, hasHydratedCache, refreshBookings, resort?.id]);
 
   const createBooking = useCallback(
     async (booking) => {

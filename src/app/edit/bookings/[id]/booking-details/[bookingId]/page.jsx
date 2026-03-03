@@ -19,13 +19,13 @@ import {
   ShieldCheck,
   AlertCircle,
   Ticket,
-  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { resorts } from "@/components/data/resorts";
 import { supabase } from "@/lib/supabase";
+import { BUCKET_NAME } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
 import { generateConfirmationStub } from "@/lib/bookingFlow";
@@ -49,12 +49,46 @@ const isMissingSupportTableError = (error) =>
     error.message.includes("does not exist") ||
     error.message.includes("schema cache"));
 
+function buildDraftFromBooking(booking) {
+  const form = booking.bookingForm || {};
+  return {
+    ...form,
+    status: form.status || booking.status || "Inquiry",
+    guestName: form.guestName || "Guest",
+    email: form.email || "",
+    phoneNumber: form.phoneNumber || "",
+    roomCount: Number(form.roomCount || booking.roomIds?.length || 1),
+    checkInDate: form.checkInDate || booking.startDate || "",
+    checkOutDate: form.checkOutDate || booking.endDate || "",
+    checkInTime: form.checkInTime || booking.checkInTime || "14:00",
+    checkOutTime: form.checkOutTime || booking.checkOutTime || "11:00",
+    paymentMethod: form.paymentMethod || "Pending",
+    downpayment: Number(form.downpayment || 0),
+    totalAmount: Number(form.totalAmount || 0),
+    paymentDeadline: form.paymentDeadline || booking.paymentDeadline || null,
+    paymentProofUrl: form.paymentProofUrl || null,
+    paymentSubmittedAt: form.paymentSubmittedAt || null,
+    paymentVerified: !!form.paymentVerified,
+    paymentVerifiedAt: form.paymentVerifiedAt || null,
+    confirmationStub: form.confirmationStub || null,
+    resortServices: form.resortServices || [],
+  };
+}
+
+function getStoragePathFromUrl(url) {
+  if (!url || typeof url !== "string") return null;
+  const marker = `/object/public/${BUCKET_NAME}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return decodeURIComponent(url.slice(idx + marker.length));
+}
+
 export default function BookingDetailsPage() {
   const { id, bookingId } = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const { resort } = useResort();
-  const { bookings, updateBookingById, deleteBookingById, refreshBookings, loadingBookings, lastFetchedAt } = useBookings();
+  const { bookings, updateBookingById, deleteBookingById } = useBookings();
   const [messages, setMessages] = useState([]);
   const [issues, setIssues] = useState([]);
   const [ownerReply, setOwnerReply] = useState("");
@@ -154,9 +188,6 @@ export default function BookingDetailsPage() {
       onOpenForm={() => router.push(`/edit/bookings/${id}/booking-details/${booking.id}/form`)}
       onOpenTicket={() => router.push(`/ticket/${booking.id}`)}
       onPrint={() => window.print()}
-      onRefresh={refreshBookings}
-      loadingBookings={loadingBookings}
-      lastFetchedAt={lastFetchedAt}
       messages={messages}
       issues={issues}
       ownerReply={ownerReply}
@@ -175,9 +206,6 @@ function BookingModernEditor({
   onOpenForm,
   onOpenTicket,
   onPrint,
-  onRefresh,
-  loadingBookings,
-  lastFetchedAt,
   messages,
   issues,
   ownerReply,
@@ -185,40 +213,52 @@ function BookingModernEditor({
   onSendReply,
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
   const [renderedAt] = useState(() => Date.now());
   const inlineDraftKey = `booking_inline_draft:${booking.id}`;
+  const [draft, setDraft] = useState(() => buildDraftFromBooking(booking));
+  const [proofPreviewUrl, setProofPreviewUrl] = useState(() => buildDraftFromBooking(booking).paymentProofUrl || null);
 
-  const [draft, setDraft] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const raw = localStorage.getItem(inlineDraftKey);
-        if (raw) return JSON.parse(raw);
-      } catch {
-        // ignore invalid draft
-      }
+  useEffect(() => {
+    const base = buildDraftFromBooking(booking);
+    if (typeof window === "undefined") {
+      if (!isEditing) setDraft(base);
+      return;
     }
-    const form = booking.bookingForm || {};
-    return {
-      ...form,
-      status: form.status || booking.status || "Inquiry",
-      guestName: form.guestName || "Guest",
-      email: form.email || "",
-      phoneNumber: form.phoneNumber || "",
-      roomCount: Number(form.roomCount || booking.roomIds?.length || 1),
-      checkInDate: form.checkInDate || booking.startDate || "",
-      checkOutDate: form.checkOutDate || booking.endDate || "",
-      checkInTime: form.checkInTime || booking.checkInTime || "14:00",
-      checkOutTime: form.checkOutTime || booking.checkOutTime || "11:00",
-      paymentMethod: form.paymentMethod || "Pending",
-      downpayment: Number(form.downpayment || 0),
-      totalAmount: Number(form.totalAmount || 0),
-      paymentDeadline: form.paymentDeadline || booking.paymentDeadline || null,
-      paymentProofUrl: form.paymentProofUrl || null,
-      confirmationStub: form.confirmationStub || null,
-      resortServices: form.resortServices || [],
-    };
-  });
+    let next = base;
+    try {
+      const raw = localStorage.getItem(inlineDraftKey);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        next = {
+          ...base,
+          ...cached,
+          status: base.status,
+          paymentMethod: base.paymentMethod,
+          downpayment: base.downpayment,
+          paymentProofUrl: base.paymentProofUrl,
+          paymentSubmittedAt: base.paymentSubmittedAt,
+          paymentVerified: base.paymentVerified,
+          paymentVerifiedAt: base.paymentVerifiedAt,
+        };
+      }
+    } catch {
+      next = base;
+    }
+    if (!isEditing) setDraft(next);
+  }, [booking, inlineDraftKey, isEditing]);
+
+  useEffect(() => {
+    setProofPreviewUrl(draft.paymentProofUrl || null);
+  }, [draft.paymentProofUrl]);
+
+  const resolveSignedProofUrl = async () => {
+    const path = getStoragePathFromUrl(draft.paymentProofUrl);
+    if (!path) return;
+    const { data, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(path, 60 * 60);
+    if (!error && data?.signedUrl) {
+      setProofPreviewUrl(data.signedUrl);
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -226,11 +266,13 @@ function BookingModernEditor({
   }, [draft, inlineDraftKey]);
 
   const status = draft.status || "Inquiry";
+  const normalizedStatus = status.toLowerCase();
   const hasProof = !!draft.paymentProofUrl;
   const balance = Math.max(0, Number(draft.totalAmount || 0) - Number(draft.downpayment || 0));
   const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;
   const hasDeadline = paymentDeadlineDate && !Number.isNaN(paymentDeadlineDate.getTime());
   const isDeadlineExpired = hasDeadline && paymentDeadlineDate.getTime() < renderedAt;
+  const showDecisionActions = !normalizedStatus.includes("confirm");
 
   const setField = (field, value) => setDraft((prev) => ({ ...prev, [field]: value }));
 
@@ -281,10 +323,9 @@ function BookingModernEditor({
   const handleVerifyProof = () => {
     const next = {
       ...draft,
-      paymentVerified: !isVerifying,
-      paymentVerifiedAt: !isVerifying ? new Date().toISOString() : null,
+      paymentVerified: !draft.paymentVerified,
+      paymentVerifiedAt: !draft.paymentVerified ? new Date().toISOString() : null,
     };
-    setIsVerifying((prev) => !prev);
     setDraft(next);
     persist(next);
   };
@@ -307,14 +348,8 @@ function BookingModernEditor({
             <Button variant="outline" onClick={onPrint} className="rounded-full flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-6">
               <Printer size={16} className="mr-2" /> Export
             </Button>
-            <Button variant="outline" onClick={onRefresh} className="rounded-full flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-6">
-              <Database size={16} className="mr-2" /> {loadingBookings ? "Querying..." : "Query DB"}
-            </Button>
           </div>
         </div>
-        <p className="text-[10px] text-slate-400 uppercase tracking-wider">
-          Booking sync: {lastFetchedAt ? new Date(lastFetchedAt).toLocaleString() : "Never"}
-        </p>
 
         {status === "Pending Payment" && (
           <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-center justify-between">
@@ -399,9 +434,14 @@ function BookingModernEditor({
               {hasProof ? (
                 <div className="space-y-4">
                   <div className="relative group cursor-pointer overflow-hidden rounded-2xl border border-slate-100">
-                    <img src={draft.paymentProofUrl} alt="Payment Receipt" className="w-full h-40 object-cover group-hover:scale-105 transition-transform" />
+                    <img
+                      src={proofPreviewUrl || draft.paymentProofUrl}
+                      alt="Payment Receipt"
+                      className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                      onError={resolveSignedProofUrl}
+                    />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button variant="secondary" size="sm" className="rounded-full text-xs" onClick={() => window.open(draft.paymentProofUrl)}>
+                      <Button variant="secondary" size="sm" className="rounded-full text-xs" onClick={() => window.open(proofPreviewUrl || draft.paymentProofUrl)}>
                         View Fullscreen <ExternalLink size={12} className="ml-2" />
                       </Button>
                     </div>
@@ -409,8 +449,8 @@ function BookingModernEditor({
                   <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
                     <p className="text-[10px] text-emerald-700 font-bold mb-1">Owner Verification</p>
                     <button onClick={handleVerifyProof} className="flex items-center gap-2 text-xs font-black text-emerald-600 uppercase tracking-tighter">
-                      {isVerifying ? <CheckCircle size={14} /> : <ShieldCheck size={14} />}
-                      {isVerifying ? "Transaction Verified" : "Mark as Verified"}
+                      {draft.paymentVerified ? <CheckCircle size={14} /> : <ShieldCheck size={14} />}
+                      {draft.paymentVerified ? "Transaction Verified" : "Mark as Verified"}
                     </button>
                   </div>
                 </div>
@@ -532,19 +572,23 @@ function BookingModernEditor({
       </div>
 
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-2xl no-print">
-        <Button variant="ghost" className="rounded-full px-8 h-12 text-slate-400 hover:text-rose-600 font-bold" onClick={() => handleSetStatus("Declined")}>
-          Decline
-        </Button>
-        {status === "Inquiry" ? (
-          <Button className="rounded-full flex items-center justify-center px-10 h-12 font-bold shadow-lg transition-all flex gap-2 bg-amber-600 hover:bg-amber-700 text-white" onClick={handleRequestPayment}>
-            <Clock size={18} />
-            Request Payment
-          </Button>
-        ) : (
-        <Button className="rounded-full flex items-center justify-center px-10 h-12 font-bold shadow-lg transition-all flex gap-2 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleSetStatus("Confirmed")}>
-          <CheckCircle size={18} />
-          {status === "Pending Payment" ? "Confirm Stay" : "Approve"}
-        </Button>
+        {showDecisionActions && (
+          <>
+            <Button variant="ghost" className="rounded-full px-8 h-12 text-slate-400 hover:text-rose-600 font-bold" onClick={() => handleSetStatus("Declined")}>
+              Decline
+            </Button>
+            {status === "Inquiry" ? (
+              <Button className="rounded-full flex items-center justify-center px-10 h-12 font-bold shadow-lg transition-all flex gap-2 bg-amber-600 hover:bg-amber-700 text-white" onClick={handleRequestPayment}>
+                <Clock size={18} />
+                Request Payment
+              </Button>
+            ) : (
+              <Button className="rounded-full flex items-center justify-center px-10 h-12 font-bold shadow-lg transition-all flex gap-2 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleSetStatus("Confirmed")}>
+                <CheckCircle size={18} />
+                {status === "Pending Payment" ? "Confirm Stay" : "Approve"}
+              </Button>
+            )}
+          </>
         )}
         {!isEditing ? (
           <Button onClick={() => setIsEditing(true)} className="items-center justify-center bg-slate-900 hover:bg-black text-white rounded-full px-10 h-12 font-bold shadow-lg flex gap-2">

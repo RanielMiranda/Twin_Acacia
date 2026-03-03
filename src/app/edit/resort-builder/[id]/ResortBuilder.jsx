@@ -21,13 +21,19 @@ export default function ResortBuilder({ resortId }) {
 
   useEffect(() => {
     if (resortId) {
-      setDraftScope(`id:${resortId}`);
-      loadResort(resortId);
-    } else if (!resort) {
+      const sameResortLoaded = resort?.id?.toString() === resortId.toString();
+      if (!sameResortLoaded) {
+        setDraftScope(`id:${resortId}`);
+        loadResort(resortId);
+      }
+      return;
+    }
+
+    if (!resort) {
       setDraftScope("new");
       setResort(resortInitialData);
-    } 
-  }, [resort, resortId, loadResort, setDraftScope, setResort]);
+    }
+  }, [resortId, resort?.id, resort, loadResort, setDraftScope, setResort]);
   
   if (loading && !resort) return <div className="mt-10 p-20 text-center">Fetching Resort Data...</div>;
   if (!resort) return <div className="mt-10 p-20 text-center">No resort found.</div>;

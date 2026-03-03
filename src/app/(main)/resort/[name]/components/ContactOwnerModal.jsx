@@ -116,16 +116,16 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
               <div className="space-y-1">
                 <label className="text-xs font-black uppercase text-slate-400 ml-1">Full Name</label>
-                <input name="guestName" value={formData.guestName} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="John Doe" />
+                <input name="guestName" value={formData.guestName ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="John Doe" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Email</label>
-                  <input name="email" value={formData.email} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="john@example.com" />
+                  <input name="email" value={formData.email ?? ""} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="john@example.com" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Contact Number</label>
-                  <input name="contactNumber" value={formData.contactNumber} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
+                  <input name="contactNumber" value={formData.contactNumber ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
                 </div>
               </div>
             </div>
@@ -138,11 +138,11 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-in Date</label>
-                  <input name="checkInDate" value={formData.checkInDate} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkInDate" value={formData.checkInDate ?? ""} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-out Date</label>
-                  <input name="checkOutDate" value={formData.checkOutDate} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkOutDate" value={formData.checkOutDate ?? ""} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
 
@@ -150,15 +150,15 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time In</label>
-                  <input name="checkInTime" value={formData.checkInTime} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkInTime" value={formData.checkInTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time Out</label>
-                  <input name="checkOutTime" value={formData.checkOutTime} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkOutTime" value={formData.checkOutTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Total Pax</label>
-                  <input name="guestCount" value={formData.guestCount} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="guestCount" value={formData.guestCount ?? 0} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
                 </div>
               </div>
 
@@ -166,11 +166,11 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Sleeping Guests</label>
-                  <input name="sleepingGuests" value={formData.sleepingGuests} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="sleepingGuests" value={formData.sleepingGuests ?? 0} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Number of Rooms</label>
-                  <input name="roomCount" value={formData.roomCount} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="roomCount" value={formData.roomCount ?? 1} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
                 </div>
               </div>
 
@@ -213,7 +213,7 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
               </div>
               <div className="space-y-1 mt-4">
                 <label className="text-xs font-black uppercase text-slate-400 ml-1">Special Message</label>
-                <textarea name="message" value={formData.message} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" placeholder="Anything else we should know?" />
+                <textarea name="message" value={formData.message ?? ""} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" placeholder="Anything else we should know?" />
               </div>
             </div>
           )}

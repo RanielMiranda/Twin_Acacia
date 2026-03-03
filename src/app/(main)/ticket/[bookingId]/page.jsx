@@ -178,15 +178,17 @@ export default function ClientTicketPage() {
         Number(bookingForm.totalAmount || 0) - Number(bookingForm.downpayment || 0)
       );
 
-      await supabase.from("booking_transactions").insert({
+      const { error: transactionError } = await supabase.from("booking_transactions").insert({
         booking_id: booking.id,
         method: paymentMethod,
         amount: Number(downpayment || 0),
         balance_after: balanceAfter,
         note: "Downpayment submitted by client ticket page",
       });
+      if (transactionError) throw transactionError;
 
       setBooking((prev) => ({ ...prev, booking_form: bookingForm, status: nextStatus }));
+      await fetchTicket();
 
       toast({
         message: "Downpayment submitted. Please wait for owner validation.",
@@ -262,6 +264,12 @@ export default function ClientTicketPage() {
   const paid = Number(form.downpayment || 0);
   const balance = Math.max(0, totalAmount - paid);
   const entryCode = form.confirmationStub?.code || `TKT-${String(booking.id).slice(-6).toUpperCase()}`;
+  const status = String(booking.status || "").toLowerCase();
+  const isConcernOnlyMode =
+    status.includes("confirm") ||
+    status.includes("ongoing") ||
+    status.includes("pending checkout") ||
+    status.includes("checked out");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-8 mt-16 pb-20">
@@ -424,17 +432,23 @@ export default function ClientTicketPage() {
             )}
           </div>
 
-          <div className="flex gap-2">
-            <input
-              className="flex-1 rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
-              placeholder="Send a message to owner"
-              value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-            />
-            <Button className="rounded-2xl h-12" onClick={handleSendMessage}>
-              Send
-            </Button>
-          </div>
+          {!isConcernOnlyMode ? (
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
+                placeholder="Send a message to owner"
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+              />
+              <Button className="rounded-2xl h-12" onClick={handleSendMessage}>
+                Send
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">
+              Stay confirmed. Use the concern form below for operational issues.
+            </p>
+          )}
 
           <input
             className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"

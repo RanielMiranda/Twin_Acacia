@@ -14,6 +14,12 @@ import AccountCard from "./components/AccountCard";
 import MessageAdminModal from "./components/MessageAdminModal";
 import { supabase } from "@/lib/supabase";
 
+const isMissingOwnerAdminTableError = (error) =>
+  !!error?.message &&
+  (error.message.includes("Could not find the table") ||
+    error.message.includes("does not exist") ||
+    error.message.includes("schema cache"));
+
 export default function Page() {
   const [resortStatus, setResortStatus] = useState("Draft");
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -40,6 +46,14 @@ export default function Page() {
       .limit(30);
 
     if (error) {
+      if (isMissingOwnerAdminTableError(error)) {
+        setAdminMessages([]);
+        toast({
+          message: "Owner-admin support table is not installed yet. Run phase4_owner_admin_messages.sql.",
+          color: "amber",
+        });
+        return;
+      }
       console.error("Failed to load owner-admin messages:", error.message);
       return;
     }
@@ -70,6 +84,13 @@ export default function Page() {
     };
     const { error } = await supabase.from("owner_admin_messages").insert(payload);
     if (error) {
+      if (isMissingOwnerAdminTableError(error)) {
+        toast({
+          message: "Owner-admin support table is missing. Run phase4_owner_admin_messages.sql.",
+          color: "amber",
+        });
+        return;
+      }
       toast({
         message: `Failed to send message: ${error.message}`,
         color: "red",

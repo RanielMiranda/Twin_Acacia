@@ -16,6 +16,12 @@ import { useResort } from "@/components/useclient/ContextEditor";
 import { supabase } from "@/lib/supabase";
 import resortInitialData from "@/app/edit/resort-builder/[id]/data/ResortInitialData";
 
+const isMissingOwnerAdminTableError = (error) =>
+  !!error?.message &&
+  (error.message.includes("Could not find the table") ||
+    error.message.includes("does not exist") ||
+    error.message.includes("schema cache"));
+
 const ADMIN_RESORT_COLUMNS = ["id", "name", "location", "visible", "profileImage", "gallery", "created_at"].join(", ");
 const ADMIN_MESSAGE_COLUMNS = ["id", "title", "content", "requestedBy", "status", "created_at"].join(", ");
 const OWNER_ADMIN_COLUMNS = ["id", "resort_id", "sender_name", "subject", "message", "status", "created_at"].join(", ");
@@ -63,12 +69,21 @@ export default function Page() {
     try {
       const { data: resortMsgs } = await supabase.from("resort_messages").select(ADMIN_MESSAGE_COLUMNS).eq("status", "pending");
       const { data: accountMsgs } = await supabase.from("account_messages").select(ADMIN_MESSAGE_COLUMNS).eq("status", "pending");
-      const { data: ownerMsgs } = await supabase
+      const { data: ownerMsgs, error: ownerMsgError } = await supabase
         .from("owner_admin_messages")
         .select(OWNER_ADMIN_COLUMNS)
         .eq("sender_role", "owner")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
+      if (ownerMsgError && !isMissingOwnerAdminTableError(ownerMsgError)) {
+        throw ownerMsgError;
+      }
+      if (ownerMsgError && isMissingOwnerAdminTableError(ownerMsgError)) {
+        toast({
+          message: "Owner-admin support table is missing. Run phase4_owner_admin_messages.sql.",
+          color: "amber",
+        });
+      }
 
       const supportMsgs = (ownerMsgs || []).map((row) => ({
         id: row.id,
@@ -101,6 +116,13 @@ export default function Page() {
         .eq("id", id);
 
       if (updateError) {
+        if (isMissingOwnerAdminTableError(updateError)) {
+          toast({
+            message: "Owner-admin support table is missing. Run phase4_owner_admin_messages.sql.",
+            color: "amber",
+          });
+          return;
+        }
         toast({
           message: `Failed to resolve support message: ${updateError.message}`,
           color: "red",
@@ -109,7 +131,7 @@ export default function Page() {
       }
 
       // Send simple admin acknowledgement so owner sees a response in inbox.
-      await supabase.from("owner_admin_messages").insert({
+      const { error: ackError } = await supabase.from("owner_admin_messages").insert({
         resort_id: resolvedMsg.resort_id || null,
         sender_role: "admin",
         sender_name: "Admin",
@@ -117,6 +139,12 @@ export default function Page() {
         message: `Resolved: ${resolvedMsg.content || "Request acknowledged by admin."}`,
         status: "resolved",
       });
+      if (ackError && !isMissingOwnerAdminTableError(ackError)) {
+        toast({
+          message: `Resolved, but failed to send owner acknowledgement: ${ackError.message}`,
+          color: "amber",
+        });
+      }
     }
 
     // Move message to archives
