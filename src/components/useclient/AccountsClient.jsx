@@ -10,6 +10,7 @@ const ACCOUNT_COLUMNS = [
   "full_name",
   "email",
   "phone",
+  "profile_image",
   "password",
   "role",
   "status",
@@ -18,7 +19,7 @@ const ACCOUNT_COLUMNS = [
   "setup_token",
   "created_at",
   "updated_at",
-  "resorts(name, location)",
+  "resorts(id, name, location)",
 ].join(", ");
 
 const readSessionAccount = () => {
@@ -203,4 +204,3 @@ export function AccountsProvider({ children }) {
 }
 
 export const useAccounts = () => useContext(AccountsContext);
-

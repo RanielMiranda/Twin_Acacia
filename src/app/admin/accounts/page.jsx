@@ -39,7 +39,7 @@ export default function Page() {
         resortName: entry.resorts?.name || "Unassigned Resort",
         role: entry.role || "owner",
         status: (entry.status || "pending").replace(/^./, (s) => s.toUpperCase()),
-        profileImage: null,
+        profileImage: entry.profile_image || null,
       })),
     [accounts]
   );
@@ -193,4 +193,3 @@ export default function Page() {
     </div>
   );
 }
-

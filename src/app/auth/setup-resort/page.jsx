@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { ShieldCheck, Lock, Camera, CheckCircle2, ArrowRight, Loader2, Building2, MapPin } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Lock, Camera, CheckCircle2, ArrowRight, Loader2, Building2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAccounts } from "@/components/useclient/AccountsClient";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import { supabase } from "@/lib/supabase";
+import { BUCKET_NAME } from "@/lib/utils";
 
 export default function Page() {
   const router = useRouter();
@@ -19,12 +20,16 @@ export default function Page() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [account, setAccount] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
   const [form, setForm] = useState({
     password: "",
     confirmPassword: "",
-    resortName: "",
-    resortLocation: "",
   });
+
+  const photoPreview = useMemo(() => {
+    if (photoFile) return URL.createObjectURL(photoFile);
+    return account?.profile_image || "";
+  }, [account?.profile_image, photoFile]);
 
   useEffect(() => {
     const load = async () => {
@@ -39,6 +44,19 @@ export default function Page() {
     load();
   }, [getAccountBySetupToken, token, toast]);
 
+  const uploadProfilePhoto = async () => {
+    if (!photoFile || !account?.id) return account?.profile_image || null;
+    const ext = (photoFile.name?.split(".").pop() || "jpg").toLowerCase();
+    const path = `accounts/${account.id}/profile-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, photoFile, {
+      upsert: true,
+      contentType: photoFile.type || "image/jpeg",
+    });
+    if (error) throw error;
+    const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path);
+    return data?.publicUrl || null;
+  };
+
   const handleCompleteSetup = async (e) => {
     e.preventDefault();
     if (!token) {
@@ -51,20 +69,10 @@ export default function Page() {
     }
     setIsSubmitting(true);
     try {
-      let resortId = account?.resort_id || null;
-      if (form.resortName.trim()) {
-        const { data: resortRow, error: resortError } = await supabase
-          .from("resorts")
-          .insert({ name: form.resortName.trim(), location: form.resortLocation.trim(), visible: false })
-          .select("id")
-          .single();
-        if (resortError) throw resortError;
-        resortId = resortRow?.id || null;
-      }
-
+      const profileUrl = await uploadProfilePhoto();
       await completeSetup(token, {
         password: form.password || account?.password || "",
-        resort_id: resortId,
+        profile_image: profileUrl || account?.profile_image || null,
       });
 
       setIsFinished(true);
@@ -90,7 +98,17 @@ export default function Page() {
           <FormHeader email={account?.email || "pending@invite"} />
 
           <form onSubmit={handleCompleteSetup} className="space-y-8">
-            <PhotoUpload />
+            <PhotoUpload preview={photoPreview} onFile={(file) => setPhotoFile(file)} />
+
+            <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm space-y-2">
+              <h4 className="font-bold text-slate-900 flex items-center gap-2"><Building2 size={16} /> Assigned Resort</h4>
+              <p className="text-sm font-semibold text-slate-800">{account?.resorts?.name || "No resort assigned yet"}</p>
+              <p className="text-xs text-slate-500 flex items-center gap-1">
+                <MapPin size={12} />
+                {account?.resorts?.location || "Admin will attach the resort from dashboard action menu."}
+              </p>
+            </div>
+
             <PasswordField
               label="Create Password"
               value={form.password}
@@ -101,23 +119,6 @@ export default function Page() {
               value={form.confirmPassword}
               onChange={(value) => setForm((prev) => ({ ...prev, confirmPassword: value }))}
             />
-
-            <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm space-y-4">
-              <h4 className="font-bold text-slate-900 flex items-center gap-2"><Building2 size={16} /> Resort Setup</h4>
-              <input
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Resort Name"
-                value={form.resortName}
-                onChange={(e) => setForm((prev) => ({ ...prev, resortName: e.target.value }))}
-              />
-              <input
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Resort Address / Location"
-                value={form.resortLocation}
-                onChange={(e) => setForm((prev) => ({ ...prev, resortLocation: e.target.value }))}
-              />
-              <p className="text-xs text-slate-500 flex items-center gap-1"><MapPin size={12} /> Address/details are configured here.</p>
-            </div>
 
             <TermsCheckbox />
 
@@ -143,9 +144,9 @@ function BrandingSidebar() {
         <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-12">
           <Building2 size={28} />
         </div>
-        <h1 className="text-4xl font-black mb-6 leading-tight">Account & Resort Setup</h1>
+        <h1 className="text-4xl font-black mb-6 leading-tight">Account Setup</h1>
         <p className="text-blue-100 text-lg font-medium max-w-xs">
-          Configure credentials and the initial resort profile in one flow.
+          Complete profile, password, and wait for admin resort assignment if needed.
         </p>
       </div>
       <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-50" />
@@ -162,17 +163,24 @@ function FormHeader({ email }) {
   );
 }
 
-function PhotoUpload() {
+function PhotoUpload({ preview, onFile }) {
   return (
-    <div className="flex items-center gap-6 p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
-      <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200">
-        <Camera size={32} />
+    <label className="flex items-center gap-6 p-6 bg-white rounded-3xl border border-slate-100 shadow-sm cursor-pointer">
+      <div className="w-20 h-20 bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200">
+        {preview ? <img src={preview} alt="Profile" className="w-full h-full object-cover" /> : <Camera size={32} />}
       </div>
       <div>
         <h4 className="font-bold text-slate-900">Profile Photo</h4>
-        <p className="text-sm text-slate-500 mb-2">Optional setup photo.</p>
+        <p className="text-sm text-slate-500 mb-2">Upload photo (stored in Supabase bucket).</p>
+        <span className="text-xs font-bold text-blue-600">Choose File</span>
       </div>
-    </div>
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => onFile(e.target.files?.[0] || null)}
+      />
+    </label>
   );
 }
 
@@ -214,7 +222,7 @@ function SuccessState({ onGoHome }) {
           <CheckCircle2 size={48} />
         </div>
         <h1 className="text-3xl font-black text-slate-900 mb-4">Setup Complete</h1>
-        <p className="text-slate-500 mb-8 font-medium">Account and resort profile initialized.</p>
+        <p className="text-slate-500 mb-8 font-medium">Account credentials and profile are saved.</p>
         <Button onClick={onGoHome} className="w-full h-14 bg-blue-600 hover:bg-blue-700 rounded-2xl text-lg font-bold shadow-lg">
           Go to Dashboard
         </Button>

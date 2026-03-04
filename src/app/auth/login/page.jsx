@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAccounts } from "@/components/useclient/AccountsClient";
 import { useToast } from "@/components/ui/toast/ToastProvider";
+import Toast from "@/components/ui/toast/Toast";
 
 export default function Page() {
   const router = useRouter();
@@ -180,6 +181,7 @@ export default function Page() {
           </div>
         )}
       </div>
+      <Toast />
     </div>
   );
 }
