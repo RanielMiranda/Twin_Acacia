@@ -7,11 +7,11 @@ import HeroSection from "./rooms/HeroSection";
 import ProfileSection from "./rooms/ProfileSection";
 import RoomsSection from "./rooms/RoomsSection";
 import ShortcutBar from "./rooms/ShortcutBar";
-import AmenitiesSection from "./rooms/AmenitiesSection";
+import FacilitySection from "./rooms/FacilitySection";
 import ServicesSection from "./rooms/ServicesSection";
 
 import GalleryModal from "./components/GalleryModal";
-import AmenitiesModal from "./components/AmenitiesModal";
+import FacilityGalleryModal from "./components/FacilityGalleryModal";
 
 import ContactOwnerModal from "./components/ContactOwnerModal";
 import RoomFilterPanel from "./rooms/filters/RoomFilterPanel";
@@ -156,7 +156,7 @@ const handleSubmitInquiry = async (submittedData) => {
 
       <ProfileSection/>
 
-      <AmenitiesSection 
+      <FacilitySection 
         facilities={resort.facilities} 
         onOpen={handleOpenFacility} 
       />
@@ -207,7 +207,7 @@ const handleSubmitInquiry = async (submittedData) => {
       )}
 
       {facilityOpen && (
-        <AmenitiesModal
+        <FacilityGalleryModal
           facilities={resort.facilities}
           activeIndex={facilityIndex}
           setActiveIndex={setFacilityIndex}

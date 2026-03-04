@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-export default function AmenitiesModal({
+export default function FacilityGalleryModal({
   facilities = [],
   activeIndex = 0,
   setActiveIndex,
@@ -73,7 +73,7 @@ export default function AmenitiesModal({
           <h3 className="mt-2 text-2xl font-black text-slate-900">{facility?.name || "Unnamed Facility"}</h3>
           <p className="mt-4 text-sm text-slate-600 leading-relaxed">
             {facility?.description ||
-              "Facility details are currently not set. You can add descriptions in the resort builder for richer guest context."}
+              "Facility details are currently not set. Add a description from the editor."}
           </p>
           <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50 p-4 text-xs text-slate-500">
             {currentIndex + 1} of {safeFacilities.length}

@@ -5,7 +5,7 @@ import { Save, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useResort } from "@/components/useclient/ContextEditor"; // Import only the hook
 
-import AmenitiesEditor from "./components/AmenitiesEditor";
+import FacilityEditor from "./components/facility/FacilityEditor";
 import HeroGalleryEditor from "./components/HeroGalleryEditor";
 import ProfileEditor from "./components/ProfileEditor";
 import RoomsEditor from "./components/RoomsEditor";
@@ -55,7 +55,7 @@ export default function ResortBuilder({ resortId }) {
       <HeroGalleryEditor />
       <ShortcutBar />
       <ProfileEditor />
-      <AmenitiesEditor />
+      <FacilityEditor />
       <ServicesEditor />
       <RoomsEditor />
       

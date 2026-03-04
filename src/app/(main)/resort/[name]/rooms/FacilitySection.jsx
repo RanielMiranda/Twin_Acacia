@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 
-export default function AmenitiesSection({ facilities, onOpen }) {
+export default function FacilitySection({ facilities, onOpen }) {
   const safeFacilities = Array.isArray(facilities) ? facilities : [];
   const maxVisible = 10;
   const visibleFacilities = safeFacilities.slice(0, maxVisible);
@@ -24,7 +24,7 @@ export default function AmenitiesSection({ facilities, onOpen }) {
     if (!isDragging.current) return;
     e.preventDefault();
     const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1; // scroll speed
+    const walk = x - startX.current;
     scrollRef.current.scrollLeft = scrollLeftStart.current - walk;
   };
 
@@ -37,10 +37,9 @@ export default function AmenitiesSection({ facilities, onOpen }) {
     <div id="facilities" className="max-w-6xl mx-auto px-4">
       <h2 className="text-2xl font-semibold mb-4">Facilities</h2>
 
-      {/* Horizontal Gallery */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto py-2 cursor-grab"
+        className="flex gap-6 overflow-x-auto snap-x snap-mandatory py-2 pb-4 cursor-grab"
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUpOrLeave}
@@ -49,26 +48,24 @@ export default function AmenitiesSection({ facilities, onOpen }) {
         {visibleFacilities.map((facility, idx) => {
           const isLast = idx === maxVisible - 1 && hasMore;
           return (
-            <div
-              key={idx}
-              className="flex-shrink-0 w-24 cursor-pointer group relative"
-              onClick={() => openModal(idx)}
-            >
-              <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 relative">
+            <div key={`${facility?.name || "facility"}-${idx}`} className="flex-shrink-0 w-48 snap-start group relative">
+              <button
+                onClick={() => openModal(idx)}
+                className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 relative shadow-sm border border-slate-200 block text-left"
+              >
                 <img
                   src={facility?.image || ""}
                   alt={facility?.name || "Facility"}
-                  className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${
-                    isLast ? "brightness-50" : ""
-                  }`}
+                  className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${isLast ? "brightness-50" : ""}`}
                 />
                 {isLast && hasMore && (
                   <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">
                     View More
                   </div>
                 )}
-              </div>
-              <p className="mt-2 text-sm font-medium text-center">{facility?.name || "Facility"}</p>
+              </button>
+              <p className="mt-3 text-sm font-semibold text-slate-900 truncate">{facility?.name || "Facility"}</p>
+              <p className="mt-1 text-xs text-slate-500 line-clamp-2">{facility?.description || "No description provided."}</p>
             </div>
           );
         })}
