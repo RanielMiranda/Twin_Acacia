@@ -5,12 +5,18 @@ import { useToast } from "./ToastProvider";
 import { useEffect, useState } from "react";
 
 function SingleToast({ data, remove }) {
-  const { id, message, color, icon: Icon } = data;
+  const { id, message, color, icon: Icon, duration = 4000, persistent = false } = data;
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     setVisible(true);
-  }, [id]);
+    if (persistent) return undefined;
+    const timer = setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => remove(id), 200);
+    }, duration);
+    return () => clearTimeout(timer);
+  }, [duration, id, persistent, remove]);
 
   const colors = {
     green: "bg-green-500",
@@ -56,10 +62,11 @@ function SingleToast({ data, remove }) {
 
 export default function ToastContainer() {
   const { toasts, remove } = useToast();
+  const normalToasts = (toasts || []).filter((entry) => !entry.persistent);
 
   return (
     <div className="fixed top-6 right-6 z-[200] flex flex-col gap-3 max-w-sm">
-      {toasts.map((toast) => (
+      {normalToasts.map((toast) => (
         <SingleToast key={toast.id} data={toast} remove={remove} />
       ))}
     </div>

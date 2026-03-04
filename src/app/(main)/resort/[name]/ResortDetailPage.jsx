@@ -18,6 +18,7 @@ import RoomFilterPanel from "./rooms/filters/RoomFilterPanel";
 
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast"
+import PersistentToast from "@/components/ui/toast/PersistentToast";
 import { supabase } from "@/lib/supabase";
 
 export default function ResortDetailPage({ name }) {
@@ -34,7 +35,7 @@ export default function ResortDetailPage({ name }) {
   const [price, setPrice] = useState(5000);
   const [inquiryNotice, setInquiryNotice] = useState("");
 
-  const { toast } = useToast();
+  const { toast, persistentToast } = useToast();
   useEffect(() => {
     if (!name) return;
         const decodedName = decodeURIComponent(name);
@@ -128,7 +129,7 @@ const handleSubmitInquiry = async (submittedData) => {
       const inquiryMessage =
         "Inquiry has been sent. Please wait for your inquiry approval link via email, where prices can be discussed.";
       setInquiryNotice(inquiryMessage);
-      toast({
+      persistentToast({
         message: inquiryMessage,
         color: "blue",
       });
@@ -232,6 +233,7 @@ const handleSubmitInquiry = async (submittedData) => {
         />
       )}
     <Toast/>
+    <PersistentToast />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const AccountsContext = createContext(null);
@@ -54,7 +54,11 @@ const clearCookie = (name) => {
 export function AccountsProvider({ children }) {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeAccount, setActiveAccount] = useState(() => readSessionAccount());
+  const [activeAccount, setActiveAccount] = useState(null);
+
+  useEffect(() => {
+    setActiveAccount(readSessionAccount());
+  }, []);
 
   const refreshAccounts = useCallback(async () => {
     setLoading(true);
