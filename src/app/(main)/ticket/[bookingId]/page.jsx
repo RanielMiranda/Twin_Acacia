@@ -150,6 +150,10 @@ export default function ClientTicketPage() {
 
   const handleSubmitDownpayment = async () => {
     if (!booking) return;
+    if (!proofFile) {
+      toast({ message: "Please attach proof of payment image before submitting.", color: "red" });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const proofUrl = await uploadProof();
@@ -424,7 +428,7 @@ export default function ClientTicketPage() {
             </div>
 
             <Button 
-              disabled={isSubmitting}
+              disabled={isSubmitting || !proofFile}
               className="w-full mt-8 bg-emerald-500 hover:bg-emerald-600 h-14 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition-all active:scale-95 flex items-center justify-center gap-2" 
               onClick={handleSubmitDownpayment}
             >
@@ -544,3 +548,5 @@ function TicketRow({ label, value, subValue, isStatus }) {
     </div>
   );
 }
+
+

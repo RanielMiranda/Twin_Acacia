@@ -1,12 +1,13 @@
 import { Edit3, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export default function ResortCard({ resort, onEdit, onPreview, ownerImage }) {
   const heroImage = resort?.profileImage || resort?.gallery?.[0] || "";
   const resortName = resort?.name || "No resort assigned";
-  const updatedLabel = resort?.updated_at
-    ? `Last updated ${new Date(resort.updated_at).toLocaleDateString()}`
+  const updatedLabel = resort?.created_at
+    ? `Added ${new Date(resort.created_at).toLocaleDateString()}`
     : "No recent update";
 
   return (
@@ -14,7 +15,9 @@ export default function ResortCard({ resort, onEdit, onPreview, ownerImage }) {
       <div className="h-56 relative overflow-hidden">
         {heroImage ? (
           <img
-            src={heroImage}
+            src={getTransformedSupabaseImageUrl(heroImage, { width: 1024, quality: 80, format: "webp" })}
+            srcSet={getSupabaseSrcSet(heroImage)}
+            sizes="(max-width: 768px) 100vw, 66vw"
             className="w-full h-full object-cover rounded-md"
             alt={resortName}
           />
@@ -33,7 +36,13 @@ export default function ResortCard({ resort, onEdit, onPreview, ownerImage }) {
           {/* Owner Profile Mini-Image beside name */}
           <div className="w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden shadow-sm bg-slate-100">
             {ownerImage ? (
-              <img src={ownerImage} alt="Owner" className="w-full h-full object-cover" />
+              <img
+                src={getTransformedSupabaseImageUrl(ownerImage, { width: 128, quality: 80, format: "webp" })}
+                srcSet={getSupabaseSrcSet(ownerImage, [64, 96, 128], 80)}
+                sizes="40px"
+                alt="Owner"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-blue-600 text-sm font-black">
                 {resortName?.charAt(0) || "R"}

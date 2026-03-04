@@ -11,19 +11,20 @@ export default function OwnerTopBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { activeAccount, signOut } = useAccounts();
-  const resortId = activeAccount?.resort_id || 1;
-  const accountId = activeAccount?.id || 1;
+  const resortId = activeAccount?.resort_id ? Number(activeAccount.resort_id) : null;
+  const accountId = activeAccount?.id ? Number(activeAccount.id) : null;
 
   const navLinks = [
-    { name: "My Resort", href: `/edit/resort-builder/${resortId}`, icon: Palmtree },
-    { name: "Bookings", href: `/edit/bookings/${resortId}`, icon: CalendarDays },
-    { name: "Account", href: `/edit/accounts/${accountId}`, icon: UserCircle },
+    { name: "My Resort", href: resortId ? `/edit/resort-builder/${resortId}` : "/owner/dashboard", icon: Palmtree },
+    { name: "Bookings", href: resortId ? `/edit/bookings/${resortId}` : "/owner/dashboard", icon: CalendarDays },
+    { name: "Account", href: accountId ? `/edit/accounts/${accountId}` : "/owner/dashboard", icon: UserCircle },
   ];
 
   const closeMenu = () => setIsMenuOpen(false);
   const handleLogout = () => {
     signOut();
-    router.push("/auth/login");
+    router.replace("/");
+    router.refresh();
   };
 
   return (

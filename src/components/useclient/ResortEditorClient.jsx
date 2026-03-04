@@ -48,6 +48,30 @@ const toResortDbPayload = (resort) =>
     return acc;
   }, {});
 
+const convertImageFileToWebp = async (file) => {
+  if (!file || !(file instanceof File) || !file.type?.startsWith("image/")) return file;
+  if (typeof window === "undefined") return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return file;
+    }
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
+    if (!blob) return file;
+    const base = file.name.replace(/\.[^.]+$/, "") || `image-${Date.now()}`;
+    return new File([blob], `${base}.webp`, { type: "image/webp" });
+  } catch {
+    return file;
+  }
+};
+
 export function ResortEditorProvider({ children }) {
   const { fetchResortByIdentifier } = useResortData();
   const [resort, setResort] = useState(null);
@@ -143,13 +167,16 @@ export function ResortEditorProvider({ children }) {
 
   const uploadImage = async (file, resortName, category, subFolder = "") => {
     if (!resortName) return null;
+    const normalizedFile = await convertImageFileToWebp(file);
     const safeResortName = resortName.replace(/\s+/g, "-").toLowerCase();
-    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+    const fileName = `${Date.now()}-${normalizedFile.name.replace(/\s+/g, "-")}`;
     let path = `${safeResortName}/${category}`;
     if (subFolder) path += `/${subFolder.replace(/\s+/g, "-").toLowerCase()}`;
     path += `/${fileName}`;
 
-    const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, file);
+    const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, normalizedFile, {
+      contentType: normalizedFile.type || "image/webp",
+    });
     if (error) throw error;
     const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path);
     return urlData.publicUrl;

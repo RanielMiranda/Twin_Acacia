@@ -32,7 +32,7 @@ export default function Page() {
   const { toast } = useToast();
   const { activeAccount } = useAccounts();
   const OWNER_RESORT_ID = activeAccount?.resort_id ? Number(activeAccount.resort_id) : null;
-  const ACCOUNT_ID = activeAccount?.id || 1;
+  const ACCOUNT_ID = activeAccount?.id ? Number(activeAccount.id) : null;
 
   const loadDashboardStatus = useCallback(async () => {
     if (!OWNER_RESORT_ID) {
@@ -62,7 +62,7 @@ export default function Page() {
     }
     const { data, error } = await supabase
       .from("resorts")
-      .select("id, name, location, profileImage, gallery, updated_at, visible")
+      .select("id, name, location, profileImage, gallery, created_at, visible")
       .eq("id", OWNER_RESORT_ID)
       .maybeSingle();
     if (error) {
@@ -273,7 +273,13 @@ export default function Page() {
           <AccountCard 
             account={activeAccount}
             resort={resortData}
-            onEditProfile={() => router.push(`/edit/accounts/${ACCOUNT_ID}`)}
+            onEditProfile={() => {
+              if (!ACCOUNT_ID) {
+                toast({ message: "No active account found.", color: "amber" });
+                return;
+              }
+              router.push(`/edit/accounts/${ACCOUNT_ID}`);
+            }}
             onContactAdmin={handleOpenAdminModal}
           />
            <InboxCard messages={adminMessages} />

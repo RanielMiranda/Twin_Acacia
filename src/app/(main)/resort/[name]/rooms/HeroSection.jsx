@@ -1,4 +1,5 @@
 import { useResort } from "@/components/useclient/ContextEditor";
+import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export default function HeroSection({ onOpen }) {
   const { resort } = useResort();
@@ -18,7 +19,9 @@ export default function HeroSection({ onOpen }) {
             } relative`}
           >
             <img
-              src={img}
+              src={getTransformedSupabaseImageUrl(img, { width: 1200, quality: 80, format: "webp" })}
+              srcSet={getSupabaseSrcSet(img)}
+              sizes="(max-width: 768px) 100vw, 50vw"
               alt=""
               className="w-full h-full object-cover"
             />

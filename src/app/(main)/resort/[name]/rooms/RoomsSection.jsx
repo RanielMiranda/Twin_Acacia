@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Users, BedDouble } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useFilters } from "@/components/useclient/ContextFilter"; 
+import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export default function RoomsSection({ onOpenRoomGallery }) {
   const { resort } = useResort(); 
@@ -44,7 +45,9 @@ export default function RoomsSection({ onOpenRoomGallery }) {
                   {/* Image 1 */}
                   <div className={`overflow-hidden ${imageCount === 1 ? "rounded-xl" : "rounded-l-xl"} row-span-${imageCount === 3 ? 2 : 1}`}>
                     <img
-                      src={room.gallery?.[0] || resort.gallery[0]}
+                      src={getTransformedSupabaseImageUrl(room.gallery?.[0] || resort.gallery[0], { width: 960, quality: 80, format: "webp" })}
+                      srcSet={getSupabaseSrcSet(room.gallery?.[0] || resort.gallery[0])}
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       onClick={() => onOpenRoomGallery(room.gallery, 0)}
                       className="object-cover w-full h-full cursor-pointer"
                     />
@@ -54,7 +57,9 @@ export default function RoomsSection({ onOpenRoomGallery }) {
                   {imageCount >= 2 && (
                     <div className={`overflow-hidden ${imageCount === 2 ? "rounded-r-xl" : "rounded-tr-xl"}`}>
                       <img
-                        src={room.gallery[1]}
+                        src={getTransformedSupabaseImageUrl(room.gallery[1], { width: 640, quality: 80, format: "webp" })}
+                        srcSet={getSupabaseSrcSet(room.gallery[1], [320, 480, 640], 80)}
+                        sizes="(max-width: 768px) 50vw, 25vw"
                         onClick={() => onOpenRoomGallery(room.gallery, 1)}
                         className="object-cover w-full h-full cursor-pointer"
                       />
@@ -65,7 +70,9 @@ export default function RoomsSection({ onOpenRoomGallery }) {
                   {imageCount === 3 && (
                     <div className="overflow-hidden relative rounded-br-xl">
                       <img
-                        src={room.gallery[2]}
+                        src={getTransformedSupabaseImageUrl(room.gallery[2], { width: 640, quality: 80, format: "webp" })}
+                        srcSet={getSupabaseSrcSet(room.gallery[2], [320, 480, 640], 80)}
+                        sizes="(max-width: 768px) 50vw, 25vw"
                         onClick={() => onOpenRoomGallery(room.gallery, 2)}
                         className="object-cover w-full h-full cursor-pointer"
                       />

@@ -3,6 +3,7 @@
 import { User, Settings, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export default function AccountCard({ account, resort, onEditProfile, onContactAdmin }) {
   const profileImg = account?.profile_image || null;
@@ -18,7 +19,9 @@ export default function AccountCard({ account, resort, onEditProfile, onContactA
           <div className="h-12 w-12 rounded-full overflow-hidden border border-slate-200">
             {profileImg ? (
               <img
-                src={profileImg}
+                src={getTransformedSupabaseImageUrl(profileImg, { width: 128, quality: 80, format: "webp" })}
+                srcSet={getSupabaseSrcSet(profileImg, [64, 96, 128], 80)}
+                sizes="48px"
                 alt="Owner"
                 className="w-full h-full object-cover"
               />

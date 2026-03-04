@@ -26,7 +26,8 @@ export default function AdminTopBar() {
   const closeMenu = () => setIsMenuOpen(false);
   const handleLogout = () => {
     signOut();
-    router.push("/auth/login");
+    router.replace("/");
+    router.refresh();
   };
 
   return (

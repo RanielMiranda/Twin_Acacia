@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import SearchBar from "../search/SearchBar";
 import { useResort } from "@/components/useclient/ContextEditor";
+import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export default function HeroBanner() {
   const [heroImages, setHeroImages] = useState([]);
@@ -53,7 +54,9 @@ export default function HeroBanner() {
 
       {/* BACKGROUND (next image always loaded underneath) */}
       <img
-        src={safeSrc(heroImages[nextIndex])}
+        src={getTransformedSupabaseImageUrl(safeSrc(heroImages[nextIndex]), { width: 1600, quality: 80, format: "webp" })}
+        srcSet={getSupabaseSrcSet(safeSrc(heroImages[nextIndex]))}
+        sizes="100vw"
         className="absolute w-full h-full object-cover"
         alt=""
       />
@@ -61,7 +64,9 @@ export default function HeroBanner() {
       {/* FOREGROUND (current image fades out) */}
       <motion.img
         key={heroIndex}
-        src={safeSrc(heroImages[nextIndex])}
+        src={getTransformedSupabaseImageUrl(safeSrc(heroImages[nextIndex]), { width: 1600, quality: 80, format: "webp" })}
+        srcSet={getSupabaseSrcSet(safeSrc(heroImages[nextIndex]))}
+        sizes="100vw"
         initial={{ opacity: 1 }}
         animate={{ opacity: 0 }}
         transition={{ duration: 2, ease: [0.4, 0, 0.2, 1] }}
