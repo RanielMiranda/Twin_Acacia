@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 const ResortDataContext = createContext(null);
 const RESORT_CACHE_KEY = "resorts_cache_v1";
 const RESORT_CACHE_TS_KEY = "resorts_cache_v1_ts";
+const getStorage = () => (typeof window === "undefined" ? null : window.sessionStorage);
 const RESORT_LIST_COLUMNS = [
   "id",
   "name",
@@ -66,9 +67,10 @@ export function ResortDataProvider({ children }) {
       setAllResorts(next);
       const fetchedAt = new Date().toISOString();
       setLastFetchedAt(fetchedAt);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(RESORT_CACHE_KEY, JSON.stringify(next));
-        localStorage.setItem(RESORT_CACHE_TS_KEY, fetchedAt);
+      const storage = getStorage();
+      if (storage) {
+        storage.setItem(RESORT_CACHE_KEY, JSON.stringify(next));
+        storage.setItem(RESORT_CACHE_TS_KEY, fetchedAt);
       }
     }
     setLoading(false);
@@ -95,12 +97,16 @@ export function ResortDataProvider({ children }) {
   }, []);
 
   const hydrateCachedResorts = useCallback(() => {
-    if (typeof window === "undefined") return;
+    const storage = getStorage();
+    if (!storage || typeof window === "undefined") return;
     try {
-      const raw = localStorage.getItem(RESORT_CACHE_KEY);
+      // Remove legacy persistent cache keys so stale deleted resorts don't survive browser restarts.
+      localStorage.removeItem(RESORT_CACHE_KEY);
+      localStorage.removeItem(RESORT_CACHE_TS_KEY);
+      const raw = storage.getItem(RESORT_CACHE_KEY);
       if (!raw) return;
       setAllResorts(JSON.parse(raw));
-      setLastFetchedAt(localStorage.getItem(RESORT_CACHE_TS_KEY) || null);
+      setLastFetchedAt(storage.getItem(RESORT_CACHE_TS_KEY) || null);
     } catch (err) {
       console.error("Resort cache hydrate error:", err.message);
     }
@@ -108,7 +114,8 @@ export function ResortDataProvider({ children }) {
 
   useEffect(() => {
     hydrateCachedResorts();
-  }, [hydrateCachedResorts]);
+    fetchResorts();
+  }, [fetchResorts, hydrateCachedResorts]);
 
   const filteredResorts = useMemo(() => {
     const { min, max } = priceRange;

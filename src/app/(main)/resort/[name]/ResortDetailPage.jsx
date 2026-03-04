@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useResort } from "@/components/useclient/ContextEditor";
-import { CheckCircle2 } from "lucide-react"
 
 import HeroSection from "./rooms/HeroSection";
 import ProfileSection from "./rooms/ProfileSection";
@@ -33,6 +32,7 @@ export default function ResortDetailPage({ name }) {
   const [roomImages, setRoomImages] = useState([]);
   const [contactOpen, setContactOpen] = useState(false);
   const [price, setPrice] = useState(5000);
+  const [inquiryNotice, setInquiryNotice] = useState("");
 
   const { toast } = useToast();
   useEffect(() => {
@@ -105,18 +105,21 @@ const handleSubmitInquiry = async (submittedData) => {
         end_date: submittedData.checkOutDate || null,
         check_in_time: submittedData.checkInTime || "14:00",
         check_out_time: submittedData.checkOutTime || "11:00",
-        color_class: "bg-blue-600",
         status: "Inquiry",
         booking_form: bookingForm,
       });
 
       if (error) throw error;
-
-      toast({
-        message: `Inquiry sent to ${resort.name}!`,
-        color: "green",
-        icon: CheckCircle2,
+      await supabase.from("ticket_messages").insert({
+        booking_id: bookingId,
+        resort_id: Number(resort.id),
+        sender_role: "client",
+        sender_name: submittedData.guestName || "Client",
+        message:
+          submittedData.message?.trim() ||
+          "Inquiry sent. Can we confirm rates, inclusions, and availability?",
       });
+      setInquiryNotice("Inquiry has been sent. Please wait for your ticket confirmation link via email.");
     } catch (err) {
       toast({
         message: `Failed to send inquiry: ${err.message}`,
@@ -156,6 +159,13 @@ const handleSubmitInquiry = async (submittedData) => {
           Contact Owner
         </button>
       </div>
+      {inquiryNotice && (
+        <div className="max-w-6xl mx-auto px-4 mb-4">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+            {inquiryNotice}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-8 px-4 lg:px-0 max-w-6xl mx-auto pb-10">
         <div className="lg:w-80 w-full lg:sticky lg:top-24">

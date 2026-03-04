@@ -110,6 +110,17 @@ export default function BookingDetailsPage() {
   const booking = (bookings || []).find(
     (entry) => entry.id.toString() === bookingId?.toString()
   );
+  const bookingConflicts = (bookings || []).filter((entry) => {
+    if (!booking || entry.id?.toString() === booking.id?.toString()) return false;
+    const sharedRoom = (entry.roomIds || []).some((rid) => (booking.roomIds || []).includes(rid));
+    if (!sharedRoom) return false;
+    const startA = booking.startDate;
+    const endA = booking.endDate || booking.startDate;
+    const startB = entry.startDate;
+    const endB = entry.endDate || entry.startDate;
+    if (!startA || !startB) return false;
+    return !(endA < startB || endB < startA);
+  });
 
   useEffect(() => {
     if (!booking?.id) return;
@@ -171,6 +182,22 @@ export default function BookingDetailsPage() {
     }
   };
 
+  const sendClientTicketNotice = async (message) => {
+    if (!booking?.id) return;
+    try {
+      await sendTicketMessage({
+        booking_id: booking.id,
+        resort_id: booking.resortId || booking.resort_id || Number(id),
+        sender_role: "owner",
+        sender_name: "Owner",
+        message: `${message} Ticket: /ticket/${booking.id}`,
+      });
+      await loadSupportData(booking.id);
+    } catch (err) {
+      console.error("Auto ticket notice error:", err.message);
+    }
+  };
+
   return (
     <BookingModernEditor
       key={booking.id}
@@ -190,6 +217,8 @@ export default function BookingDetailsPage() {
       ownerReply={ownerReply}
       setOwnerReply={setOwnerReply}
       onSendReply={handleSendReply}
+      onNotifyClient={sendClientTicketNotice}
+      conflicts={bookingConflicts}
     />
   );
 }
@@ -208,6 +237,8 @@ function BookingModernEditor({
   ownerReply,
   setOwnerReply,
   onSendReply,
+  onNotifyClient,
+  conflicts = [],
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [renderedAt] = useState(() => Date.now());
@@ -312,6 +343,9 @@ function BookingModernEditor({
     }
     setDraft(next);
     persist(next);
+    if (nextStatus === "Confirmed") {
+      onNotifyClient?.("Your booking has been approved.");
+    }
   };
 
   const handleRequestPayment = () => {
@@ -323,6 +357,7 @@ function BookingModernEditor({
     };
     setDraft(next);
     persist(next);
+    onNotifyClient?.("Inquiry approved. Please proceed with payment upload.");
   };
 
   const handleVerifyProof = () => {
@@ -414,6 +449,14 @@ function BookingModernEditor({
                   <InfoItem label="Check-Out" value={draft.checkOutDate} editing={isEditing} type="date" onChange={(val) => setField("checkOutDate", val)} />
                   <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
                   <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
+                </div>
+                <div className={`rounded-xl px-3 py-2 border ${conflicts.length > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`}>
+                  <p className="text-[10px] uppercase tracking-wider font-black text-slate-500">Availability Check</p>
+                  <p className={`text-xs font-bold ${conflicts.length > 0 ? "text-rose-700" : "text-emerald-700"}`}>
+                    {conflicts.length > 0
+                      ? `${conflicts.length} conflicting booking(s) on shared room/date range.`
+                      : "No detected schedule conflict for this range."}
+                  </p>
                 </div>
               </div>
             </div>
@@ -539,17 +582,25 @@ function BookingModernEditor({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-3">
-            <SectionLabel icon={<AlertCircle size={14} />} label="Client Issues" />
+            <SectionLabel icon={<AlertCircle size={14} />} label="Inquiry / Client Messages" />
             <div className="max-h-52 overflow-auto space-y-2">
-              {issues.length === 0 ? (
-                <p className="text-xs text-slate-400">No complaints filed.</p>
+              {issues.length === 0 && !draft.notes ? (
+                <p className="text-xs text-slate-400">No messages sent yet.</p>
               ) : (
-                issues.map((issue) => (
-                  <div key={issue.id} className="p-3 rounded-xl bg-amber-50 border border-amber-100">
-                    <p className="text-[10px] font-black uppercase text-amber-700">{issue.subject || "Issue"}</p>
-                    <p className="text-xs text-slate-700 mt-1">{issue.message}</p>
-                  </div>
-                ))
+                <>
+                  {draft.notes ? (
+                    <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                      <p className="text-[10px] font-black uppercase text-blue-700">Inquiry Message</p>
+                      <p className="text-xs text-slate-700 mt-1">{draft.notes}</p>
+                    </div>
+                  ) : null}
+                  {issues.map((issue) => (
+                    <div key={issue.id} className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                      <p className="text-[10px] font-black uppercase text-amber-700">{issue.subject || "Concern"}</p>
+                      <p className="text-xs text-slate-700 mt-1">{issue.message}</p>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </div>

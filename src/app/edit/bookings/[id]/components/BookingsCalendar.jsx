@@ -17,7 +17,7 @@ import { useBookings } from "@/components/useclient/BookingsClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-const GROUP_COLORS = ["bg-blue-600", "bg-emerald-600", "bg-amber-500", "bg-rose-500", "bg-violet-600", "bg-cyan-500"];
+const GROUP_COLORS = ["bg-blue-600", "bg-orange-500", "bg-emerald-600", "bg-amber-500"];
 
 export default function BookingCalendar() {
   const { resort } = useResort();
@@ -32,6 +32,11 @@ export default function BookingCalendar() {
 
   const rooms = resort?.rooms || [];
   const bookingList = useMemo(() => bookings || resort?.bookings || [], [bookings, resort?.bookings]);
+  const getBookingColor = (booking) => {
+    const index = bookingList.findIndex((entry) => entry.id?.toString() === booking.id?.toString());
+    if (index < 0) return GROUP_COLORS[0];
+    return GROUP_COLORS[index % GROUP_COLORS.length];
+  };
   const selectedRooms = selectedRoomIds.length > 0 ? selectedRoomIds : rooms[0]?.id ? [rooms[0].id] : [];
 
   const toggleRoomSelection = (id) => {
@@ -65,7 +70,6 @@ export default function BookingCalendar() {
       endDate: null,
       checkInTime: "14:00",
       checkOutTime: "11:00",
-      colorClass: GROUP_COLORS[bookingList.length % GROUP_COLORS.length],
       bookingForm: {
         status: "Inquiry",
         roomCount: selectedRooms.length,
@@ -165,7 +169,7 @@ export default function BookingCalendar() {
                 key={day}
                 onClick={() => handleDateClick(dateString)}
                 className={`h-9 w-full rounded-lg text-sm transition-all relative 
-                  ${booking ? `${booking.colorClass} text-white` : "hover:bg-slate-100 text-slate-600"} 
+                  ${booking ? `${getBookingColor(booking)} text-white` : "hover:bg-slate-100 text-slate-600"} 
                   ${isActive ? "ring-2 ring-offset-2 ring-slate-400 scale-90 z-10" : ""} 
                   ${booking?.startDate === dateString ? "rounded-r-none" : ""} 
                   ${booking?.endDate === dateString ? "rounded-l-none" : ""} 
@@ -264,7 +268,7 @@ return (
                       activeRangeId?.toString() === booking.id?.toString() ? "border-slate-400 bg-white shadow-sm" : "border-transparent bg-slate-50 opacity-70"
                     }`}
                   >
-                    <div className={`w-3 h-3 rounded-full ${booking.colorClass}`} />
+                    <div className={`w-3 h-3 rounded-full ${getBookingColor(booking)}`} />
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black text-slate-400 uppercase">{booking.roomIds?.length || 0} Rooms</span>
                       <span className="text-xs font-bold text-slate-700">{booking.startDate || "..."} - {booking.endDate || "..."}</span>

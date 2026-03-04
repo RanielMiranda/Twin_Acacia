@@ -2,9 +2,10 @@ import React, { useState, useRef } from "react";
 import GalleryModal from "../components/GalleryModal";
 
 export default function AmenitiesSection({ facilities }) {
+  const safeFacilities = Array.isArray(facilities) ? facilities : [];
   const maxVisible = 10;
-  const visibleFacilities = facilities.slice(0, maxVisible);
-  const hasMore = facilities.length > maxVisible;
+  const visibleFacilities = safeFacilities.slice(0, maxVisible);
+  const hasMore = safeFacilities.length > maxVisible;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -62,8 +63,8 @@ export default function AmenitiesSection({ facilities }) {
             >
               <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 relative">
                 <img
-                  src={facility.image}
-                  alt={facility.name}
+                  src={facility?.image || ""}
+                  alt={facility?.name || "Facility"}
                   className={`w-full h-full object-cover transition-transform group-hover:scale-110 ${
                     isLast ? "brightness-50" : ""
                   }`}
@@ -74,7 +75,7 @@ export default function AmenitiesSection({ facilities }) {
                   </div>
                 )}
               </div>
-              <p className="mt-2 text-sm font-medium text-center">{facility.name}</p>
+              <p className="mt-2 text-sm font-medium text-center">{facility?.name || "Facility"}</p>
             </div>
           );
         })}
@@ -83,8 +84,8 @@ export default function AmenitiesSection({ facilities }) {
       {/* Modal */}
       {modalOpen && (
         <GalleryModal
-          images={facilities.map((f) => f.image)}
-          names={facilities.map((f) => f.name)}
+          images={safeFacilities.map((f) => f?.image).filter(Boolean)}
+          names={safeFacilities.map((f) => f?.name || "Facility")}
           activeIndex={activeIndex}
           setActiveIndex={setActiveIndex}
           onClose={() => setModalOpen(false)}

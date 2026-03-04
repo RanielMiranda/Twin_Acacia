@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Inbox, CheckCircle2, AlertCircle, User, FileText, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Inbox, CheckCircle2, AlertCircle, User, ChevronRight, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useResort } from "@/components/useclient/ContextEditor";
@@ -12,7 +12,7 @@ const TABS = [
   { id: "checkout", label: "Pending Checkout", icon: AlertCircle, color: "text-rose-600", bg: "bg-rose-50" },
 ];
 
-export default function RentalManager({ onOpenForm, onOpenDetails }) {
+export default function RentalManager({ onOpenDetails }) {
   const [activeTab, setActiveTab] = useState("inquiry");
   const { bookings } = useBookings();
   const { resort } = useResort();
@@ -106,12 +106,6 @@ export default function RentalManager({ onOpenForm, onOpenDetails }) {
                   onClick={() => onOpenDetails(item, item.bookingId)}
                 >
                   Manage <ArrowUpRight size={14}/>
-                </Button>
-                <Button 
-                  className="rounded-xl bg-blue-600 items-center justify-center hover:bg-blue-700 h-9 px-4 font-bold text-xs flex gap-2"
-                  onClick={() => onOpenForm(item, item.bookingId)}
-                >
-                  <FileText size={14} /> Full Form
                 </Button>
               </div>
             </div>

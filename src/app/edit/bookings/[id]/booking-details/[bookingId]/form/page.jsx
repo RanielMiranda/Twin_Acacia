@@ -6,8 +6,6 @@ import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import BookingForm from "./BookingConfirmation";
 
-const GROUP_COLORS = ["bg-blue-600", "bg-emerald-600", "bg-amber-500", "bg-rose-500", "bg-violet-600", "bg-cyan-500"];
-
 export default function BookingDetailsFormPage() {
   const params = useParams();
   const router = useRouter();
@@ -95,7 +93,6 @@ export default function BookingDetailsFormPage() {
       checkInTime: formData.checkInTime || "14:00",
       checkOutTime: formData.checkOutTime || "11:00",
       paymentDeadline: formData.paymentDeadline || null,
-      colorClass: GROUP_COLORS[bookingList.length % GROUP_COLORS.length],
       status: formData.status || "Inquiry",
       bookingForm: formData,
     };

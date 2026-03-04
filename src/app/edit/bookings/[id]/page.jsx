@@ -239,7 +239,7 @@ export default function BookingManagementPage() {
         <main className="pb-20">
           {activeTab === "workflow" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <RentalManager onOpenForm={openForm} onOpenDetails={(item, id) => openDetails(id)} />
+              <RentalManager onOpenDetails={(item, bookingId) => openDetails(bookingId)} />
             </div>
           ) : activeTab === "calendar" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">

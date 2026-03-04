@@ -115,6 +115,30 @@ export default function BookingConfirmation({
           <p className="font-bold text-blue-600">{formData.status || "Inquiry"}</p>
         </div>
       </div>
+    
+      <div className="mt-5 flex items-center justify-end gap-3">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Back
+          </Button>
+        )}
+        {!readOnly && (
+          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            Save Booking Form
+          </Button>
+        )}
+        {!readOnly && onDelete && (
+          <Button type="button" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => {
+            const confirmed = window.confirm("Delete this booking form?");
+            if (!confirmed) return;
+            if (storageKey && typeof window !== "undefined") localStorage.removeItem(storageKey);
+            onDelete();
+          }}>
+            Delete Form
+          </Button>
+        )}
+      </div>
+
 
       <form onSubmit={handleSubmit}>
         <Card className="p-6 md:p-8 space-y-8">
@@ -199,29 +223,6 @@ export default function BookingConfirmation({
             />
           </section>
         </Card>
-
-        <div className="mt-5 flex items-center justify-end gap-3">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Back
-            </Button>
-          )}
-          {!readOnly && (
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Save Booking Form
-            </Button>
-          )}
-          {!readOnly && onDelete && (
-            <Button type="button" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => {
-              const confirmed = window.confirm("Delete this booking form?");
-              if (!confirmed) return;
-              if (storageKey && typeof window !== "undefined") localStorage.removeItem(storageKey);
-              onDelete();
-            }}>
-              Delete Form
-            </Button>
-          )}
-        </div>
       </form>
     </div>
   );
