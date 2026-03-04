@@ -4,6 +4,7 @@ import { ResortDataProvider } from "@/components/useclient/ResortDataClient";
 import { ResortProvider } from "@/components/useclient/ContextEditor";
 import { BookingsProvider } from "@/components/useclient/BookingsClient";
 import { SupportProvider } from "@/components/useclient/SupportClient";
+import { AccountsProvider } from "@/components/useclient/AccountsClient";
 import { ToastProvider } from "@/components/ui/toast/ToastProvider";
 
 export default function RootLayout({ children }) {
@@ -14,7 +15,9 @@ export default function RootLayout({ children }) {
           <ResortProvider>
             <BookingsProvider>
               <SupportProvider>
-                <ToastProvider>{children}</ToastProvider>
+                <AccountsProvider>
+                  <ToastProvider>{children}</ToastProvider>
+                </AccountsProvider>
               </SupportProvider>
             </BookingsProvider>
           </ResortProvider>

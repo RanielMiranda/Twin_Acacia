@@ -80,14 +80,25 @@ export function ResortDataProvider({ children }) {
     if (!identifier) return null;
     setLoadingResort(true);
     try {
-      const column = isId ? "id" : "name";
+      if (isId) {
+        const { data, error } = await supabase
+          .from("resorts")
+          .select(RESORT_DETAIL_COLUMNS)
+          .eq("id", Number(identifier))
+          .maybeSingle();
+        if (error) throw error;
+        return data || null;
+      }
+
+      const normalizedName = decodeURIComponent(String(identifier));
       const { data, error } = await supabase
         .from("resorts")
         .select(RESORT_DETAIL_COLUMNS)
-        .eq(column, identifier)
-        .single();
+        .ilike("name", normalizedName)
+        .order("created_at", { ascending: false })
+        .limit(1);
       if (error) throw error;
-      return data;
+      return data?.[0] || null;
     } catch (err) {
       console.error("Resort detail fetch error:", err.message);
       return null;

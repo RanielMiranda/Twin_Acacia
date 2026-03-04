@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { MoreVertical, Edit3, KeyRound, Mail, Eye, Trash2 } from "lucide-react";
+import { MoreVertical, Edit3, Mail, Eye, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function ActionMenu({ account, onViewResort, onResetPassword, onDeleteAccount, onMessageOwner }) {
+export default function ActionMenu({ account, onViewResort, onDeleteAccount, onMessageOwner }) {
   const [isOpen, setIsOpen] = useState(false);
   const [menuLeft, setMenuLeft] = useState(true);
   const menuRef = useRef(null);
@@ -81,11 +81,6 @@ export default function ActionMenu({ account, onViewResort, onResetPassword, onD
                 className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold"
               >
                 <Edit3 size={16} /> Edit Profile
-              </button>
-              <button 
-                onClick={onResetPassword}
-                className="w-full flex items-center gap-3 px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors text-left font-bold">
-                <KeyRound size={16} /> Reset Password
               </button>
               <button 
                 onClick={() => {
