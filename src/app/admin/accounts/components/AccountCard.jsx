@@ -17,10 +17,21 @@ export default function AccountCard({ account, onToggleStatus, onApprove, onView
   return (
     <Card className="p-4 bg-white shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl group relative">
       <div className="grid grid-cols-1 lg:grid-cols-[220px_180px_1fr_1fr_1fr_220px] gap-4 items-center">
-        <div className="min-w-0">
+        <div className="min-w-0 flex items-center gap-3">
+          <div className="h-11 w-11 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+            {account.profileImage ? (
+              <img src={account.profileImage} alt={account.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-blue-600 font-black">
+                {account.name?.charAt(0) || "A"}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Name / Resort</p>
           <p className="font-bold text-slate-900 truncate">{account.name}</p>
           <p className="text-xs text-slate-500 truncate flex items-center gap-1"><Building2 size={12} />{account.resortName}</p>
+          </div>
         </div>
 
         <div>
@@ -76,4 +87,3 @@ export default function AccountCard({ account, onToggleStatus, onApprove, onView
     </Card>
   );
 }
-

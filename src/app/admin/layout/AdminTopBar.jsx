@@ -2,19 +2,19 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Menu, X, ArrowLeft, Settings2, ExternalLink } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Users, Menu, X, ArrowLeft, ExternalLink, LogOut } from "lucide-react";
 import { useAccounts } from "@/components/useclient/AccountsClient";
 
 export default function AdminTopBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { activeAccount } = useAccounts();
+  const router = useRouter();
+  const { activeAccount, signOut } = useAccounts();
 
   const navLinks = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Accounts", href: "/admin/accounts", icon: Users },
-    { name: "Owner Dashboard", href: "/owner/dashboard", icon: Settings2 },
     {
       name: "Analytics",
       href: "https://vercel.com/raniels-projects-2ea24826/agoda-style-website/analytics",
@@ -24,6 +24,10 @@ export default function AdminTopBar() {
   ];
 
   const closeMenu = () => setIsMenuOpen(false);
+  const handleLogout = () => {
+    signOut();
+    router.push("/auth/login");
+  };
 
   return (
     <div className="w-full bg-white shadow-sm border-b border-slate-200 fixed top-0 left-0 z-[100]">
@@ -32,7 +36,7 @@ export default function AdminTopBar() {
           <Link href="/admin/dashboard" className="text-2xl font-bold text-blue-600 hover:opacity-80 transition-opacity">
             Twin Acacia
           </Link>
-          <span className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+          <span suppressHydrationWarning className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
             {(activeAccount?.role || "admin").toUpperCase()} / {activeAccount?.full_name || "Admin"}
           </span>
         </div>
@@ -66,9 +70,9 @@ export default function AdminTopBar() {
 
           <div className="w-[1px] h-6 bg-slate-200 mx-2" />
 
-          <Link href="/" className="text-slate-500 hover:text-blue-600 text-sm font-bold transition-colors">
-            Back to Site
-          </Link>
+          <button onClick={handleLogout} className="text-slate-500 hover:text-blue-600 text-sm font-bold transition-colors flex items-center gap-2">
+            <LogOut size={14} /> Logout
+          </button>
         </div>
 
         <button
@@ -113,10 +117,16 @@ export default function AdminTopBar() {
 
             <div className="h-[1px] bg-slate-100 my-2" />
 
-            <Link href="/" onClick={closeMenu} className="flex items-center gap-3 p-4 text-slate-500 hover:text-blue-600 transition-colors">
+            <button
+              onClick={() => {
+                closeMenu();
+                handleLogout();
+              }}
+              className="flex items-center gap-3 p-4 text-slate-500 hover:text-blue-600 transition-colors"
+            >
               <ArrowLeft size={20} />
-              Back to Homepage
-            </Link>
+              Logout
+            </button>
           </div>
         </div>
       )}

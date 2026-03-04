@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import Toast from "@/components/ui/toast/Toast";
 
 export default function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signIn } = useAccounts();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +35,11 @@ export default function Page() {
       const account = await signIn(formData.email, formData.password);
       if (!account.setup_complete && account.setup_token) {
         router.push(`/auth/setup-resort?token=${encodeURIComponent(account.setup_token)}`);
+        return;
+      }
+      const nextPath = searchParams.get("next");
+      if (nextPath) {
+        router.push(nextPath);
         return;
       }
       if ((account.role || "").toLowerCase() === "admin") {

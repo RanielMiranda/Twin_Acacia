@@ -36,7 +36,9 @@ export default function Page() {
         email: entry.email || "-",
         phone: entry.phone || "-",
         password: entry.password || "",
-        resortName: entry.resorts?.name || "Unassigned Resort",
+        resortName:
+          entry.resorts?.name ||
+          ((entry.role || "").toLowerCase() === "admin" ? "Admin Account" : "Unassigned Resort"),
         role: entry.role || "owner",
         status: (entry.status || "pending").replace(/^./, (s) => s.toUpperCase()),
         profileImage: entry.profile_image || null,

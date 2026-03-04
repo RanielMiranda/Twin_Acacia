@@ -13,15 +13,10 @@ import { useToast } from "@/components/ui/toast/ToastProvider";
 import AccountCard from "./components/AccountCard";
 import MessageAdminModal from "./components/MessageAdminModal";
 import { supabase } from "@/lib/supabase";
+import { useAccounts } from "@/components/useclient/AccountsClient";
 
 const isMissingOwnerAdminTableError = (error) =>
   !!error?.message &&
-  (error.message.includes("Could not find the table") ||
-    error.message.includes("does not exist") ||
-    error.message.includes("schema cache"));
-const isMissingResortMessagesTableError = (error) =>
-  !!error?.message &&
-  error.message.includes("resort_messages") &&
   (error.message.includes("Could not find the table") ||
     error.message.includes("does not exist") ||
     error.message.includes("schema cache"));
@@ -34,40 +29,25 @@ export default function Page() {
   const [bookingsAlertCount, setBookingsAlertCount] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
-  const OWNER_RESORT_ID = 1;
+  const { activeAccount } = useAccounts();
+  const OWNER_RESORT_ID = activeAccount?.resort_id ? Number(activeAccount.resort_id) : null;
+  const ACCOUNT_ID = activeAccount?.id || 1;
 
   const loadDashboardStatus = useCallback(async () => {
+    if (!OWNER_RESORT_ID) {
+      setResortStatus("Draft");
+      return;
+    }
     const { data: resortRow, error: resortError } = await supabase
       .from("resorts")
       .select("id, name, visible")
       .eq("id", OWNER_RESORT_ID)
-      .single();
+      .maybeSingle();
     if (resortError) {
       console.error("Failed to load owner resort status:", resortError.message);
       return;
     }
-
-    const { data: pendingRequest, error: pendingError } = await supabase
-      .from("resort_messages")
-      .select("id")
-      .eq("status", "pending")
-      .eq("requestedBy", resortRow?.name || `Resort #${OWNER_RESORT_ID}`)
-      .ilike("title", "Publication Request%")
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    if (pendingError) {
-      if (isMissingResortMessagesTableError(pendingError)) {
-        setResortStatus(resortRow?.visible ? "Published" : "Draft");
-        return;
-      }
-      console.error("Failed to load publication request status:", pendingError.message);
-      return;
-    }
-
-    if (pendingRequest?.length) {
-      setResortStatus("Pending Approval");
-    } else if (resortRow?.visible) {
+    if (resortRow?.visible) {
       setResortStatus("Published");
     } else {
       setResortStatus("Draft");
@@ -75,6 +55,10 @@ export default function Page() {
   }, [OWNER_RESORT_ID, toast]);
 
   const loadBookingsAlertCount = useCallback(async () => {
+    if (!OWNER_RESORT_ID) {
+      setBookingsAlertCount(0);
+      return;
+    }
     let total = 0;
     const { count: inquiryCount, error: inquiryErr } = await supabase
       .from("bookings")
@@ -95,45 +79,21 @@ export default function Page() {
   }, [OWNER_RESORT_ID]);
 
   const handleRequestPublish = useCallback(async () => {
+    if (!OWNER_RESORT_ID) {
+      toast({ message: "No resort linked to this account yet.", color: "amber" });
+      return;
+    }
     setSubmittingPublish(true);
     try {
-      const { data: resortRow, error: resortErr } = await supabase
-        .from("resorts")
-        .select("id, name")
-        .eq("id", OWNER_RESORT_ID)
-        .single();
-      if (resortErr) throw resortErr;
-
-      const requestedBy = resortRow?.name || `Resort #${OWNER_RESORT_ID}`;
-      const title = `Publication Request - ${requestedBy}`;
-      const content = `${requestedBy} requested publication review from owner dashboard.`;
-
-      const { error: messageError } = await supabase.from("resort_messages").insert({
-        title,
-        content,
-        requestedBy,
-        status: "pending",
-      });
-      if (messageError) {
-        if (isMissingResortMessagesTableError(messageError)) {
-          toast({
-            message: "Publication request table is missing. Create public.resort_messages first.",
-            color: "amber",
-          });
-          return;
-        }
-        throw messageError;
-      }
-
       const { error: visibilityError } = await supabase
         .from("resorts")
-        .update({ visible: false })
-        .eq("id", OWNER_RESORT_ID);
+        .update({ visible: true })
+        .eq("id", OWNER_RESORT_ID)
       if (visibilityError) throw visibilityError;
 
-      setResortStatus("Pending Approval");
+      setResortStatus("Published");
       toast({
-        message: `${requestedBy} publication request sent for admin review.`,
+        message: "Resort published.",
         color: "blue",
         icon: CheckCircle,
       });
@@ -148,6 +108,10 @@ export default function Page() {
   }, [OWNER_RESORT_ID, toast]);
 
   const loadOwnerAdminMessages = useCallback(async () => {
+    if (!OWNER_RESORT_ID) {
+      setAdminMessages([]);
+      return;
+    }
     const { data, error } = await supabase
       .from("owner_admin_messages")
       .select("id, sender_role, subject, message, created_at, status")
@@ -253,7 +217,7 @@ export default function Page() {
           <div className="lg:col-span-1">
             <BookingsCard
               alertCount={bookingsAlertCount}
-              onBookings={() => router.push("/edit/bookings/1")}
+              onBookings={() => router.push(`/edit/bookings/${OWNER_RESORT_ID || 1}`)}
             />
           </div>
 
@@ -263,7 +227,7 @@ export default function Page() {
           */}
           <div className="lg:col-span-2 lg:-mt-10 transition-all">
             <ResortCard 
-              onEdit={() => router.push("/edit/resort-builder/1")}
+              onEdit={() => router.push(`/edit/resort-builder/${OWNER_RESORT_ID || 1}`)}
               onPreview={() => router.push("/resort/Kasbah-Villa")}
             />
           </div>
@@ -271,7 +235,7 @@ export default function Page() {
           {/* 4. Sidebar Items: These stack naturally under Bookings */}
           <div className="lg:col-span-1 space-y-6">
           <AccountCard 
-            onEditProfile={() => router.push("/edit/accounts/1")}
+            onEditProfile={() => router.push(`/edit/accounts/${ACCOUNT_ID}`)}
             onContactAdmin={handleOpenAdminModal}
           />
            <InboxCard messages={adminMessages} />

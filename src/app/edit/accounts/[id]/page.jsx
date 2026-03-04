@@ -12,7 +12,8 @@ export default function EditAccountPage() {
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const { getAccountById, updateAccount } = useAccounts();
+  const { getAccountById, updateAccount, activeAccount } = useAccounts();
+  const isLoggedAdmin = (activeAccount?.role || "").toLowerCase() === "admin";
 
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -93,64 +94,68 @@ export default function EditAccountPage() {
             <Field label="Contact Number" value={form.phone} onChange={(value) => setForm((prev) => ({ ...prev, phone: value }))} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400 ml-1">Role</label>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, role: "owner" }))}
-                  className={`flex-1 p-3 rounded-2xl border font-bold text-sm flex items-center justify-center gap-2 ${
-                    form.role === "owner" ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-600"
-                  }`}
-                >
-                  <UserCircle size={16} /> Owner
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, role: "admin" }))}
-                  className={`flex-1 p-3 rounded-2xl border font-bold text-sm flex items-center justify-center gap-2 ${
-                    form.role === "admin" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
-                  }`}
-                >
-                  <ShieldCheck size={16} /> Admin
-                </button>
+          {isLoggedAdmin && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Role</label>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, role: "owner" }))}
+                      className={`flex-1 p-3 rounded-2xl border font-bold text-sm flex items-center justify-center gap-2 ${
+                        form.role === "owner" ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-600"
+                      }`}
+                    >
+                      <UserCircle size={16} /> Owner
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, role: "admin" }))}
+                      className={`flex-1 p-3 rounded-2xl border font-bold text-sm flex items-center justify-center gap-2 ${
+                        form.role === "admin" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"
+                      }`}
+                    >
+                      <ShieldCheck size={16} /> Admin
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Status</label>
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase text-slate-400 ml-1">Status</label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value }))}
-                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="pending">Pending</option>
-                <option value="active">Active</option>
-                <option value="suspended">Suspended</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-black uppercase text-slate-400 mb-1">Resort Details Setup Link</p>
-            <p className="text-sm font-medium text-slate-700 break-all">
-              {form.setup_token ? `/auth/setup-resort?token=${form.setup_token}` : "No setup token found."}
-            </p>
-            {form.setup_token && (
-              <button
-                type="button"
-                className="mt-2 text-xs font-bold text-blue-600 hover:underline"
-                onClick={() => {
-                  const setupLink = `/auth/setup-resort?token=${form.setup_token}`;
-                  console.info("Manual setup link:", setupLink);
-                  router.push(setupLink);
-                }}
-              >
-                Open setup-resort
-              </button>
-            )}
-          </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-black uppercase text-slate-400 mb-1">Resort Details Setup Link</p>
+                <p className="text-sm font-medium text-slate-700 break-all">
+                  {form.setup_token ? `/auth/setup-resort?token=${form.setup_token}` : "No setup token found."}
+                </p>
+                {form.setup_token && (
+                  <button
+                    type="button"
+                    className="mt-2 text-xs font-bold text-blue-600 hover:underline"
+                    onClick={() => {
+                      const setupLink = `/auth/setup-resort?token=${form.setup_token}`;
+                      console.info("Manual setup link:", setupLink);
+                      router.push(setupLink);
+                    }}
+                  >
+                    Open setup-resort
+                  </button>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="flex justify-end pt-4">
             <Button className="bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white px-8 h-12 rounded-2xl font-bold shadow-lg shadow-blue-100">
@@ -176,4 +181,3 @@ function Field({ label, value, onChange }) {
     </div>
   );
 }
-

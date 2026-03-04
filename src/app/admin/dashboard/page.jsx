@@ -22,7 +22,6 @@ const isMissingOwnerAdminTableError = (error) =>
     error.message.includes("schema cache"));
 
 const ADMIN_RESORT_COLUMNS = ["id", "name", "location", "visible", "profileImage", "gallery", "created_at"].join(", ");
-const ADMIN_MESSAGE_COLUMNS = ["id", "title", "content", "requestedBy", "status", "created_at"].join(", ");
 const OWNER_ADMIN_COLUMNS = ["id", "resort_id", "sender_name", "subject", "message", "status", "created_at"].join(", ");
 
 export default function Page() {
@@ -66,8 +65,11 @@ export default function Page() {
 
   const fetchMessages = async () => {
     try {
-      const { data: resortMsgs } = await supabase.from("resort_messages").select(ADMIN_MESSAGE_COLUMNS).eq("status", "pending");
-      const { data: accountMsgs } = await supabase.from("account_messages").select(ADMIN_MESSAGE_COLUMNS).eq("status", "pending");
+      const resortMsgs = [];
+      const { data: accountMsgs } = await supabase
+        .from("account_messages")
+        .select("id, title, content, requestedBy, status, created_at")
+        .eq("status", "pending");
       const { data: ownerMsgs, error: ownerMsgError } = await supabase
         .from("owner_admin_messages")
         .select(OWNER_ADMIN_COLUMNS)
@@ -95,7 +97,7 @@ export default function Page() {
       }));
 
       setMessages({
-        resort: resortMsgs || [],
+        resort: resortMsgs,
         account: accountMsgs || [],
         support: supportMsgs,
       });

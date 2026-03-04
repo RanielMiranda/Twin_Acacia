@@ -42,6 +42,14 @@ const persistSessionAccount = (account) => {
 };
 
 const randomToken = () => `setup-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+const writeCookie = (name, value, maxAgeSeconds = 60 * 60 * 24 * 7) => {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; samesite=lax`;
+};
+const clearCookie = (name) => {
+  if (typeof document === "undefined") return;
+  document.cookie = `${name}=; path=/; max-age=0; samesite=lax`;
+};
 
 export function AccountsProvider({ children }) {
   const [accounts, setAccounts] = useState([]);
@@ -161,12 +169,18 @@ export function AccountsProvider({ children }) {
     if (!data) throw new Error("Invalid credentials.");
     setActiveAccount(data);
     persistSessionAccount(data);
+    writeCookie("app_auth", "1");
+    writeCookie("app_role", data.role || "owner");
+    writeCookie("app_account_id", String(data.id || ""));
     return data;
   }, []);
 
   const signOut = useCallback(() => {
     setActiveAccount(null);
     persistSessionAccount(null);
+    clearCookie("app_auth");
+    clearCookie("app_role");
+    clearCookie("app_account_id");
   }, []);
 
   const value = useMemo(
