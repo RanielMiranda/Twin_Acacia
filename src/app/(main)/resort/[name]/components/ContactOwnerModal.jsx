@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Calendar, User, CheckCircle2, ArrowRight, ArrowLeft, Phone, MapPin, Clock, PlusCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFilters } from "@/components/useclient/ContextFilter";
 
 export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInquiry }) {
   const [agreed, setAgreed] = useState(false);
-  const { guests, startDate, endDate } = useFilters();
+  const { guests, startDate, endDate, destination } = useFilters();
   // We can access resort data directly if not passed as prop, but prop is safer
   const [step, setStep] = useState(1);
 
@@ -28,7 +28,9 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
     guestName: "",
     email: "",
     contactNumber: "",
-    area: "",
+    area: destination || "",
+    adultCount: Number(guests?.adults || 0),
+    childrenCount: Number(guests?.children || 0),
     pax: Number((guests?.adults || 0) + (guests?.children || 0)),
     guestCount: Number((guests?.adults || 0) + (guests?.children || 0)),
     sleepingGuests: 0,
@@ -40,6 +42,24 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
     message: "",
     selectedServices: [], // Added to track extra services
   });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const adults = Number(guests?.adults || 0);
+    const children = Number(guests?.children || 0);
+    const pax = adults + children;
+    setFormData((prev) => ({
+      ...prev,
+      area: destination || prev.area || "",
+      adultCount: adults,
+      childrenCount: children,
+      pax,
+      guestCount: pax,
+      roomCount: Number(guests?.rooms || prev.roomCount || 1),
+      checkInDate: formatDateForInput(startDate) || prev.checkInDate || "",
+      checkOutDate: formatDateForInput(endDate) || prev.checkOutDate || "",
+    }));
+  }, [destination, endDate, guests?.adults, guests?.children, guests?.rooms, isOpen, startDate]);
 
   // Steps Configuration (Increased to 4)
   const steps = [
@@ -53,7 +73,19 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === "adultCount" || name === "childrenCount") {
+        const adults = Number(name === "adultCount" ? value : next.adultCount || 0);
+        const children = Number(name === "childrenCount" ? value : next.childrenCount || 0);
+        next.pax = adults + children;
+        next.guestCount = adults + children;
+      }
+      if (name === "guestCount") {
+        next.pax = Number(value || 0);
+      }
+      return next;
+    });
   };
 
   // Toggle service selection
@@ -146,8 +178,8 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
                 </div>
               </div>
 
-              {/* Row 2: 3 Columns */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* Row 2: 2 Columns */}
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time In</label>
                   <input name="checkInTime" value={formData.checkInTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
@@ -156,13 +188,34 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time Out</label>
                   <input name="checkOutTime" value={formData.checkOutTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
+              </div>
+
+              {/* Row 3: 3 Columns */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Adults</label>
+                  <input name="adultCount" value={formData.adultCount ?? 0} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Children</label>
+                  <input name="childrenCount" value={formData.childrenCount ?? 0} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Total Pax</label>
-                  <input name="guestCount" value={formData.guestCount ?? 0} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input
+                    name="guestCount"
+                    value={formData.guestCount ?? 0}
+                    type="number"
+                    min="0"
+                    readOnly
+                    disabled
+                    className="w-full px-4 py-3 rounded-xl bg-slate-100 text-slate-500 border-none outline-none cursor-not-allowed"
+                    placeholder="0"
+                  />
                 </div>
               </div>
 
-              {/* Row 3: 2 Columns */}
+              {/* Row 4: 2 Columns */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Sleeping Guests</label>
@@ -212,7 +265,7 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
                 )}
               </div>
               <div className="space-y-1 mt-4">
-                <label className="text-xs font-black uppercase text-slate-400 ml-1">Special Message</label>
+                <label className="text-xs font-black uppercase text-slate-400 ml-1">Message section</label>
                 <textarea name="message" value={formData.message ?? ""} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" placeholder="Anything else we should know?" />
               </div>
             </div>

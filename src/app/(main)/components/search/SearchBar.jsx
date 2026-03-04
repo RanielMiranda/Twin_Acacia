@@ -8,7 +8,8 @@ import GuestField from "./guest/GuestField";
 import { useFilters } from "@/components/useclient/ContextFilter";
 export default function SearchBar() {
   const { 
-    guests, 
+    destination,
+    setDestination,
     setGuests, 
     startDate, 
     setStartDate, 
@@ -16,13 +17,8 @@ export default function SearchBar() {
     setEndDate 
   } = useFilters();
 
-  const [destination, setDestination] = useState("");
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [guestType, setGuestType] = useState("Solo Traveler");
-
-  const [rooms, setRooms] = useState(1);
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
 
   const containerRef = useRef(null);
 
@@ -63,7 +59,7 @@ export default function SearchBar() {
   return (
     <div
       ref={containerRef}
-      className="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap gap-2 bg-white rounded-xl p-[1vh]"
+      className="relative z-[120] flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap gap-2 bg-white rounded-xl p-[1vh]"
     >
       <DestinationField
         destination={destination}
@@ -86,12 +82,6 @@ export default function SearchBar() {
       <GuestField
         guestType={guestType}
         setGuestType={setGuestType}
-        rooms={rooms}
-        setRooms={setRooms}
-        adults={adults}
-        setAdults={setAdults}
-        children={children}
-        setChildren={setChildren}
         activeDropdown={activeDropdown}
         setActiveDropdown={setActiveDropdown}
         handleGuestTypeChange={handleGuestTypeChange}

@@ -77,12 +77,18 @@ const handleSubmitInquiry = async (submittedData) => {
       );
 
       const bookingId = Date.now().toString();
+      const adultCount = Number(submittedData.adultCount || 0);
+      const childrenCount = Number(submittedData.childrenCount || 0);
+      const pax = Number(submittedData.guestCount || submittedData.pax || adultCount + childrenCount || 0);
       const bookingForm = {
         guestName: submittedData.guestName || "",
         email: submittedData.email || "",
         phoneNumber: submittedData.contactNumber || "",
         address: submittedData.area || "",
-        guestCount: Number(submittedData.guestCount || submittedData.pax || 0),
+        adultCount,
+        childrenCount,
+        pax,
+        guestCount: pax,
         roomCount: Number(submittedData.roomCount || 1),
         sleepingGuests: Number(submittedData.sleepingGuests || 0),
         checkInDate: submittedData.checkInDate || "",
@@ -119,7 +125,13 @@ const handleSubmitInquiry = async (submittedData) => {
           submittedData.message?.trim() ||
           "Inquiry sent. Can we confirm rates, inclusions, and availability?",
       });
-      setInquiryNotice("Inquiry has been sent. Please wait for your ticket confirmation link via email.");
+      const inquiryMessage =
+        "Inquiry has been sent. Please wait for your inquiry approval link via email, where prices can be discussed.";
+      setInquiryNotice(inquiryMessage);
+      toast({
+        message: inquiryMessage,
+        color: "blue",
+      });
     } catch (err) {
       toast({
         message: `Failed to send inquiry: ${err.message}`,

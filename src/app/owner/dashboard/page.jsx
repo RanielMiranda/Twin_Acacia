@@ -22,7 +22,7 @@ const isMissingOwnerAdminTableError = (error) =>
     error.message.includes("schema cache"));
 
 export default function Page() {
-  const [resortStatus, setResortStatus] = useState("Draft");
+  const [resortStatus, setResortStatus] = useState("Hidden");
   const [submittingPublish, setSubmittingPublish] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [adminMessages, setAdminMessages] = useState([]);
@@ -36,7 +36,7 @@ export default function Page() {
 
   const loadDashboardStatus = useCallback(async () => {
     if (!OWNER_RESORT_ID) {
-      setResortStatus("Draft");
+      setResortStatus("Hidden");
       return;
     }
     const { data: resortRow, error: resortError } = await supabase
@@ -48,11 +48,7 @@ export default function Page() {
       console.error("Failed to load owner resort status:", resortError.message);
       return;
     }
-    if (resortRow?.visible) {
-      setResortStatus("Published");
-    } else {
-      setResortStatus("Draft");
-    }
+    setResortStatus(resortRow?.visible ? "Visible" : "Hidden");
   }, [OWNER_RESORT_ID]);
 
   const loadResortData = useCallback(async () => {
@@ -96,22 +92,23 @@ export default function Page() {
     setBookingsAlertCount(total);
   }, [OWNER_RESORT_ID]);
 
-  const handleRequestPublish = useCallback(async () => {
+  const handleToggleVisibility = useCallback(async () => {
     if (!OWNER_RESORT_ID) {
       toast({ message: "No resort linked to this account yet.", color: "amber" });
       return;
     }
     setSubmittingPublish(true);
     try {
+      const nextVisible = resortStatus !== "Visible";
       const { error: visibilityError } = await supabase
         .from("resorts")
-        .update({ visible: true })
+        .update({ visible: nextVisible })
         .eq("id", OWNER_RESORT_ID)
       if (visibilityError) throw visibilityError;
 
-      setResortStatus("Published");
+      setResortStatus(nextVisible ? "Visible" : "Hidden");
       toast({
-        message: "Resort published.",
+        message: nextVisible ? "Resort is now visible to guests." : "Resort is now hidden from guests.",
         color: "blue",
         icon: CheckCircle,
       });
@@ -123,7 +120,7 @@ export default function Page() {
     } finally {
       setSubmittingPublish(false);
     }
-  }, [OWNER_RESORT_ID, toast]);
+  }, [OWNER_RESORT_ID, resortStatus, toast]);
 
   const loadOwnerAdminMessages = useCallback(async () => {
     if (!OWNER_RESORT_ID) {
@@ -227,7 +224,7 @@ export default function Page() {
             <VisibilityCard 
               status={resortStatus} 
               submitting={submittingPublish}
-              onRequestPublish={handleRequestPublish} 
+              onRequestPublish={handleToggleVisibility} 
             />
           </div>
 

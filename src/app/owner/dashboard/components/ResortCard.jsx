@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export default function ResortCard({ resort, onEdit, onPreview, ownerImage }) {
-  const heroImage = resort?.profileImage || resort?.gallery?.[0] || "";
+  const heroImage = resort?.gallery?.[0] || resort?.profileImage || "";
   const resortName = resort?.name || "No resort assigned";
   const updatedLabel = resort?.created_at
     ? `Added ${new Date(resort.created_at).toLocaleDateString()}`

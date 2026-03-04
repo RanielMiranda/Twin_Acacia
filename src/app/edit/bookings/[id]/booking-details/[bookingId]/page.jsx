@@ -43,13 +43,20 @@ const STATUS_PHASES = [
 const PAYMENT_CHANNELS = ["Pending", "GCash", "Bank", "Cash"];
 function buildDraftFromBooking(booking) {
   const form = booking.bookingForm || {};
+  const adults = Number(form.adultCount || 0);
+  const children = Number(form.childrenCount || 0);
+  const derivedPax = Number(form.guestCount || form.pax || adults + children || 0);
   return {
     ...form,
     status: form.status || booking.status || "Inquiry",
     guestName: form.guestName || "Guest",
     email: form.email || "",
     phoneNumber: form.phoneNumber || "",
+    adultCount: adults,
+    childrenCount: children,
+    guestCount: derivedPax,
     roomCount: Number(form.roomCount || booking.roomIds?.length || 1),
+    sleepingGuests: Number(form.sleepingGuests || 0),
     checkInDate: form.checkInDate || booking.startDate || "",
     checkOutDate: form.checkOutDate || booking.endDate || "",
     checkInTime: form.checkInTime || booking.checkInTime || "14:00",
@@ -245,6 +252,14 @@ function BookingModernEditor({
   const inlineDraftKey = `booking_inline_draft:${booking.id}`;
   const [draft, setDraft] = useState(() => buildDraftFromBooking(booking));
   const [proofPreviewUrl, setProofPreviewUrl] = useState(() => buildDraftFromBooking(booking).paymentProofUrl || null);
+
+  useEffect(() => {
+    const adults = Number(draft.adultCount || 0);
+    const children = Number(draft.childrenCount || 0);
+    const pax = adults + children;
+    if (Number(draft.guestCount || 0) === pax) return;
+    setDraft((prev) => ({ ...prev, guestCount: pax, pax }));
+  }, [draft.adultCount, draft.childrenCount, draft.guestCount]);
 
   useEffect(() => {
     const base = buildDraftFromBooking(booking);
@@ -450,6 +465,9 @@ function BookingModernEditor({
                   <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
                   <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
                   <InfoItem label="Pax" value={draft.guestCount} editing={isEditing} type="number" onChange={(val) => setField("guestCount", Number(val) || 0)} />
+                  <InfoItem label="Adults" value={draft.adultCount || 0} editing={isEditing} type="number" onChange={(val) => setField("adultCount", Number(val) || 0)} />
+                  <InfoItem label="Children" value={draft.childrenCount || 0} editing={isEditing} type="number" onChange={(val) => setField("childrenCount", Number(val) || 0)} />
+                  <InfoItem label="Sleeping" value={draft.sleepingGuests || 0} editing={isEditing} type="number" onChange={(val) => setField("sleepingGuests", Number(val) || 0)} />
                   <InfoItem label="Rooms" value={draft.roomCount} editing={isEditing} type="number" onChange={(val) => setField("roomCount", Number(val) || 0)} />
                 </div>
                 <div className={`rounded-xl px-3 py-2 border ${conflicts.length > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`}>

@@ -1,1 +1,0 @@
-export const areaSuggestions = ["Location 1", "Location 2", "Location 3"];

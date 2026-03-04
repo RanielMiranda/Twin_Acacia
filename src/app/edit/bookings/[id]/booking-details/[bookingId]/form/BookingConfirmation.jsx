@@ -10,6 +10,8 @@ const DEFAULT_FORM = {
   address: "",
   email: "",
   phoneNumber: "",
+  adultCount: 0,
+  childrenCount: 0,
   guestCount: 0,
   roomCount: 1,
   sleepingGuests: 0,
@@ -100,6 +102,12 @@ export default function BookingConfirmation({
     localStorage.setItem(storageKey, JSON.stringify(formData));
   }, [formData, storageKey]);
 
+  useEffect(() => {
+    const pax = Number(formData.adultCount || 0) + Number(formData.childrenCount || 0);
+    if (Number(formData.guestCount || 0) === pax) return;
+    setFormData((prev) => ({ ...prev, guestCount: pax, pax }));
+  }, [formData.adultCount, formData.childrenCount, formData.guestCount]);
+
   const inputClass =
     "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500";
 
@@ -165,7 +173,10 @@ export default function BookingConfirmation({
           <section className="space-y-3">
             <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Booking + Payment</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Field label="Adults"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.adultCount} onChange={(e) => handleNumberChange("adultCount", e.target.value)} /></Field>
+              <Field label="Children"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.childrenCount} onChange={(e) => handleNumberChange("childrenCount", e.target.value)} /></Field>
               <Field label="Guests"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.guestCount} onChange={(e) => handleNumberChange("guestCount", e.target.value)} /></Field>
+              <Field label="Sleeping Guests"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.sleepingGuests} onChange={(e) => handleNumberChange("sleepingGuests", e.target.value)} /></Field>
               <Field label="Rooms"><input disabled={readOnly} className={inputClass} type="number" min="1" value={formData.roomCount} onChange={(e) => handleNumberChange("roomCount", e.target.value)} /></Field>
               <Field label="Base Rate"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.baseRate} onChange={(e) => handleNumberChange("baseRate", e.target.value)} /></Field>
               <Field label="Booking Mode">

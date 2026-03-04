@@ -350,6 +350,9 @@ export default function ClientTicketPage() {
           <TicketRow label="Guest Name" value={form.guestName} />
           <TicketRow label="Status" value={booking.status || "Inquiry"} isStatus />
           <TicketRow label="Pax" value={form.guestCount || 0} />
+          <TicketRow label="Adults" value={form.adultCount || 0} />
+          <TicketRow label="Children" value={form.childrenCount || 0} />
+          <TicketRow label="Sleeping" value={form.sleepingGuests || 0} />
           <TicketRow label="Rooms" value={form.roomCount || 0} />
           <TicketRow label="Check-In" value={booking.start_date || form.checkInDate} subValue={booking.check_in_time || form.checkInTime} />
           <TicketRow label="Check-Out" value={booking.end_date || form.checkOutDate} subValue={booking.check_out_time || form.checkOutTime} />

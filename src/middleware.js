@@ -6,9 +6,13 @@ export async function middleware(request) {
   const appRole = request.cookies.get("app_role")?.value
   const isAdminRoute = pathname.startsWith("/admin")
   const isOwnerRoute = pathname.startsWith("/owner")
+  const isEditRoute = pathname.startsWith("/edit")
 
-  if (isAdminRoute || isOwnerRoute) {
+  if (isAdminRoute || isOwnerRoute || isEditRoute) {
     if (!appAuth) {
+      return NextResponse.redirect(new URL("/", request.url))
+    }
+    if (!["admin", "owner"].includes(String(appRole || "").toLowerCase())) {
       return NextResponse.redirect(new URL("/", request.url))
     }
     if (isAdminRoute && appRole === "owner") {
@@ -23,5 +27,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/owner/:path*'],
+  matcher: ['/admin/:path*', '/owner/:path*', '/edit/:path*'],
 }

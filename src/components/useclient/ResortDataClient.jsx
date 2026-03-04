@@ -48,6 +48,7 @@ export function ResortDataProvider({ children }) {
 
   const [priceRange, setPriceRange] = useState({ min: 10000, max: 30000 });
   const [selectedTags, setSelectedTags] = useState([]);
+  const [destination, setDestination] = useState("");
   const [guests, setGuests] = useState({ adults: 2, children: 0, rooms: 1 });
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -176,6 +177,8 @@ export function ResortDataProvider({ children }) {
         setPriceRange,
         selectedTags,
         setSelectedTags,
+        destination,
+        setDestination,
         guests,
         setGuests,
         startDate,
