@@ -27,6 +27,7 @@ export default function Page() {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [adminMessages, setAdminMessages] = useState([]);
   const [bookingsAlertCount, setBookingsAlertCount] = useState(0);
+  const [resortData, setResortData] = useState(null);
   const router = useRouter();
   const { toast } = useToast();
   const { activeAccount } = useAccounts();
@@ -52,6 +53,23 @@ export default function Page() {
     } else {
       setResortStatus("Draft");
     }
+  }, [OWNER_RESORT_ID]);
+
+  const loadResortData = useCallback(async () => {
+    if (!OWNER_RESORT_ID) {
+      setResortData(null);
+      return;
+    }
+    const { data, error } = await supabase
+      .from("resorts")
+      .select("id, name, location, profileImage, gallery, updated_at, visible")
+      .eq("id", OWNER_RESORT_ID)
+      .maybeSingle();
+    if (error) {
+      console.error("Failed to load owner resort profile:", error.message);
+      return;
+    }
+    setResortData(data || null);
   }, [OWNER_RESORT_ID, toast]);
 
   const loadBookingsAlertCount = useCallback(async () => {
@@ -182,9 +200,10 @@ export default function Page() {
 
   useEffect(() => {
     loadDashboardStatus();
+    loadResortData();
     loadBookingsAlertCount();
     loadOwnerAdminMessages();
-  }, [loadBookingsAlertCount, loadDashboardStatus, loadOwnerAdminMessages]);
+  }, [loadBookingsAlertCount, loadDashboardStatus, loadOwnerAdminMessages, loadResortData]);
 
   return (
     <div className="min-h-screen bg-slate-50 pt-24 pb-12 px-4 md:px-8">
@@ -217,7 +236,13 @@ export default function Page() {
           <div className="lg:col-span-1">
             <BookingsCard
               alertCount={bookingsAlertCount}
-              onBookings={() => router.push(`/edit/bookings/${OWNER_RESORT_ID || 1}`)}
+              onBookings={() => {
+                if (!OWNER_RESORT_ID) {
+                  toast({ message: "No resort linked to this account yet.", color: "amber" });
+                  return;
+                }
+                router.push(`/edit/bookings/${OWNER_RESORT_ID}`);
+              }}
             />
           </div>
 
@@ -227,14 +252,27 @@ export default function Page() {
           */}
           <div className="lg:col-span-2 lg:-mt-10 transition-all">
             <ResortCard 
-              onEdit={() => router.push(`/edit/resort-builder/${OWNER_RESORT_ID || 1}`)}
-              onPreview={() => router.push("/resort/Kasbah-Villa")}
+              resort={resortData}
+              ownerImage={activeAccount?.profile_image || null}
+              onEdit={() => {
+                if (!OWNER_RESORT_ID) {
+                  toast({ message: "No resort linked to this account yet.", color: "amber" });
+                  return;
+                }
+                router.push(`/edit/resort-builder/${OWNER_RESORT_ID}`);
+              }}
+              onPreview={() => {
+                if (!resortData?.name) return;
+                router.push(`/resort/${encodeURIComponent(resortData.name)}`);
+              }}
             />
           </div>
 
           {/* 4. Sidebar Items: These stack naturally under Bookings */}
           <div className="lg:col-span-1 space-y-6">
           <AccountCard 
+            account={activeAccount}
+            resort={resortData}
             onEditProfile={() => router.push(`/edit/accounts/${ACCOUNT_ID}`)}
             onContactAdmin={handleOpenAdminModal}
           />

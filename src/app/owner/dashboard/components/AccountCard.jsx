@@ -4,8 +4,10 @@ import { User, Settings, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default function AccountCard({ onEditProfile, onContactAdmin }) {
-  const profileImg = "https://cibirdplhynnpqctcjzj.supabase.co/storage/v1/object/public/resort-images/kasbah-villa---hot-spring-resort/profile.jpg";
+export default function AccountCard({ account, resort, onEditProfile, onContactAdmin }) {
+  const profileImg = account?.profile_image || null;
+  const profileTitle = account?.full_name || "Owner Account";
+  const profileSubtitle = resort?.name ? `${resort.name} Profile` : "No resort linked yet";
 
   return (
     <div className="space-y-6">
@@ -14,15 +16,21 @@ export default function AccountCard({ onEditProfile, onContactAdmin }) {
         <div className="flex items-center gap-3 mt-4">
           {/* Replaced Icon with Profile Image */}
           <div className="h-12 w-12 rounded-full overflow-hidden border border-slate-200">
-            <img 
-              src={profileImg} 
-              alt="Owner" 
-              className="w-full h-full object-cover"
-            />
+            {profileImg ? (
+              <img
+                src={profileImg}
+                alt="Owner"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-slate-100 text-blue-600 font-black">
+                {profileTitle?.charAt(0) || "O"}
+              </div>
+            )}
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-800">Kasbah Villa - Hot Spring Resort Profile</p>
-            <p className="text-xs text-slate-500">Update contact and payout details</p>
+            <p className="text-sm font-semibold text-slate-800">{profileTitle}</p>
+            <p className="text-xs text-slate-500">{profileSubtitle}</p>
           </div>
         </div>
         

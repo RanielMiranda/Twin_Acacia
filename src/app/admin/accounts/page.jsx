@@ -91,7 +91,7 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 pt-20 my-20">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 pt-20 my-10">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>

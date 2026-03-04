@@ -2,17 +2,27 @@ import { Edit3, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default function ResortCard({ onEdit, onPreview }) {
-  const profileImg = "https://cibirdplhynnpqctcjzj.supabase.co/storage/v1/object/public/resort-images/kasbah-villa---hot-spring-resort/profile.jpg";
+export default function ResortCard({ resort, onEdit, onPreview, ownerImage }) {
+  const heroImage = resort?.profileImage || resort?.gallery?.[0] || "";
+  const resortName = resort?.name || "No resort assigned";
+  const updatedLabel = resort?.updated_at
+    ? `Last updated ${new Date(resort.updated_at).toLocaleDateString()}`
+    : "No recent update";
 
   return (
     <Card className="overflow-hidden rounded-2xl shadow-md bg-white">
       <div className="h-56 relative overflow-hidden">
-        <img
-          src="https://cibirdplhynnpqctcjzj.supabase.co/storage/v1/object/public/resort-images/kasbah-villa---hot-spring-resort/hero/1771915023358-gallery-1.jpg"
-          className="w-full h-full object-cover rounded-md"
-          alt="Resort"
-        />
+        {heroImage ? (
+          <img
+            src={heroImage}
+            className="w-full h-full object-cover rounded-md"
+            alt={resortName}
+          />
+        ) : (
+          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 text-sm font-semibold">
+            No resort image
+          </div>
+        )}
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg text-sm font-semibold">
           Active Resort
         </div>
@@ -21,14 +31,18 @@ export default function ResortCard({ onEdit, onPreview }) {
       <div className="p-6 flex flex-col md:flex-row justify-between md:items-center gap-6">
         <div className="flex items-center gap-4">
           {/* Owner Profile Mini-Image beside name */}
-          <img 
-            src={profileImg} 
-            alt="Owner" 
-            className="w-10 h-10 rounded-full border-2 border-slate-100 object-cover shadow-sm" 
-          />
+          <div className="w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden shadow-sm bg-slate-100">
+            {ownerImage ? (
+              <img src={ownerImage} alt="Owner" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-blue-600 text-sm font-black">
+                {resortName?.charAt(0) || "R"}
+              </div>
+            )}
+          </div>
           <div>
-            <h3 className="text-xl font-semibold text-slate-800">Kasbah Villa - Hot Spring Resort</h3>
-            <p className="text-sm text-slate-500 mt-1">Last updated 2 days ago</p>
+            <h3 className="text-xl font-semibold text-slate-800">{resortName}</h3>
+            <p className="text-sm text-slate-500 mt-1">{updatedLabel}</p>
           </div>
         </div>
         
@@ -36,7 +50,7 @@ export default function ResortCard({ onEdit, onPreview }) {
           <Button variant="outline" onClick={onEdit} className="rounded-xl flex items-center justify-center">
             <Edit3 size={18} className="mr-2" /> Edit
           </Button>
-          <Button onClick={onPreview} className="rounded-xl flex items-center justify-center">
+          <Button onClick={onPreview} disabled={!resort?.name} className="rounded-xl flex items-center justify-center">
             <Eye size={18} className="mr-2" /> Preview
           </Button>
         </div>

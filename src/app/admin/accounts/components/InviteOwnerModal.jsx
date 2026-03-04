@@ -161,9 +161,9 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
           )}
         </div>
 
-        <div className="p-8 pt-0 flex gap-3">
+        <div className="p-8 pt-0 flex gap-3 ">
           {step > 1 && (
-            <Button variant="ghost" onClick={prevStep} className="flex-1 h-12 rounded-2xl font-bold text-slate-500">
+            <Button variant="ghost" onClick={prevStep} className="flex-1 flex items-center justify-left h-12 rounded-2xl font-bold text-slate-500">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back
             </Button>
           )}
