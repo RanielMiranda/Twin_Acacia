@@ -7,7 +7,7 @@ import { useFilters } from "@/components/useclient/ContextFilter";
 
 export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInquiry }) {
   const [agreed, setAgreed] = useState(false);
-  const { guests, startDate, endDate, destination } = useFilters();
+  const { guests, startDate, endDate, destination, checkInTime, checkOutTime } = useFilters();
   // We can access resort data directly if not passed as prop, but prop is safer
   const [step, setStep] = useState(1);
 
@@ -37,8 +37,8 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
     roomCount: 1,
     checkInDate: formatDateForInput(startDate),
     checkOutDate: formatDateForInput(endDate),
-    checkInTime: "14:00",
-    checkOutTime: "12:00",
+    checkInTime: checkInTime || "14:00",
+    checkOutTime: checkOutTime || "12:00",
     message: "",
     selectedServices: [], // Added to track extra services
   });
@@ -58,8 +58,10 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
       roomCount: Number(guests?.rooms || prev.roomCount || 1),
       checkInDate: formatDateForInput(startDate) || prev.checkInDate || "",
       checkOutDate: formatDateForInput(endDate) || prev.checkOutDate || "",
+      checkInTime: checkInTime || prev.checkInTime || "14:00",
+      checkOutTime: checkOutTime || prev.checkOutTime || "12:00",
     }));
-  }, [destination, endDate, guests?.adults, guests?.children, guests?.rooms, isOpen, startDate]);
+  }, [checkInTime, checkOutTime, destination, endDate, guests?.adults, guests?.children, guests?.rooms, isOpen, startDate]);
 
   // Steps Configuration (Increased to 4)
   const steps = [

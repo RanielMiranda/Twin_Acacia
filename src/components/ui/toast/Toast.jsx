@@ -54,8 +54,27 @@ function SingleToast({ data, remove }) {
             <X size={18}/>
           </button>
         </div>
-        <div className={`h-1 ${colors[color] || colors.green}`} />
+        <div
+          className={`h-1 ${colors[color] || colors.green} ${persistent ? "" : "toast-progress"}`}
+          style={!persistent ? { animationDuration: `${duration}ms` } : undefined}
+        />
       </div>
+      <style jsx>{`
+        .toast-progress {
+          transform-origin: left;
+          animation-name: shrink;
+          animation-timing-function: linear;
+          animation-fill-mode: forwards;
+        }
+        @keyframes shrink {
+          from {
+            transform: scaleX(1);
+          }
+          to {
+            transform: scaleX(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }

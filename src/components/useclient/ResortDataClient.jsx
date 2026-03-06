@@ -52,6 +52,8 @@ export function ResortDataProvider({ children }) {
   const [guests, setGuests] = useState({ adults: 2, children: 0, rooms: 1 });
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [checkInTime, setCheckInTime] = useState("14:00");
+  const [checkOutTime, setCheckOutTime] = useState("12:00");
 
   const fetchResorts = useCallback(async () => {
     setLoading(true);
@@ -185,6 +187,10 @@ export function ResortDataProvider({ children }) {
         setStartDate,
         endDate,
         setEndDate,
+        checkInTime,
+        setCheckInTime,
+        checkOutTime,
+        setCheckOutTime,
       }}
     >
       {children}

@@ -50,7 +50,7 @@ export default function ResortResults({ resorts }) {
                   Tags
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {resort.tags?.map((tag, index) => (
+                  {(resort.tags || []).slice(0, 2).map((tag, index) => (
                     <span
                       key={index}
                       className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md"

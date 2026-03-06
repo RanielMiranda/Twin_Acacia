@@ -33,7 +33,6 @@ export default function ResortDetailPage({ name }) {
   const [roomImages, setRoomImages] = useState([]);
   const [contactOpen, setContactOpen] = useState(false);
   const [price, setPrice] = useState(5000);
-  const [inquiryNotice, setInquiryNotice] = useState("");
 
   const { toast, persistentToast } = useToast();
   useEffect(() => {
@@ -128,7 +127,6 @@ const handleSubmitInquiry = async (submittedData) => {
       });
       const inquiryMessage =
         "Inquiry has been sent. Please wait for your inquiry approval link via email, where prices can be discussed.";
-      setInquiryNotice(inquiryMessage);
       persistentToast({
         message: inquiryMessage,
         color: "blue",
@@ -166,21 +164,7 @@ const handleSubmitInquiry = async (submittedData) => {
 
       <div className="max-w-6xl mx-auto px-4 mb-6 flex flex-col md:flex-row items-center justify-between">
         <h2 className="text-2xl font-semibold mb-4 md:mb-0">Available Rooms</h2>
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-2xl hover:bg-blue-700 transition hover:scale-105"
-          onClick={() => setContactOpen(true)}
-        >
-          Contact Owner
-        </button>
       </div>
-      {inquiryNotice && (
-        <div className="max-w-6xl mx-auto px-4 mb-4">
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-            {inquiryNotice}
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-col lg:flex-row gap-8 px-4 lg:px-0 max-w-6xl mx-auto pb-10">
         <div className="lg:w-80 w-full lg:sticky lg:top-24">
           <RoomFilterPanel price={price} setPrice={setPrice} />
@@ -233,6 +217,16 @@ const handleSubmitInquiry = async (submittedData) => {
           onSubmitInquiry={handleSubmitInquiry}
         />
       )}
+      <div className="fixed bottom-5 right-5 z-40 w-[280px] bg-white border border-slate-200 shadow-2xl rounded-2xl p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Want to inquire?</p>
+        <p className="text-sm font-semibold text-slate-800 mb-3">Message the owner here</p>
+        <button
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition font-bold text-sm"
+          onClick={() => setContactOpen(true)}
+        >
+          Contact Owner
+        </button>
+      </div>
     <Toast/>
     <PersistentToast />
     </div>

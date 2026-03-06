@@ -171,6 +171,9 @@ export function AccountsProvider({ children }) {
       .maybeSingle();
     if (error) throw error;
     if (!data) throw new Error("Invalid credentials.");
+    if ((data.status || "").toLowerCase() === "suspended") {
+      throw new Error("This account is suspended. Contact admin for access.");
+    }
     setActiveAccount(data);
     persistSessionAccount(data);
     writeCookie("app_auth", "1");

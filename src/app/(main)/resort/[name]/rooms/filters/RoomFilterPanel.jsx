@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, Tag, Users } from "lucide-react";
+import { Calendar, Clock3, Tag, Users } from "lucide-react";
 import SideRangeCalendar from "./SideRangeCalendar";
 import { useFilters } from "@/components/useclient/ContextFilter"; 
 
@@ -12,7 +12,11 @@ export default function RoomFilterPanel() {
     startDate, 
     setStartDate, 
     endDate, 
-    setEndDate 
+    setEndDate,
+    checkInTime,
+    setCheckInTime,
+    checkOutTime,
+    setCheckOutTime,
   } = useFilters();
 
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -39,6 +43,33 @@ export default function RoomFilterPanel() {
           formatFullDate={formatFullDate}
           formatWeekday={formatWeekday}
         />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <Clock3 size={16} className="text-blue-600" />
+          <p className="font-medium text-sm text-gray-700">Time Range</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Time In</p>
+            <input
+              type="time"
+              value={checkInTime || "14:00"}
+              onChange={(e) => setCheckInTime(e.target.value)}
+              className="w-full bg-transparent text-sm font-semibold outline-none"
+            />
+          </label>
+          <label className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Time Out</p>
+            <input
+              type="time"
+              value={checkOutTime || "12:00"}
+              onChange={(e) => setCheckOutTime(e.target.value)}
+              className="w-full bg-transparent text-sm font-semibold outline-none"
+            />
+          </label>
+        </div>
       </div>
 
       {/* AMENITIES TAGS */}
