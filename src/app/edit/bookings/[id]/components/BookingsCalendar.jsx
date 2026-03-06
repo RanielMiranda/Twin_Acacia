@@ -144,14 +144,14 @@ export default function BookingCalendar() {
   const getBookingTooltip = (booking) => {
     const checkIn = booking?.checkInTime || booking?.bookingForm?.checkInTime || "--:--";
     const checkOut = booking?.checkOutTime || booking?.bookingForm?.checkOutTime || "--:--";
-    return `${checkIn} - ${checkOut}`;
+    return `Time In: ${checkIn} - Time Out: ${checkOut}`;
   };
 
   const getDateTooltip = (dateBookings) => {
     if (!dateBookings?.length) return "";
     return dateBookings
       .slice(0, 2)
-      .map((booking, index) => `Range ${index + 1}: ${getBookingTooltip(booking)}`)
+      .map((booking, index) => `${getBookingTooltip(booking)}`)
       .join(" | ");
   };
 

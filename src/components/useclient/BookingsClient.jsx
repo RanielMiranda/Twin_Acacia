@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { supabase } from "@/lib/supabase";
 import { useResort } from "./ResortEditorClient";
 import { BUCKET_NAME, getStoragePathFromPublicUrl } from "@/lib/utils";
+import { isCheckoutOverdueRow } from "@/lib/bookingDateTime";
 
 const BookingsContext = createContext(null);
 const BOOKING_COLUMNS = [
@@ -129,6 +130,11 @@ export function BookingsProvider({ children }) {
         const unpaid = Number(row.booking_form?.downpayment || 0) <= 0;
         return pendingPayment && unpaid && isPastDeadline(row.payment_deadline || row.booking_form?.paymentDeadline);
       });
+      const overdueCheckoutRows = rows.filter((row) => {
+        const status = (row.status || row.booking_form?.status || "").toLowerCase();
+        const isConfirmed = status.includes("confirmed");
+        return isConfirmed && isCheckoutOverdueRow(row);
+      });
 
       if (expiredRows.length > 0) {
         const nowIso = new Date().toISOString();
@@ -150,16 +156,45 @@ export function BookingsProvider({ children }) {
           )
         );
       }
+      if (overdueCheckoutRows.length > 0) {
+        const nowIso = new Date().toISOString();
+        await Promise.all(
+          overdueCheckoutRows.map((row) =>
+            supabase
+              .from("bookings")
+              .update({
+                status: "Pending Checkout",
+                booking_form: {
+                  ...(row.booking_form || {}),
+                  status: "Pending Checkout",
+                  autoPendingCheckoutAt: nowIso,
+                },
+              })
+              .eq("id", row.id)
+          )
+        );
+      }
 
       const normalizedRows = rows.map((row) => {
         const shouldCancel = expiredRows.some((entry) => entry.id === row.id);
-        if (!shouldCancel) return row;
+        const shouldMoveToPendingCheckout = overdueCheckoutRows.some((entry) => entry.id === row.id);
+        if (!shouldCancel && !shouldMoveToPendingCheckout) return row;
+        if (shouldCancel) {
+          return {
+            ...row,
+            status: "Cancelled",
+            booking_form: {
+              ...(row.booking_form || {}),
+              status: "Cancelled",
+            },
+          };
+        }
         return {
           ...row,
-          status: "Cancelled",
+          status: "Pending Checkout",
           booking_form: {
             ...(row.booking_form || {}),
-            status: "Cancelled",
+            status: "Pending Checkout",
           },
         };
       });
