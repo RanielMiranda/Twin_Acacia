@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME } from "@/lib/utils";
+import { BUCKET_NAME, convertImageFileToWebp, getStoragePathFromPublicUrl } from "@/lib/utils";
 import { useResortData } from "./ResortDataClient";
 
 const ResortEditorContext = createContext(null);
@@ -34,14 +34,6 @@ const sanitizeSegment = (value) =>
     .replace(/[^a-z0-9-_\s]/g, "")
     .replace(/\s+/g, "-");
 
-const toStoragePathFromUrl = (url) => {
-  if (!url || typeof url !== "string") return null;
-  const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
-  const index = url.indexOf(marker);
-  if (index === -1) return null;
-  return decodeURIComponent(url.slice(index + marker.length));
-};
-
 const toResortDbPayload = (resort) =>
   RESORT_DB_COLUMNS.reduce((acc, key) => {
     if (resort?.[key] !== undefined) acc[key] = resort[key];
@@ -67,30 +59,6 @@ const collectResortImageUrls = (resortLike) => {
     });
   });
   return urls;
-};
-
-const convertImageFileToWebp = async (file) => {
-  if (!file || !(file instanceof File) || !file.type?.startsWith("image/")) return file;
-  if (typeof window === "undefined") return file;
-  try {
-    const bitmap = await createImageBitmap(file);
-    const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      bitmap.close();
-      return file;
-    }
-    ctx.drawImage(bitmap, 0, 0);
-    bitmap.close();
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
-    if (!blob) return file;
-    const base = file.name.replace(/\.[^.]+$/, "") || `image-${Date.now()}`;
-    return new File([blob], `${base}.webp`, { type: "image/webp" });
-  } catch {
-    return file;
-  }
 };
 
 export function ResortEditorProvider({ children }) {
@@ -266,7 +234,7 @@ export function ResortEditorProvider({ children }) {
 
         const explicitPaths = new Set();
         const addUrlPath = (value) => {
-          const path = toStoragePathFromUrl(value);
+          const path = getStoragePathFromPublicUrl(value, BUCKET_NAME);
           if (path) explicitPaths.add(path);
         };
         addUrlPath(resortRow.profileImage);
@@ -372,7 +340,7 @@ export function ResortEditorProvider({ children }) {
       const newUrls = collectResortImageUrls(finalPayload);
       const orphanedPaths = Array.from(oldUrls)
         .filter((url) => !newUrls.has(url))
-        .map((url) => toStoragePathFromUrl(url))
+        .map((url) => getStoragePathFromPublicUrl(url, BUCKET_NAME))
         .filter(Boolean);
 
       if (orphanedPaths.length > 0) {

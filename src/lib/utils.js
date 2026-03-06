@@ -1,6 +1,41 @@
 export const BUCKET_NAME = "resort-images";
 const DEFAULT_SUPABASE_IMAGE_WIDTHS = [480, 768, 1024, 1440];
 
+export function getStoragePathFromPublicUrl(url, bucketName = BUCKET_NAME) {
+  if (!url || typeof url !== "string") return null;
+  const publicMarker = `/storage/v1/object/public/${bucketName}/`;
+  const objectMarker = `/object/public/${bucketName}/`;
+  const marker = url.includes(publicMarker) ? publicMarker : objectMarker;
+  const index = url.indexOf(marker);
+  if (index === -1) return null;
+  return decodeURIComponent(url.slice(index + marker.length));
+}
+
+export async function convertImageFileToWebp(file, quality = 0.82) {
+  if (!file || !(file instanceof File) || !file.type?.startsWith("image/")) return file;
+  if (typeof window === "undefined") return file;
+  if ((file.type || "").toLowerCase() === "image/webp") return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return file;
+    }
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+    if (!blob) return file;
+    const base = file.name.replace(/\.[^.]+$/, "") || `image-${Date.now()}`;
+    return new File([blob], `${base}.webp`, { type: "image/webp" });
+  } catch {
+    return file;
+  }
+}
+
 export function getResortStoragePath(resortName, category, subFolder = "", fileName = "") {
   const safeName = resortName.replace(/\s+/g, '-').toLowerCase();
   // category: 'profile', 'facilities', 'gallery', 'rooms'

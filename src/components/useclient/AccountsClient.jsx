@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME } from "@/lib/utils";
+import { BUCKET_NAME, convertImageFileToWebp, getStoragePathFromPublicUrl } from "@/lib/utils";
 
 const AccountsContext = createContext(null);
 const ACTIVE_ACCOUNT_KEY = "active_account_v1";
@@ -50,30 +50,6 @@ const writeCookie = (name, value, maxAgeSeconds = 60 * 60 * 24 * 7) => {
 const clearCookie = (name) => {
   if (typeof document === "undefined") return;
   document.cookie = `${name}=; path=/; max-age=0; samesite=lax`;
-};
-
-const toWebpFile = async (file) => {
-  if (!(file instanceof File)) return file;
-  if ((file.type || "").toLowerCase() === "image/webp") return file;
-  const bitmap = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return file;
-  ctx.drawImage(bitmap, 0, 0);
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
-  if (!blob) return file;
-  const base = (file.name || "profile").replace(/\.[^.]+$/, "");
-  return new File([blob], `${base}.webp`, { type: "image/webp" });
-};
-
-const getStoragePathFromUrl = (url) => {
-  if (!url || typeof url !== "string") return null;
-  const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
-  const idx = url.indexOf(marker);
-  if (idx === -1) return null;
-  return decodeURIComponent(url.slice(idx + marker.length));
 };
 
 export function AccountsProvider({ children }) {
@@ -141,7 +117,7 @@ export function AccountsProvider({ children }) {
       let nextProfileImage = updates?.profile_image || null;
 
       if (profileFile instanceof File) {
-        const normalized = await toWebpFile(profileFile);
+        const normalized = await convertImageFileToWebp(profileFile, 0.82);
         const path = `accounts/${Number(accountId)}/profile-${Date.now()}.webp`;
         const { error: uploadError } = await supabase.storage.from(BUCKET_NAME).upload(path, normalized, {
           upsert: true,
@@ -158,7 +134,7 @@ export function AccountsProvider({ children }) {
       });
 
       if (profileFile instanceof File && previousImageUrl && nextProfileImage && previousImageUrl !== nextProfileImage) {
-        const previousPath = getStoragePathFromUrl(previousImageUrl);
+        const previousPath = getStoragePathFromPublicUrl(previousImageUrl, BUCKET_NAME);
         if (previousPath) {
           await supabase.storage.from(BUCKET_NAME).remove([previousPath]);
         }
