@@ -6,11 +6,15 @@ create table if not exists public.owner_admin_messages (
   resort_id bigint references public.resorts(id) on delete cascade,
   sender_role text not null check (sender_role in ('owner', 'admin')),
   sender_name text,
+  sender_image text,
   subject text,
   message text not null,
   status text not null default 'pending' check (status in ('pending', 'resolved')),
   created_at timestamptz not null default now()
 );
+
+alter table public.owner_admin_messages
+  add column if not exists sender_image text;
 
 create index if not exists owner_admin_messages_resort_idx on public.owner_admin_messages(resort_id);
 create index if not exists owner_admin_messages_status_idx on public.owner_admin_messages(status);

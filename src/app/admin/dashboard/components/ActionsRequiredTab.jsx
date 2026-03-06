@@ -82,8 +82,12 @@ export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab
 
               {/* Middle: Who Requested */}
               <div className="flex items-center gap-3 px-4 md:border-l md:border-r border-slate-100 min-w-50">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">
-                  {msg.requestedBy?.charAt(0) || "U"}
+                <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm overflow-hidden">
+                  {msg.senderImage ? (
+                    <img src={msg.senderImage} alt={msg.requestedBy || "Owner"} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{msg.requestedBy?.charAt(0) || "U"}</span>
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold text-slate-700 leading-tight">

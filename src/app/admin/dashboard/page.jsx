@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, LayoutDashboard, Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import SearchBar from "./components/SearchBar";
 import ActionsRequiredTab from "./components/ActionsRequiredTab"; 
 
 import { useResort } from "@/components/useclient/ContextEditor";
+import { useSupport } from "@/components/useclient/SupportClient";
 import { supabase } from "@/lib/supabase";
 import resortInitialData from "@/app/edit/resort-builder/[id]/data/ResortInitialData";
 
@@ -22,7 +23,7 @@ const isMissingOwnerAdminTableError = (error) =>
     error.message.includes("schema cache"));
 
 const ADMIN_RESORT_COLUMNS = ["id", "name", "location", "visible", "profileImage", "gallery", "created_at"].join(", ");
-const OWNER_ADMIN_COLUMNS = ["id", "resort_id", "sender_name", "subject", "message", "status", "created_at"].join(", ");
+const OWNER_ADMIN_COLUMNS = ["id", "resort_id", "sender_name", "sender_image", "subject", "message", "status", "created_at"].join(", ");
 
 export default function Page() {
   const [resorts, setResorts] = useState([]);
@@ -32,6 +33,7 @@ export default function Page() {
   const [activeActionTab, setActiveActionTab] = useState("resort");
   const { toast } = useToast();
   const [messages, setMessages] = useState({ resort: [], account: [], support: [] });
+  const { listArchivedOwnerAdminMessages, archiveOwnerAdminMessage, isMissingSupportTableError } = useSupport();
   
   const router = useRouter();
   const { resetResort, deleteResort } = useResort();
@@ -42,12 +44,7 @@ export default function Page() {
     support: []
   });
 
-  useEffect(() => {
-    fetchResorts();
-    fetchMessages();
-  }, []);
-
-  const fetchResorts = async () => {
+  const fetchResorts = useCallback(async () => {
     setFetching(true);
     try {
       const { data, error } = await supabase
@@ -61,15 +58,10 @@ export default function Page() {
     } finally {
       setFetching(false);
     }
-  };
+  }, []);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
-      const resortMsgs = [];
-      const { data: accountMsgs } = await supabase
-        .from("account_messages")
-        .select("id, title, content, requestedBy, status, created_at")
-        .eq("status", "pending");
       const { data: ownerMsgs, error: ownerMsgError } = await supabase
         .from("owner_admin_messages")
         .select(OWNER_ADMIN_COLUMNS)
@@ -86,71 +78,97 @@ export default function Page() {
         });
       }
 
-      const supportMsgs = (ownerMsgs || []).map((row) => ({
+      const normalized = (ownerMsgs || []).map((row) => ({
         id: row.id,
         resort_id: row.resort_id,
-        title: row.subject || "Owner Support Message",
+        title: (row.subject || "support").toString().replace(/^./, (c) => c.toUpperCase()),
         content: row.message,
         requestedBy: row.sender_name || `Resort #${row.resort_id || "Unknown"}`,
+        senderImage: row.sender_image || null,
         status: row.status,
+        category: ((row.subject || "support").toString().toLowerCase()),
         created_at: row.created_at,
       }));
 
+      const resortMsgs = normalized.filter((msg) => msg.category === "resort");
+      const accountMsgs = normalized.filter((msg) => msg.category === "account");
+      const supportMsgs = normalized.filter((msg) => msg.category !== "resort" && msg.category !== "account");
+
+      let archivedRows = [];
+      try {
+        archivedRows = await listArchivedOwnerAdminMessages();
+      } catch (archiveError) {
+        if (!isMissingSupportTableError(archiveError)) {
+          throw archiveError;
+        }
+      }
+      const normalizedArchived = (archivedRows || []).map((row) => ({
+        id: `arch:${row.id}`,
+        resort_id: row.resort_id,
+        title: (row.subject || "support").toString().replace(/^./, (c) => c.toUpperCase()),
+        content: row.message,
+        requestedBy: row.sender_name || `Resort #${row.resort_id || "Unknown"}`,
+        senderImage: row.sender_image || null,
+        status: row.status || "resolved",
+        category: ((row.subject || "support").toString().toLowerCase()),
+        created_at: row.created_at,
+        archived_at: row.archived_at,
+      }));
+
       setMessages({
-        resort: resortMsgs,
+        resort: resortMsgs || [],
         account: accountMsgs || [],
         support: supportMsgs,
+      });
+      setArchives({
+        resort: normalizedArchived.filter((msg) => msg.category === "resort"),
+        account: normalizedArchived.filter((msg) => msg.category === "account"),
+        support: normalizedArchived.filter((msg) => msg.category !== "resort" && msg.category !== "account"),
       });
     } catch (err) {
       console.error(err.message);
     }
-  };
+  }, [isMissingSupportTableError, listArchivedOwnerAdminMessages, toast]);
+
+  useEffect(() => {
+    fetchResorts();
+    fetchMessages();
+  }, [fetchMessages, fetchResorts]);
 
   const handleResolve = async (id) => {
     const resolvedMsg = messages[activeActionTab].find(msg => msg.id === id);
     if (!resolvedMsg) return;
 
-    if (activeActionTab === "support") {
-      const { error: updateError } = await supabase
-        .from("owner_admin_messages")
-        .update({ status: "resolved" })
-        .eq("id", id);
-
-      if (updateError) {
-        if (isMissingOwnerAdminTableError(updateError)) {
-          toast({
-            message: "Owner-admin support table is missing. Run phase4_owner_admin_messages.sql.",
-            color: "amber",
-          });
-          return;
-        }
-        toast({
-          message: `Failed to resolve support message: ${updateError.message}`,
-          color: "red",
-        });
-        return;
-      }
-
+    const { data: sourceRow, error: loadError } = await supabase
+      .from("owner_admin_messages")
+      .select("id, resort_id, sender_name, sender_image, subject, message, status, created_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (loadError) {
+      toast({
+        message: `Failed to resolve request: ${loadError.message}`,
+        color: "red",
+      });
+      return;
     }
+    if (!sourceRow) return;
 
-    // Move message to archives
-    const archivedWithResolution = { ...resolvedMsg, status: "resolved" };
-    setArchives(prev => ({
-      ...prev,
-      [activeActionTab]: [...prev[activeActionTab], archivedWithResolution]
-    }));
-
-    // Remove from active messages
-    setMessages(prev => ({
-      ...prev,
-      [activeActionTab]: prev[activeActionTab].filter(msg => msg.id !== id)
-    }));
+    try {
+      await archiveOwnerAdminMessage(sourceRow);
+    } catch (archiveError) {
+      toast({
+        message: `Failed to archive request: ${archiveError.message}`,
+        color: "red",
+      });
+      return;
+    }
 
     toast({
       message: "Request resolved and archived",
       color: "green",
       icon: CheckCircle2,
     });
+    fetchMessages();
   };
 
   const filteredResorts = resorts.filter(

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useAccounts } from "@/components/useclient/AccountsClient";
+import { supabase } from "@/lib/supabase";
 
 import AccountCard from "./components/AccountCard";
 import InviteOwnerModal from "./components/InviteOwnerModal";
@@ -32,6 +33,7 @@ export default function Page() {
     () =>
       (accounts || []).map((entry) => ({
         id: String(entry.id),
+        resortId: entry.resort_id ? Number(entry.resort_id) : null,
         name: entry.full_name || "Unknown",
         email: entry.email || "-",
         phone: entry.phone || "-",
@@ -63,9 +65,28 @@ export default function Page() {
     setIsMessageModalOpen(true);
   };
 
-  const handleSendMessage = (_, data) => {
-    console.info("Owner message payload:", data);
-    toast({ message: "Message payload logged in console.", color: "blue", icon: CheckCircle2 });
+  const handleSendMessage = async (_, data) => {
+    if (!selectedAccount?.resortId) {
+      toast({ message: "This account has no linked resort.", color: "amber" });
+      return;
+    }
+    const normalizedSubject = ["resort", "account", "support"].includes(String(data.subject || "").toLowerCase())
+      ? String(data.subject).toLowerCase()
+      : "support";
+    const payload = {
+      resort_id: selectedAccount.resortId,
+      sender_role: "admin",
+      sender_name: "Admin",
+      subject: normalizedSubject,
+      message: data.message,
+      status: "pending",
+    };
+    const { error } = await supabase.from("owner_admin_messages").insert(payload);
+    if (error) {
+      toast({ message: `Failed to send message: ${error.message}`, color: "red" });
+      return;
+    }
+    toast({ message: "Message sent to owner inbox.", color: "blue", icon: CheckCircle2 });
   };
 
   const handleApprove = async (id) => {

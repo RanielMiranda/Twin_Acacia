@@ -7,9 +7,9 @@ export async function middleware(request) {
   const isAdminRoute = pathname.startsWith("/admin")
   const isOwnerRoute = pathname.startsWith("/owner")
   const isEditRoute = pathname.startsWith("/edit")
-  const isPublicEntry = pathname === "/" || pathname === "/auth/login"
+  const isLoginPage = pathname === "/auth/login"
 
-  if (isPublicEntry && appAuth && ["admin", "owner"].includes(appRole)) {
+  if (isLoginPage && appAuth && ["admin", "owner"].includes(appRole)) {
     const target = appRole === "admin" ? "/admin/dashboard" : "/owner/dashboard";
     return NextResponse.redirect(new URL(target, request.url));
   }

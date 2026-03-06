@@ -152,7 +152,9 @@ export default function Page() {
       type: row.sender_role === "admin" ? "admin_notice" : "owner_message",
       senderRole: row.sender_role,
       status: row.status || "pending",
-      subject: row.subject || (row.sender_role === "admin" ? "Admin Notice" : "Owner Message"),
+      subject: (row.subject || (row.sender_role === "admin" ? "Admin Notice" : "Owner Message"))
+        .toString()
+        .replace(/^./, (c) => c.toUpperCase()),
       message: row.message || "",
       date: new Date(row.created_at).toLocaleString(),
       unread: row.sender_role === "admin" && row.status !== "resolved",
@@ -166,11 +168,15 @@ export default function Page() {
   };
 
   const handleSendAdminMessage = async (data) => {
+    const normalizedSubject = ["resort", "account", "support"].includes(String(data.subject || "").toLowerCase())
+      ? String(data.subject).toLowerCase()
+      : "support";
     const payload = {
       resort_id: OWNER_RESORT_ID,
       sender_role: "owner",
-      sender_name: "Owner",
-      subject: data.subject || "Owner Support Request",
+      sender_name: activeAccount?.full_name || "Owner",
+      sender_image: activeAccount?.profile_image || null,
+      subject: normalizedSubject,
       message: data.message,
       status: "pending",
     };
