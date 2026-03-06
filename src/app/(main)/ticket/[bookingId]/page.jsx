@@ -183,10 +183,21 @@ export default function ClientTicketPage() {
         (booking.status || "").toLowerCase().includes("inquiry") || (booking.status || "").toLowerCase().includes("pending")
           ? "Pending Payment"
           : booking.status;
+      const adults = Number(bookingForm.adultCount || form.adultCount || 0);
+      const children = Number(bookingForm.childrenCount || form.childrenCount || 0);
+      const pax = Number(bookingForm.guestCount || bookingForm.pax || adults + children || 0);
 
       const { error } = await supabase
         .from("bookings")
-        .update({ booking_form: bookingForm, status: nextStatus })
+        .update({
+          booking_form: bookingForm,
+          status: nextStatus,
+          adult_count: adults,
+          children_count: children,
+          pax,
+          sleeping_guests: Number(bookingForm.sleepingGuests || form.sleepingGuests || 0),
+          room_count: Number(bookingForm.roomCount || form.roomCount || 1),
+        })
         .eq("id", booking.id);
 
       if (error) throw error;

@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   AlertCircle,
   Phone,
+  Copy,
   Ticket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -473,6 +474,20 @@ function BookingModernEditor({
     }
   };
 
+  const handleCopyTicketLink = async () => {
+    if (typeof window === "undefined") return;
+    const token = draft.ticketAccessToken;
+    const link = token
+      ? `${window.location.origin}/ticket/${booking.id}?token=${encodeURIComponent(token)}`
+      : `${window.location.origin}/ticket/${booking.id}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      alert("Ticket link copied to clipboard.");
+    } catch {
+      window.prompt("Copy ticket link:", link);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-32 pt-10 px-4 md:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -487,6 +502,9 @@ function BookingModernEditor({
             </Button>
             <Button variant="outline" onClick={onOpenTicket} className="rounded-full flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-6">
               <Ticket size={16} className="mr-2" /> Client Ticket
+            </Button>
+            <Button variant="outline" onClick={handleCopyTicketLink} className="rounded-full flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-6">
+              <Copy size={16} className="mr-2" /> Copy Ticket Link
             </Button>
             <Button variant="outline" onClick={onPrint} className="rounded-full flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-6">
               <Printer size={16} className="mr-2" /> Export

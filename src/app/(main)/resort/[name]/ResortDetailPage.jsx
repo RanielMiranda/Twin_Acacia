@@ -135,8 +135,12 @@ const handleSubmitInquiry = async (submittedData) => {
           submittedData.message?.trim() ||
           "Inquiry sent. Can we confirm rates, inclusions, and availability?",
       });
+      if (typeof window !== "undefined") {
+        const ticketUrl = `${window.location.origin}/ticket/${bookingId}?token=${ticketAccessToken}`;
+        console.info("Client ticket link (for testing until email is enabled):", ticketUrl);
+      }
       const inquiryMessage =
-        "Inquiry has been sent. Please wait for your inquiry approval link via email, where prices can be discussed.";
+        "Inquiry has been sent. Ticket link is prepared and logged in console for testing.";
       persistentToast({
         message: inquiryMessage,
         color: "blue",
