@@ -2,19 +2,17 @@
 
 import { Camera, Trash2, Edit3, UploadCloud, Loader2 } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function HeroGalleryEditor() {
   const { resort, updateResort, uploadImage, safeSrc } = useResort();
-  const [localGallery, setLocalGallery] = useState(resort.gallery || []);
+  const localGallery = resort.gallery || [];
   const [isUploading, setIsUploading] = useState(false);
   
   const addInputRef = useRef(null);
   const replaceInputRef = useRef(null);
   const [replacingIdx, setReplacingIdx] = useState(null);
-
-  useEffect(() => setLocalGallery(resort.gallery || []), [resort.gallery]);
 
   const handleMultipleUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -23,7 +21,6 @@ export default function HeroGalleryEditor() {
     // DON'T call uploadImage here. 
     // Just add the File objects to the state.
     const updated = [...localGallery, ...files];
-    setLocalGallery(updated);
     updateResort("gallery", updated);
     
     e.target.value = ""; 
@@ -35,7 +32,6 @@ export default function HeroGalleryEditor() {
 
     const updated = [...localGallery];
     updated[replacingIdx] = file; // Store File object
-    setLocalGallery(updated);
     updateResort("gallery", updated);
     
     setReplacingIdx(null);
@@ -49,7 +45,6 @@ export default function HeroGalleryEditor() {
     }
     if (confirm("Remove this photo?")) {
       const updated = localGallery.filter((_, i) => i !== index);
-      setLocalGallery(updated);
       updateResort("gallery", updated);
     }
   };

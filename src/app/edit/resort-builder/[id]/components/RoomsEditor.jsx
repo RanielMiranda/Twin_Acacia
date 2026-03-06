@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 // --- DND Kit Imports ---
@@ -16,8 +16,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 // --- Helper Components for "Update on Blur" ---
 const BlurInput = ({ value, onChange, ...props }) => {
-  const [localVal, setLocalVal] = useState(value);
-  useEffect(() => setLocalVal(value), [value]);
+  const [localVal, setLocalVal] = useState(() => value ?? "");
 
   return (
     <input
@@ -31,8 +30,7 @@ const BlurInput = ({ value, onChange, ...props }) => {
 };
 
 const BlurTextArea = ({ value, onChange, ...props }) => {
-  const [localVal, setLocalVal] = useState(value);
-  useEffect(() => setLocalVal(value), [value]);
+  const [localVal, setLocalVal] = useState(() => value ?? "");
 
   return (
     <textarea
@@ -47,8 +45,7 @@ const BlurTextArea = ({ value, onChange, ...props }) => {
 // --- Sortable Tag Component ---
 function SortableRoomTag({ id, tag, onRemove, onUpdate }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const [localVal, setLocalVal] = useState(tag);
-  useEffect(() => setLocalVal(tag), [tag]);
+  const [localVal, setLocalVal] = useState(() => tag ?? "");
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -235,6 +232,7 @@ export default function RoomsEditor() {
             <div className="md:w-1/2 p-6 flex flex-col">
               <div className="flex justify-between items-start mb-2">
                 <BlurInput 
+                  key={`room-name-${room.id}-${room.name}`}
                   className="text-xl font-semibold w-full bg-transparent border-none p-0 focus:ring-0" 
                   value={room.name} 
                   onChange={(val) => handleRoomUpdate(room.id, { name: val })} 
@@ -262,6 +260,7 @@ export default function RoomsEditor() {
                 <span className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-2xl border border-blue-100">
                   <Users size={14} className="text-blue-600"/> 
                   <BlurInput 
+                    key={`room-guests-${room.id}-${room.guests}`}
                     type="number" 
                     className="bg-transparent border-none p-0 w-8 text-center focus:ring-0 font-semibold text-blue-700" 
                     value={room.guests} 
@@ -271,6 +270,7 @@ export default function RoomsEditor() {
                 <span className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-2xl border border-blue-100 flex-1">
                   <BedDouble size={14} className="text-blue-600 shrink-0"/> 
                   <BlurInput 
+                    key={`room-beds-${room.id}-${room.beds}`}
                     className="bg-transparent border-none p-0 w-full focus:ring-0 font-semibold text-blue-700" 
                     value={room.beds} 
                     onChange={(val) => handleRoomUpdate(room.id, { beds: val })} 
@@ -308,6 +308,7 @@ export default function RoomsEditor() {
               </div>
 
               <BlurTextArea 
+                key={`room-details-${room.id}-${room.details}`}
                 className="text-slate-500 text-sm w-full bg-transparent border-none p-0 focus:ring-0 resize-none mb-4"
                 value={room.details} 
                 onChange={(val) => handleRoomUpdate(room.id, { details: val })} 

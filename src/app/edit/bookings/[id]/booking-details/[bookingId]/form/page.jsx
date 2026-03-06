@@ -65,19 +65,40 @@ export default function BookingDetailsFormPage() {
     checkOutDate: existingBooking?.endDate || draftData?.checkOutDate || "",
     checkInTime: existingBooking?.checkInTime || draftData?.checkInTime || "14:00",
     checkOutTime: existingBooking?.checkOutTime || draftData?.checkOutTime || "11:00",
+    roomName:
+      existingBooking?.bookingForm?.roomName ||
+      (existingBooking?.roomIds || [])
+        .map((roomId) => (currentResort?.rooms || []).find((room) => room.id === roomId)?.name)
+        .filter(Boolean)
+        .join(", ") ||
+      draftData?.roomName ||
+      "",
     resortName: currentResort?.name,
   };
 
   const handleSave = (formData) => {
+    const selectedRoom =
+      (currentResort?.rooms || []).find((room) => room.name === formData.roomName) || null;
+    const selectedRoomIds = selectedRoom?.id ? [selectedRoom.id] : [];
+    const selectedRoomNames = selectedRoom?.name ? [selectedRoom.name] : [];
     if (!isNewBooking && existingBooking) {
       updateBookingById(bookingId, (booking) => ({
         ...booking,
+        roomIds: selectedRoomIds.length > 0 ? selectedRoomIds : booking.roomIds || [],
         startDate: formData.checkInDate || booking.startDate,
         endDate: formData.checkOutDate || booking.endDate,
         checkInTime: formData.checkInTime || booking.checkInTime,
         checkOutTime: formData.checkOutTime || booking.checkOutTime,
         paymentDeadline: formData.paymentDeadline || booking.paymentDeadline || null,
-        bookingForm: formData,
+        bookingForm: {
+          ...formData,
+          roomCount: selectedRoomIds.length > 0 ? 1 : Number(formData.roomCount || 1),
+          assignedRoomIds: selectedRoomIds.length > 0 ? selectedRoomIds : booking.roomIds || [],
+          assignedRoomNames:
+            selectedRoomNames.length > 0
+              ? selectedRoomNames
+              : (booking.bookingForm?.assignedRoomNames || []),
+        },
         status: formData.status || booking.status,
       }));
       router.push(`/edit/bookings/${resortId}/booking-details/${bookingId}`);
@@ -87,14 +108,19 @@ export default function BookingDetailsFormPage() {
     const newBookingId = Date.now().toString();
     const nextBooking = {
       id: newBookingId,
-      roomIds: currentResort?.rooms?.[0]?.id ? [currentResort.rooms[0].id] : [],
+      roomIds: selectedRoomIds,
       startDate: formData.checkInDate || null,
       endDate: formData.checkOutDate || null,
       checkInTime: formData.checkInTime || "14:00",
       checkOutTime: formData.checkOutTime || "11:00",
       paymentDeadline: formData.paymentDeadline || null,
       status: formData.status || "Inquiry",
-      bookingForm: formData,
+      bookingForm: {
+        ...formData,
+        roomCount: selectedRoomIds.length > 0 ? 1 : Number(formData.roomCount || 1),
+        assignedRoomIds: selectedRoomIds,
+        assignedRoomNames: selectedRoomNames,
+      },
     };
 
     createBooking(nextBooking);
@@ -119,6 +145,7 @@ export default function BookingDetailsFormPage() {
         title={isNewBooking ? "New Booking Form" : "Booking Form"}
         data={initialData}
         resortName={currentResort?.name}
+        roomOptions={currentResort?.rooms || []}
         storageKey={storageKey}
         onCancel={() => router.back()}
         onSave={handleSave}

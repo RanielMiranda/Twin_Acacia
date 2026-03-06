@@ -1,6 +1,6 @@
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 import {
@@ -19,6 +19,12 @@ import {
 } from "@dnd-kit/sortable";
 
 import { CSS } from "@dnd-kit/utilities";
+
+const withServiceIds = (services = []) =>
+  services.map((service, index) => ({
+    ...service,
+    id: service.id || `service-${index}`,
+  }));
 
 /* ---------------- SORTABLE ROW ---------------- */
 
@@ -117,17 +123,9 @@ function SortableRow({
 
 export default function ServicesEditor() {
   const { resort, updateResort } = useResort();
-  const [localServices, setLocalServices] = useState([]);
+  const [localServices, setLocalServices] = useState(null);
+  const services = localServices ?? withServiceIds(resort.extraServices || []);
   const servicesEndRef = useRef(null);
-
-  /* Ensure services always have IDs */
-  useEffect(() => {
-    const withIds = (resort.extraServices || []).map((s) => ({
-      ...s,
-      id: s.id || crypto.randomUUID(),
-    }));
-    setLocalServices(withIds);
-  }, [resort.extraServices]);
 
   const scrollToCenter = () => {
     servicesEndRef.current?.scrollIntoView({
@@ -138,7 +136,7 @@ export default function ServicesEditor() {
 
   const addService = () => {
     const updated = [
-      ...localServices,
+      ...services,
       {
         id: crypto.randomUUID(),
         name: "New Service",
@@ -152,19 +150,19 @@ export default function ServicesEditor() {
   };
 
   const updateServiceLocal = (index, field, value) => {
-    const updated = [...localServices];
+    const updated = [...services];
     updated[index] = { ...updated[index], [field]: value };
     setLocalServices(updated);
   };
 
   const commitService = () => {
-    updateResort("extraServices", localServices);
+    updateResort("extraServices", services);
   };
 
   const removeService = (index) => {
-    const serviceName = localServices[index]?.name;
+    const serviceName = services[index]?.name;
     if (window.confirm(`Remove "${serviceName}"?`)) {
-      const updated = localServices.filter((_, i) => i !== index);
+      const updated = services.filter((_, i) => i !== index);
       setLocalServices(updated);
       updateResort("extraServices", updated);
     }
@@ -178,14 +176,14 @@ export default function ServicesEditor() {
 
     if (!over || active.id === over.id) return;
 
-    const oldIndex = localServices.findIndex(
+    const oldIndex = services.findIndex(
       (s) => s.id === active.id
     );
-    const newIndex = localServices.findIndex(
+    const newIndex = services.findIndex(
       (s) => s.id === over.id
     );
 
-    const reordered = arrayMove(localServices, oldIndex, newIndex);
+    const reordered = arrayMove(services, oldIndex, newIndex);
     setLocalServices(reordered);
     updateResort("extraServices", reordered);
   };
@@ -220,10 +218,10 @@ export default function ServicesEditor() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={localServices.map((s) => s.id)}
+            items={services.map((s) => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            {localServices.map((service, index) => (
+            {services.map((service, index) => (
               <SortableRow
                 key={service.id}
                 service={service}

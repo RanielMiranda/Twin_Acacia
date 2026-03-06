@@ -412,6 +412,11 @@ export default function ClientTicketPage() {
     status.includes("ongoing") ||
     status.includes("pending checkout") ||
     status.includes("checked out");
+  const canAccessEntryPass =
+    status.includes("confirm") ||
+    status.includes("ongoing") ||
+    status.includes("pending checkout") ||
+    status.includes("checked out");
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-8 mt-16 pb-20">
@@ -430,6 +435,7 @@ export default function ClientTicketPage() {
           </p>
         </div>
         <Button 
+          disabled={!canAccessEntryPass}
           variant="outline"
           className="rounded-full px-6 flex items-center justify-center border-slate-200 font-bold text-xs uppercase tracking-wider h-12 bg-white shadow-sm"
           onClick={openPrintableEntryPass}
@@ -437,6 +443,7 @@ export default function ClientTicketPage() {
           <Printer size={16} className="mr-2" /> Print Entry Pass
         </Button>
         <Button
+          disabled={!canAccessEntryPass}
           variant="outline"
           className="rounded-full px-6 flex items-center justify-center border-slate-200 font-bold text-xs uppercase tracking-wider h-12 bg-white shadow-sm"
           onClick={downloadTicketImage}
@@ -449,7 +456,6 @@ export default function ClientTicketPage() {
       <Card id="ticket-stay-card" className="p-8 md:p-10 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] relative overflow-hidden">
         <h2 className="text-sm font-black text-blue-600 uppercase tracking-[0.2em] mb-6 border-b border-slate-50 pb-4">Stay Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <TicketRow label="Resort" value={resort?.name} />
           <TicketRow label="Guest Name" value={form.guestName} />
           <TicketRow label="Status" value={booking.status || "Inquiry"} isStatus />
           <TicketRow label="Pax" value={form.guestCount || 0} />

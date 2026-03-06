@@ -60,6 +60,10 @@ function buildDraftFromBooking(booking) {
   const paymentPendingApproval = !!form.paymentPendingApproval && !paymentVerified;
   const pendingDownpayment = paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
   const pendingPaymentMethod = paymentPendingApproval ? form.pendingPaymentMethod || null : null;
+  const roomNameFromAssigned =
+    (form.assignedRoomNames || []).length > 0
+      ? form.assignedRoomNames.join(", ")
+      : (form.roomName || "");
   return {
     ...form,
     status: form.status || booking.status || "Inquiry",
@@ -70,6 +74,7 @@ function buildDraftFromBooking(booking) {
     childrenCount: children,
     guestCount: derivedPax,
     roomCount: Number(form.roomCount || booking.roomIds?.length || 1),
+    roomName: roomNameFromAssigned,
     sleepingGuests: Number(form.sleepingGuests || 0),
     checkInDate: form.checkInDate || booking.startDate || "",
     checkOutDate: form.checkOutDate || booking.endDate || "",
@@ -96,6 +101,17 @@ function formatWeekdayLabel(dateValue) {
   const parsed = new Date(`${dateValue}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return "Invalid date";
   return parsed.toLocaleDateString(undefined, { weekday: "long" });
+}
+
+function formatTotalStayDays(checkInDate, checkOutDate) {
+  if (!checkInDate || !checkOutDate) return "Not set";
+  const start = new Date(`${checkInDate}T00:00:00`);
+  const end = new Date(`${checkOutDate}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "Invalid date";
+  const diffDays = Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+  if (diffDays < 0) return "Invalid range";
+  const totalDays = diffDays === 0 ? 1 : diffDays;
+  return `${totalDays} day${totalDays > 1 ? "s" : ""}`;
 }
 
 function toDateTimeMs(dateValue, timeValue, fallbackTime) {
@@ -351,6 +367,7 @@ function BookingModernEditor({
   }, [draft, inlineDraftKey]);
 
   const status = draft.status || "Inquiry";
+  const totalStayDays = formatTotalStayDays(draft.checkInDate, draft.checkOutDate);
   const normalizedStatus = status.toLowerCase();
   const hasProof = !!draft.paymentProofUrl;
   const balance = Math.max(0, Number(draft.totalAmount || 0) - Number(draft.downpayment || 0));
@@ -379,6 +396,7 @@ function BookingModernEditor({
         ...(booking.bookingForm || {}),
         ...nextDraft,
         roomCount: assignedRoomIds.length || nextDraft.roomCount || booking.roomIds?.length || 1,
+        roomName: selectedRoomNames.length > 0 ? selectedRoomNames.join(", ") : nextDraft.roomName || "",
         assignedRoomIds,
         assignedRoomNames: selectedRoomNames,
       },
@@ -631,13 +649,24 @@ function BookingModernEditor({
                   <InfoItem label="Check-Out" value={draft.checkOutDate} editing={isEditing} type="date" onChange={(val) => setField("checkOutDate", val)} />
                   <InfoItem label="Check-In-Day" value={formatWeekdayLabel(draft.checkInDate)} editing={isEditing} type="date" onChange={(val) => setField("checkInDate", val)} />
                   <InfoItem label="Check-Out-Day" value={formatWeekdayLabel(draft.checkOutDate)} editing={isEditing} type="date" onChange={(val) => setField("checkInDate", val)} />
+                  <InfoItem label="Total Days Stay" value={totalStayDays} />
                   <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
                   <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
                   <InfoItem label="Pax" value={draft.guestCount} editing={isEditing} type="number" onChange={(val) => setField("guestCount", Number(val) || 0)} />
                   <InfoItem label="Adults" value={draft.adultCount || 0} editing={isEditing} type="number" onChange={(val) => setField("adultCount", Number(val) || 0)} />
                   <InfoItem label="Children" value={draft.childrenCount || 0} editing={isEditing} type="number" onChange={(val) => setField("childrenCount", Number(val) || 0)} />
                   <InfoItem label="Sleeping" value={draft.sleepingGuests || 0} editing={isEditing} type="number" onChange={(val) => setField("sleepingGuests", Number(val) || 0)} />
-                  <InfoItem label="Rooms" value={draft.roomCount} editing={isEditing} type="number" onChange={(val) => setField("roomCount", Number(val) || 0)} />
+                  <InfoItem
+                    label="Room"
+                    value={
+                      (assignedRoomIds.length > 0
+                        ? (resortRooms || [])
+                            .filter((room) => assignedRoomIds.includes(room.id))
+                            .map((room) => room.name)
+                            .join(", ")
+                        : draft.roomName) || "Not assigned"
+                    }
+                  />
                 </div>
                 <div className={`rounded-xl px-3 py-2 border ${conflicts.length > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`}>
                   <p className="text-[10px] uppercase tracking-wider font-black text-slate-500">Availability Check</p>

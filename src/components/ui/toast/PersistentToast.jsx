@@ -2,15 +2,11 @@
 
 import { X } from "lucide-react";
 import { useToast } from "./ToastProvider";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 function SinglePersistentToast({ data, remove }) {
   const { id, message, color, icon: Icon } = data;
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    setVisible(true);
-  }, [id]);
+  const [visible, setVisible] = useState(true);
 
   const colors = {
     green: "bg-green-500",

@@ -70,6 +70,22 @@ const handleSubmitInquiry = async (submittedData) => {
       const selectedServices = (resort.extraServices || []).filter((service) =>
         submittedData.selectedServices?.includes(service.name)
       );
+      const selectedRoomIds = Array.isArray(submittedData.selectedRoomIds)
+        ? submittedData.selectedRoomIds.map((id) => id?.toString()).filter(Boolean)
+        : [];
+      const selectedRooms = (resort.rooms || []).filter((room) =>
+        selectedRoomIds.includes(room.id?.toString())
+      );
+      const resolvedRooms =
+        selectedRooms.length > 0
+          ? selectedRooms
+          : [
+              (resort.rooms || []).find((room) => room.id?.toString() === submittedData.roomId?.toString()) ||
+                (resort.rooms || []).find((room) => room.name === submittedData.roomName) ||
+                resort.rooms?.[0],
+            ].filter(Boolean);
+      const resolvedRoomIds = resolvedRooms.map((room) => room.id);
+      const resolvedRoomNames = resolvedRooms.map((room) => room.name);
 
       const bookingId = Date.now().toString();
       const adultCount = Number(submittedData.adultCount || 0);
@@ -86,7 +102,11 @@ const handleSubmitInquiry = async (submittedData) => {
         childrenCount,
         pax,
         guestCount: pax,
-        roomCount: Number(submittedData.roomCount || 1),
+        roomCount: resolvedRoomIds.length || Number(submittedData.roomCount || 0),
+        roomName: resolvedRoomNames.length > 0 ? resolvedRoomNames.join(", ") : submittedData.roomName || "",
+        roomId: resolvedRoomIds[0] || submittedData.roomId || "",
+        assignedRoomNames: resolvedRoomNames,
+        assignedRoomIds: resolvedRoomIds,
         sleepingGuests: Number(submittedData.sleepingGuests || 0),
         checkInDate: submittedData.checkInDate || "",
         checkOutDate: submittedData.checkOutDate || "",
@@ -105,7 +125,7 @@ const handleSubmitInquiry = async (submittedData) => {
       const { error } = await supabase.from("bookings").upsert({
         id: bookingId,
         resort_id: Number(resort.id),
-        room_ids: resort.rooms?.[0]?.id ? [resort.rooms[0].id] : [],
+        room_ids: resolvedRoomIds,
         start_date: submittedData.checkInDate || null,
         end_date: submittedData.checkOutDate || null,
         check_in_time: submittedData.checkInTime || "14:00",
@@ -115,7 +135,7 @@ const handleSubmitInquiry = async (submittedData) => {
         children_count: childrenCount,
         pax,
         sleeping_guests: Number(submittedData.sleepingGuests || 0),
-        room_count: Number(submittedData.roomCount || 1),
+        room_count: resolvedRoomIds.length || Number(submittedData.roomCount || 0),
         booking_form: bookingForm,
       });
 

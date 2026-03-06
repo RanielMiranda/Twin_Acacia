@@ -14,6 +14,7 @@ const DEFAULT_FORM = {
   childrenCount: 0,
   guestCount: 0,
   roomCount: 1,
+  roomName: "",
   sleepingGuests: 0,
   baseRate: 0,
   checkInDate: "",
@@ -46,6 +47,7 @@ const STATUS_PHASES = [
 export default function BookingConfirmation({
   data,
   resortName,
+  roomOptions = [],
   readOnly = false,
   title = "Booking Form",
   onSave,
@@ -184,7 +186,21 @@ export default function BookingConfirmation({
               <Field label="Children"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.childrenCount} onChange={(e) => handleNumberChange("childrenCount", e.target.value)} /></Field>
               <Field label="Guests"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.guestCount} onChange={(e) => handleNumberChange("guestCount", e.target.value)} /></Field>
               <Field label="Sleeping Guests"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.sleepingGuests} onChange={(e) => handleNumberChange("sleepingGuests", e.target.value)} /></Field>
-              <Field label="Rooms"><input disabled={readOnly} className={inputClass} type="number" min="1" value={formData.roomCount} onChange={(e) => handleNumberChange("roomCount", e.target.value)} /></Field>
+              <Field label="Room">
+                <select
+                  disabled={readOnly}
+                  className={inputClass}
+                  value={formData.roomName || ""}
+                  onChange={(e) => handleChange("roomName", e.target.value)}
+                >
+                  <option value="">Select room</option>
+                  {roomOptions.map((room) => (
+                    <option key={room.id} value={room.name}>
+                      {room.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
               <Field label="Base Rate"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.baseRate} onChange={(e) => handleNumberChange("baseRate", e.target.value)} /></Field>
               <Field label="Booking Mode">
                 <select disabled={readOnly} className={inputClass} value={formData.bookingMode || "full_day"} onChange={(e) => handleChange("bookingMode", e.target.value)}>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { X, Calendar, User, CheckCircle2, ArrowRight, ArrowLeft, Phone, MapPin, Clock, PlusCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFilters } from "@/components/useclient/ContextFilter";
@@ -34,7 +34,11 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
     pax: Number((guests?.adults || 0) + (guests?.children || 0)),
     guestCount: Number((guests?.adults || 0) + (guests?.children || 0)),
     sleepingGuests: 0,
-    roomCount: 1,
+    roomCount: resort?.rooms?.[0]?.id ? 1 : 0,
+    roomName: resort?.rooms?.[0]?.name || "",
+    roomId: resort?.rooms?.[0]?.id || "",
+    selectedRoomIds: resort?.rooms?.[0]?.id ? [resort.rooms[0].id] : [],
+    selectedRoomNames: resort?.rooms?.[0]?.name ? [resort.rooms[0].name] : [],
     checkInDate: formatDateForInput(startDate),
     checkOutDate: formatDateForInput(endDate),
     checkInTime: checkInTime || "14:00",
@@ -42,26 +46,6 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
     message: "",
     selectedServices: [], // Added to track extra services
   });
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const adults = Number(guests?.adults || 0);
-    const children = Number(guests?.children || 0);
-    const pax = adults + children;
-    setFormData((prev) => ({
-      ...prev,
-      area: destination || prev.area || "",
-      adultCount: adults,
-      childrenCount: children,
-      pax,
-      guestCount: pax,
-      roomCount: Number(guests?.rooms || prev.roomCount || 1),
-      checkInDate: formatDateForInput(startDate) || prev.checkInDate || "",
-      checkOutDate: formatDateForInput(endDate) || prev.checkOutDate || "",
-      checkInTime: checkInTime || prev.checkInTime || "14:00",
-      checkOutTime: checkOutTime || prev.checkOutTime || "12:00",
-    }));
-  }, [checkInTime, checkOutTime, destination, endDate, guests?.adults, guests?.children, guests?.rooms, isOpen, startDate]);
 
   // Steps Configuration (Increased to 4)
   const steps = [
@@ -98,6 +82,27 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
         ? prev.selectedServices.filter(s => s !== serviceName)
         : [...prev.selectedServices, serviceName]
     }));
+  };
+
+  const toggleRoomSelection = (room) => {
+    setFormData((prev) => {
+      const alreadySelected = prev.selectedRoomIds.includes(room.id);
+      const selectedRoomIds = alreadySelected
+        ? prev.selectedRoomIds.filter((id) => id !== room.id)
+        : [...prev.selectedRoomIds, room.id];
+      const selectedRoomNames = (resort?.rooms || [])
+        .filter((item) => selectedRoomIds.includes(item.id))
+        .map((item) => item.name);
+
+      return {
+        ...prev,
+        selectedRoomIds,
+        selectedRoomNames,
+        roomCount: selectedRoomIds.length,
+        roomId: selectedRoomIds[0] || "",
+        roomName: selectedRoomNames.join(", "),
+      };
+    });
   };
 
   const nextStep = () => setStep(s => Math.min(s + 1, 4));
@@ -224,8 +229,32 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
                   <input name="sleepingGuests" value={formData.sleepingGuests ?? 0} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Number of Rooms</label>
-                  <input name="roomCount" value={formData.roomCount ?? 1} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Selected Rooms</label>
+                  <div className="w-full px-4 py-3 rounded-xl bg-slate-100 text-slate-600 text-sm min-h-[48px]">
+                    {formData.selectedRoomNames.length > 0 ? formData.selectedRoomNames.join(", ") : "No rooms selected"}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-slate-400 ml-1">Choose Rooms (Multiple)</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {(resort?.rooms || []).map((room) => {
+                    const isSelected = formData.selectedRoomIds.includes(room.id);
+                    return (
+                      <button
+                        key={room.id}
+                        type="button"
+                        onClick={() => toggleRoomSelection(room)}
+                        className={`text-left px-4 py-3 rounded-xl border-2 transition-all ${
+                          isSelected
+                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                        }`}
+                      >
+                        <p className="font-bold text-sm">{room.name}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -282,6 +311,11 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
                   <SummaryItem icon={MapPin} label="Pax" value={`${formData.pax} People`} />
                   <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
                   <SummaryItem icon={Clock} label="Schedule" value={`${formatTime(formData.checkInTime)} - ${formatTime(formData.checkOutTime)}`} />
+                  <SummaryItem
+                    icon={PlusCircle}
+                    label="Rooms"
+                    value={formData.selectedRoomNames.length > 0 ? formData.selectedRoomNames.join(", ") : "Not set"}
+                  />
                   <SummaryItem icon={Phone} label="Contact" value={formData.contactNumber || "Not set"} />
                   <SummaryItem 
                     icon={PlusCircle} 
