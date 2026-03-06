@@ -103,9 +103,12 @@ export function ResortEditorProvider({ children }) {
 
   useEffect(() => {
     if (!resort || typeof window === "undefined") return;
-    localStorage.setItem(draftStorageKey(draftScope), JSON.stringify(resort));
-    // Keep legacy key for backwards compatibility while migrating old drafts.
-    localStorage.setItem(LEGACY_DRAFT_KEY, JSON.stringify(resort));
+    const timer = setTimeout(() => {
+      localStorage.setItem(draftStorageKey(draftScope), JSON.stringify(resort));
+      // Keep legacy key for backwards compatibility while migrating old drafts.
+      localStorage.setItem(LEGACY_DRAFT_KEY, JSON.stringify(resort));
+    }, 250);
+    return () => clearTimeout(timer);
   }, [draftScope, resort]);
 
   const resetResort = useCallback((initialData = null, scope = "new") => {

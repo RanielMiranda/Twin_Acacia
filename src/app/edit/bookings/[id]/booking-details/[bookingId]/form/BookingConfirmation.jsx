@@ -76,7 +76,16 @@ export default function BookingConfirmation({
 
   const handleNumberChange = (field, value) => {
     const parsed = Number(value);
-    handleChange(field, Number.isNaN(parsed) ? 0 : parsed);
+    const nextValue = Number.isNaN(parsed) ? 0 : parsed;
+    if (field === "adultCount" || field === "childrenCount") {
+      setFormData((prev) => {
+        const next = { ...prev, [field]: nextValue };
+        const pax = Number(next.adultCount || 0) + Number(next.childrenCount || 0);
+        return { ...next, guestCount: pax, pax };
+      });
+      return;
+    }
+    handleChange(field, nextValue);
   };
 
   const handleSubmit = (event) => {
@@ -100,14 +109,11 @@ export default function BookingConfirmation({
 
   useEffect(() => {
     if (!storageKey || typeof window === "undefined") return;
-    localStorage.setItem(storageKey, JSON.stringify(formData));
+    const timer = setTimeout(() => {
+      localStorage.setItem(storageKey, JSON.stringify(formData));
+    }, 200);
+    return () => clearTimeout(timer);
   }, [formData, storageKey]);
-
-  useEffect(() => {
-    const pax = Number(formData.adultCount || 0) + Number(formData.childrenCount || 0);
-    if (Number(formData.guestCount || 0) === pax) return;
-    setFormData((prev) => ({ ...prev, guestCount: pax, pax }));
-  }, [formData.adultCount, formData.childrenCount, formData.guestCount]);
 
   const inputClass =
     "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500";

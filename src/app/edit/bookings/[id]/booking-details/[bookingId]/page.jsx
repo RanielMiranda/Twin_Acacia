@@ -251,6 +251,8 @@ export default function BookingDetailsPage() {
       conflicts={bookingConflicts}
       createSignedProofUrl={createSignedProofUrl}
       createBookingTransaction={createBookingTransaction}
+      resortRooms={currentResort?.rooms || []}
+      allBookings={bookings || []}
     />
   );
 }
@@ -273,12 +275,19 @@ function BookingModernEditor({
   conflicts = [],
   createSignedProofUrl,
   createBookingTransaction,
+  resortRooms = [],
+  allBookings = [],
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [renderedAt] = useState(() => Date.now());
   const inlineDraftKey = `booking_inline_draft:${booking.id}`;
   const [draft, setDraft] = useState(() => buildDraftFromBooking(booking));
   const [proofPreviewUrl, setProofPreviewUrl] = useState(() => buildDraftFromBooking(booking).paymentProofUrl || null);
+  const [assignedRoomIds, setAssignedRoomIds] = useState(() => booking.roomIds || []);
+
+  useEffect(() => {
+    setAssignedRoomIds(booking.roomIds || []);
+  }, [booking.id, booking.roomIds]);
 
   useEffect(() => {
     const adults = Number(draft.adultCount || 0);
@@ -336,7 +345,10 @@ function BookingModernEditor({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    localStorage.setItem(inlineDraftKey, JSON.stringify(draft));
+    const timer = setTimeout(() => {
+      localStorage.setItem(inlineDraftKey, JSON.stringify(draft));
+    }, 200);
+    return () => clearTimeout(timer);
   }, [draft, inlineDraftKey]);
 
   const status = draft.status || "Inquiry";
@@ -351,8 +363,13 @@ function BookingModernEditor({
   const setField = (field, value) => setDraft((prev) => ({ ...prev, [field]: value }));
 
   const persist = (nextDraft) => {
+    const selectedRoomNames = (resortRooms || [])
+      .filter((room) => (assignedRoomIds || []).includes(room.id))
+      .map((room) => room.name)
+      .filter(Boolean);
     const payload = {
       ...booking,
+      roomIds: assignedRoomIds,
       status: nextDraft.status,
       startDate: nextDraft.checkInDate || booking.startDate,
       endDate: nextDraft.checkOutDate || booking.endDate,
@@ -362,10 +379,39 @@ function BookingModernEditor({
       bookingForm: {
         ...(booking.bookingForm || {}),
         ...nextDraft,
+        roomCount: assignedRoomIds.length || nextDraft.roomCount || booking.roomIds?.length || 1,
+        assignedRoomIds,
+        assignedRoomNames: selectedRoomNames,
       },
     };
 
     onSave(payload);
+  };
+
+  const isRoomConflicting = (roomId) => {
+    const probe = {
+      id: booking.id,
+      roomIds: [roomId],
+      startDate: draft.checkInDate || booking.startDate,
+      endDate: draft.checkOutDate || booking.endDate || draft.checkInDate || booking.startDate,
+      checkInTime: draft.checkInTime || booking.checkInTime,
+      checkOutTime: draft.checkOutTime || booking.checkOutTime,
+      bookingForm: {
+        checkInTime: draft.checkInTime || booking.checkInTime,
+        checkOutTime: draft.checkOutTime || booking.checkOutTime,
+      },
+    };
+    return (allBookings || []).some((entry) => {
+      if (entry.id?.toString() === booking.id?.toString()) return false;
+      if (!(entry.roomIds || []).includes(roomId)) return false;
+      return overlapsByDateTime(entry, probe);
+    });
+  };
+
+  const toggleAssignedRoom = (roomId) => {
+    setAssignedRoomIds((prev) =>
+      prev.includes(roomId) ? prev.filter((id) => id !== roomId) : [...prev, roomId]
+    );
   };
 
   const handleSaveInline = () => {
@@ -373,6 +419,17 @@ function BookingModernEditor({
     if (typeof window !== "undefined") localStorage.removeItem(inlineDraftKey);
     setIsEditing(false);
   };
+
+  useEffect(() => {
+    const current = JSON.stringify(booking.roomIds || []);
+    const next = JSON.stringify(assignedRoomIds || []);
+    if (current === next) return;
+    persist({
+      ...draft,
+      roomCount: assignedRoomIds.length || draft.roomCount || 1,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignedRoomIds]);
 
   const handleCancelInline = () => {
     const base = buildDraftFromBooking(booking);
@@ -743,70 +800,124 @@ function BookingModernEditor({
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
-          <SectionLabel icon={<Mail size={14} />} label="Client Messaging" />
-          {draft.notes ? (
-            <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
-              <p className="text-[10px] font-black uppercase text-blue-700">Inquiry</p>
-              <p className="text-xs text-slate-700 mt-1">{draft.notes}</p>
-            </div>
-          ) : null}
-          {issues.length > 0 && (
-            <div className="space-y-2">
-              {issues.map((issue) => {
-                const resolved = String(issue.status || "").toLowerCase() === "resolved";
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+            <SectionLabel icon={<Briefcase size={14} />} label="Assign Rooms" />
+            <p className="text-xs text-slate-500">
+              Select available rooms for this stay. Conflicting rooms are marked.
+            </p>
+            <div className="space-y-2 max-h-64 overflow-auto pr-1">
+              {(resortRooms || []).map((room) => {
+                const roomId = room.id;
+                const selected = assignedRoomIds.includes(roomId);
+                const conflict = isRoomConflicting(roomId);
                 return (
-                  <div
-                    key={issue.id}
-                    className={`p-3 rounded-xl border ${resolved ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-100"}`}
+                  <label
+                    key={roomId}
+                    className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2 cursor-pointer ${
+                      selected ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-slate-50"
+                    }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className={`text-[10px] font-black uppercase ${resolved ? "text-emerald-700" : "text-amber-700"}`}>
-                        {issue.subject || "Concern"} {resolved ? "(Resolved)" : ""}
-                      </p>
-                      {!resolved ? (
-                        <Button
-                          variant="outline"
-                          className="h-7 px-2 text-[10px] font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                          onClick={() => onResolveIssue?.(issue.id)}
-                        >
-                          Resolve
-                        </Button>
-                      ) : null}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => toggleAssignedRoom(roomId)}
+                      />
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{room.name || `Room ${roomId}`}</p>
+                        <p className="text-[11px] text-slate-500">Sleeps {Number(room.guests || 0)} pax</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-700 mt-1">{issue.message}</p>
-                  </div>
+                    <span
+                      className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${
+                        conflict ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"
+                      }`}
+                    >
+                      {conflict ? "Conflict" : "Available"}
+                    </span>
+                  </label>
                 );
               })}
             </div>
-          )}
-          <div className="max-h-52 overflow-auto space-y-2">
-            {messages.length === 0 ? (
-              <p className="text-xs text-slate-400">No messages sent yet.</p>
-            ) : (
-              messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`p-2.5 rounded-xl text-xs ${
-                    msg.sender_role === "owner"
-                      ? "bg-blue-50 text-blue-700 ml-8"
-                      : "bg-slate-50 text-slate-700 mr-8"
-                  }`}
-                >
-                  <p className="font-black uppercase text-[9px] mb-1">{msg.sender_role}</p>
-                  <p>{msg.message}</p>
-                </div>
-              ))
-            )}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-[10px] font-black uppercase text-slate-500">Assigned</p>
+              <p className="text-xs text-slate-700 mt-1">
+                {assignedRoomIds.length > 0
+                  ? (resortRooms || [])
+                      .filter((room) => assignedRoomIds.includes(room.id))
+                      .map((room) => room.name)
+                      .join(", ")
+                  : "No room assigned yet."}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <input
-              className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm"
-              placeholder="Reply to client"
-              value={ownerReply}
-              onChange={(e) => setOwnerReply(e.target.value)}
-            />
-            <Button onClick={onSendReply}>Send</Button>
+
+          <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
+            <SectionLabel icon={<Mail size={14} />} label="Client Messaging" />
+            {draft.notes ? (
+              <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                <p className="text-[10px] font-black uppercase text-blue-700">Inquiry</p>
+                <p className="text-xs text-slate-700 mt-1">{draft.notes}</p>
+              </div>
+            ) : null}
+            {issues.length > 0 && (
+              <div className="space-y-2">
+                {issues.map((issue) => {
+                  const resolved = String(issue.status || "").toLowerCase() === "resolved";
+                  return (
+                    <div
+                      key={issue.id}
+                      className={`p-3 rounded-xl border ${resolved ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-100"}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className={`text-[10px] font-black uppercase ${resolved ? "text-emerald-700" : "text-amber-700"}`}>
+                          {issue.subject || "Concern"} {resolved ? "(Resolved)" : ""}
+                        </p>
+                        {!resolved ? (
+                          <Button
+                            variant="outline"
+                            className="h-7 px-2 text-[10px] font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                            onClick={() => onResolveIssue?.(issue.id)}
+                          >
+                            Resolve
+                          </Button>
+                        ) : null}
+                      </div>
+                      <p className="text-xs text-slate-700 mt-1">{issue.message}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="max-h-52 overflow-auto space-y-2">
+              {messages.length === 0 ? (
+                <p className="text-xs text-slate-400">No messages sent yet.</p>
+              ) : (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`p-2.5 rounded-xl text-xs ${
+                      msg.sender_role === "owner"
+                        ? "bg-blue-50 text-blue-700 ml-8"
+                        : "bg-slate-50 text-slate-700 mr-8"
+                    }`}
+                  >
+                    <p className="font-black uppercase text-[9px] mb-1">{msg.sender_role}</p>
+                    <p>{msg.message}</p>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                placeholder="Reply to client"
+                value={ownerReply}
+                onChange={(e) => setOwnerReply(e.target.value)}
+              />
+              <Button onClick={onSendReply}>Send</Button>
+            </div>
           </div>
         </div>
       </div>

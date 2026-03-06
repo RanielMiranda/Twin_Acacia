@@ -18,6 +18,7 @@ import { isTicketTokenValid } from "@/lib/ticketAccess";
 const BOOKING_TICKET_COLUMNS = [
   "id",
   "resort_id",
+  "room_ids",
   "start_date",
   "end_date",
   "check_in_time",
@@ -124,7 +125,7 @@ export default function ClientTicketPage() {
       if (bookingData?.resort_id) {
         const { data: resortData, error: resortError } = await supabase
           .from("resorts")
-          .select("id, name, location, contactEmail, contactPhone, contactMedia")
+          .select("id, name, location, contactEmail, contactPhone, contactMedia, rooms")
           .eq("id", bookingData.resort_id)
           .single();
         if (resortError) throw resortError;
@@ -285,6 +286,7 @@ export default function ClientTicketPage() {
       ["Children", String(form.childrenCount || 0)],
       ["Sleeping", String(form.sleepingGuests || 0)],
       ["Rooms", String(form.roomCount || 0)],
+      ["Assigned Rooms", assignedRoomNames.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"],
       ["Check-In", `${booking.start_date || form.checkInDate || "-"} ${booking.check_in_time || form.checkInTime || ""}`.trim()],
       ["Check-Out", `${booking.end_date || form.checkOutDate || "-"} ${booking.check_out_time || form.checkOutTime || ""}`.trim()],
       ["Location", resort?.location || "-"],
@@ -398,6 +400,12 @@ export default function ClientTicketPage() {
   const paid = Number(form.downpayment || 0);
   const balance = Math.max(0, totalAmount - paid);
   const entryCode = form.confirmationStub?.code || `TKT-${String(booking.id).slice(-6).toUpperCase()}`;
+  const assignedRoomNames =
+    (form.assignedRoomNames && form.assignedRoomNames.length > 0
+      ? form.assignedRoomNames
+      : (booking.room_ids || [])
+          .map((roomId) => (resort?.rooms || []).find((room) => room.id === roomId)?.name)
+          .filter(Boolean)) || [];
   const status = String(booking.status || "").toLowerCase();
   const isConcernOnlyMode =
     status.includes("confirm") ||
@@ -449,6 +457,7 @@ export default function ClientTicketPage() {
           <TicketRow label="Children" value={form.childrenCount || 0} />
           <TicketRow label="Sleeping" value={form.sleepingGuests || 0} />
           <TicketRow label="Rooms" value={form.roomCount || 0} />
+          <TicketRow label="Assigned Rooms" value={assignedRoomNames.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"} />
           <TicketRow label="Check-In" value={booking.start_date || form.checkInDate} subValue={booking.check_in_time || form.checkInTime} />
           <TicketRow label="Check-Out" value={booking.end_date || form.checkOutDate} subValue={booking.check_out_time || form.checkOutTime} />
           <TicketRow label="Location" value={resort?.location} />

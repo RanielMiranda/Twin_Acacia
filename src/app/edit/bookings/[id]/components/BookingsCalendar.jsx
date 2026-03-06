@@ -296,6 +296,11 @@ return (
               .map((booking) => {
                 const checkIn = booking?.checkInTime || booking?.bookingForm?.checkInTime || "--:--";
                 const checkOut = booking?.checkOutTime || booking?.bookingForm?.checkOutTime || "--:--";
+                const guestName = booking?.bookingForm?.guestName || "Guest";
+                const roomNames = (booking.roomIds || [])
+                  .map((rid) => rooms.find((room) => room.id === rid)?.name)
+                  .filter(Boolean);
+                const roomLabel = roomNames.length > 0 ? roomNames.join(", ") : `${booking.roomIds?.length || 0} Rooms`;
 
                 return (
                   <div
@@ -308,7 +313,8 @@ return (
                   >
                     <div className={`w-3 h-3 rounded-full ${getBookingColor(booking)}`} />
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-400 uppercase">{booking.roomIds?.length || 0} Rooms</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase">{roomLabel}</span>
+                      <span className="text-xs font-black text-slate-800">{guestName}</span>
                       <span className="text-xs font-bold text-slate-700">{booking.startDate || "..."} - {booking.endDate || "..."}</span>
                       <span className="text-[10px] text-slate-500 flex items-center gap-1"><Clock3 size={10} /> {checkIn} to {checkOut}</span>
                     </div>

@@ -1,5 +1,6 @@
 export const BUCKET_NAME = "resort-images";
 const DEFAULT_SUPABASE_IMAGE_WIDTHS = [480, 768, 1024, 1440];
+const SUPABASE_TRANSFORMS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_SUPABASE_TRANSFORMS === "true";
 
 export function getStoragePathFromPublicUrl(url, bucketName = BUCKET_NAME) {
   if (!url || typeof url !== "string") return null;
@@ -59,6 +60,7 @@ export function isSupabasePublicStorageUrl(url) {
 }
 
 export function getTransformedSupabaseImageUrl(url, { width, quality = 80, format = "webp" } = {}) {
+  if (!SUPABASE_TRANSFORMS_ENABLED) return url || "";
   if (!url || !isSupabasePublicStorageUrl(url)) return url || "";
   try {
     const parsed = new URL(url);
@@ -72,6 +74,7 @@ export function getTransformedSupabaseImageUrl(url, { width, quality = 80, forma
 }
 
 export function getSupabaseSrcSet(url, widths = DEFAULT_SUPABASE_IMAGE_WIDTHS, quality = 80) {
+  if (!SUPABASE_TRANSFORMS_ENABLED) return undefined;
   if (!isSupabasePublicStorageUrl(url)) return undefined;
   return widths
     .map((width) => `${getTransformedSupabaseImageUrl(url, { width, quality, format: "webp" })} ${width}w`)
