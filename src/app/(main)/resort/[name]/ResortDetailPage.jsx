@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast"
 import PersistentToast from "@/components/ui/toast/PersistentToast";
 import { supabase } from "@/lib/supabase";
+import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 
 export default function ResortDetailPage({ name }) {
   const { resort, setResort, loadResort, loading } = useResort();
@@ -80,6 +81,8 @@ const handleSubmitInquiry = async (submittedData) => {
       const adultCount = Number(submittedData.adultCount || 0);
       const childrenCount = Number(submittedData.childrenCount || 0);
       const pax = Number(submittedData.guestCount || submittedData.pax || adultCount + childrenCount || 0);
+      const ticketAccessToken = generateTicketAccessToken();
+      const ticketAccessExpiresAt = getTicketAccessExpiry(30);
       const bookingForm = {
         guestName: submittedData.guestName || "",
         email: submittedData.email || "",
@@ -101,6 +104,8 @@ const handleSubmitInquiry = async (submittedData) => {
         totalAmount: Number(resort.price || 0),
         resortServices: selectedServices,
         notes: submittedData.message || "",
+        ticketAccessToken,
+        ticketAccessExpiresAt,
       };
 
       const { error } = await supabase.from("bookings").upsert({
@@ -112,6 +117,11 @@ const handleSubmitInquiry = async (submittedData) => {
         check_in_time: submittedData.checkInTime || "14:00",
         check_out_time: submittedData.checkOutTime || "11:00",
         status: "Inquiry",
+        adult_count: adultCount,
+        children_count: childrenCount,
+        pax,
+        sleeping_guests: Number(submittedData.sleepingGuests || 0),
+        room_count: Number(submittedData.roomCount || 1),
         booking_form: bookingForm,
       });
 

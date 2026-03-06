@@ -14,6 +14,11 @@ const BOOKING_COLUMNS = [
   "check_in_time",
   "check_out_time",
   "status",
+  "adult_count",
+  "children_count",
+  "pax",
+  "sleeping_guests",
+  "room_count",
   "payment_deadline",
   "booking_form",
   "created_at",
@@ -31,12 +36,21 @@ function toModel(row) {
     checkOutTime: row.check_out_time || "11:00",
     bookingForm: row.booking_form || {},
     status: row.status || row.booking_form?.status || "Inquiry",
+    adultCount: Number(row.adult_count ?? row.booking_form?.adultCount ?? 0),
+    childrenCount: Number(row.children_count ?? row.booking_form?.childrenCount ?? 0),
+    pax: Number(row.pax ?? row.booking_form?.guestCount ?? row.booking_form?.pax ?? 0),
+    sleepingGuests: Number(row.sleeping_guests ?? row.booking_form?.sleepingGuests ?? 0),
+    roomCount: Number(row.room_count ?? row.booking_form?.roomCount ?? row.room_ids?.length ?? 0),
     paymentDeadline: row.payment_deadline || row.booking_form?.paymentDeadline || null,
     updatedAt: row.updated_at || null,
   };
 }
 
 function toRow(booking, resortId) {
+  const form = booking.bookingForm || {};
+  const adults = Number(form.adultCount ?? booking.adultCount ?? 0);
+  const children = Number(form.childrenCount ?? booking.childrenCount ?? 0);
+  const pax = Number(form.guestCount ?? form.pax ?? booking.pax ?? adults + children);
   return {
     id: booking.id?.toString(),
     resort_id: Number(resortId),
@@ -46,8 +60,19 @@ function toRow(booking, resortId) {
     check_in_time: booking.checkInTime || null,
     check_out_time: booking.checkOutTime || null,
     status: booking.status || booking.bookingForm?.status || "Inquiry",
+    adult_count: adults,
+    children_count: children,
+    pax,
+    sleeping_guests: Number(form.sleepingGuests ?? booking.sleepingGuests ?? 0),
+    room_count: Number(form.roomCount ?? booking.roomCount ?? booking.roomIds?.length ?? 1),
     payment_deadline: booking.paymentDeadline || booking.bookingForm?.paymentDeadline || null,
-    booking_form: booking.bookingForm || {},
+    booking_form: {
+      ...form,
+      adultCount: adults,
+      childrenCount: children,
+      guestCount: pax,
+      pax,
+    },
   };
 }
 

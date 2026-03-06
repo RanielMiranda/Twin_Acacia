@@ -30,6 +30,8 @@ import { BUCKET_NAME } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
 import { generateConfirmationStub } from "@/lib/bookingFlow";
+import { notifyCaretakerOnPaymentApproval } from "@/lib/caretakerNotifications";
+import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 const STATUS_PHASES = [
   "Inquiry",
   "Approved Inquiry",
@@ -56,6 +58,10 @@ function buildDraftFromBooking(booking) {
   const adults = Number(form.adultCount || 0);
   const children = Number(form.childrenCount || 0);
   const derivedPax = Number(form.guestCount || form.pax || adults + children || 0);
+  const paymentVerified = !!form.paymentVerified;
+  const paymentPendingApproval = !!form.paymentPendingApproval && !paymentVerified;
+  const pendingDownpayment = paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
+  const pendingPaymentMethod = paymentPendingApproval ? form.pendingPaymentMethod || null : null;
   return {
     ...form,
     status: form.status || booking.status || "Inquiry",
@@ -73,14 +79,14 @@ function buildDraftFromBooking(booking) {
     checkOutTime: form.checkOutTime || booking.checkOutTime || "11:00",
     paymentMethod: form.paymentMethod || "Pending",
     downpayment: Number(form.downpayment || 0),
-    pendingDownpayment: Number(form.pendingDownpayment || 0),
-    pendingPaymentMethod: form.pendingPaymentMethod || null,
-    paymentPendingApproval: !!form.paymentPendingApproval,
+    pendingDownpayment,
+    pendingPaymentMethod,
+    paymentPendingApproval,
     totalAmount: Number(form.totalAmount || 0),
     paymentDeadline: form.paymentDeadline || booking.paymentDeadline || null,
     paymentProofUrl: form.paymentProofUrl || null,
     paymentSubmittedAt: form.paymentSubmittedAt || null,
-    paymentVerified: !!form.paymentVerified,
+    paymentVerified,
     paymentVerifiedAt: form.paymentVerifiedAt || null,
     confirmationStub: form.confirmationStub || null,
     resortServices: form.resortServices || [],
@@ -125,7 +131,7 @@ export default function BookingDetailsPage() {
   const { toast } = useToast();
   const { resort, loadResort, setResort, loading } = useResort();
   const { bookings, updateBookingById, deleteBookingById, loadingBookings } = useBookings();
-  const { loadBookingSupport, sendTicketMessage, isMissingSupportTableError } = useSupport();
+  const { loadBookingSupport, updateConcernStatus, sendTicketMessage, isMissingSupportTableError } = useSupport();
   const [messages, setMessages] = useState([]);
   const [issues, setIssues] = useState([]);
   const [ownerReply, setOwnerReply] = useState("");
@@ -221,6 +227,16 @@ export default function BookingDetailsPage() {
     }
   };
 
+  const handleResolveIssue = async (issueId) => {
+    try {
+      await updateConcernStatus(issueId, "resolved");
+      await loadSupportData(booking.id);
+      toast({ message: "Issue marked as resolved.", color: "green" });
+    } catch (err) {
+      toast({ message: `Resolve failed: ${err.message}`, color: "red" });
+    }
+  };
+
   return (
     <BookingModernEditor
       key={booking.id}
@@ -240,6 +256,7 @@ export default function BookingDetailsPage() {
       ownerReply={ownerReply}
       setOwnerReply={setOwnerReply}
       onSendReply={handleSendReply}
+      onResolveIssue={handleResolveIssue}
       conflicts={bookingConflicts}
     />
   );
@@ -259,6 +276,7 @@ function BookingModernEditor({
   ownerReply,
   setOwnerReply,
   onSendReply,
+  onResolveIssue,
   conflicts = [],
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -372,6 +390,11 @@ function BookingModernEditor({
     const next = { ...draft, status: nextStatus };
     if (nextStatus === "Confirmed" && !next.confirmationStub?.code) {
       next.confirmationStub = generateConfirmationStub(booking.id, resortName, draft.guestName);
+      if (next.paymentVerified) {
+        next.paymentPendingApproval = false;
+        next.pendingDownpayment = 0;
+        next.pendingPaymentMethod = null;
+      }
     }
     setDraft(next);
     persist(next);
@@ -389,7 +412,12 @@ function BookingModernEditor({
   };
 
   const handleApproveInquiry = () => {
-    const next = { ...draft, status: "Approved Inquiry" };
+    const next = {
+      ...draft,
+      status: "Approved Inquiry",
+      ticketAccessToken: draft.ticketAccessToken || generateTicketAccessToken(),
+      ticketAccessExpiresAt: draft.ticketAccessExpiresAt || getTicketAccessExpiry(30),
+    };
     setDraft(next);
     persist(next);
   };
@@ -405,28 +433,25 @@ function BookingModernEditor({
   };
 
   const handleVerifyProof = async () => {
-    const approving = !draft.paymentVerified;
-    const pendingAmount = Number(draft.pendingDownpayment || 0);
-    const approvedAmount = approving ? pendingAmount : 0;
-    const nextDownpayment = approving
-      ? Number(draft.downpayment || 0) + approvedAmount
-      : Number(draft.downpayment || 0);
-    const nextMethod = approving ? draft.pendingPaymentMethod || draft.paymentMethod : draft.paymentMethod;
+    if (draft.paymentVerified) return;
+    const approvedAmount = Number(draft.pendingDownpayment || 0);
+    const nextDownpayment = Number(draft.downpayment || 0) + approvedAmount;
+    const nextMethod = draft.pendingPaymentMethod || draft.paymentMethod;
 
     const next = {
       ...draft,
-      paymentVerified: approving,
-      paymentVerifiedAt: approving ? new Date().toISOString() : null,
+      paymentVerified: true,
+      paymentVerifiedAt: new Date().toISOString(),
       downpayment: nextDownpayment,
       paymentMethod: nextMethod,
-      pendingDownpayment: approving ? 0 : draft.pendingDownpayment,
-      pendingPaymentMethod: approving ? null : draft.pendingPaymentMethod,
-      paymentPendingApproval: approving ? false : draft.paymentPendingApproval,
+      pendingDownpayment: 0,
+      pendingPaymentMethod: null,
+      paymentPendingApproval: false,
     };
     setDraft(next);
     persist(next);
 
-    if (approving && approvedAmount > 0) {
+    if (approvedAmount > 0) {
       const balanceAfter = Math.max(0, Number(next.totalAmount || 0) - Number(next.downpayment || 0));
       const { error } = await supabase.from("booking_transactions").insert({
         booking_id: booking.id,
@@ -438,6 +463,13 @@ function BookingModernEditor({
       if (error) {
         console.error("Failed to log booking transaction:", error.message);
       }
+      await notifyCaretakerOnPaymentApproval({
+        bookingId: booking.id,
+        resortId: booking.resortId || booking.resort_id || null,
+        guestName: next.guestName,
+        amount: approvedAmount,
+        method: nextMethod,
+      });
     }
   };
 
@@ -612,7 +644,7 @@ function BookingModernEditor({
                   </div>
                   <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
                     <p className="text-[10px] text-emerald-700 font-bold mb-1">Owner Verification</p>
-                    {Number(draft.pendingDownpayment || 0) > 0 ? (
+                    {draft.paymentPendingApproval && Number(draft.pendingDownpayment || 0) > 0 ? (
                       <p className="text-[10px] text-emerald-700/80 mb-2">
                         Pending approval: PHP {Number(draft.pendingDownpayment || 0).toLocaleString()} ({draft.pendingPaymentMethod || "Pending"})
                       </p>
@@ -650,7 +682,7 @@ function BookingModernEditor({
                     <span className="font-bold">PHP {Number(draft.downpayment || 0).toLocaleString()}</span>
                   )}
                 </div>
-                {Number(draft.pendingDownpayment || 0) > 0 ? (
+                {draft.paymentPendingApproval && Number(draft.pendingDownpayment || 0) > 0 ? (
                   <div className="flex justify-between items-center gap-2">
                     <span className="text-slate-400">Pending Approval</span>
                     <span className="font-bold text-amber-300">
@@ -707,12 +739,31 @@ function BookingModernEditor({
           ) : null}
           {issues.length > 0 && (
             <div className="space-y-2">
-              {issues.map((issue) => (
-                <div key={issue.id} className="p-3 rounded-xl bg-amber-50 border border-amber-100">
-                  <p className="text-[10px] font-black uppercase text-amber-700">{issue.subject || "Concern"}</p>
-                  <p className="text-xs text-slate-700 mt-1">{issue.message}</p>
-                </div>
-              ))}
+              {issues.map((issue) => {
+                const resolved = String(issue.status || "").toLowerCase() === "resolved";
+                return (
+                  <div
+                    key={issue.id}
+                    className={`p-3 rounded-xl border ${resolved ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-100"}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className={`text-[10px] font-black uppercase ${resolved ? "text-emerald-700" : "text-amber-700"}`}>
+                        {issue.subject || "Concern"} {resolved ? "(Resolved)" : ""}
+                      </p>
+                      {!resolved ? (
+                        <Button
+                          variant="outline"
+                          className="h-7 px-2 text-[10px] font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                          onClick={() => onResolveIssue?.(issue.id)}
+                        >
+                          Resolve
+                        </Button>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-slate-700 mt-1">{issue.message}</p>
+                  </div>
+                );
+              })}
             </div>
           )}
           <div className="max-h-52 overflow-auto space-y-2">

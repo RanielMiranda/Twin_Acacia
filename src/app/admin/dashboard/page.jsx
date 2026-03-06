@@ -131,21 +131,6 @@ export default function Page() {
         return;
       }
 
-      // Send simple admin acknowledgement so owner sees a response in inbox.
-      const { error: ackError } = await supabase.from("owner_admin_messages").insert({
-        resort_id: resolvedMsg.resort_id || null,
-        sender_role: "admin",
-        sender_name: "Admin",
-        subject: resolvedMsg.title || "Support Request",
-        message: `Resolved: ${resolvedMsg.content || "Request acknowledged by admin."}`,
-        status: "resolved",
-      });
-      if (ackError && !isMissingOwnerAdminTableError(ackError)) {
-        toast({
-          message: `Resolved, but failed to send owner acknowledgement: ${ackError.message}`,
-          color: "amber",
-        });
-      }
     }
 
     // Move message to archives

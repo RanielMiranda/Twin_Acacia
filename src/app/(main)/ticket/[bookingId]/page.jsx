@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { 
   Printer, Mail, Phone, MessageSquare, 
   CreditCard, Upload, Ticket, ShieldCheck, 
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
+import { isTicketTokenValid } from "@/lib/ticketAccess";
 
 const BOOKING_TICKET_COLUMNS = [
   "id",
@@ -40,8 +41,10 @@ const toSafeSegment = (value) =>
 
 export default function ClientTicketPage() {
   const { bookingId } = useParams();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const normalizedBookingId = Array.isArray(bookingId) ? bookingId[0] : bookingId;
+  const accessToken = searchParams.get("token") || "";
 
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,6 +110,14 @@ export default function ClientTicketPage() {
         });
       }
       const bookingData = bookingRows[0];
+      const cookieRoleMatch = typeof document !== "undefined"
+        ? document.cookie.match(/(?:^|;\s*)app_role=([^;]+)/)
+        : null;
+      const role = cookieRoleMatch ? decodeURIComponent(cookieRoleMatch[1] || "").toLowerCase() : "";
+      const isStaff = role === "admin" || role === "owner";
+      if (!isStaff && !isTicketTokenValid(bookingData?.booking_form || {}, accessToken)) {
+        throw new Error("Ticket access token is missing, invalid, or expired.");
+      }
 
       setBooking(bookingData);
 
@@ -126,7 +137,7 @@ export default function ClientTicketPage() {
     } finally {
       setLoading(false);
     }
-  }, [fetchMessages, normalizedBookingId, toast]);
+  }, [accessToken, fetchMessages, normalizedBookingId, toast]);
 
   useEffect(() => {
     if (!normalizedBookingId) return;
@@ -250,6 +261,83 @@ export default function ClientTicketPage() {
     }
   };
 
+  const openPrintableEntryPass = () => {
+    if (!booking) return;
+    const doc = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+    if (!doc) return;
+    const rows = [
+      ["Resort", resort?.name || "-"],
+      ["Guest Name", form.guestName || "-"],
+      ["Status", booking.status || "Inquiry"],
+      ["Pax", String(form.guestCount || 0)],
+      ["Adults", String(form.adultCount || 0)],
+      ["Children", String(form.childrenCount || 0)],
+      ["Sleeping", String(form.sleepingGuests || 0)],
+      ["Rooms", String(form.roomCount || 0)],
+      ["Check-In", `${booking.start_date || form.checkInDate || "-"} ${booking.check_in_time || form.checkInTime || ""}`.trim()],
+      ["Check-Out", `${booking.end_date || form.checkOutDate || "-"} ${booking.check_out_time || form.checkOutTime || ""}`.trim()],
+      ["Location", resort?.location || "-"],
+      ["Entry Code", form.confirmationStub?.code || `TKT-${String(booking.id).slice(-6).toUpperCase()}`],
+    ];
+    const rowsHtml = rows
+      .map(([label, value]) => `<div class="row"><span class="label">${label}</span><span class="value">${value}</span></div>`)
+      .join("");
+
+    doc.document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Entry Pass ${booking.id}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; color: #0f172a; }
+      .card { border: 1px solid #e2e8f0; border-radius: 24px; padding: 24px; max-width: 840px; margin: 0 auto; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; }
+      .label { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #64748b; font-weight: 700; }
+      .value { margin-top: 4px; font-size: 14px; font-weight: 700; color: #0f172a; }
+      @media print { body { margin: 0; } .card { border: none; } }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="grid">${rowsHtml}</div>
+    </div>
+    <script>window.onload = () => window.print();</script>
+  </body>
+</html>`);
+    doc.document.close();
+  };
+
+  const downloadTicketImage = async () => {
+    const card = document.getElementById("ticket-stay-card");
+    if (!card) return;
+    const width = Math.max(card.offsetWidth, 900);
+    const height = card.offsetHeight;
+    const data = card.outerHTML;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <foreignObject width="100%" height="100%">${data.replace(/#/g, "%23").replace(/\n/g, " ")}</foreignObject>
+    </svg>`;
+    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = `ticket-${booking?.id || "entry"}.png`;
+      link.click();
+    };
+    img.src = url;
+  };
+
   if (loading && !booking) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-8 mt-16 pb-20 animate-pulse">
@@ -325,14 +413,21 @@ export default function ClientTicketPage() {
         <Button 
           variant="outline"
           className="rounded-full px-6 flex items-center justify-center border-slate-200 font-bold text-xs uppercase tracking-wider h-12 bg-white shadow-sm"
-          onClick={() => window.print()}
+          onClick={openPrintableEntryPass}
         >
           <Printer size={16} className="mr-2" /> Print Entry Pass
+        </Button>
+        <Button
+          variant="outline"
+          className="rounded-full px-6 flex items-center justify-center border-slate-200 font-bold text-xs uppercase tracking-wider h-12 bg-white shadow-sm"
+          onClick={downloadTicketImage}
+        >
+          Download Ticket
         </Button>
       </div>
 
       {/* Main Ticket Card */}
-      <Card className="p-8 md:p-10 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] relative overflow-hidden">
+      <Card id="ticket-stay-card" className="p-8 md:p-10 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] relative overflow-hidden">
         <h2 className="text-sm font-black text-blue-600 uppercase tracking-[0.2em] mb-6 border-b border-slate-50 pb-4">Stay Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <TicketRow label="Resort" value={resort?.name} />
@@ -437,7 +532,7 @@ export default function ClientTicketPage() {
       </Card>
       ) : null}
 
-      {/* Messaging Section */}
+      {/* Messaging + Issues Section */}
       <Card className="p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-6">
         <div className="flex justify-between items-start">
           <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
@@ -487,35 +582,30 @@ export default function ClientTicketPage() {
               </Button>
             </div>
           ) : (
-            <p className="text-xs text-slate-500">
-              Stay confirmed. Use the concern form below for operational issues.
-            </p>
+            <div className="space-y-3 border-t border-slate-100 pt-4">
+              <p className="text-xs font-black uppercase tracking-widest text-rose-600">Issue Report</p>
+              <input
+                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
+                placeholder="Subject of concern"
+                value={issueSubject}
+                onChange={(e) => setIssueSubject(e.target.value)}
+              />
+              <textarea
+                className="w-full min-h-28 rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
+                placeholder="Please describe your concern or issues with your stay..."
+                value={issueMessage}
+                onChange={(e) => setIssueMessage(e.target.value)}
+              />
+              <Button
+                className="rounded-full px-8 h-11 bg-slate-900 font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all"
+                onClick={handleSendIssue}
+              >
+                Send Issue Report
+              </Button>
+            </div>
           )}
 
         </div>
-      </Card>
-
-      {/* Issue Report Section */}
-      <Card className="p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-4">
-        <h3 className="text-sm font-black text-rose-600 uppercase tracking-[0.2em]">Issue Report</h3>
-        <input
-          className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
-          placeholder="Subject of concern"
-          value={issueSubject}
-          onChange={(e) => setIssueSubject(e.target.value)}
-        />
-        <textarea
-          className="w-full min-h-32 rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
-          placeholder="Please describe your concern or any issues with your stay..."
-          value={issueMessage}
-          onChange={(e) => setIssueMessage(e.target.value)}
-        />
-        <Button
-          className="rounded-full px-10 h-12 bg-slate-900 font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all"
-          onClick={handleSendIssue}
-        >
-          Send Issue Report
-        </Button>
       </Card>
 
       <Toast />
