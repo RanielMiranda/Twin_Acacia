@@ -28,7 +28,6 @@ export default function ResortResults({ resorts }) {
             <ResortContent resort={resort} />
           </div>
 
-          {/* RIGHT INFO PANEL */}
           <div className="w-full sm:w-72 flex flex-col">
             <div className="flex-1 p-4 sm:p-6">
               <p className="font-semibold mb-2">Available Rooms</p>
@@ -39,8 +38,8 @@ export default function ResortResults({ resorts }) {
                       {room.name}
                     </div>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-700 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition whitespace-nowrap z-50">
-                      {room.guests} Guests • {room.beds} Beds
-                      <br />₱ {room.price}
+                      {room.guests} Guests - {room.beds} Beds
+                      <br />PHP {room.price}
                     </div>
                   </div>
                 ))}
@@ -51,7 +50,7 @@ export default function ResortResults({ resorts }) {
                   Tags
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {resort.tags?.map((tag, index) => (
+                  {(resort.tags || []).slice(0, 2).map((tag, index) => (
                     <span
                       key={index}
                       className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md"
@@ -64,12 +63,21 @@ export default function ResortResults({ resorts }) {
             </div>
 
             <div className="p-4 sm:p-6 bg-white">
-              <p className="text-sm font-medium text-gray-600 mb-1">
-                Average pricing
-              </p>
-              <p className="text-2xl font-bold text-blue-600 mb-4">
-                ₱{resort.price.toLocaleString()}
-              </p>
+              <p className="text-sm font-medium text-gray-600 mb-1">Average pricing</p>
+              <p className="text-2xl font-bold text-blue-600 mb-3">PHP {Number(resort.price || 0).toLocaleString()}</p>
+              {Number(resort.description?.meta?.pricing?.forAsLowAs || 0) > 0 && (
+                <p className="text-xs font-semibold text-emerald-600 mb-1">
+                  For as low as PHP {Number(resort.description?.meta?.pricing?.forAsLowAs || 0).toLocaleString()}
+                </p>
+              )}
+              {resort.description?.meta?.pricing?.customOfferLabel && (
+                <p className="text-xs text-slate-500 mb-4">
+                  {resort.description?.meta?.pricing?.customOfferLabel}
+                  {Number(resort.description?.meta?.pricing?.customOfferPrice || 0) > 0
+                    ? `: PHP ${Number(resort.description?.meta?.pricing?.customOfferPrice || 0).toLocaleString()}`
+                    : ""}
+                </p>
+              )}
               <Button
                 className="w-full rounded-xl text-lg hover:scale-105 transition"
                 onClick={() => {

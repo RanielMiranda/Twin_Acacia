@@ -8,7 +8,15 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { arrayMove, SortableContext, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-function SortableAmenity({ id, facility, idx, onRemove, onReplace, onNameChange, safeSrc }) {
+function SortableAmenity({
+  id,
+  facility,
+  onRemove,
+  onReplace,
+  onNameChange,
+  onDescriptionChange,
+  safeSrc,
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id });
 
@@ -19,11 +27,7 @@ function SortableAmenity({ id, facility, idx, onRemove, onReplace, onNameChange,
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex-shrink-0 w-28 snap-start group relative ${isDragging ? "opacity-50" : ""}`}
-    >
+    <div ref={setNodeRef} style={style} className={`flex-shrink-0 w-48 snap-start group relative ${isDragging ? "opacity-50" : ""}`}>
       {/* Drag Handle */}
       <div
         {...attributes}
@@ -33,7 +37,7 @@ function SortableAmenity({ id, facility, idx, onRemove, onReplace, onNameChange,
         <GripVertical size={12} />
       </div>
 
-      <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 relative shadow-sm border border-slate-200">
+      <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 relative shadow-sm border border-slate-200">
         {facility.image ? (
           <img src={safeSrc(facility.image)} className="w-full h-full object-cover" alt="" />
         ) : (
@@ -53,9 +57,16 @@ function SortableAmenity({ id, facility, idx, onRemove, onReplace, onNameChange,
       </div>
 
       <input
-        className="mt-2 text-sm font-medium text-center w-full bg-transparent border-none p-0 focus:ring-2 focus:ring-blue-500 rounded"
+        className="mt-3 text-sm font-semibold w-full bg-white border border-slate-200 px-3 py-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
         value={facility.name}
         onChange={(e) => onNameChange(e.target.value)}
+        placeholder="Facility name"
+      />
+      <textarea
+        className="mt-2 text-xs w-full bg-white border border-slate-200 px-3 py-2 rounded-xl min-h-20 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+        value={facility.description || ""}
+        onChange={(e) => onDescriptionChange(e.target.value)}
+        placeholder="Facility details shown in the right panel."
       />
     </div>
   );
@@ -104,7 +115,8 @@ export default function AmenitiesEditor() {
     if (!files.length) return;
 
     const newAmenities = files.map((file) => ({
-      name: "New Amenity",
+      name: "New Facility",
+      description: "",
       image: file,
     }));
 
@@ -113,18 +125,18 @@ export default function AmenitiesEditor() {
   };
 
   return (
-    <div id="amenities" className="max-w-6xl mx-auto px-4 mt-8">
+    <div id="facilities" className="max-w-6xl mx-auto px-4 mt-8">
 
       {/* Header with Add Button */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold">Amenities</h2>
+        <h2 className="text-2xl font-semibold">Facilities</h2>
 
         <button
           onClick={() => bulkInputRef.current?.click()}
           className="flex items-center hover:scale-105 gap-2 px-4 py-3 rounded-lg bg-blue-600 text-white text-md font-medium hover:bg-blue-700 transition"
         >
           <Plus size={16} />
-          Add Amenities
+          Add Facilities
         </button>
       </div>
 
@@ -151,11 +163,11 @@ export default function AmenitiesEditor() {
                   key={`amenity-${idx}`}
                   id={`amenity-${idx}`}
                   facility={facility}
-                  idx={idx}
                   safeSrc={safeSrc}
                   onRemove={() => removeAmenity(idx)}
                   onReplace={() => fileInputRefs.current[idx]?.click()}
                   onNameChange={(val) => updateAmenity(idx, "name", val)}
+                  onDescriptionChange={(val) => updateAmenity(idx, "description", val)}
                 />
               ))}
             </SortableContext>
@@ -172,10 +184,7 @@ export default function AmenitiesEditor() {
               accept="image/*"
             />
           ))}
-        <button
-          onClick={() => bulkInputRef.current?.click()}
-          className="flex w-28 max-h-36 aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 transition hover:bg-blue-50"
-        >
+        <button onClick={() => bulkInputRef.current?.click()} className="flex-shrink-0 w-48 aspect-square rounded-2xl border-2 border-dashed border-slate-300 flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:text-blue-500 transition hover:bg-blue-50">
           <Plus size={24} />
           <span className="text-xs font-bold mt-1">Add</span>
         </button>          

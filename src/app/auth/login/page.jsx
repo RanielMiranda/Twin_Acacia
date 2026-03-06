@@ -1,13 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAccounts } from "@/components/useclient/AccountsClient";
+import { useToast } from "@/components/ui/toast/ToastProvider";
+import Toast from "@/components/ui/toast/Toast";
 
-export default function Page() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { signIn } = useAccounts();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -22,12 +28,30 @@ export default function Page() {
     message: "",
   });
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      router.push("/admin/dashboard");
-    }, 800);
+    try {
+      const account = await signIn(formData.email, formData.password);
+      if (!account.setup_complete && account.setup_token) {
+        router.push(`/auth/setup-resort?token=${encodeURIComponent(account.setup_token)}`);
+        return;
+      }
+      const nextPath = searchParams.get("next");
+      if (nextPath) {
+        router.push(nextPath);
+        return;
+      }
+      if ((account.role || "").toLowerCase() === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/owner/dashboard");
+      }
+    } catch (error) {
+      toast({ message: error.message || "Login failed.", color: "red" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotSubmit = (e) => {
@@ -163,6 +187,15 @@ export default function Page() {
           </div>
         )}
       </div>
+      <Toast />
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,5 @@
 import { MessageSquare, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 export default function InboxCard({ messages = [] }) {
   return (
@@ -23,23 +22,31 @@ export default function InboxCard({ messages = [] }) {
             <div 
               key={msg.id} 
               className={`p-4 rounded-xl border transition-colors ${
-                msg.unread ? "bg-blue-50/30 border-blue-100" : "bg-white border-slate-100"
+                msg.type === "admin_notice"
+                  ? "bg-blue-50/60 border-blue-200"
+                  : msg.status === "resolved"
+                    ? "bg-emerald-50/40 border-emerald-200"
+                    : "bg-white border-slate-100"
               }`}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className={`text-[10px] uppercase font-bold tracking-wider ${
-                  msg.type === 'action_required' ? "text-amber-600" : "text-blue-600"
+                <span className={`text-[10px] uppercase font-bold tracking-wider flex items-center gap-2 ${
+                  msg.type === "admin_notice" ? "text-blue-700" : "text-slate-600"
                 }`}>
-                  {msg.type.replace('_', ' ')}
+                  {msg.type.replace("_", " ")}
+                  {msg.status === "resolved" ? (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      Resolved
+                    </span>
+                  ) : null}
                 </span>
                 <div className="flex items-center text-slate-400 text-[10px]">
                   <Clock size={12} className="mr-1" />
                   {msg.date}
                 </div>
               </div>
-              <p className="text-sm text-slate-700 leading-snug">
-                {msg.text}
-              </p>
+              <p className="text-sm font-black text-slate-800 leading-snug">{msg.subject || "Subject"}</p>
+              <p className="text-sm text-slate-700 leading-snug mt-1">{msg.message || "-"}</p>
             </div>
           ))
         ) : (

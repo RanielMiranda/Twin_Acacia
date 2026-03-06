@@ -10,7 +10,18 @@ const resortInitialData = {
 
   description: {
     summary:
-      "description."
+      "description.",
+    meta: {
+      pricing: {
+        forAsLowAs: 0,
+        customOfferLabel: "",
+        customOfferPrice: 0,
+      },
+    },
+    theme: {
+      name: "Default",
+      primaryColor: "#2563eb",
+    },
   },
 
   extraServices: [

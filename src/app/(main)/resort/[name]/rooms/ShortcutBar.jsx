@@ -20,10 +20,10 @@ export default function ShortcutBar() {
         </button>
 
         <button
-          onClick={() => scrollTo("amenities")}
+          onClick={() => scrollTo("facilities")}
           className="hover:text-blue-600 flex items-center"
         >
-          Amenities
+          Facilities
         </button>
 
         <button

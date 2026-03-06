@@ -1,178 +1,117 @@
-"use client";
-import React, { useState } from "react";
-import { 
-  Inbox, CheckCircle2, AlertCircle, 
-  Mail, Calendar, FileText, Edit2
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+  "use client";
 
-export default function RentalManager({ onOpenForm }) {
-  const [activeTab, setActiveTab] = useState("inbox");
+  import React, { useMemo, useState } from "react";
+  import { Inbox, CheckCircle2, AlertCircle, User, ChevronRight, ArrowUpRight } from "lucide-react";
+  import { Button } from "@/components/ui/button";
+  import { useBookings } from "@/components/useclient/BookingsClient";
+  import { useResort } from "@/components/useclient/ContextEditor";
 
-  // Updated Mock Data to include fields for the Form
-  const mockData = {
-    inbox: [
-      { 
-        id: 1, 
-        guestName: "User 1", 
-        room: "Room A", 
-        dates: "Feb 20 - 22", 
-        number: "123 345 7891",
-        email: "User1@example.com",
-        pax: "4 Adults",
-        status: "Inquiry",
-        checkInDate: "Feb 20, 2024",
-        checkInTime: "2:00 PM",
-        checkOutDate: "Feb 22, 2024",        
-        checkOutTime: "5:00 PM",
-      }
-    ],
-    confirmed: [
-      { 
-        id: 2, 
-        guestName: "User 2",
-        room: "Room A", 
-        dates: "Feb 24 - March 3",        
-        address: "123 Mahogany St., Forbes Park, Makati City",
-        email: "name@email.com",
-        phoneNumber: "+63 917 123 4567",
-        status: "Confirmed",
-        guestCount: 12,
-        roomCount: 4,
-        sleepingGuests: 10,
-        baseRate: 28000,
-        checkInDate: "Oct 24, 2025",
-        checkInTime: "2:00 PM",
-        checkOutDate: "Oct 26, 2025",
-        checkOutTime: "11:00 AM",
-        bookingAgent: "Booking Agent Name",
-        turnoverAuthorizedPerson: "Authorized Person Name",
-        resortServices: [
-          { name: "Catering", cost: 3500 },
-          { name: "Sounds Systems", cost: 1500 },
-          { name: "Food Carts", cost: 1200 }
-        ],
-        downpayment: 4000,
-        paymentMethod: "GCash",
-        totalAmount: 35050
-      }
-    ],
-    overdue: [
-      { id: 3, 
-        guestName: "User 3", 
-        room: "Room B", 
-        status: "Checked Out",
-        dates: "Feb 10 - 15", 
-        email: "User3@example.com" }
-    ]
-  };
-
-  const tabs = [
-    { id: "inbox", label: "Inquiry Inbox", icon: Inbox, count: mockData.inbox.length },
-    { id: "confirmed", label: "Confirmed Stays", icon: CheckCircle2, count: mockData.confirmed.length },
-    { id: "overdue", label: "Pending Checkout", icon: AlertCircle, count: mockData.overdue.length },
+  const TABS = [
+    { id: "inquiry", label: "Inquiries", icon: Inbox, color: "text-blue-600", bg: "bg-blue-50" },
+    { id: "confirmed", label: "Confirmed Stays", icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { id: "checkout", label: "Pending Checkout", icon: AlertCircle, color: "text-rose-600", bg: "bg-rose-50" },
   ];
 
-  return (
-    <div className="rounded-3xl overflow-hidden bg-white-500 border-2 border-slate-50 shadow-xl">
-      {/* Panel Header / Tabs */}
-      <div className="flex border-b border-slate-100 bg-slate-50/50">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`
-              flex-1 flex items-center justify-center gap-2 py-4 px-6 text-sm font-bold transition-all
-              ${activeTab === tab.id 
-                ? "bg-white text-blue-600 border-b-2 border-blue-600" 
-                : "text-slate-400 hover:text-slate-600 hover:bg-slate-100/50"}
-            `}
-          >
-            <tab.icon size={18} />
-            {tab.label}
-            {tab.count > 0 && (
-              <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] ${activeTab === tab.id ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
-                {tab.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+  export default function RentalManager({ onOpenDetails }) {
+    const [activeTab, setActiveTab] = useState("inquiry");
+    const { bookings } = useBookings();
+    const { resort } = useResort();
 
-      {/* Panel Content */}
-      <div className="p-6 min-h-100">
-        {mockData[activeTab].length > 0 ? (
-          <div className="space-y-3">
-            {mockData[activeTab].map((item) => (
-              <div key={item.id} className="group flex flex-col md:flex-row items-center justify-between p-4 rounded-2xl border border-slate-100 hover:border-blue-100 hover:bg-blue-50/30 transition-all gap-4">
-                
-                {/* 1. Left: Guest & Room Info */}
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className={`p-3 rounded-xl shrink-0 ${activeTab === 'overdue' ? 'bg-rose-100 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
-                    <Calendar size={20} />
+    const rows = useMemo(() => {
+      return (bookings || []).map((booking) => {
+        const form = booking.bookingForm || {};
+        const roomId = booking.roomIds?.[0];
+        const roomName = resort?.rooms?.find((r) => r.id === roomId)?.name || form.roomName || "Room";
+        return {
+          bookingId: booking.id,
+          guestName: form.guestName || "Guest",
+          room: roomName,
+          email: form.email || "No email",
+          status: form.status || booking.status || "Inquiry",
+          normalizedStatus: (form.status || booking.status || "Inquiry").toLowerCase(),
+          checkInDate: booking.startDate || form.checkInDate || "",
+          checkOutDate: booking.endDate || form.checkOutDate || "",
+        };
+      });
+    }, [bookings, resort?.rooms]);
+
+    const grouped = useMemo(() => ({
+      inquiry: rows.filter((r) => r.normalizedStatus.includes("inquiry") || r.normalizedStatus.includes("pending payment")),
+      confirmed: rows.filter((r) => r.normalizedStatus.includes("confirm") || r.normalizedStatus.includes("ongoing")),
+      checkout: rows.filter((r) => r.normalizedStatus.includes("pending checkout")),
+    }), [rows]);
+
+    return (
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        {/* Tab Navigation */}
+        <div className="flex p-2 bg-slate-50/50 border-b border-slate-50">
+          {TABS.map((tab) => {
+            const count = grouped[tab.id].length;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                  isActive ? "bg-white text-slate-900 shadow-sm border border-slate-100" : "text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                <tab.icon size={16} className={isActive ? tab.color : ""} />
+                {tab.label}
+                <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? `${tab.bg} ${tab.color}` : "bg-slate-200 text-slate-500"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="p-6 space-y-3">
+          {grouped[activeTab].length === 0 ? (
+            <div className="py-20 text-center flex flex-col items-center gap-4">
+              <div className="p-4 bg-slate-50 rounded-full text-slate-200"><Inbox size={40}/></div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Queue is empty</p>
+            </div>
+          ) : (
+            grouped[activeTab].map((item) => (
+              <div
+                key={item.bookingId}
+                className="group grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 items-center p-3 rounded-xl border border-slate-100 bg-white hover:border-blue-200 transition-all"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
+                    <User size={16} />
                   </div>
-                  <div className="truncate">
-                    <h4 className="font-bold text-slate-900 truncate">{item.guestName}</h4>
-                    <p className="text-xs text-slate-500 flex items-center gap-2">
-                      <span className="font-semibold text-blue-600">{item.room}</span> 
-                      <span className="text-slate-300">•</span>
-                      {item.dates}
-                    </p>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-black text-slate-900 truncate">{item.guestName}</h3>
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-500 uppercase tracking-tight">{item.room}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 uppercase tracking-tight">
+                        {item.status}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <p className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                        {item.checkInDate} <ChevronRight size={10}/> {item.checkOutDate}
+                      </p>
+                      <span className="text-[11px] text-slate-400 truncate">{item.email}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* 2. Center: Email Address */}
-                <div className="flex-1 flex justify-center items-center">
-                  <div className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 rounded-full group-hover:bg-white transition-colors border border-transparent group-hover:border-slate-200">
-                    <Mail size={14} className="text-slate-400" />
-                    <span className="text-sm font-medium text-slate-600 lowercase">{item.email}</span>
-                  </div>
-                </div>
-
-                {/* 3. Right: Contextual Actions */}
-                <div className="flex items-center gap-2 flex-1 justify-end">
-                  {activeTab === "inbox" && (
-                    <>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 rounded-xl px-4 shadow-sm shadow-emerald-100">Approve</Button>
-                      <Button size="sm" variant="" className="bg-red-500 text-white hover:bg-red-600 rounded-xl">Decline</Button>
-                    </>
-                  )}
-                  {activeTab === "confirmed" && (
-                    <>
-                    <Button size="sm" variant = "" 
-                     className="hover:scale-105 flex items-center gap-2 bg-slate-200 hover:bg-slate-400 text-slate-700 rounded-xl h-10 px-4 font-bold transition-all"
-                    >
-                      <Edit2 size={14} /> Edit Details
-                    </Button>
-                    </>
-                  )}
-                  {activeTab === "overdue" && (
-                    <Button size="sm" className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-4">Process Checkout</Button>
-                  )}
-                  
-                  <div className="h-8 w-px bg-blue-200/60 mx-1 hidden md:block" />
-                  
-                  <button 
-                    onClick={() => onOpenForm(item)}
-                    className="p-2 text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-2 group/btn" 
-                    title="View Confirmation Form"
+                <div className="flex items-center gap-2 justify-end">
+                  <Button 
+                    variant="ghost" 
+                    className="items-center justify-center rounded-xl font-bold text-xs h-9 hover:bg-slate-50 flex gap-2"
+                    onClick={() => onOpenDetails(item, item.bookingId)}
                   >
-                    <FileText size={18} />
-                    <span className="text-[10px] font-bold uppercase transition-opacity">Form</span>
-                  </button>
+                    Manage <ArrowUpRight size={14}/>
+                  </Button>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-            <div className="bg-slate-50 p-6 rounded-full mb-4">
-               <Inbox size={48} className="opacity-20" />
-            </div>
-            <p className="font-medium">No {activeTab} records found.</p>
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

@@ -5,7 +5,7 @@ import { X, Send, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function MessageAdminModal({ isOpen, onClose, onSendMessage }) {
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState("support");
   const [message, setMessage] = useState("");
 
   if (!isOpen) return null;
@@ -54,13 +54,16 @@ export default function MessageAdminModal({ isOpen, onClose, onSendMessage }) {
               <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5 ml-1">
                 Subject
               </label>
-              <input
+              <select
                 required
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Payment Issue / Listing Question..."
                 className="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-medium"
-              />
+              >
+                <option value="resort">Resort</option>
+                <option value="account">Account</option>
+                <option value="support">Support</option>
+              </select>
             </div>
 
             <div>

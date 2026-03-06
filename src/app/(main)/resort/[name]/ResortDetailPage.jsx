@@ -2,23 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 import { useResort } from "@/components/useclient/ContextEditor";
-import { CheckCircle2 } from "lucide-react"
 
 import HeroSection from "./rooms/HeroSection";
 import ProfileSection from "./rooms/ProfileSection";
 import RoomsSection from "./rooms/RoomsSection";
 import ShortcutBar from "./rooms/ShortcutBar";
-import AmenitiesSection from "./rooms/AmenitiesSection";
+import FacilitySection from "./rooms/FacilitySection";
 import ServicesSection from "./rooms/ServicesSection";
 
 import GalleryModal from "./components/GalleryModal";
-import AmenitiesModal from "./components/AmenitiesModal";
+import FacilityGalleryModal from "./components/FacilityGalleryModal";
 
 import ContactOwnerModal from "./components/ContactOwnerModal";
 import RoomFilterPanel from "./rooms/filters/RoomFilterPanel";
 
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast"
+import PersistentToast from "@/components/ui/toast/PersistentToast";
+import { supabase } from "@/lib/supabase";
+import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 
 export default function ResortDetailPage({ name }) {
   const { resort, setResort, loadResort, loading } = useResort();
@@ -33,7 +35,7 @@ export default function ResortDetailPage({ name }) {
   const [contactOpen, setContactOpen] = useState(false);
   const [price, setPrice] = useState(5000);
 
-  const { toast } = useToast();
+  const { toast, persistentToast } = useToast();
   useEffect(() => {
     if (!name) return;
         const decodedName = decodeURIComponent(name);
@@ -63,20 +65,92 @@ export default function ResortDetailPage({ name }) {
     setFacilityOpen(true);
   };
 
-const handleSubmitInquiry = (submittedData) => {
+const handleSubmitInquiry = async (submittedData) => {
     const payload = { 
       ...submittedData, 
       resortName: resort.name,
       location: resort.location 
     };
 
-    console.log("Final Booking Payload:", payload);
+    try {
+      const selectedServices = (resort.extraServices || []).filter((service) =>
+        submittedData.selectedServices?.includes(service.name)
+      );
 
-    toast({
-      message: `Inquiry sent to ${resort.name}!`,
-      color: "green",
-      icon: CheckCircle2 
-    });
+      const bookingId = Date.now().toString();
+      const adultCount = Number(submittedData.adultCount || 0);
+      const childrenCount = Number(submittedData.childrenCount || 0);
+      const pax = Number(submittedData.guestCount || submittedData.pax || adultCount + childrenCount || 0);
+      const ticketAccessToken = generateTicketAccessToken();
+      const ticketAccessExpiresAt = getTicketAccessExpiry(30);
+      const bookingForm = {
+        guestName: submittedData.guestName || "",
+        email: submittedData.email || "",
+        phoneNumber: submittedData.contactNumber || "",
+        address: submittedData.area || "",
+        adultCount,
+        childrenCount,
+        pax,
+        guestCount: pax,
+        roomCount: Number(submittedData.roomCount || 1),
+        sleepingGuests: Number(submittedData.sleepingGuests || 0),
+        checkInDate: submittedData.checkInDate || "",
+        checkOutDate: submittedData.checkOutDate || "",
+        checkInTime: submittedData.checkInTime || "14:00",
+        checkOutTime: submittedData.checkOutTime || "11:00",
+        status: "Inquiry",
+        paymentMethod: "Pending",
+        downpayment: 0,
+        totalAmount: Number(resort.price || 0),
+        resortServices: selectedServices,
+        notes: submittedData.message || "",
+        ticketAccessToken,
+        ticketAccessExpiresAt,
+      };
+
+      const { error } = await supabase.from("bookings").upsert({
+        id: bookingId,
+        resort_id: Number(resort.id),
+        room_ids: resort.rooms?.[0]?.id ? [resort.rooms[0].id] : [],
+        start_date: submittedData.checkInDate || null,
+        end_date: submittedData.checkOutDate || null,
+        check_in_time: submittedData.checkInTime || "14:00",
+        check_out_time: submittedData.checkOutTime || "11:00",
+        status: "Inquiry",
+        adult_count: adultCount,
+        children_count: childrenCount,
+        pax,
+        sleeping_guests: Number(submittedData.sleepingGuests || 0),
+        room_count: Number(submittedData.roomCount || 1),
+        booking_form: bookingForm,
+      });
+
+      if (error) throw error;
+      await supabase.from("ticket_messages").insert({
+        booking_id: bookingId,
+        resort_id: Number(resort.id),
+        sender_role: "client",
+        sender_name: submittedData.guestName || "Client",
+        message:
+          submittedData.message?.trim() ||
+          "Inquiry sent. Can we confirm rates, inclusions, and availability?",
+      });
+      if (typeof window !== "undefined") {
+        const ticketUrl = `${window.location.origin}/ticket/${bookingId}?token=${ticketAccessToken}`;
+        console.info("Client ticket link (for testing until email is enabled):", ticketUrl);
+      }
+      const inquiryMessage =
+        "Inquiry has been sent. Ticket link is prepared and logged in console for testing.";
+      persistentToast({
+        message: inquiryMessage,
+        color: "blue",
+      });
+    } catch (err) {
+      toast({
+        message: `Failed to send inquiry: ${err.message}`,
+        color: "red",
+      });
+    }
 
     setContactOpen(false);
   };
@@ -94,8 +168,9 @@ const handleSubmitInquiry = (submittedData) => {
 
       <ProfileSection/>
 
-      <AmenitiesSection 
+      <FacilitySection 
         facilities={resort.facilities} 
+        summary={resort.description?.facilitiesSummary || ""}
         onOpen={handleOpenFacility} 
       />
 
@@ -103,14 +178,7 @@ const handleSubmitInquiry = (submittedData) => {
 
       <div className="max-w-6xl mx-auto px-4 mb-6 flex flex-col md:flex-row items-center justify-between">
         <h2 className="text-2xl font-semibold mb-4 md:mb-0">Available Rooms</h2>
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-2xl hover:bg-blue-700 transition hover:scale-105"
-          onClick={() => setContactOpen(true)}
-        >
-          Contact Owner
-        </button>
       </div>
-
       <div className="flex flex-col lg:flex-row gap-8 px-4 lg:px-0 max-w-6xl mx-auto pb-10">
         <div className="lg:w-80 w-full lg:sticky lg:top-24">
           <RoomFilterPanel price={price} setPrice={setPrice} />
@@ -138,7 +206,7 @@ const handleSubmitInquiry = (submittedData) => {
       )}
 
       {facilityOpen && (
-        <AmenitiesModal
+        <FacilityGalleryModal
           facilities={resort.facilities}
           activeIndex={facilityIndex}
           setActiveIndex={setFacilityIndex}
@@ -163,7 +231,18 @@ const handleSubmitInquiry = (submittedData) => {
           onSubmitInquiry={handleSubmitInquiry}
         />
       )}
+      <div className="fixed bottom-5 right-5 z-40 w-[280px] bg-white border border-slate-200 shadow-2xl rounded-2xl p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Want to inquire?</p>
+        <p className="text-sm font-semibold text-slate-800 mb-3">Message the owner here</p>
+        <button
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition font-bold text-sm"
+          onClick={() => setContactOpen(true)}
+        >
+          Contact Owner
+        </button>
+      </div>
     <Toast/>
+    <PersistentToast />
     </div>
   );
 }

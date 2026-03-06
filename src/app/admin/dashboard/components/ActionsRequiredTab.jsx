@@ -55,7 +55,11 @@ export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab
           displayMessages.map((msg) => (
             <div 
               key={msg.id} 
-              className="group bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-blue-200 transition-all"
+              className={`group rounded-2xl shadow-sm border p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all ${
+                showArchives && msg.status === "resolved"
+                  ? "bg-emerald-50/50 border-emerald-200"
+                  : "bg-white border-slate-100 hover:border-blue-200"
+              }`}
             >
               {/* Left: Icon & Main */}
               <div className="flex items-center gap-4 flex-1">
@@ -64,15 +68,26 @@ export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab
                    activeActionTab === "account" ? <KeyRound size={24} /> : <Mail size={24} />}
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900">{msg.title}</h4>
+                  <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                    {msg.title}
+                    {showArchives && msg.status === "resolved" ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                        Resolved
+                      </span>
+                    ) : null}
+                  </h4>
                   <p className="text-sm text-slate-500">{msg.content}</p>
                 </div>
               </div>
 
               {/* Middle: Who Requested */}
               <div className="flex items-center gap-3 px-4 md:border-l md:border-r border-slate-100 min-w-50">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">
-                  {msg.requestedBy?.charAt(0) || "U"}
+                <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm overflow-hidden">
+                  {msg.senderImage ? (
+                    <img src={msg.senderImage} alt={msg.requestedBy || "Owner"} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{msg.requestedBy?.charAt(0) || "U"}</span>
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold text-slate-700 leading-tight">

@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
+import { useParams } from "next/navigation";
 import ResortBuilder from "@/app/edit/resort-builder/[id]/ResortBuilder";
 
-export default function AdminBuilderPage({ params }) {
-  const unwrappedParams = React.use(params);
-  
-  return <ResortBuilder resortId={unwrappedParams.id} />;
+export default function AdminBuilderPage() {
+  const params = useParams();
+  return <ResortBuilder resortId={params?.id} />;
 }

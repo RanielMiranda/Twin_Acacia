@@ -4,3 +4,15 @@
   from { width: 100%; }
   to { width: 0%; }
 }
+
+.editor-theme .editor-primary-text {
+  color: var(--editor-primary, #2563eb);
+}
+
+.editor-theme .editor-primary-bg {
+  background-color: var(--editor-primary, #2563eb);
+}
+
+.editor-theme .editor-primary-border {
+  border-color: var(--editor-primary, #2563eb);
+}

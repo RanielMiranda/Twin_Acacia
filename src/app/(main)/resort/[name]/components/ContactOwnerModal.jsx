@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Calendar, User, CheckCircle2, ArrowRight, ArrowLeft, Phone, MapPin, Clock, PlusCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFilters } from "@/components/useclient/ContextFilter";
-import { useResort } from "@/components/useclient/ContextEditor"; // Import the resort context
 
 export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInquiry }) {
   const [agreed, setAgreed] = useState(false);
-  const { guests, startDate, endDate } = useFilters();
+  const { guests, startDate, endDate, destination, checkInTime, checkOutTime } = useFilters();
   // We can access resort data directly if not passed as prop, but prop is safer
   const [step, setStep] = useState(1);
 
@@ -29,15 +28,40 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
     guestName: "",
     email: "",
     contactNumber: "",
-    area: "",
-    pax: (guests?.adults || 0) + (guests?.children || 0) || "",
+    area: destination || "",
+    adultCount: Number(guests?.adults || 0),
+    childrenCount: Number(guests?.children || 0),
+    pax: Number((guests?.adults || 0) + (guests?.children || 0)),
+    guestCount: Number((guests?.adults || 0) + (guests?.children || 0)),
+    sleepingGuests: 0,
+    roomCount: 1,
     checkInDate: formatDateForInput(startDate),
     checkOutDate: formatDateForInput(endDate),
-    checkInTime: "14:00",
-    checkOutTime: "12:00",
+    checkInTime: checkInTime || "14:00",
+    checkOutTime: checkOutTime || "12:00",
     message: "",
     selectedServices: [], // Added to track extra services
   });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const adults = Number(guests?.adults || 0);
+    const children = Number(guests?.children || 0);
+    const pax = adults + children;
+    setFormData((prev) => ({
+      ...prev,
+      area: destination || prev.area || "",
+      adultCount: adults,
+      childrenCount: children,
+      pax,
+      guestCount: pax,
+      roomCount: Number(guests?.rooms || prev.roomCount || 1),
+      checkInDate: formatDateForInput(startDate) || prev.checkInDate || "",
+      checkOutDate: formatDateForInput(endDate) || prev.checkOutDate || "",
+      checkInTime: checkInTime || prev.checkInTime || "14:00",
+      checkOutTime: checkOutTime || prev.checkOutTime || "12:00",
+    }));
+  }, [checkInTime, checkOutTime, destination, endDate, guests?.adults, guests?.children, guests?.rooms, isOpen, startDate]);
 
   // Steps Configuration (Increased to 4)
   const steps = [
@@ -47,24 +71,23 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
     { id: 4, title: "Review Inquiry", icon: CheckCircle2 },
   ];
 
-  useEffect(() => {
-    if (isOpen) {
-      setFormData(prev => ({
-        ...prev,
-        pax: (guests?.adults || 0) + (guests?.children || 0),
-        checkInDate: formatDateForInput(startDate),
-        checkOutDate: formatDateForInput(endDate),
-      }));
-    } else {
-      setStep(1);
-    }
-  }, [isOpen, guests, startDate, endDate]);
-
   if (!resort || !isOpen) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === "adultCount" || name === "childrenCount") {
+        const adults = Number(name === "adultCount" ? value : next.adultCount || 0);
+        const children = Number(name === "childrenCount" ? value : next.childrenCount || 0);
+        next.pax = adults + children;
+        next.guestCount = adults + children;
+      }
+      if (name === "guestCount") {
+        next.pax = Number(value || 0);
+      }
+      return next;
+    });
   };
 
   // Toggle service selection
@@ -79,15 +102,20 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
 
   const nextStep = () => setStep(s => Math.min(s + 1, 4));
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
+  const handleClose = () => {
+    setStep(1);
+    setAgreed(false);
+    onClose();
+  };
 
   const handleSubmit = () => {
     onSubmitInquiry(formData);
-    onClose();
+    handleClose();
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={handleClose} />
       
       <div className="relative bg-white w-full max-w-xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         
@@ -102,7 +130,7 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400">
+          <button onClick={handleClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400">
             <X size={24} />
           </button>
         </div>
@@ -122,16 +150,16 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
               <div className="space-y-1">
                 <label className="text-xs font-black uppercase text-slate-400 ml-1">Full Name</label>
-                <input name="guestName" value={formData.guestName} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="John Doe" />
+                <input name="guestName" value={formData.guestName ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="John Doe" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Email</label>
-                  <input name="email" value={formData.email} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="john@example.com" />
+                  <input name="email" value={formData.email ?? ""} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="john@example.com" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Contact Number</label>
-                  <input name="contactNumber" value={formData.contactNumber} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
+                  <input name="contactNumber" value={formData.contactNumber ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
                 </div>
               </div>
             </div>
@@ -144,39 +172,60 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-in Date</label>
-                  <input name="checkInDate" value={formData.checkInDate} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkInDate" value={formData.checkInDate ?? ""} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-out Date</label>
-                  <input name="checkOutDate" value={formData.checkOutDate} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkOutDate" value={formData.checkOutDate ?? ""} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
 
-              {/* Row 2: 3 Columns */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* Row 2: 2 Columns */}
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time In</label>
-                  <input name="checkInTime" value={formData.checkInTime} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkInTime" value={formData.checkInTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time Out</label>
-                  <input name="checkOutTime" value={formData.checkOutTime} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Total Pax</label>
-                  <input name="guestCount" value={formData.guestCount} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="checkOutTime" value={formData.checkOutTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
 
-              {/* Row 3: 2 Columns */}
+              {/* Row 3: 3 Columns */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Adults</label>
+                  <input name="adultCount" value={formData.adultCount ?? 0} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Children</label>
+                  <input name="childrenCount" value={formData.childrenCount ?? 0} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Total Pax</label>
+                  <input
+                    name="guestCount"
+                    value={formData.guestCount ?? 0}
+                    type="number"
+                    min="0"
+                    readOnly
+                    disabled
+                    className="w-full px-4 py-3 rounded-xl bg-slate-100 text-slate-500 border-none outline-none cursor-not-allowed"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: 2 Columns */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Sleeping Guests</label>
-                  <input name="sleepingGuests" value={formData.sleepingGuests} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="sleepingGuests" value={formData.sleepingGuests ?? 0} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Number of Rooms</label>
-                  <input name="roomCount" value={formData.roomCount} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="roomCount" value={formData.roomCount ?? 1} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
                 </div>
               </div>
 
@@ -218,8 +267,8 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
                 )}
               </div>
               <div className="space-y-1 mt-4">
-                <label className="text-xs font-black uppercase text-slate-400 ml-1">Special Message</label>
-                <textarea name="message" value={formData.message} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" placeholder="Anything else we should know?" />
+                <label className="text-xs font-black uppercase text-slate-400 ml-1">Message section</label>
+                <textarea name="message" value={formData.message ?? ""} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" placeholder="Anything else we should know?" />
               </div>
             </div>
           )}
@@ -255,7 +304,7 @@ export default function ContactOwnerModal({ isOpen, onClose, resort, onSubmitInq
                     />
                   </div>
                   <label htmlFor="terms" className="text-xs text-slate-500 leading-relaxed cursor-pointer">
-                    I have read and agree to the resort's{" "}
+                    I have read and agree to the resort&apos;s{" "}
                     <button type="button" className="text-blue-600 font-bold underline hover:text-blue-700">Rules and Regulations</button>
                     {" "}and{" "}
                     <button type="button" className="text-blue-600 font-bold underline hover:text-blue-700">Terms and Conditions</button>.

@@ -1,60 +1,37 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
 export async function middleware(request) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  const { pathname } = request.nextUrl
+  const appAuth = request.cookies.get("app_auth")?.value
+  const appRole = String(request.cookies.get("app_role")?.value || "").toLowerCase()
+  const isAdminRoute = pathname.startsWith("/admin")
+  const isOwnerRoute = pathname.startsWith("/owner")
+  const isEditRoute = pathname.startsWith("/edit")
+  const isLoginPage = pathname === "/auth/login"
 
-  // Initialize the Supabase client for Middleware
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          response = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          )
-        },
-      },
+  if (isLoginPage && appAuth && ["admin", "owner"].includes(appRole)) {
+    const target = appRole === "admin" ? "/admin/dashboard" : "/owner/dashboard";
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
+  if (isAdminRoute || isOwnerRoute || isEditRoute) {
+    if (!appAuth) {
+      return NextResponse.redirect(new URL("/", request.url))
     }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  /* PROTECT ADMIN ROUTES
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    
-    if (!user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+    if (!["admin", "owner"].includes(appRole)) {
+      return NextResponse.redirect(new URL("/", request.url))
     }
-
-    // Role check logic using your table
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single()
-
-    if (roleData?.role !== 'admin' && roleData?.role !== 'owner') {
-      return NextResponse.redirect(new URL('/', request.url))
+    if (isAdminRoute && appRole === "owner") {
+      return NextResponse.redirect(new URL("/owner/dashboard", request.url))
+    }
+    if (isOwnerRoute && appRole === "admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url))
     }
   }
-    */
 
-  return response
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/login'],
+  matcher: ['/', '/auth/login', '/admin/:path*', '/owner/:path*', '/edit/:path*'],
 }

@@ -1,67 +1,264 @@
 "use client";
-import React, { useState } from "react";
-import { useParams } from "next/navigation"; // To get the resort ID
-import { resorts } from "@/components/data/resorts"; // Your data source
+
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useResort } from "@/components/useclient/ContextEditor";
+import { useBookings } from "@/components/useclient/BookingsClient";
+import { useSupport } from "@/components/useclient/SupportClient";
+import {
+  Plus, 
+  Calendar as CalendarIcon, 
+  ClipboardList, 
+  LayoutDashboard,
+  ChevronRight,
+  MessageCircleWarning,
+  AlertTriangle,
+  Clock4,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+// Components
 import BookingCalendar from "./components/BookingsCalendar";
-import RentalManager from "./components/RentalManager"
-import BookingConfirmation from "./components/BookingConfirmation";
+import RentalManager from "./components/RentalManager";
+import LiveConcernsPanel from "./components/LiveConcernsPanel";
 
-export default function Page() {
-  const { id } = useParams(); // Get the ID from /admin/bookings/[id]
-  const [view, setView] = useState("manager");
-  const [selectedBookingData, setSelectedBookingData] = useState(null);
+export default function BookingManagementPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const { resort, loadResort, setResort, loading } = useResort();
+  const { bookings, refreshBookings } = useBookings();
+  const { listResortConcerns, updateConcernStatus } = useSupport();
+  const [concerns, setConcerns] = useState([]);
+  const [loadingConcerns, setLoadingConcerns] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns
 
-  const currentResort = resorts.find((r) => r.id.toString() === id.toString());
+  useEffect(() => {
+    if (id) loadResort(id, true);
+  }, [id, loadResort]);
 
-  const openForm = (guestData) => {
-    setSelectedBookingData({
-      ...guestData,
-      location: currentResort?.location,
-      rates: currentResort?.price,
-      resortServices: currentResort?.extraServices,
-      resortName: currentResort?.name
+  useEffect(() => {
+    if (!id || loading) return;
+    if (resort?.id?.toString() === id?.toString()) return;
+    const numericId = Number(id);
+    if (!Number.isFinite(numericId)) return;
+    setResort((prev) => {
+      if (prev?.id?.toString() === id?.toString()) return prev;
+      return {
+        id: numericId,
+        name: prev?.name || `Resort ${id}`,
+        rooms: prev?.rooms || [],
+        bookings: prev?.bookings || [],
+      };
     });
-    setView("form");
+  }, [id, loading, resort?.id, setResort]);
+
+  const currentResort = resort?.id?.toString() === id?.toString() ? resort : null;
+  const resortId = Number(currentResort?.id || 0);
+
+  const workflowCounts = useMemo(() => {
+    const source = bookings || [];
+    const inquiry = source.filter((entry) => {
+      const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
+      return status.includes("inquiry") || status.includes("pending payment");
+    }).length;
+    const checkout = source.filter((entry) => {
+      const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
+      return status.includes("pending checkout");
+    }).length;
+    return { inquiry, checkout };
+  }, [bookings]);
+
+  const loadConcerns = async () => {
+    if (!resortId) return;
+    setLoadingConcerns(true);
+    try {
+      const rows = await listResortConcerns(resortId, { pruneResolvedOlderThanDays: 10 });
+      setConcerns(rows);
+    } catch (error) {
+      console.error("Concerns load error:", error.message);
+    } finally {
+      setLoadingConcerns(false);
+    }
   };
 
-  if (!currentResort) return <div className="p-20 text-center">Resort not found.</div>;
+  useEffect(() => {
+    if (!resortId) return;
+    loadConcerns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resortId]);
 
-  if (view === "form") {
-    return (
-      <div className="p-4 md:p-8 bg-slate-50 min-h-screen">
-        <BookingConfirmation 
-          onBack={() => setView("manager")} 
-          data={selectedBookingData} 
-        />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!resortId) return;
+    refreshBookings();
+    const interval = setInterval(() => {
+      refreshBookings();
+    }, 30000);
+    const handleFocus = () => refreshBookings();
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [refreshBookings, resortId]);
+
+  const handleResolveConcern = async (issueId) => {
+    try {
+      await updateConcernStatus(issueId, "resolved");
+      setConcerns((prev) => prev.map((entry) => (entry.id === issueId ? { ...entry, status: "resolved" } : entry)));
+    } catch (error) {
+      console.error("Resolve concern error:", error.message);
+    }
+  };
+
+  const handleReopenConcern = async (issueId) => {
+    try {
+      await updateConcernStatus(issueId, "open");
+      setConcerns((prev) => prev.map((entry) => (entry.id === issueId ? { ...entry, status: "open" } : entry)));
+    } catch (error) {
+      console.error("Reopen concern error:", error.message);
+    }
+  };
+
+  const openForm = (guestData = {}, targetBookingId = null) => {
+    if (targetBookingId) {
+      router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}/form`);
+      return;
+    }
+    const payload = { ...guestData, resortName: currentResort?.name };
+    const draftKey = `booking-form:${Date.now()}`;
+    sessionStorage.setItem(draftKey, JSON.stringify(payload));
+    router.push(`/edit/bookings/${id}/booking-details/new/form?draft=${encodeURIComponent(draftKey)}`);
+  };
+
+  const openDetails = (targetBookingId) => {
+    router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}`);
+  };
+
+  if (!currentResort && loading) return <div className="p-20 text-center">Loading Management Console...</div>;
+  if (!currentResort) return <div className="p-20 text-center">Unable to load resort profile. Showing booking data by resort ID.</div>;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-10 mt-[10vh]">
-      <div className="flex justify-between items-center px-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight">
-            Booking Management
-          </h1>
-          <p className="text-blue-600 font-bold text-sm">{currentResort.name}</p>
+    <div className="mt-10 min-h-screen bg-slate-50">
+      {/* Header Area */}
+      <div className="max-w-[1600px] mx-auto pt-12 px-4 md:px-8">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl">
+              <LayoutDashboard size={28} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                Resort Manager <ChevronRight size={12}/> {currentResort.name}
+              </div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">
+                Booking Console
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={() => openForm({ status: "Inquiry" })}
+              className="bg-blue-600 items-center justify-center hover:bg-blue-700 text-white rounded-2xl px-8 h-14 font-black shadow-lg shadow-blue-100 transition-all hover:scale-105 flex gap-3"
+            >
+              <Plus size={20} /> Create New Entry
+            </Button>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Priority Workflow</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><Clock4 size={16} className="text-blue-600" /> Pending Inquiries</p>
+                <p className="text-2xl font-black text-blue-600">{workflowCounts.inquiry}</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><AlertTriangle size={16} className="text-rose-600" /> Pending Checkout</p>
+                <p className="text-2xl font-black text-rose-600">{workflowCounts.checkout}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm">
+            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Live Concerns</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><MessageCircleWarning size={16} className="text-rose-600" /> Open Tickets</p>
+                <p className="text-2xl font-black text-rose-600">
+                  {concerns.filter((item) => item.status !== "resolved").length}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="rounded-xl text-xs font-bold"
+                onClick={() => setActiveTab("concerns")}
+              >
+                View Concerns
+              </Button>
+            </div>
+          </div>
         </div>
-        
-        <button 
-          onClick={() => openForm({ status: "Inquiry" })} 
-          className="text-xs font-bold bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2 rounded-xl transition-all shadow-sm"
-        >
-          View Blank Confirmation Form
-        </button>
+
+        <div className="flex items-center gap-8 border-b border-slate-200 mb-8">
+          <button
+            onClick={() => setActiveTab("workflow")}
+            className={`flex items-center gap-2 pb-4 text-sm font-bold uppercase tracking-widest transition-all relative ${
+              activeTab === "workflow" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <ClipboardList size={18} />
+            Guest Workflow
+            {activeTab === "workflow" && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-full" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("calendar")}
+            className={`flex items-center gap-2 pb-4 text-sm font-bold uppercase tracking-widest transition-all relative ${
+              activeTab === "calendar" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <CalendarIcon size={18} />
+            Availability Calendar
+            {activeTab === "calendar" && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-full" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("concerns")}
+            className={`flex items-center gap-2 pb-4 text-sm font-bold uppercase tracking-widest transition-all relative ${
+              activeTab === "concerns" ? "text-rose-600" : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <MessageCircleWarning size={18} />
+            Live Concerns
+            {activeTab === "concerns" && <div className="absolute bottom-0 left-0 w-full h-1 bg-rose-600 rounded-t-full" />}
+          </button>
+        </div>
+
+        <main className="pb-20">
+          {activeTab === "workflow" ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <RentalManager onOpenDetails={(item, bookingId) => openDetails(bookingId)} />
+            </div>
+          ) : activeTab === "calendar" ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <BookingCalendar fullWidth />
+            </div>
+          ) : (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <LiveConcernsPanel
+                concerns={concerns}
+                loading={loadingConcerns}
+                onRefresh={loadConcerns}
+                onResolve={handleResolveConcern}
+                onReopen={handleReopenConcern}
+                onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
+              />
+            </div>
+          )}
+        </main>
       </div>
-
-      <section>
-        <BookingCalendar />
-      </section>
-
-      <section>
-        <RentalManager onOpenForm={openForm} />
-      </section>
     </div>
   );
 }

@@ -68,7 +68,7 @@ export default function TopBar() {
             <div className="w-[1px] h-6 bg-slate-200 mx-2" />
 
             <Link href="/auth/login" className="hover:text-blue-600 transition">
-              Admin Page
+              Login Page
             </Link>
           </div>
 
@@ -121,7 +121,7 @@ export default function TopBar() {
               onClick={() => setIsMenuOpen(false)}
               className="hover:text-blue-600 transition"
             >
-              Admin Page
+              Login Page
             </Link>
           </div>
         </div>

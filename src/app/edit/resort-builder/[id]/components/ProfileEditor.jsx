@@ -72,6 +72,36 @@ export default function ProfileEditor() {
   );
 
   if (!resort) return null;
+  const pricingMeta = resort.description?.meta?.pricing || {};
+  const themeMeta = resort.description?.theme || {};
+
+  const setDescriptionMeta = (nextPartial) => {
+    updateResort("description", {
+      ...(resort.description || {}),
+      ...nextPartial,
+    });
+  };
+
+  const setPricingMeta = (field, value) => {
+    setDescriptionMeta({
+      meta: {
+        ...(resort.description?.meta || {}),
+        pricing: {
+          ...(pricingMeta || {}),
+          [field]: value,
+        },
+      },
+    });
+  };
+
+  const setThemeMeta = (field, value) => {
+    setDescriptionMeta({
+      theme: {
+        ...(themeMeta || {}),
+        [field]: value,
+      },
+    });
+  };
 
   // IMPORTANT: Since your context uses simple strings, we map them to IDs for DND-Kit
   // but we keep the actual value from the context.
@@ -218,26 +248,68 @@ export default function ProfileEditor() {
           )}
         </div>
       </div>
-      
-      {/* Clipboard / Styling Symbols */}
-      <div className="mt-8">
-        <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Clipboard — copy symbols / bullets</p>
-        <div className="flex flex-wrap gap-2">
-          {["•", "—", "→", "★", "✓"].map((symbol) => (
-            <button
-              key={symbol}
-              onClick={() => {
-                // Copy the symbol to the clipboard
-                navigator.clipboard.writeText(symbol);
-              }}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-md text-xs font-semibold transition-colors"
-            >
-              {symbol === "\n" ? "↵ Line Break" : symbol}
-            </button>
-          ))}
+
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-2">Public Pricing Options</p>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 block">
+              For as low as (PHP)
+              <input
+                type="number"
+                min="0"
+                className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                value={Number(pricingMeta.forAsLowAs || 0)}
+                onChange={(e) => setPricingMeta("forAsLowAs", Number(e.target.value) || 0)}
+              />
+            </label>
+            <label className="text-xs font-semibold text-slate-500 block">
+              Custom Offer Label
+              <input
+                className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                value={pricingMeta.customOfferLabel || ""}
+                onChange={(e) => setPricingMeta("customOfferLabel", e.target.value)}
+                placeholder="Weekend Promo"
+              />
+            </label>
+            <label className="text-xs font-semibold text-slate-500 block">
+              Custom Offer Price (PHP)
+              <input
+                type="number"
+                min="0"
+                className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                value={Number(pricingMeta.customOfferPrice || 0)}
+                onChange={(e) => setPricingMeta("customOfferPrice", Number(e.target.value) || 0)}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-2">Edit Theme (Preparation)</p>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-500 block">
+              Theme Name
+              <input
+                className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                value={themeMeta.name || ""}
+                onChange={(e) => setThemeMeta("name", e.target.value)}
+                placeholder="Coastal Blue"
+              />
+            </label>
+            <label className="text-xs font-semibold text-slate-500 block">
+              Primary Hex Color
+              <input
+                type="color"
+                className="mt-1 w-full h-10 bg-white border border-slate-200 rounded-xl px-1 py-1"
+                value={themeMeta.primaryColor || "#2563eb"}
+                onChange={(e) => setThemeMeta("primaryColor", e.target.value)}
+              />
+            </label>
+          </div>
         </div>
       </div>
-
+      
       {/* Description */}
       <div className="mt-8">
         <textarea

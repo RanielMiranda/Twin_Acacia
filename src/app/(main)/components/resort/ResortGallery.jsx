@@ -1,5 +1,6 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
+import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export default function ResortGallery({ resort }) {
   const gallery = resort.gallery || [];
@@ -19,7 +20,9 @@ export default function ResortGallery({ resort }) {
         {/* Main Image - 3/4 width */}
         <div className="group w-3/4 h-full overflow-hidden rounded-l-xl">
           <img
-            src={mainImage}
+            src={getTransformedSupabaseImageUrl(mainImage, { width: 1024, quality: 80, format: "webp" })}
+            srcSet={getSupabaseSrcSet(mainImage)}
+            sizes="(max-width: 768px) 100vw, 75vw"
             className={imageClasses}
             alt={resort.name}
           />
@@ -31,7 +34,9 @@ export default function ResortGallery({ resort }) {
           {/* Top mini image */}
           <div className="group h-1/2 w-full overflow-hidden rounded-tr-xl">
             <img
-              src={topMini}
+              src={getTransformedSupabaseImageUrl(topMini, { width: 640, quality: 80, format: "webp" })}
+              srcSet={getSupabaseSrcSet(topMini, [320, 480, 640], 80)}
+              sizes="(max-width: 768px) 50vw, 25vw"
               className={imageClasses}
               alt={`${resort.name} 1`}
             />
@@ -40,7 +45,9 @@ export default function ResortGallery({ resort }) {
           {/* Bottom mini image with overlay */}
           <div className="group relative h-1/2 w-full overflow-hidden rounded-br-xl">
             <img
-              src={bottomMini}
+              src={getTransformedSupabaseImageUrl(bottomMini, { width: 640, quality: 80, format: "webp" })}
+              srcSet={getSupabaseSrcSet(bottomMini, [320, 480, 640], 80)}
+              sizes="(max-width: 768px) 50vw, 25vw"
               className={imageClasses}
               alt={`${resort.name} 2`}
             />

@@ -1,73 +1,44 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Menu, 
-  X, 
-  ArrowLeft, 
-  Settings2,
-  ExternalLink
-} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Users, Menu, X, ArrowLeft, Activity, ExternalLink, LogOut } from "lucide-react";
+import { useAccounts } from "@/components/useclient/AccountsClient";
 
 export default function AdminTopBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { activeAccount, signOut } = useAccounts();
 
   const navLinks = [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Accounts", href: "/admin/accounts", icon: Users },
-    { name: "Owner Dashboard", href: "/owner/dashboard", icon: Settings2 },
-    { 
-      name: "Analytics", 
-      href: "https://vercel.com/raniels-projects-2ea24826/agoda-style-website/analytics",
-      icon: ExternalLink, 
-      external: true 
-    },
+    { name: "Analytics", href: "/admin/analytics", icon: Activity },
   ];
 
-  // Fixes hydration mismatch by ensuring client-only logic runs after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const closeMenu = () => setIsMenuOpen(false);
-
-  // Simple skeleton/placeholder for the Server Side Render
-  if (!mounted) {
-    return (
-      <div className="w-full bg-white shadow-sm border-b border-slate-200 fixed top-0 left-0 z-[100] h-[65px]">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center">
-          <span className="text-2xl font-bold text-blue-600">🍃 Twin Acacia</span>
-        </div>
-      </div>
-    );
-  }
+  const handleLogout = () => {
+    signOut();
+    router.replace("/");
+    router.refresh();
+  };
 
   return (
     <div className="w-full bg-white shadow-sm border-b border-slate-200 fixed top-0 left-0 z-[100]">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        
-        {/* Logo & Portal Tag */}
         <div className="flex items-center gap-6">
-          <Link 
-            href="/admin/dashboard" 
-            className="text-2xl font-bold text-blue-600 flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            🍃 Twin Acacia
+          <Link href="/admin/dashboard" className="text-2xl font-bold text-blue-600 hover:opacity-80 transition-opacity">
+            Twin Acacia
           </Link>
-          <span className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-            Admin Portal
+          <span suppressHydrationWarning className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+            {(activeAccount?.role || "admin").toUpperCase()} / {activeAccount?.full_name || "Admin"}
           </span>
         </div>
 
-        {/* Desktop Navigation */}
         <div className="hidden md:flex gap-2 font-medium items-center">
-          {navLinks.map((link) => 
+          {navLinks.map((link) =>
             link.external ? (
               <a
                 key={link.href}
@@ -84,9 +55,7 @@ export default function AdminTopBar() {
                 key={link.href}
                 href={link.href}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  pathname === link.href 
-                    ? "bg-blue-50 text-blue-600 shadow-sm" 
-                    : "text-slate-600 hover:bg-slate-50"
+                  pathname === link.href ? "bg-blue-50 text-blue-600 shadow-sm" : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 <link.icon size={18} />
@@ -94,20 +63,16 @@ export default function AdminTopBar() {
               </Link>
             )
           )}
-          
+
           <div className="w-[1px] h-6 bg-slate-200 mx-2" />
-          
-          <Link 
-            href="/" 
-            className="text-slate-500 hover:text-blue-600 text-sm font-bold transition-colors"
-          >
-            Back to Site
-          </Link>
+
+          <button onClick={handleLogout} className="text-slate-500 hover:text-blue-600 text-sm font-bold transition-colors flex items-center gap-2">
+            <LogOut size={14} /> Logout
+          </button>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <button 
-          className="md:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" 
+        <button
+          className="md:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle Menu"
         >
@@ -115,7 +80,6 @@ export default function AdminTopBar() {
         </button>
       </div>
 
-      {/* Mobile Navigation Dropdown */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-slate-100 p-4 absolute w-full shadow-2xl animate-in fade-in slide-in-from-top-2">
           <div className="flex flex-col gap-2">
@@ -138,9 +102,7 @@ export default function AdminTopBar() {
                   href={link.href}
                   onClick={closeMenu}
                   className={`flex items-center gap-3 p-4 rounded-xl transition-colors ${
-                    pathname === link.href 
-                      ? "bg-blue-50 text-blue-600 font-bold shadow-sm" 
-                      : "text-slate-600 active:bg-slate-50"
+                    pathname === link.href ? "bg-blue-50 text-blue-600 font-bold shadow-sm" : "text-slate-600 active:bg-slate-50"
                   }`}
                 >
                   <link.icon size={20} />
@@ -148,17 +110,19 @@ export default function AdminTopBar() {
                 </Link>
               )
             )}
-            
+
             <div className="h-[1px] bg-slate-100 my-2" />
-            
-            <Link
-              href="/"
-              onClick={closeMenu}
+
+            <button
+              onClick={() => {
+                closeMenu();
+                handleLogout();
+              }}
               className="flex items-center gap-3 p-4 text-slate-500 hover:text-blue-600 transition-colors"
             >
               <ArrowLeft size={20} />
-              Back to Homepage
-            </Link>
+              Logout
+            </button>
           </div>
         </div>
       )}

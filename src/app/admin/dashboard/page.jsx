@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, LayoutDashboard, Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,19 @@ import ResortCard from "./components/ResortCard";
 import SearchBar from "./components/SearchBar";
 import ActionsRequiredTab from "./components/ActionsRequiredTab"; 
 
-import { fakeData } from "./components/data/data";
 import { useResort } from "@/components/useclient/ContextEditor";
+import { useSupport } from "@/components/useclient/SupportClient";
 import { supabase } from "@/lib/supabase";
 import resortInitialData from "@/app/edit/resort-builder/[id]/data/ResortInitialData";
+
+const isMissingOwnerAdminTableError = (error) =>
+  !!error?.message &&
+  (error.message.includes("Could not find the table") ||
+    error.message.includes("does not exist") ||
+    error.message.includes("schema cache"));
+
+const ADMIN_RESORT_COLUMNS = ["id", "name", "location", "visible", "profileImage", "gallery", "created_at"].join(", ");
+const OWNER_ADMIN_COLUMNS = ["id", "resort_id", "sender_name", "sender_image", "subject", "message", "status", "created_at"].join(", ");
 
 export default function Page() {
   const [resorts, setResorts] = useState([]);
@@ -23,10 +32,11 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("resorts");
   const [activeActionTab, setActiveActionTab] = useState("resort");
   const { toast } = useToast();
-  const [messages, setMessages] = useState(fakeData);
+  const [messages, setMessages] = useState({ resort: [], account: [], support: [] });
+  const { listArchivedOwnerAdminMessages, archiveOwnerAdminMessage, isMissingSupportTableError } = useSupport();
   
   const router = useRouter();
-  const { resetResort } = useResort();
+  const { resetResort, deleteResort } = useResort();
 
   const [archives, setArchives] = useState({
     resort: [],
@@ -34,16 +44,12 @@ export default function Page() {
     support: []
   });
 
-  useEffect(() => {
-    fetchResorts();
-  }, []);
-
-  const fetchResorts = async () => {
+  const fetchResorts = useCallback(async () => {
     setFetching(true);
     try {
       const { data, error } = await supabase
         .from("resorts")
-        .select("*")
+        .select(ADMIN_RESORT_COLUMNS)
         .order("created_at", { ascending: false });
       if (error) throw error;
       setResorts(data || []);
@@ -52,44 +58,117 @@ export default function Page() {
     } finally {
       setFetching(false);
     }
-  };
+  }, []);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
-      const { data: resortMsgs } = await supabase.from("resort_messages").select("*").eq("status", "pending");
-      const { data: accountMsgs } = await supabase.from("account_messages").select("*").eq("status", "pending");
-      const { data: supportMsgs } = await supabase.from("support_messages").select("*").eq("status", "pending");
+      const { data: ownerMsgs, error: ownerMsgError } = await supabase
+        .from("owner_admin_messages")
+        .select(OWNER_ADMIN_COLUMNS)
+        .eq("sender_role", "owner")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (ownerMsgError && !isMissingOwnerAdminTableError(ownerMsgError)) {
+        throw ownerMsgError;
+      }
+      if (ownerMsgError && isMissingOwnerAdminTableError(ownerMsgError)) {
+        toast({
+          message: "Owner-admin support table is missing. Run phase4_owner_admin_messages.sql.",
+          color: "amber",
+        });
+      }
+
+      const normalized = (ownerMsgs || []).map((row) => ({
+        id: row.id,
+        resort_id: row.resort_id,
+        title: (row.subject || "support").toString().replace(/^./, (c) => c.toUpperCase()),
+        content: row.message,
+        requestedBy: row.sender_name || `Resort #${row.resort_id || "Unknown"}`,
+        senderImage: row.sender_image || null,
+        status: row.status,
+        category: ((row.subject || "support").toString().toLowerCase()),
+        created_at: row.created_at,
+      }));
+
+      const resortMsgs = normalized.filter((msg) => msg.category === "resort");
+      const accountMsgs = normalized.filter((msg) => msg.category === "account");
+      const supportMsgs = normalized.filter((msg) => msg.category !== "resort" && msg.category !== "account");
+
+      let archivedRows = [];
+      try {
+        archivedRows = await listArchivedOwnerAdminMessages();
+      } catch (archiveError) {
+        if (!isMissingSupportTableError(archiveError)) {
+          throw archiveError;
+        }
+      }
+      const normalizedArchived = (archivedRows || []).map((row) => ({
+        id: `arch:${row.id}`,
+        resort_id: row.resort_id,
+        title: (row.subject || "support").toString().replace(/^./, (c) => c.toUpperCase()),
+        content: row.message,
+        requestedBy: row.sender_name || `Resort #${row.resort_id || "Unknown"}`,
+        senderImage: row.sender_image || null,
+        status: row.status || "resolved",
+        category: ((row.subject || "support").toString().toLowerCase()),
+        created_at: row.created_at,
+        archived_at: row.archived_at,
+      }));
 
       setMessages({
         resort: resortMsgs || [],
         account: accountMsgs || [],
-        support: supportMsgs || [],
+        support: supportMsgs,
+      });
+      setArchives({
+        resort: normalizedArchived.filter((msg) => msg.category === "resort"),
+        account: normalizedArchived.filter((msg) => msg.category === "account"),
+        support: normalizedArchived.filter((msg) => msg.category !== "resort" && msg.category !== "account"),
       });
     } catch (err) {
       console.error(err.message);
     }
-  };
+  }, [isMissingSupportTableError, listArchivedOwnerAdminMessages, toast]);
 
-  const handleResolve = (id) => {
+  useEffect(() => {
+    fetchResorts();
+    fetchMessages();
+  }, [fetchMessages, fetchResorts]);
+
+  const handleResolve = async (id) => {
     const resolvedMsg = messages[activeActionTab].find(msg => msg.id === id);
+    if (!resolvedMsg) return;
 
-    // Move message to archives
-    setArchives(prev => ({
-      ...prev,
-      [activeActionTab]: [...prev[activeActionTab], resolvedMsg]
-    }));
+    const { data: sourceRow, error: loadError } = await supabase
+      .from("owner_admin_messages")
+      .select("id, resort_id, sender_name, sender_image, subject, message, status, created_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (loadError) {
+      toast({
+        message: `Failed to resolve request: ${loadError.message}`,
+        color: "red",
+      });
+      return;
+    }
+    if (!sourceRow) return;
 
-    // Remove from active messages
-    setMessages(prev => ({
-      ...prev,
-      [activeActionTab]: prev[activeActionTab].filter(msg => msg.id !== id)
-    }));
+    try {
+      await archiveOwnerAdminMessage(sourceRow);
+    } catch (archiveError) {
+      toast({
+        message: `Failed to archive request: ${archiveError.message}`,
+        color: "red",
+      });
+      return;
+    }
 
     toast({
       message: "Request resolved and archived",
       color: "green",
       icon: CheckCircle2,
     });
+    fetchMessages();
   };
 
   const filteredResorts = resorts.filter(
@@ -134,6 +213,28 @@ export default function Page() {
         duration: 4000
       });
     }
+  };
+
+  const handleDeleteResort = async (resortId, resortName) => {
+    const confirmed = window.confirm(
+      `Delete ${resortName}? This will remove resort data, related bookings, and uploaded proof/images from storage.`
+    );
+    if (!confirmed) return;
+    const result = await deleteResort(resortId);
+    if (!result?.ok) {
+      toast({
+        message: `Failed to delete resort: ${result?.error || "Unknown error"}`,
+        color: "red",
+      });
+      return;
+    }
+    toast({
+      message: `${resortName} deleted successfully.`,
+      color: "green",
+      icon: CheckCircle2,
+    });
+    fetchResorts();
+    fetchMessages();
   };
     
   return (
@@ -195,7 +296,7 @@ export default function Page() {
               filteredResorts.map((resort) => (
                 <ResortCard key={resort.id} 
                 resort={resort} 
-                onDelete={fetchResorts} 
+                onDelete={handleDeleteResort} 
                 onToggleVisibility={handleToggleVisibility} 
                 />
               ))
