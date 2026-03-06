@@ -18,6 +18,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const GROUP_COLORS = ["bg-blue-600", "bg-orange-500", "bg-emerald-600", "bg-amber-500"];
+const HALF_BG_CLASSES = [
+  "from-blue-600 to-orange-500",
+  "from-orange-500 to-emerald-600",
+  "from-emerald-600 to-amber-500",
+  "from-amber-500 to-blue-600",
+];
 
 export default function BookingCalendar() {
   const { resort } = useResort();
@@ -44,8 +50,8 @@ export default function BookingCalendar() {
     setActiveRangeId(null);
   };
 
-  const getDateBooking = (dateString) =>
-    bookingList.find((booking) => {
+  const getDateBookings = (dateString) =>
+    bookingList.filter((booking) => {
       const roomMatch = booking.roomIds?.some((rid) => selectedRooms.includes(rid));
       if (!roomMatch || !booking.startDate) return false;
       if (!booking.endDate) return booking.startDate === dateString;
@@ -89,7 +95,8 @@ export default function BookingCalendar() {
   const navigateToForm = (bookingId) => router.push(`/edit/bookings/${params.id}/booking-details/${bookingId}`);
 
   const handleDateClick = (dateString) => {
-    const clickedBooking = getDateBooking(dateString);
+    const clickedBookings = getDateBookings(dateString);
+    const clickedBooking = clickedBookings[0] || null;
 
     if (!isRangeMode) {
       if (clickedBooking) navigateToDetails(clickedBooking.id);
@@ -137,7 +144,15 @@ export default function BookingCalendar() {
   const getBookingTooltip = (booking) => {
     const checkIn = booking?.checkInTime || booking?.bookingForm?.checkInTime || "--:--";
     const checkOut = booking?.checkOutTime || booking?.bookingForm?.checkOutTime || "--:--";
-    return `Time In: ${checkIn} | Time Out: ${checkOut}`;
+    return `${checkIn} - ${checkOut}`;
+  };
+
+  const getDateTooltip = (dateBookings) => {
+    if (!dateBookings?.length) return "";
+    return dateBookings
+      .slice(0, 2)
+      .map((booking, index) => `Range ${index + 1}: ${getBookingTooltip(booking)}`)
+      .join(" | ");
   };
 
   const renderMonth = (monthOffset) => {
@@ -160,23 +175,46 @@ export default function BookingCalendar() {
           {Array.from({ length: days }).map((_, index) => {
             const day = index + 1;
             const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const booking = getDateBooking(dateString);
-            const isActive = booking && activeRangeId && booking.id?.toString() === activeRangeId?.toString();
+            const dateBookings = getDateBookings(dateString);
+            const booking = dateBookings[0] || null;
+            const secondaryBooking = dateBookings[1] || null;
+            const hasSplit = !!booking && !!secondaryBooking;
+            const isActive =
+              !!activeRangeId &&
+              dateBookings.some((entry) => entry.id?.toString() === activeRangeId?.toString());
+            const primaryColor = booking ? getBookingColor(booking) : "";
+            const splitGradient = hasSplit
+              ? HALF_BG_CLASSES[
+                  bookingList.findIndex((entry) => entry.id?.toString() === booking.id?.toString()) % HALF_BG_CLASSES.length
+                ]
+              : "";
 
 
             return (
               <button
                 key={day}
                 onClick={() => handleDateClick(dateString)}
+                title={!isRangeMode ? getDateTooltip(dateBookings) : ""}
                 className={`h-9 w-full rounded-lg text-sm transition-all relative 
-                  ${booking ? `${getBookingColor(booking)} text-white` : "hover:bg-slate-100 text-slate-600"} 
+                  ${booking ? "text-white" : "hover:bg-slate-100 text-slate-600"} 
                   ${isActive ? "ring-2 ring-offset-2 ring-slate-400 scale-90 z-10" : ""} 
                   ${booking?.startDate === dateString ? "rounded-r-none" : ""} 
                   ${booking?.endDate === dateString ? "rounded-l-none" : ""} 
                   ${booking && booking.startDate !== dateString && booking.endDate !== dateString ? "rounded-none opacity-80" : ""}
                 `}
               >
-                {day}
+                {booking ? (
+                  hasSplit ? (
+                    <span
+                      className={`absolute inset-0 rounded-[inherit] bg-gradient-to-r ${splitGradient} ${booking?.startDate !== dateString && booking?.endDate !== dateString ? "opacity-90" : ""}`}
+                    />
+                  ) : (
+                    <span
+                      className={`absolute inset-0 rounded-[inherit] ${primaryColor} ${booking?.startDate !== dateString && booking?.endDate !== dateString ? "opacity-90" : ""}`}
+                    />
+                  )
+                ) : null}
+                <span className="relative z-10">{day}</span>
               </button>
             );
           })}

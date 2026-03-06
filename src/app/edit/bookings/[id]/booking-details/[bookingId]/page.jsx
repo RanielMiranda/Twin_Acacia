@@ -65,6 +65,9 @@ function buildDraftFromBooking(booking) {
     checkOutTime: form.checkOutTime || booking.checkOutTime || "11:00",
     paymentMethod: form.paymentMethod || "Pending",
     downpayment: Number(form.downpayment || 0),
+    pendingDownpayment: Number(form.pendingDownpayment || 0),
+    pendingPaymentMethod: form.pendingPaymentMethod || null,
+    paymentPendingApproval: !!form.paymentPendingApproval,
     totalAmount: Number(form.totalAmount || 0),
     paymentDeadline: form.paymentDeadline || booking.paymentDeadline || null,
     paymentProofUrl: form.paymentProofUrl || null,
@@ -89,6 +92,23 @@ function formatWeekdayLabel(dateValue) {
   const parsed = new Date(`${dateValue}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return "Invalid date";
   return parsed.toLocaleDateString(undefined, { weekday: "long" });
+}
+
+function toDateTimeMs(dateValue, timeValue, fallbackTime) {
+  if (!dateValue) return null;
+  const safeTime = (timeValue || fallbackTime || "00:00").slice(0, 5);
+  const parsed = new Date(`${dateValue}T${safeTime}:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.getTime();
+}
+
+function overlapsByDateTime(a, b) {
+  const startA = toDateTimeMs(a.startDate, a.checkInTime || a.bookingForm?.checkInTime, "00:00");
+  const endA = toDateTimeMs(a.endDate || a.startDate, a.checkOutTime || a.bookingForm?.checkOutTime, "23:59");
+  const startB = toDateTimeMs(b.startDate, b.checkInTime || b.bookingForm?.checkInTime, "00:00");
+  const endB = toDateTimeMs(b.endDate || b.startDate, b.checkOutTime || b.bookingForm?.checkOutTime, "23:59");
+  if ([startA, endA, startB, endB].some((value) => value === null)) return false;
+  return startA < endB && startB < endA;
 }
 
 export default function BookingDetailsPage() {
@@ -130,12 +150,7 @@ export default function BookingDetailsPage() {
     if (!booking || entry.id?.toString() === booking.id?.toString()) return false;
     const sharedRoom = (entry.roomIds || []).some((rid) => (booking.roomIds || []).includes(rid));
     if (!sharedRoom) return false;
-    const startA = booking.startDate;
-    const endA = booking.endDate || booking.startDate;
-    const startB = entry.startDate;
-    const endB = entry.endDate || entry.startDate;
-    if (!startA || !startB) return false;
-    return !(endA < startB || endB < startA);
+    return overlapsByDateTime(booking, entry);
   });
 
   useEffect(() => {
@@ -269,6 +284,9 @@ function BookingModernEditor({
           status: base.status,
           paymentMethod: base.paymentMethod,
           downpayment: base.downpayment,
+          pendingDownpayment: base.pendingDownpayment,
+          pendingPaymentMethod: base.pendingPaymentMethod,
+          paymentPendingApproval: base.paymentPendingApproval,
           paymentProofUrl: base.paymentProofUrl,
           paymentSubmittedAt: base.paymentSubmittedAt,
           paymentVerified: base.paymentVerified,
@@ -368,14 +386,41 @@ function BookingModernEditor({
     persist(next);
   };
 
-  const handleVerifyProof = () => {
+  const handleVerifyProof = async () => {
+    const approving = !draft.paymentVerified;
+    const pendingAmount = Number(draft.pendingDownpayment || 0);
+    const approvedAmount = approving ? pendingAmount : 0;
+    const nextDownpayment = approving
+      ? Number(draft.downpayment || 0) + approvedAmount
+      : Number(draft.downpayment || 0);
+    const nextMethod = approving ? draft.pendingPaymentMethod || draft.paymentMethod : draft.paymentMethod;
+
     const next = {
       ...draft,
-      paymentVerified: !draft.paymentVerified,
-      paymentVerifiedAt: !draft.paymentVerified ? new Date().toISOString() : null,
+      paymentVerified: approving,
+      paymentVerifiedAt: approving ? new Date().toISOString() : null,
+      downpayment: nextDownpayment,
+      paymentMethod: nextMethod,
+      pendingDownpayment: approving ? 0 : draft.pendingDownpayment,
+      pendingPaymentMethod: approving ? null : draft.pendingPaymentMethod,
+      paymentPendingApproval: approving ? false : draft.paymentPendingApproval,
     };
     setDraft(next);
     persist(next);
+
+    if (approving && approvedAmount > 0) {
+      const balanceAfter = Math.max(0, Number(next.totalAmount || 0) - Number(next.downpayment || 0));
+      const { error } = await supabase.from("booking_transactions").insert({
+        booking_id: booking.id,
+        method: nextMethod || "Pending",
+        amount: approvedAmount,
+        balance_after: balanceAfter,
+        note: "Downpayment approved by owner",
+      });
+      if (error) {
+        console.error("Failed to log booking transaction:", error.message);
+      }
+    }
   };
 
   return (
@@ -549,6 +594,11 @@ function BookingModernEditor({
                   </div>
                   <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
                     <p className="text-[10px] text-emerald-700 font-bold mb-1">Owner Verification</p>
+                    {Number(draft.pendingDownpayment || 0) > 0 ? (
+                      <p className="text-[10px] text-emerald-700/80 mb-2">
+                        Pending approval: PHP {Number(draft.pendingDownpayment || 0).toLocaleString()} ({draft.pendingPaymentMethod || "Pending"})
+                      </p>
+                    ) : null}
                     <button onClick={handleVerifyProof} className="flex items-center gap-2 text-xs font-black text-emerald-600 uppercase tracking-tighter">
                       {draft.paymentVerified ? <CheckCircle size={14} /> : <ShieldCheck size={14} />}
                       {draft.paymentVerified ? "Transaction Verified" : "Mark as Verified"}
@@ -582,6 +632,14 @@ function BookingModernEditor({
                     <span className="font-bold">PHP {Number(draft.downpayment || 0).toLocaleString()}</span>
                   )}
                 </div>
+                {Number(draft.pendingDownpayment || 0) > 0 ? (
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-slate-400">Pending Approval</span>
+                    <span className="font-bold text-amber-300">
+                      PHP {Number(draft.pendingDownpayment || 0).toLocaleString()}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-slate-400">Channel</span>
                   {isEditing ? (
