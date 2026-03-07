@@ -7,6 +7,7 @@ const resortInitialData = {
   contactMedia: "https://facebook.com/resort",
   profileImage:
     "",
+  payment_image_url: null,
 
   description: {
     summary:

@@ -180,6 +180,7 @@ export default function BookingDetailsPage() {
       resortRooms={currentResort?.rooms || []}
       allBookings={bookings || []}
       statusAudits={statusAudits}
+      resortPaymentImageUrl={currentResort?.payment_image_url}
     />
     <Toast />
   </div>    

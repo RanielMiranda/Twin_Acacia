@@ -15,6 +15,7 @@ import {
   ReceiptText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getTransformedSupabaseImageUrl } from "@/lib/utils";
 import { InfoItem, SectionLabel, StatusBadge } from "./BookingEditorAtoms";
 
 export function ClientCardSection({ resortName, isEditing, draft, setField, status }) {
@@ -92,12 +93,6 @@ export function StayCardSection({
         <InfoItem label="Check-Out" value={draft.checkOutDate} editing={isEditing} type="date" onChange={(val) => setField("checkOutDate", val)} />
         <InfoItem label="Check-In-Day" value={formatWeekdayLabel(draft.checkInDate)} editing={isEditing} type="date" onChange={(val) => setField("checkInDate", val)} />
         <InfoItem label="Check-Out-Day" value={formatWeekdayLabel(draft.checkOutDate)} editing={isEditing} type="date" onChange={(val) => setField("checkOutDate", val)} />
-        <InfoItem label="Pax" value={draft.guestCount} editing={isEditing} type="number" onChange={(val) => setField("guestCount", Number(val) || 0)} />
-        <InfoItem label="Sleeping" value={draft.sleepingGuests || 0} editing={isEditing} type="number" onChange={(val) => setField("sleepingGuests", Number(val) || 0)} />
-        <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
-        <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
-        <InfoItem label="Adults" value={draft.adultCount || 0} editing={isEditing} type="number" onChange={(val) => setField("adultCount", Number(val) || 0)} />
-        <InfoItem label="Children" value={draft.childrenCount || 0} editing={isEditing} type="number" onChange={(val) => setField("childrenCount", Number(val) || 0)} />
         <InfoItem label="Total Days Stay" value={totalStayDays} />  
         <InfoItem
           label="Room"
@@ -110,6 +105,12 @@ export function StayCardSection({
               : draft.roomName) || "Not assigned"
           }
         />
+        <InfoItem label="Pax" value={draft.guestCount} editing={isEditing} type="number" onChange={(val) => setField("guestCount", Number(val) || 0)} />
+        <InfoItem label="Sleeping" value={draft.sleepingGuests || 0} editing={isEditing} type="number" onChange={(val) => setField("sleepingGuests", Number(val) || 0)} />
+        <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
+        <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
+        <InfoItem label="Adults" value={draft.adultCount || 0} editing={isEditing} type="number" onChange={(val) => setField("adultCount", Number(val) || 0)} />
+        <InfoItem label="Children" value={draft.childrenCount || 0} editing={isEditing} type="number" onChange={(val) => setField("childrenCount", Number(val) || 0)} />
         <InfoItem label="Approved By" value={approvedByName} />        
       </div>
       <div className={`rounded-xl px-3 py-2 border ${conflicts.length > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`}>
@@ -186,7 +187,9 @@ export function ProofCardSection({
   draft,
   resolveSignedProofUrl,
   handleVerifyProof,
+  resortPaymentImageUrl,
 }) {
+  const hasResortPaymentImage = !!resortPaymentImageUrl && typeof resortPaymentImageUrl === "string";
   return (
     <div className={`p-6 rounded-[2rem] border-2 transition-all shadow-xl ${
       hasProof ? "bg-white border-emerald-100 shadow-emerald-50" : "bg-slate-50 border-dashed border-slate-200 shadow-none"
@@ -199,6 +202,27 @@ export function ProofCardSection({
           <span className="bg-slate-200 text-slate-500 text-[9px] font-black px-2 py-1 rounded-md">AWAITING</span>
         )}
       </div>
+
+      {hasResortPaymentImage && (
+        <div className="mb-6 p-3 rounded-xl border border-blue-100 bg-blue-50/50">
+          <p className="text-[10px] font-black text-blue-700 uppercase tracking-wider mb-2">Payment reference (GCash / Bank)</p>
+          <a
+            href={resortPaymentImageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block relative group overflow-hidden rounded-xl border border-slate-100 max-w-[200px]"
+          >
+            <img
+              src={getTransformedSupabaseImageUrl(resortPaymentImageUrl, { width: 400, quality: 85, format: "webp" })}
+              alt="Payment reference"
+              className="w-full h-28 object-cover group-hover:scale-105 transition-transform"
+            />
+            <span className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+              <ExternalLink size={16} className="text-white" />
+            </span>
+          </a>
+        </div>
+      )}
 
       {hasProof ? (
         <div className="space-y-4">

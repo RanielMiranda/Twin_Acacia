@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BUCKET_NAME, convertImageFileToWebp, getStoragePathFromPublicUrl } from "@/lib/utils";
+import { uploadResortPaymentImage } from "@/lib/resortPaymentImage";
 import { useResortData } from "./ResortDataClient";
 
 const ResortEditorContext = createContext(null);
@@ -20,6 +21,7 @@ const RESORT_DB_COLUMNS = [
   "contactEmail",
   "contactMedia",
   "profileImage",
+  "payment_image_url",
   "description",
   "extraServices",
   "facilities",
@@ -58,6 +60,9 @@ const collectResortImageUrls = (resortLike) => {
       if (typeof img === "string" && img) urls.add(img);
     });
   });
+  if (typeof resortLike.payment_image_url === "string" && resortLike.payment_image_url) {
+    urls.add(resortLike.payment_image_url);
+  }
   return urls;
 };
 
@@ -290,7 +295,7 @@ export function ResortEditorProvider({ children }) {
       const rName = resort.name;
       const { data: existingResort } = await supabase
         .from("resorts")
-        .select("profileImage, gallery, facilities, rooms")
+        .select("profileImage, payment_image_url, gallery, facilities, rooms")
         .eq("id", resort.id)
         .single();
 
@@ -298,6 +303,11 @@ export function ResortEditorProvider({ children }) {
         resort.profileImage instanceof File
           ? await uploadImage(resort.profileImage, rName, "profileImage")
           : resort.profileImage;
+
+      const updatedPaymentImageUrl =
+        resort.payment_image_url instanceof File
+          ? await uploadResortPaymentImage(supabase, resort.payment_image_url, rName)
+          : resort.payment_image_url;
 
       const updatedGallery = await Promise.all(
         (resort.gallery || []).map(async (item) =>
@@ -329,6 +339,7 @@ export function ResortEditorProvider({ children }) {
       const finalPayload = {
         ...resort,
         profileImage: updatedProfileImage,
+        payment_image_url: updatedPaymentImageUrl,
         gallery: updatedGallery,
         facilities: updatedFacilities,
         rooms: updatedRooms,

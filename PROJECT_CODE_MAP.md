@@ -56,6 +56,13 @@ Quick reference for where key logic lives.
     - Supabase storage path extraction
     - image transform/srcSet helpers
     - bucket constants
+    - `convertImageFileToWebp()` (shared WebP conversion)
+    - `getResortStoragePath()` (e.g. resortname/payment)
+
+- `resortPaymentImage.js`
+  - Shared upload/delete for resort payment reference image (e.g. GCash QR).
+  - `uploadResortPaymentImage(supabase, file, resortName)` → converts to WebP, uploads to `[resortname]/payment` in bucket, returns public URL.
+  - `deleteResortPaymentImage(supabase, imageUrl)` → removes object from storage when image is removed/replaced.
 
 - `bookingFlow.js`
   - Booking confirmation stub generator.
@@ -136,6 +143,9 @@ Quick reference for where key logic lives.
 
 - `supabase/booking_system_related_schema.sql`
   - Combined schema phases (bookings, transactions, support messaging, accounts, archive).
+
+- `supabase/add_resort_payment_image.sql`
+  - Adds `payment_image_url` (text) to `resorts` for optional payment reference image (e.g. GCash QR). Storage: `[resortname]/payment` in resort-images bucket.
 
 - `supabase/phase8_security_hardening.sql`
   - Status transition enforcement trigger.

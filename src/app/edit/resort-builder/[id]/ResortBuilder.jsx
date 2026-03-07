@@ -8,6 +8,7 @@ import { useResort } from "@/components/useclient/ContextEditor"; // Import only
 import FacilityEditor from "./components/facility/FacilityEditor";
 import HeroGalleryEditor from "./components/HeroGalleryEditor";
 import ProfileEditor from "./components/ProfileEditor";
+import PaymentImageEditor from "./components/PaymentImageEditor";
 import RoomsEditor from "./components/RoomsEditor";
 import ServicesEditor from "./components/ServicesEditor";
 import ShortcutBar from "./components/ShortcutBar";
@@ -55,6 +56,7 @@ export default function ResortBuilder({ resortId }) {
       <HeroGalleryEditor />
       <ShortcutBar />
       <ProfileEditor />
+      <PaymentImageEditor />
       <FacilityEditor />
       <ServicesEditor />
       <RoomsEditor />
