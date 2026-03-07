@@ -66,6 +66,10 @@ Quick reference for where key logic lives.
 - `caretakerNotifications.js`
   - Notification write helper used after payment approval.
 
+- `server/bookingStatusAutomation.js`
+  - Server-only status automation runner.
+  - Auto-moves overdue confirmed/ongoing bookings to `Pending Checkout`.
+
 ## Main Public Pages
 
 - `src/app/(main)/components/hero/HeroBanner.jsx`
@@ -129,6 +133,15 @@ Quick reference for where key logic lives.
 
 - `supabase/booking_system_related_schema.sql`
   - Combined schema phases (bookings, transactions, support messaging, accounts, archive).
+
+## Server Automation
+
+- `src/app/api/internal/booking-status/route.js`
+  - Cron-safe internal endpoint.
+  - Uses `CRON_SECRET` (or `BOOKING_AUTOMATION_SECRET`) auth in non-dev.
+
+- `vercel.json`
+  - Cron schedule for `/api/internal/booking-status` every 30 minutes.
 
 ## Rule of Thumb
 
