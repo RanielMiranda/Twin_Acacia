@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+import { generateIdempotencyKey } from "@/lib/idempotency";
 
 const SupportContext = createContext(null);
 
@@ -222,8 +223,38 @@ export function SupportProvider({ children }) {
   }, []);
 
   const sendTicketMessage = useCallback(async (payload) => {
-    const { error } = await supabase.from("ticket_messages").insert(payload);
-    if (error) throw error;
+    const idempotencyKey = payload?.idempotency_key || generateIdempotencyKey("ticket-msg");
+    const rpcPayload = {
+      p_booking_id: payload.booking_id,
+      p_resort_id: payload.resort_id ?? null,
+      p_sender_role: payload.sender_role,
+      p_sender_name: payload.sender_name ?? null,
+      p_message: payload.message,
+      p_idempotency_key: idempotencyKey,
+    };
+
+    const { error: rpcError } = await supabase.rpc("send_ticket_message_safe", rpcPayload);
+    if (!rpcError) return;
+
+    const rpcMissing =
+      rpcError.message?.includes("send_ticket_message_safe") &&
+      (rpcError.message?.includes("does not exist") || rpcError.message?.includes("schema cache"));
+
+    if (!rpcMissing) throw rpcError;
+
+    const { error } = await supabase.from("ticket_messages").insert({
+      ...payload,
+      idempotency_key: idempotencyKey,
+    });
+    if (!error) return;
+
+    const missingColumn =
+      error.message?.includes("idempotency_key") &&
+      (error.message?.includes("does not exist") || error.message?.includes("schema cache"));
+    if (!missingColumn) throw error;
+
+    const { error: plainInsertError } = await supabase.from("ticket_messages").insert(payload);
+    if (plainInsertError) throw plainInsertError;
   }, []);
 
   const value = useMemo(

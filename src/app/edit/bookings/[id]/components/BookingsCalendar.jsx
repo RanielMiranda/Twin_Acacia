@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import {
   Calendar as CalendarIcon,
   Clock3,
-  Pen,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -18,12 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const GROUP_COLORS = ["bg-blue-600", "bg-orange-500", "bg-emerald-600", "bg-amber-500"];
-const HALF_BG_CLASSES = [
-  "from-blue-600 to-orange-500",
-  "from-orange-500 to-emerald-600",
-  "from-emerald-600 to-amber-500",
-  "from-amber-500 to-blue-600",
-];
+const GROUP_COLOR_HEX = ["#2563eb", "#f97316", "#059669", "#f59e0b"];
 
 export default function BookingCalendar() {
   const { resort } = useResort();
@@ -34,7 +28,6 @@ export default function BookingCalendar() {
   const [selectedRoomIds, setSelectedRoomIds] = useState([]);
   const [activeRangeId, setActiveRangeId] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [isRangeMode, setIsRangeMode] = useState(false);
 
   const rooms = resort?.rooms || [];
   const bookingList = useMemo(() => bookings || resort?.bookings || [], [bookings, resort?.bookings]);
@@ -42,6 +35,11 @@ export default function BookingCalendar() {
     const index = bookingList.findIndex((entry) => entry.id?.toString() === booking.id?.toString());
     if (index < 0) return GROUP_COLORS[0];
     return GROUP_COLORS[index % GROUP_COLORS.length];
+  };
+  const getBookingColorHex = (booking) => {
+    const index = bookingList.findIndex((entry) => entry.id?.toString() === booking.id?.toString());
+    if (index < 0) return GROUP_COLOR_HEX[0];
+    return GROUP_COLOR_HEX[index % GROUP_COLOR_HEX.length];
   };
   const selectedRooms = selectedRoomIds.length > 0 ? selectedRoomIds : rooms[0]?.id ? [rooms[0].id] : [];
 
@@ -62,49 +60,36 @@ export default function BookingCalendar() {
       );
     });
 
-  const addBookingGroup = () => {
-    if (selectedRooms.length === 0) {
-      alert("Select at least one room first");
-      return;
-    }
 
-    const newId = Date.now().toString();
-    createBooking({
-      id: newId,
-      roomIds: [...selectedRooms],
-      startDate: null,
-      endDate: null,
-      checkInTime: "14:00",
-      checkOutTime: "11:00",
-      bookingForm: {
-        status: "Inquiry",
-        roomCount: selectedRooms.length,
-        checkInTime: "14:00",
-        checkOutTime: "11:00",
-      },
-    });
-    setActiveRangeId(newId);
-  };
-
-  const handleToggleRangeMode = () => {
-    if (!isRangeMode) addBookingGroup();
-    setIsRangeMode((prev) => !prev);
-  };
-
-  const navigateToDetails = (bookingId) => router.push(`/edit/bookings/${params.id}/booking-details/${bookingId}`);
   const navigateToForm = (bookingId) => router.push(`/edit/bookings/${params.id}/booking-details/${bookingId}`);
 
   const handleDateClick = (dateString) => {
     const clickedBookings = getDateBookings(dateString);
     const clickedBooking = clickedBookings[0] || null;
 
-    if (!isRangeMode) {
-      if (clickedBooking) navigateToDetails(clickedBooking.id);
-      return;
-    }
-
     if (!activeRangeId) {
-      if (clickedBooking) setActiveRangeId(clickedBooking.id.toString());
+      if (clickedBooking) {
+        setActiveRangeId(clickedBooking.id.toString());
+        return;
+      }
+      const newId = addBookingGroup();
+      if (!newId) return;
+      updateBookingById(newId, {
+        id: newId,
+        roomIds: [...selectedRooms],
+        startDate: dateString,
+        endDate: null,
+        checkInTime: "14:00",
+        checkOutTime: "11:00",
+        bookingForm: {
+          status: "Inquiry",
+          roomCount: selectedRooms.length,
+          checkInDate: dateString,
+          checkOutDate: "",
+          checkInTime: "14:00",
+          checkOutTime: "11:00",
+        },
+      });
       return;
     }
 
@@ -176,25 +161,30 @@ export default function BookingCalendar() {
             const day = index + 1;
             const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const dateBookings = getDateBookings(dateString);
-            const booking = dateBookings[0] || null;
-            const secondaryBooking = dateBookings[1] || null;
+            const orderedBookings = [...dateBookings].sort((a, b) => {
+              const startA = a.startDate || "";
+              const startB = b.startDate || "";
+              if (startA !== startB) return startA.localeCompare(startB);
+              return String(a.id || "").localeCompare(String(b.id || ""));
+            });
+            const booking = orderedBookings[0] || null;
+            const secondaryBooking = orderedBookings[1] || null;
             const hasSplit = !!booking && !!secondaryBooking;
             const isActive =
               !!activeRangeId &&
               dateBookings.some((entry) => entry.id?.toString() === activeRangeId?.toString());
             const primaryColor = booking ? getBookingColor(booking) : "";
-            const splitGradient = hasSplit
-              ? HALF_BG_CLASSES[
-                  bookingList.findIndex((entry) => entry.id?.toString() === booking.id?.toString()) % HALF_BG_CLASSES.length
-                ]
-              : "";
-
+            const splitGradientStyle = hasSplit
+              ? {
+                  backgroundImage: `linear-gradient(90deg, ${getBookingColorHex(booking)} 0%, ${getBookingColorHex(booking)} 50%, ${getBookingColorHex(secondaryBooking)} 50%, ${getBookingColorHex(secondaryBooking)} 100%)`,
+                }
+              : undefined;
 
             return (
               <button
                 key={day}
                 onClick={() => handleDateClick(dateString)}
-                title={!isRangeMode ? getDateTooltip(dateBookings) : ""}
+                title={getDateTooltip(dateBookings)}
                 className={`h-9 w-full rounded-lg text-sm transition-all relative 
                   ${booking ? "text-white" : "hover:bg-slate-100 text-slate-600"} 
                   ${isActive ? "ring-2 ring-offset-2 ring-slate-400 scale-90 z-10" : ""} 
@@ -206,7 +196,8 @@ export default function BookingCalendar() {
                 {booking ? (
                   hasSplit ? (
                     <span
-                      className={`absolute inset-0 rounded-[inherit] bg-gradient-to-r ${splitGradient} ${booking?.startDate !== dateString && booking?.endDate !== dateString ? "opacity-90" : ""}`}
+                      style={splitGradientStyle}
+                      className={`absolute inset-0 rounded-[inherit] ${booking?.startDate !== dateString && booking?.endDate !== dateString ? "opacity-90" : ""}`}
                     />
                   ) : (
                     <span
@@ -242,16 +233,7 @@ return (
             </h2>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Select dates to manage room availability</p>
           </div>
-          
-          <div className="flex items-center gap-3 w-full md:w-auto">
-             <Button
-                onClick={handleToggleRangeMode}
-                className={`w-full md:w-auto flex items-center justify-center ${isRangeMode ? "bg-emerald-600 shadow-emerald-100" : " shadow-slate-200"} rounded-2xl h-11 md:h-12 px-4 md:px-6 font-bold gap-2 shadow-lg transition-all`}
-              >
-                <Pen size={16} />
-                {isRangeMode ? "Range Mode: Active" : "Enable Range Selection"}
-              </Button>
-          </div>
+        
         </div>
 
         {/* Room Filter Bar */}
@@ -305,8 +287,8 @@ return (
                 return (
                   <div
                     key={booking.id}
-                    title={!isRangeMode ? getBookingTooltip(booking) : ""}
-                    onClick={() => (isRangeMode ? setActiveRangeId(booking.id.toString()) : navigateToDetails(booking.id))}
+                    title={getBookingTooltip(booking)}
+                    onClick={() => setActiveRangeId(booking.id.toString())}
                     className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer border transition-all ${
                       activeRangeId?.toString() === booking.id?.toString() ? "border-slate-400 bg-white shadow-sm" : "border-transparent bg-slate-50 opacity-70"
                     }`}

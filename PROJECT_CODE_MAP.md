@@ -70,6 +70,9 @@ Quick reference for where key logic lives.
   - Server-only status automation runner.
   - Auto-moves overdue confirmed/ongoing bookings to `Pending Checkout`.
 
+- `idempotency.js`
+  - Simple idempotency key generator for write actions/messages.
+
 ## Main Public Pages
 
 - `src/app/(main)/components/hero/HeroBanner.jsx`
@@ -133,6 +136,11 @@ Quick reference for where key logic lives.
 
 - `supabase/booking_system_related_schema.sql`
   - Combined schema phases (bookings, transactions, support messaging, accounts, archive).
+
+- `supabase/phase8_security_hardening.sql`
+  - Status transition enforcement trigger.
+  - Booking status/payment audit table + trigger.
+  - Ticket message idempotency column/index + safe insert RPC.
 
 ## Server Automation
 

@@ -281,11 +281,11 @@ export default function ClientTicketPage() {
       ["Resort", resort?.name || "-"],
       ["Guest Name", form.guestName || "-"],
       ["Status", booking.status || "Inquiry"],
+      ["Approved By", approvedByName],
       ["Pax", String(form.guestCount || 0)],
       ["Adults", String(form.adultCount || 0)],
       ["Children", String(form.childrenCount || 0)],
       ["Sleeping", String(form.sleepingGuests || 0)],
-      ["Rooms", String(form.roomCount || 0)],
       ["Assigned Rooms", assignedRoomNames.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"],
       ["Check-In", `${booking.start_date || form.checkInDate || "-"} ${booking.check_in_time || form.checkInTime || ""}`.trim()],
       ["Check-Out", `${booking.end_date || form.checkOutDate || "-"} ${booking.check_out_time || form.checkOutTime || ""}`.trim()],
@@ -400,6 +400,12 @@ export default function ClientTicketPage() {
   const paid = Number(form.downpayment || 0);
   const balance = Math.max(0, totalAmount - paid);
   const entryCode = form.confirmationStub?.code || `TKT-${String(booking.id).slice(-6).toUpperCase()}`;
+  const statusAuditEntries = Array.isArray(form.statusAudit) ? form.statusAudit : [];
+  const latestApprovalAudit = [...statusAuditEntries].reverse().find((entry) => {
+    const toStatus = String(entry?.to || "").toLowerCase();
+    return toStatus.includes("approved inquiry") || toStatus.includes("confirmed");
+  });
+  const approvedByName = latestApprovalAudit?.actorName || latestApprovalAudit?.actorRole || latestApprovalAudit?.actor || "Not approved yet";
   const assignedRoomNames =
     (form.assignedRoomNames && form.assignedRoomNames.length > 0
       ? form.assignedRoomNames
@@ -462,7 +468,7 @@ export default function ClientTicketPage() {
           <TicketRow label="Adults" value={form.adultCount || 0} />
           <TicketRow label="Children" value={form.childrenCount || 0} />
           <TicketRow label="Sleeping" value={form.sleepingGuests || 0} />
-          <TicketRow label="Rooms" value={form.roomCount || 0} />
+          <TicketRow label="Approved By" value={approvedByName} />
           <TicketRow label="Assigned Rooms" value={assignedRoomNames.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"} />
           <TicketRow label="Check-In" value={booking.start_date || form.checkInDate} subValue={booking.check_in_time || form.checkInTime} />
           <TicketRow label="Check-Out" value={booking.end_date || form.checkOutDate} subValue={booking.check_out_time || form.checkOutTime} />

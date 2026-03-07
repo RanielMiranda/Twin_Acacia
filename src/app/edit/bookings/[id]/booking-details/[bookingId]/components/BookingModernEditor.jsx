@@ -3,20 +3,10 @@
 import React, { useEffect, useState } from "react";
 import {
   Printer,
-  CheckCircle,
-  Clock,
+  Download,
   ChevronLeft,
-  User,
-  Calendar,
-  Mail,
-  Briefcase,
-  ReceiptText,
   FileText,
-  Image as ImageIcon,
-  ExternalLink,
-  ShieldCheck,
   AlertCircle,
-  Phone,
   Ticket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,7 +22,16 @@ import {
 } from "./bookingEditorUtils";
 import { PAYMENT_CHANNELS, PREVIOUS_STATUS, STATUS_PHASES } from "./bookingEditorConfig";
 import BookingEditorActionBar from "./BookingEditorActionBar";
-import { InfoItem, SectionLabel, StatusBadge } from "./BookingEditorAtoms";
+import {
+  AddOnsCardSection,
+  AssignRoomsCardSection,
+  ClientCardSection,
+  MessagesInboxCardSection,
+  PaymentCardSection,
+  ProofCardSection,
+  StatusAuditCardSection,
+  StayCardSection,
+} from "./BookingEditorSections";
 export default function BookingModernEditor({
   booking,
   resortName,
@@ -41,7 +40,6 @@ export default function BookingModernEditor({
   onDelete,
   onOpenForm,
   onOpenTicket,
-  onPrint,
   messages,
   issues,
   ownerReply,
@@ -53,6 +51,7 @@ export default function BookingModernEditor({
   createBookingTransaction,
   resortRooms = [],
   allBookings = [],
+  statusAudits = [],
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
@@ -61,10 +60,27 @@ export default function BookingModernEditor({
   const [draft, setDraft] = useState(() => buildDraftFromBooking(booking));
   const [proofPreviewUrl, setProofPreviewUrl] = useState(() => buildDraftFromBooking(booking).paymentProofUrl || null);
   const [assignedRoomIds, setAssignedRoomIds] = useState(() => booking.roomIds || []);
+  const [actorMeta, setActorMeta] = useState({ name: "Owner", role: "owner", id: "" });
 
   useEffect(() => {
     setAssignedRoomIds(booking.roomIds || []);
   }, [booking.id, booking.roomIds]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = sessionStorage.getItem("active_account_v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      setActorMeta({
+        name: parsed?.full_name || parsed?.email || "Owner",
+        role: parsed?.role || "owner",
+        id: parsed?.id ? String(parsed.id) : "",
+      });
+    } catch {
+      // keep default actor
+    }
+  }, []);
 
   useEffect(() => {
     const adults = Number(draft.adultCount || 0);
@@ -137,6 +153,21 @@ export default function BookingModernEditor({
   const hasDeadline = paymentDeadlineDate && !Number.isNaN(paymentDeadlineDate.getTime());
   const isDeadlineExpired = hasDeadline && paymentDeadlineDate.getTime() < renderedAt;
   const showDecisionActions = !normalizedStatus.includes("confirm");
+  const bookingFormAudits = Array.isArray(draft.statusAudit) ? draft.statusAudit : [];
+  const dbAudits = Array.isArray(statusAudits) ? statusAudits : [];
+  const approvalAuditFromDb = dbAudits.find((entry) => {
+    const next = String(entry?.new_status || "").toLowerCase();
+    return next.includes("confirmed") || next.includes("approved inquiry");
+  });
+  const approvalAuditFromForm = [...bookingFormAudits].reverse().find((entry) => {
+    const next = String(entry?.to || "").toLowerCase();
+    return next.includes("confirmed") || next.includes("approved inquiry");
+  });
+  const approvedByName =
+    approvalAuditFromForm?.actorName ||
+    approvalAuditFromDb?.actor_name ||
+    approvalAuditFromDb?.actor_role ||
+    "Not approved yet";
 
   const setField = (field, value) => setDraft((prev) => ({ ...prev, [field]: value }));
 
@@ -161,6 +192,9 @@ export default function BookingModernEditor({
               to: nextStatus,
               at: new Date().toISOString(),
               actor: "owner-ui",
+              actorRole: actorMeta.role || "owner",
+              actorId: actorMeta.id || "",
+              actorName: actorMeta.name || "Owner",
             },
           ]
         : currentAudit;
@@ -182,10 +216,81 @@ export default function BookingModernEditor({
         assignedRoomIds,
         assignedRoomNames: selectedRoomNames,
         statusAudit,
+        lastActionBy: actorMeta.name || "Owner",
       },
     };
 
     await Promise.resolve(onSave(payload));
+  };
+
+  const buildEntryPassRows = () => {
+    const assigned = assignedRoomIds.length > 0
+      ? (resortRooms || [])
+          .filter((room) => assignedRoomIds.includes(room.id))
+          .map((room) => room.name)
+          .join(", ")
+      : (draft.roomName || "Not assigned");
+    return [
+      ["Guest Name", draft.guestName || "Guest"],
+      ["Status", status || "Inquiry"],
+      ["Approved By", approvedByName],
+      ["Pax", String(draft.guestCount || 0)],
+      ["Assigned Rooms", assigned],
+      ["Check-In", `${draft.checkInDate || "-"} ${draft.checkInTime || ""}`.trim()],
+      ["Check-Out", `${draft.checkOutDate || "-"} ${draft.checkOutTime || ""}`.trim()],
+      ["Total Days Stay", totalStayDays],
+      ["Entry Code", draft.confirmationStub?.code || `TKT-${String(booking.id).slice(-6).toUpperCase()}`],
+    ];
+  };
+
+  const openPrintableEntryPass = () => {
+    const doc = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+    if (!doc) return;
+    const rowsHtml = buildEntryPassRows()
+      .map(
+        ([label, value]) =>
+          `<div class="row"><span class="label">${label}</span><span class="value">${value}</span></div>`
+      )
+      .join("");
+    doc.document.write(`<!doctype html>
+<html><head><meta charset="utf-8" /><title>Entry Pass ${booking.id}</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 24px; color: #0f172a; }
+.card { border: 1px solid #e2e8f0; border-radius: 24px; padding: 24px; max-width: 840px; margin: 0 auto; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; }
+.label { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #64748b; font-weight: 700; }
+.value { margin-top: 4px; font-size: 14px; font-weight: 700; color: #0f172a; }
+@media print { body { margin: 0; } .card { border: none; } }
+</style></head>
+<body><div class="card"><div class="grid">${rowsHtml}</div></div><script>window.onload = () => window.print();</script></body></html>`);
+    doc.document.close();
+  };
+
+  const downloadEntryPassHtml = () => {
+    const rowsHtml = buildEntryPassRows()
+      .map(
+        ([label, value]) =>
+          `<div class="row"><span class="label">${label}</span><span class="value">${value}</span></div>`
+      )
+      .join("");
+    const html = `<!doctype html><html><head><meta charset="utf-8" />
+<title>Entry Pass ${booking.id}</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 24px; color: #0f172a; }
+.card { border: 1px solid #e2e8f0; border-radius: 24px; padding: 24px; max-width: 840px; margin: 0 auto; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.row { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; }
+.label { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #64748b; font-weight: 700; }
+.value { margin-top: 4px; font-size: 14px; font-weight: 700; color: #0f172a; }
+</style></head><body><div class="card"><div class="grid">${rowsHtml}</div></div></body></html>`;
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `entry-pass-${booking.id}.html`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const isRoomConflicting = (roomId) => {
@@ -379,8 +484,11 @@ export default function BookingModernEditor({
             <Button variant="outline" onClick={onOpenTicket} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
               <Ticket size={16} className="mr-2" /> Client Ticket
             </Button>
-            <Button variant="outline" onClick={onPrint} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
-              <Printer size={16} className="mr-2" /> Export
+            <Button variant="outline" onClick={openPrintableEntryPass} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
+              <Printer size={16} className="mr-2" /> Print Entry Pass
+            </Button>
+            <Button variant="outline" onClick={downloadEntryPassHtml} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
+              <Download size={16} className="mr-2" /> Download Entry Pass
             </Button>
             <Button
               variant="outline"
@@ -470,6 +578,7 @@ export default function BookingModernEditor({
                   <InfoItem label="Check-In-Day" value={formatWeekdayLabel(draft.checkInDate)} editing={isEditing} type="date" onChange={(val) => setField("checkInDate", val)} />
                   <InfoItem label="Check-Out-Day" value={formatWeekdayLabel(draft.checkOutDate)} editing={isEditing} type="date" onChange={(val) => setField("checkOutDate", val)} />
                   <InfoItem label="Total Days Stay" value={totalStayDays} />
+                  <InfoItem label="Approved By" value={approvedByName} />
                   <InfoItem label="Pax" value={draft.guestCount} editing={isEditing} type="number" onChange={(val) => setField("guestCount", Number(val) || 0)} />                  
                   <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
                   <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
@@ -513,6 +622,38 @@ export default function BookingModernEditor({
                   <div className="text-xs text-slate-400">No add-ons selected.</div>
                 )}
               </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
+              <SectionLabel icon={<Clock size={14} />} label="Status Audit" />
+              {dbAudits.length === 0 && bookingFormAudits.length === 0 ? (
+                <p className="text-xs text-slate-400">No audit entries yet.</p>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-auto pr-1">
+                  {dbAudits.map((entry) => (
+                    <div key={`db-${entry.id}`} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                      <p className="text-[10px] font-black uppercase text-slate-500">
+                        {entry.old_status || "Unknown"} {"->"} {entry.new_status || "Unknown"}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-700 mt-1">
+                        {entry.actor_name || entry.actor_role || "system"}
+                      </p>
+                      <p className="text-[11px] text-slate-500">{new Date(entry.changed_at).toLocaleString()}</p>
+                    </div>
+                  ))}
+                  {bookingFormAudits.map((entry, index) => (
+                    <div key={`form-${index}`} className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
+                      <p className="text-[10px] font-black uppercase text-blue-600">
+                        {entry.from || "Unknown"} {"->"} {entry.to || "Unknown"}
+                      </p>
+                      <p className="text-xs font-semibold text-blue-700 mt-1">
+                        {entry.actorName || entry.actorRole || entry.actor || "owner"}
+                      </p>
+                      <p className="text-[11px] text-blue-500">{entry.at ? new Date(entry.at).toLocaleString() : "-"}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

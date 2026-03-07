@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
 import BookingModernEditor from "./components/BookingModernEditor";
 import { overlapsByDateTime } from "./components/bookingEditorUtils";
+import { supabase } from "@/lib/supabase";
 
 export default function BookingDetailsPage() {
   const { id, bookingId } = useParams();
@@ -21,6 +22,7 @@ export default function BookingDetailsPage() {
   const [messages, setMessages] = useState([]);
   const [issues, setIssues] = useState([]);
   const [ownerReply, setOwnerReply] = useState("");
+  const [statusAudits, setStatusAudits] = useState([]);
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -56,6 +58,7 @@ export default function BookingDetailsPage() {
   useEffect(() => {
     if (!booking?.id) return;
     loadSupportData(booking.id);
+    loadStatusAudits(booking.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?.id]);
 
@@ -72,6 +75,34 @@ export default function BookingDetailsPage() {
       }
     } catch (err) {
       toast({ message: `Unable to load support data: ${err.message}`, color: "red" });
+    }
+  };
+
+  const loadStatusAudits = async (activeBookingId) => {
+    try {
+      const { data, error } = await supabase
+        .from("booking_status_audit")
+        .select("id, booking_id, changed_at, actor_role, actor_name, old_status, new_status")
+        .eq("booking_id", activeBookingId)
+        .order("changed_at", { ascending: false });
+      if (!error) {
+        setStatusAudits(data || []);
+        return;
+      }
+      const missingActorName =
+        error.message?.includes("actor_name") &&
+        (error.message?.includes("does not exist") || error.message?.includes("schema cache"));
+      if (!missingActorName) throw error;
+
+      const fallback = await supabase
+        .from("booking_status_audit")
+        .select("id, booking_id, changed_at, actor_role, old_status, new_status")
+        .eq("booking_id", activeBookingId)
+        .order("changed_at", { ascending: false });
+      if (fallback.error) throw fallback.error;
+      setStatusAudits(fallback.data || []);
+    } catch {
+      setStatusAudits([]);
     }
   };
 
@@ -124,6 +155,7 @@ export default function BookingDetailsPage() {
   };
 
   return (
+    <div>
     <BookingModernEditor
       key={booking.id}
       booking={booking}
@@ -136,7 +168,6 @@ export default function BookingDetailsPage() {
       }}
       onOpenForm={() => router.push(`/edit/bookings/${id}/booking-details/${booking.id}/form`)}
       onOpenTicket={() => router.push(`/ticket/${booking.id}`)}
-      onPrint={() => window.print()}
       messages={messages}
       issues={issues}
       ownerReply={ownerReply}
@@ -148,6 +179,9 @@ export default function BookingDetailsPage() {
       createBookingTransaction={createBookingTransaction}
       resortRooms={currentResort?.rooms || []}
       allBookings={bookings || []}
+      statusAudits={statusAudits}
     />
+    <Toast />
+  </div>    
   );
 }

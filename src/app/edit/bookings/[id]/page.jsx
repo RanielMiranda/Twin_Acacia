@@ -14,13 +14,16 @@ import {
   MessageCircleWarning,
   AlertTriangle,
   Clock4,
+  Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 // Components
 import BookingCalendar from "./components/BookingsCalendar";
 import RentalManager from "./components/RentalManager";
 import LiveConcernsPanel from "./components/LiveConcernsPanel";
+import AuditArchivePanel from "./components/AuditArchivePanel";
 
 export default function BookingManagementPage() {
   const { id } = useParams();
@@ -30,8 +33,10 @@ export default function BookingManagementPage() {
   const { listResortConcerns, updateConcernStatus } = useSupport();
   const [concerns, setConcerns] = useState([]);
   const [loadingConcerns, setLoadingConcerns] = useState(false);
+  const [audits, setAudits] = useState([]);
+  const [loadingAudits, setLoadingAudits] = useState(false);
   
-  const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns
+  const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -82,6 +87,55 @@ export default function BookingManagementPage() {
     }
   };
 
+  const loadAudits = async () => {
+    const bookingIds = (bookings || []).map((entry) => entry.id?.toString()).filter(Boolean);
+    if (bookingIds.length === 0) {
+      setAudits([]);
+      return;
+    }
+    setLoadingAudits(true);
+    try {
+      const baseQuery = supabase
+        .from("booking_status_audit")
+        .eq("booking_id", bookingIds[0]);
+      const { error: tableCheckError } = await baseQuery.select("id").limit(1);
+      if (tableCheckError) {
+        setAudits([]);
+        return;
+      }
+
+      const withActorName = await supabase
+        .from("booking_status_audit")
+        .select("id, booking_id, changed_at, actor_role, actor_name, old_status, new_status")
+        .in("booking_id", bookingIds)
+        .order("changed_at", { ascending: false })
+        .limit(300);
+      if (!withActorName.error) {
+        setAudits(withActorName.data || []);
+        return;
+      }
+
+      const missingActorName =
+        withActorName.error.message?.includes("actor_name") &&
+        (withActorName.error.message?.includes("does not exist") ||
+          withActorName.error.message?.includes("schema cache"));
+      if (!missingActorName) {
+        setAudits([]);
+        return;
+      }
+
+      const fallback = await supabase
+        .from("booking_status_audit")
+        .select("id, booking_id, changed_at, actor_role, old_status, new_status")
+        .in("booking_id", bookingIds)
+        .order("changed_at", { ascending: false })
+        .limit(300);
+      setAudits(fallback.data || []);
+    } finally {
+      setLoadingAudits(false);
+    }
+  };
+
   useEffect(() => {
     if (!resortId) return;
     loadConcerns();
@@ -101,6 +155,11 @@ export default function BookingManagementPage() {
       window.removeEventListener("focus", handleFocus);
     };
   }, [refreshBookings, resortId]);
+
+  useEffect(() => {
+    loadAudits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings]);
 
   const handleResolveConcern = async (issueId) => {
     try {
@@ -234,6 +293,17 @@ export default function BookingManagementPage() {
             Live Concerns
             {activeTab === "concerns" && <div className="absolute bottom-0 left-0 w-full h-1 bg-rose-600 rounded-t-full" />}
           </button>
+
+          <button
+            onClick={() => setActiveTab("audits")}
+            className={`shrink-0 flex items-center gap-2 pb-4 text-sm font-bold uppercase tracking-widest transition-all relative ${
+              activeTab === "audits" ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <Archive size={18} />
+            Audit Archive
+            {activeTab === "audits" && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 rounded-t-full" />}
+          </button>
         </div>
 
         <main className="pb-20">
@@ -245,7 +315,7 @@ export default function BookingManagementPage() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <BookingCalendar fullWidth />
             </div>
-          ) : (
+          ) : activeTab === "concerns" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <LiveConcernsPanel
                 concerns={concerns}
@@ -253,6 +323,15 @@ export default function BookingManagementPage() {
                 onRefresh={loadConcerns}
                 onResolve={handleResolveConcern}
                 onReopen={handleReopenConcern}
+                onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
+              />
+            </div>
+          ) : (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <AuditArchivePanel
+                audits={audits}
+                loading={loadingAudits}
+                onRefresh={loadAudits}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
               />
             </div>
