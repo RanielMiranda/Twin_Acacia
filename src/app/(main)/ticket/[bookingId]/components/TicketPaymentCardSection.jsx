@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
-import { CreditCard, Upload, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
+import React, { useState } from "react";
+import { CreditCard, Upload, ShieldCheck, Loader2, CheckCircle2, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export function TicketPaymentCardSection({
   totalAmount,
@@ -17,16 +18,65 @@ export function TicketPaymentCardSection({
   setProofFile,
   isSubmitting,
   onSubmitDownpayment,
+  resortPaymentImageUrl,
 }) {
+  const hasReference = !!resortPaymentImageUrl && typeof resortPaymentImageUrl === "string";
+  const [referenceExpanded, setReferenceExpanded] = useState(false);
+  const bigImageUrl = hasReference
+    ? getTransformedSupabaseImageUrl(resortPaymentImageUrl, { width: 1024, quality: 95, format: "webp" })
+    : null;
   return (
-    <Card className="p-8 md:p-10 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem]">
-      <h3 className="text-sm font-black text-emerald-600 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+    <Card className="p-6 md:p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem]">
+      <h3 className="text-sm font-black text-emerald-600 uppercase tracking-[0.2em] mb-6 md:mb-8 flex items-center gap-2">
         <CreditCard size={18} /> Payment & Verification
       </h3>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className={`grid gap-6 md:gap-8 ${hasReference ? "grid-cols-1 lg:grid-cols-12" : "grid-cols-1 lg:grid-cols-12"}`}>
+        {hasReference && (
+          <div className="lg:col-span-3 order-1 flex flex-col items-center justify-start">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2 w-full">Payment reference (click to enlarge)</p>
+            <button
+              type="button"
+              onClick={() => setReferenceExpanded(true)}
+              className="w-full max-w-[200px] sm:max-w-[240px] lg:max-w-full aspect-square max-h-[200px] sm:max-h-[240px] lg:max-h-[220px] bg-slate-50 rounded-2xl border border-slate-100 p-3 flex items-center justify-center cursor-pointer hover:border-emerald-200 hover:ring-2 hover:ring-emerald-100 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              aria-label="View payment reference larger"
+            >
+              <img
+                src={getTransformedSupabaseImageUrl(resortPaymentImageUrl, { width: 512, quality: 90, format: "webp" })}
+                alt="Payment reference"
+                className="w-full h-full object-contain pointer-events-none"
+              />
+            </button>
+            {referenceExpanded && bigImageUrl && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+                onClick={() => setReferenceExpanded(false)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Escape" && setReferenceExpanded(false)}
+                aria-label="Close"
+              >
+                <button
+                  type="button"
+                  className="absolute top-4 right-4 p-2 rounded-full bg-white/90 text-slate-700 hover:bg-white"
+                  onClick={() => setReferenceExpanded(false)}
+                  aria-label="Close"
+                >
+                  <X size={20} />
+                </button>
+                <img
+                  src={bigImageUrl}
+                  alt="Payment reference (enlarged)"
+                  className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-xl shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className={`space-y-6 ${hasReference ? "lg:col-span-5 order-2" : "lg:col-span-8"}`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
             <label className="space-y-2">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                 Payment Method
@@ -58,7 +108,7 @@ export function TicketPaymentCardSection({
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
               Upload Screenshot / Receipt
             </span>
-            <div className="relative group border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50/50 hover:bg-white hover:border-blue-400 transition-all cursor-pointer">
+            <div className="relative group border-2 border-dashed border-slate-200 rounded-2xl p-4 md:p-6 bg-slate-50/50 hover:bg-white hover:border-blue-400 transition-all cursor-pointer">
               <input
                 className="absolute inset-0 opacity-0 cursor-pointer"
                 type="file"
@@ -70,7 +120,7 @@ export function TicketPaymentCardSection({
                 ) : (
                   <Upload size={24} />
                 )}
-                <p className="text-xs font-bold uppercase tracking-tighter">
+                <p className="text-xs font-bold uppercase tracking-tighter text-center">
                   {proofFile ? proofFile.name : "Tap to browse or drop files here"}
                 </p>
               </div>
@@ -78,7 +128,7 @@ export function TicketPaymentCardSection({
           </label>
         </div>
 
-        <div className="lg:col-span-4 bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col justify-between">
+        <div className={`bg-slate-900 rounded-2xl p-6 md:p-8 text-white flex flex-col justify-between ${hasReference ? "lg:col-span-4 order-3" : "lg:col-span-4"}`}>
           <div className="space-y-4">
             <div>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">
