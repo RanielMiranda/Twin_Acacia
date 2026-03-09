@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle, Clock, Edit3 } from "lucide-react";
+import { CheckCircle, Clock, Edit3, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PREVIOUS_STATUS } from "./bookingEditorConfig";
 
@@ -15,11 +15,15 @@ export default function BookingEditorActionBar({
   onApproveInquiry,
   onRequestPayment,
   onConfirmStay,
+  onDeleteTicket,
   onOpenEditInline,
   onSaveInline,
   onCancelInline,
   actionBusy = false,
 }) {
+  const normalizedStatus = String(status || "").toLowerCase();
+  const isDeclined = normalizedStatus === "declined";
+
   return (
     <div className="fixed bottom-3 left-3 right-3 md:bottom-8 md:left-1/2 md:right-auto md:-translate-x-1/2 z-50 flex flex-col md:flex-row items-stretch md:items-center justify-center md:justify-start gap-2 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-2xl no-print max-h-[55vh] overflow-y-auto">
       {showDecisionActions && status === "Inquiry" && (
@@ -42,7 +46,7 @@ export default function BookingEditorActionBar({
           Back One Step
         </Button>
       ) : null}
-      {showDecisionActions ? (
+      {showDecisionActions && !isDeclined ? (
         status === "Inquiry" ? (
           <Button
             className="rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-blue-600 hover:bg-blue-700 text-white"
@@ -71,6 +75,16 @@ export default function BookingEditorActionBar({
             {status === "Pending Payment" ? "Confirm Stay" : "Approve"}
           </Button>
         )
+      ) : null}
+      {showDecisionActions && isDeclined ? (
+        <Button
+          className="rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-rose-600 hover:bg-rose-700 text-white"
+          onClick={onDeleteTicket}
+          disabled={actionBusy}
+        >
+          <Trash2 size={18} />
+          Delete Ticket
+        </Button>
       ) : null}
       {!isEditing ? (
         <Button

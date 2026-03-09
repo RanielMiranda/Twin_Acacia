@@ -20,8 +20,7 @@ import { InfoItem, SectionLabel, StatusBadge } from "./BookingEditorAtoms";
 function getAuditActorLabel(entry) {
   if (entry?.actor_name) return entry.actor_name;
   if (entry?.actorRole) return entry.actorRole;
-  if (entry?.actor_role === "audit") return "system";
-  return entry?.actor_role || entry?.actor || "system";
+  return entry?.actor || "system";
 }
 
 export function ClientCardSection({ resortName, isEditing, draft, setField, status }) {

@@ -4,14 +4,12 @@ import React, { useEffect, useState } from "react";
 import { ChevronLeft, FileText, AlertCircle, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast/Toast";
-import { generateConfirmationStub } from "@/lib/bookingFlow";
+import { useToast } from "@/components/ui/toast/ToastProvider";
 import { notifyCaretakerOnPaymentApproval } from "@/lib/caretakerNotifications";
-import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 import {
   buildDraftFromBooking,
   formatWeekdayLabel,
   formatTotalStayDays,
-  overlapsByDateTime,
 } from "./bookingEditorUtils";
 import { PAYMENT_CHANNELS, PREVIOUS_STATUS, STATUS_PHASES } from "./bookingEditorConfig";
 import BookingEditorActionBar from "./BookingEditorActionBar";
@@ -25,6 +23,10 @@ import {
   StatusAuditCardSection,
   StayCardSection,
 } from "./BookingEditorSections";
+import { buildPersistPayload } from "./functions/payloadHandlers";
+import { handleCancelInlineAction, handleSaveInlineAction, loadDraftFromStorage, persistDraftToStorage, syncPaxFromCounts } from "./functions/editHandlers";
+import { handleApproveInquiryAction, handleDeclineAction, handleRequestPaymentAction, handleRevertStepAction, handleSetStatusAction, handleVerifyProofAction } from "./functions/statusHandlers";
+import { isRoomConflictingForBooking, resolveApprovedByName } from "./functions/utilHandlers";
 export default function BookingModernEditor({
   booking,
   resortName,
@@ -46,6 +48,7 @@ export default function BookingModernEditor({
   allBookings = [],
   statusAudits = [],
 }) {
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [renderedAt] = useState(() => Date.now());
@@ -76,42 +79,16 @@ export default function BookingModernEditor({
   }, []);
 
   useEffect(() => {
-    const adults = Number(draft.adultCount || 0);
-    const children = Number(draft.childrenCount || 0);
-    const pax = adults + children;
-    if (Number(draft.guestCount || 0) === pax) return;
-    setDraft((prev) => ({ ...prev, guestCount: pax, pax }));
+    syncPaxFromCounts({
+      adultCount: draft.adultCount,
+      childrenCount: draft.childrenCount,
+      guestCount: draft.guestCount,
+      setDraft,
+    });
   }, [draft.adultCount, draft.childrenCount, draft.guestCount]);
 
   useEffect(() => {
-    const base = buildDraftFromBooking(booking);
-    if (typeof window === "undefined") {
-      if (!isEditing) setDraft(base);
-      return;
-    }
-    let next = base;
-    try {
-      const raw = localStorage.getItem(inlineDraftKey);
-      if (raw) {
-        const cached = JSON.parse(raw);
-        next = {
-          ...base,
-          ...cached,
-          status: base.status,
-          paymentMethod: base.paymentMethod,
-          downpayment: base.downpayment,
-          pendingDownpayment: base.pendingDownpayment,
-          pendingPaymentMethod: base.pendingPaymentMethod,
-          paymentPendingApproval: base.paymentPendingApproval,
-          paymentProofUrl: base.paymentProofUrl,
-          paymentSubmittedAt: base.paymentSubmittedAt,
-          paymentVerified: base.paymentVerified,
-          paymentVerifiedAt: base.paymentVerifiedAt,
-        };
-      }
-    } catch {
-      next = base;
-    }
+    const next = loadDraftFromStorage({ booking, inlineDraftKey, isEditing });
     if (!isEditing) setDraft(next);
   }, [booking, inlineDraftKey, isEditing]);
 
@@ -132,7 +109,7 @@ export default function BookingModernEditor({
   useEffect(() => {
     if (typeof window === "undefined") return;
     const timer = setTimeout(() => {
-      localStorage.setItem(inlineDraftKey, JSON.stringify(draft));
+      persistDraftToStorage({ draft, inlineDraftKey });
     }, 200);
     return () => clearTimeout(timer);
   }, [draft, inlineDraftKey]);
@@ -148,94 +125,17 @@ export default function BookingModernEditor({
   const showDecisionActions = !normalizedStatus.includes("confirm");
   const bookingFormAudits = Array.isArray(draft.statusAudit) ? draft.statusAudit : [];
   const dbAudits = Array.isArray(statusAudits) ? statusAudits : [];
-  const approvalAuditFromDb = dbAudits.find((entry) => {
-    const next = String(entry?.new_status || "").toLowerCase();
-    return next.includes("confirmed") || next.includes("approved inquiry");
-  });
-  const approvalAuditFromForm = [...bookingFormAudits].reverse().find((entry) => {
-    const next = String(entry?.to || "").toLowerCase();
-    return next.includes("confirmed") || next.includes("approved inquiry");
-  });
-  const approvedByName =
-    approvalAuditFromForm?.actorName ||
-    approvalAuditFromDb?.actor_name ||
-    (approvalAuditFromDb?.actor_role === "audit" ? "system" : approvalAuditFromDb?.actor_role) ||
-    "Not approved yet";
+  const approvedByName = resolveApprovedByName({ bookingFormAudits, dbAudits });
 
   const setField = (field, value) => setDraft((prev) => ({ ...prev, [field]: value }));
 
   const persist = async (nextDraft) => {
-    const selectedRoomNames = (resortRooms || [])
-      .filter((room) => (assignedRoomIds || []).includes(room.id))
-      .map((room) => room.name)
-      .filter(Boolean);
-    const previousStatus = booking.bookingForm?.status || booking.status || null;
-    const nextStatus = nextDraft.status || previousStatus || "Inquiry";
-    const currentAudit = Array.isArray(booking.bookingForm?.statusAudit)
-      ? booking.bookingForm.statusAudit
-      : Array.isArray(nextDraft.statusAudit)
-        ? nextDraft.statusAudit
-        : [];
-    const statusAudit =
-      previousStatus && nextStatus && previousStatus !== nextStatus
-        ? [
-            ...currentAudit,
-            {
-              from: previousStatus,
-              to: nextStatus,
-              at: new Date().toISOString(),
-              actor: "owner-ui",
-              actorRole: actorMeta.role || "owner",
-              actorId: actorMeta.id || "",
-              actorName: actorMeta.name || "Owner",
-            },
-          ]
-        : currentAudit;
-
-    const payload = {
-      ...booking,
-      roomIds: assignedRoomIds,
-      status: nextStatus,
-      startDate: nextDraft.checkInDate || booking.startDate,
-      endDate: nextDraft.checkOutDate || booking.endDate,
-      checkInTime: nextDraft.checkInTime || booking.checkInTime,
-      checkOutTime: nextDraft.checkOutTime || booking.checkOutTime,
-      paymentDeadline: nextDraft.paymentDeadline || null,
-      bookingForm: {
-        ...(booking.bookingForm || {}),
-        ...nextDraft,
-        roomCount: assignedRoomIds.length || nextDraft.roomCount || booking.roomIds?.length || 1,
-        roomName: selectedRoomNames.length > 0 ? selectedRoomNames.join(", ") : nextDraft.roomName || "",
-        assignedRoomIds,
-        assignedRoomNames: selectedRoomNames,
-        statusAudit,
-        lastActionBy: actorMeta.name || "Owner",
-        lastActionRole: actorMeta.role || "owner",
-        lastActionById: actorMeta.id || "",
-      },
-    };
-
+    const payload = buildPersistPayload({ booking, nextDraft, assignedRoomIds, resortRooms, actorMeta });
     await Promise.resolve(onSave(payload));
   };
 
   const isRoomConflicting = (roomId) => {
-    const probe = {
-      id: booking.id,
-      roomIds: [roomId],
-      startDate: draft.checkInDate || booking.startDate,
-      endDate: draft.checkOutDate || booking.endDate || draft.checkInDate || booking.startDate,
-      checkInTime: draft.checkInTime || booking.checkInTime,
-      checkOutTime: draft.checkOutTime || booking.checkOutTime,
-      bookingForm: {
-        checkInTime: draft.checkInTime || booking.checkInTime,
-        checkOutTime: draft.checkOutTime || booking.checkOutTime,
-      },
-    };
-    return (allBookings || []).some((entry) => {
-      if (entry.id?.toString() === booking.id?.toString()) return false;
-      if (!(entry.roomIds || []).includes(roomId)) return false;
-      return overlapsByDateTime(entry, probe);
-    });
+    return isRoomConflictingForBooking({ roomId, booking, draft, allBookings });
   };
 
   const toggleAssignedRoom = (roomId) => {
@@ -245,15 +145,7 @@ export default function BookingModernEditor({
   };
 
   const handleSaveInline = async () => {
-    if (actionBusy) return;
-    setActionBusy(true);
-    try {
-      await persist(draft);
-      if (typeof window !== "undefined") localStorage.removeItem(inlineDraftKey);
-      setIsEditing(false);
-    } finally {
-      setActionBusy(false);
-    }
+    await handleSaveInlineAction({ actionBusy, setActionBusy, persist, draft, inlineDraftKey, setIsEditing });
   };
 
   useEffect(() => {
@@ -270,128 +162,57 @@ export default function BookingModernEditor({
   }, [assignedRoomIds]);
 
   const handleCancelInline = () => {
-    const base = buildDraftFromBooking(booking);
-    setDraft(base);
-    setProofPreviewUrl(base.paymentProofUrl || null);
-    if (typeof window !== "undefined") localStorage.removeItem(inlineDraftKey);
-    setIsEditing(false);
+    handleCancelInlineAction({ booking, setDraft, setProofPreviewUrl, inlineDraftKey, setIsEditing });
   };
 
   const handleSetStatus = async (nextStatus) => {
-    if (actionBusy) return;
-    setActionBusy(true);
-    try {
-      const next = { ...draft, status: nextStatus };
-      if (nextStatus === "Confirmed" && !next.confirmationStub?.code) {
-        next.confirmationStub = generateConfirmationStub(booking.id, resortName, draft.guestName);
-        if (next.paymentVerified) {
-          next.paymentPendingApproval = false;
-          next.pendingDownpayment = 0;
-          next.pendingPaymentMethod = null;
-        }
-      }
-      setDraft(next);
-      await persist(next);
-    } finally {
-      setActionBusy(false);
-    }
+    await handleSetStatusAction({
+      actionBusy,
+      setActionBusy,
+      draft,
+      setDraft,
+      nextStatus,
+      booking,
+      resortName,
+      persist,
+    });
+  };
+
+  const handleDecline = async () => {
+    await handleDeclineAction({ handleSetStatus });
   };
 
   const handleRequestPayment = async () => {
-    if (actionBusy) return;
-    setActionBusy(true);
-    try {
-      const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      const next = {
-        ...draft,
-        status: "Pending Payment",
-        paymentDeadline: deadline,
-      };
-      setDraft(next);
-      await persist(next);
-    } finally {
-      setActionBusy(false);
-    }
+    await handleRequestPaymentAction({ actionBusy, setActionBusy, draft, setDraft, persist });
   };
 
   const handleApproveInquiry = async () => {
-    if (actionBusy) return;
-    setActionBusy(true);
-    try {
-      const next = {
-        ...draft,
-        status: "Approved Inquiry",
-        ticketAccessToken: draft.ticketAccessToken || generateTicketAccessToken(),
-        ticketAccessExpiresAt: draft.ticketAccessExpiresAt || getTicketAccessExpiry(30),
-      };
-      setDraft(next);
-      await persist(next);
-    } finally {
-      setActionBusy(false);
-    }
+    await handleApproveInquiryAction({
+      actionBusy,
+      setActionBusy,
+      draft,
+      setDraft,
+      persist,
+      bookingId: booking.id,
+      toast,
+    });
   };
 
   const handleRevertStep = async () => {
-    if (actionBusy) return;
-    const previous = PREVIOUS_STATUS[draft.status];
-    if (!previous) return;
-    const confirmed = window.confirm(`Revert status from "${draft.status}" to "${previous}"?`);
-    if (!confirmed) return;
-    setActionBusy(true);
-    try {
-      const next = { ...draft, status: previous };
-      setDraft(next);
-      await persist(next);
-    } finally {
-      setActionBusy(false);
-    }
+    await handleRevertStepAction({ actionBusy, setActionBusy, draft, setDraft, persist });
   };
 
   const handleVerifyProof = async () => {
-    if (draft.paymentVerified || actionBusy) return;
-    setActionBusy(true);
-    try {
-      const approvedAmount = Number(draft.pendingDownpayment || 0);
-      const nextDownpayment = Number(draft.downpayment || 0) + approvedAmount;
-      const nextMethod = draft.pendingPaymentMethod || draft.paymentMethod;
-
-      const next = {
-        ...draft,
-        paymentVerified: true,
-        paymentVerifiedAt: new Date().toISOString(),
-        downpayment: nextDownpayment,
-        paymentMethod: nextMethod,
-        pendingDownpayment: 0,
-        pendingPaymentMethod: null,
-        paymentPendingApproval: false,
-      };
-      setDraft(next);
-      await persist(next);
-
-      if (approvedAmount > 0) {
-        const balanceAfter = Math.max(0, Number(next.totalAmount || 0) - Number(next.downpayment || 0));
-        try {
-          await createBookingTransaction?.({
-          booking_id: booking.id,
-          method: nextMethod || "Pending",
-          amount: approvedAmount,
-          balance_after: balanceAfter,
-          note: "Downpayment approved by owner",
-          });
-        } catch (error) {
-          console.error("Failed to log booking transaction:", error.message);
-        }
-        await notifyCaretakerOnPaymentApproval({
-          bookingId: booking.id,
-          resortId: booking.resortId || booking.resort_id || null,
-          guestName: next.guestName,
-          amount: approvedAmount,
-          method: nextMethod,
-        });
-      }
-    } finally {
-      setActionBusy(false);
-    }
+    await handleVerifyProofAction({
+      draft,
+      actionBusy,
+      setActionBusy,
+      setDraft,
+      persist,
+      createBookingTransaction,
+      notifyCaretakerOnPaymentApproval,
+      booking,
+    });
   };
 
   return (
@@ -513,11 +334,17 @@ export default function BookingModernEditor({
         status={status}
         draftStatus={draft.status}
         isEditing={isEditing}
-        onDecline={() => handleSetStatus("Declined")}
+        onDecline={handleDecline}
         onBackOneStep={handleRevertStep}
         onApproveInquiry={handleApproveInquiry}
         onRequestPayment={handleRequestPayment}
         onConfirmStay={() => handleSetStatus("Confirmed")}
+        onDeleteTicket={() => {
+          const confirmed = window.confirm("Delete this declined ticket and related data?");
+          if (!confirmed) return;
+          if (typeof window !== "undefined") localStorage.removeItem(inlineDraftKey);
+          onDelete();
+        }}
         onOpenEditInline={() => setIsEditing(true)}
         onSaveInline={handleSaveInline}
         onCancelInline={handleCancelInline}

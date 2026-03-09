@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { X, Calendar, User, CheckCircle2, ArrowRight, ArrowLeft, Phone, MapPin, Clock, PlusCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFilters } from "@/components/useclient/ContextFilter";
+
+const getDraftKey = (resortId) => `contact_owner_draft:${resortId}`;
 
 export default function ContactOwnerModal({
   isOpen,
@@ -54,7 +56,7 @@ export default function ContactOwnerModal({
     return `${h}:${minutes} ${ampm}`;
   };
 
-  const [formData, setFormData] = useState({
+  const buildInitialFormData = () => ({
     guestName: "",
     email: "",
     contactNumber: "",
@@ -76,6 +78,54 @@ export default function ContactOwnerModal({
     message: "",
     selectedServices: [], // Added to track extra services
   });
+  const [formData, setFormData] = useState(buildInitialFormData);
+
+  useEffect(() => {
+    if (!isOpen || !resort?.id) return;
+    const base = buildInitialFormData();
+    if (typeof window === "undefined") {
+      setFormData(base);
+      return;
+    }
+    try {
+      const raw = sessionStorage.getItem(getDraftKey(resort.id));
+      if (!raw) {
+        setFormData(base);
+        return;
+      }
+      const saved = JSON.parse(raw);
+      setFormData({
+        ...base,
+        guestName: saved.guestName || "",
+        email: saved.email || "",
+        contactNumber: saved.contactNumber || "",
+        area: saved.area || base.area,
+        message: saved.message || "",
+        sleepingGuests: Number(saved.sleepingGuests || 0),
+      });
+    } catch {
+      setFormData(base);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, resort?.id, destination, guests?.adults, guests?.children, startDate, endDate, checkInTime, checkOutTime, initialSelectableRoomIds.join("|"), initialSelectableRoomNames.join("|")]);
+
+  useEffect(() => {
+    if (!isOpen || !resort?.id || typeof window === "undefined") return;
+    const timer = setTimeout(() => {
+      sessionStorage.setItem(
+        getDraftKey(resort.id),
+        JSON.stringify({
+          guestName: formData.guestName || "",
+          email: formData.email || "",
+          contactNumber: formData.contactNumber || "",
+          area: formData.area || "",
+          message: formData.message || "",
+          sleepingGuests: Number(formData.sleepingGuests || 0),
+        })
+      );
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [formData.guestName, formData.email, formData.contactNumber, formData.area, formData.message, formData.sleepingGuests, isOpen, resort?.id]);
 
   // Steps Configuration (Increased to 4)
   const steps = [

@@ -10,6 +10,10 @@ function toActionLabel(row) {
   return `${from} -> ${to}`;
 }
 
+function getActorName(row) {
+  return row?.actor_name || "system";
+}
+
 export default function AuditArchivePanel({
   audits = [],
   declinedBookings = [],
@@ -124,7 +128,7 @@ export default function AuditArchivePanel({
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1.5 inline-flex items-center gap-1">
                     <User2 size={11} />
-                    {item.actor_name || (item.actor_role === "audit" ? "system" : item.actor_role) || "system"}
+                    {getActorName(item)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

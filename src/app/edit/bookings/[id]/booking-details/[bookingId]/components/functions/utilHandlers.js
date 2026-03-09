@@ -1,0 +1,45 @@
+import { overlapsByDateTime } from "../bookingEditorUtils";
+
+export function resolveApprovedByName({ bookingFormAudits = [], dbAudits = [] }) {
+  const approvalAuditFromDb = dbAudits.find((entry) => {
+    const next = String(entry?.new_status || "").toLowerCase();
+    return next.includes("confirmed") || next.includes("approved inquiry");
+  });
+
+  const approvalAuditFromForm = [...bookingFormAudits].reverse().find((entry) => {
+    const next = String(entry?.to || "").toLowerCase();
+    return next.includes("confirmed") || next.includes("approved inquiry");
+  });
+
+  return (
+    approvalAuditFromForm?.actorName ||
+    approvalAuditFromDb?.actor_name ||
+    "Not approved yet"
+  );
+}
+
+export function isRoomConflictingForBooking({
+  roomId,
+  booking,
+  draft,
+  allBookings = [],
+}) {
+  const probe = {
+    id: booking.id,
+    roomIds: [roomId],
+    startDate: draft.checkInDate || booking.startDate,
+    endDate: draft.checkOutDate || booking.endDate || draft.checkInDate || booking.startDate,
+    checkInTime: draft.checkInTime || booking.checkInTime,
+    checkOutTime: draft.checkOutTime || booking.checkOutTime,
+    bookingForm: {
+      checkInTime: draft.checkInTime || booking.checkInTime,
+      checkOutTime: draft.checkOutTime || booking.checkOutTime,
+    },
+  };
+
+  return (allBookings || []).some((entry) => {
+    if (entry.id?.toString() === booking.id?.toString()) return false;
+    if (!(entry.roomIds || []).includes(roomId)) return false;
+    return overlapsByDateTime(entry, probe);
+  });
+}
