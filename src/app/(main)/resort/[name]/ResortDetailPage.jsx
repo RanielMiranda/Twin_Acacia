@@ -117,6 +117,9 @@ export default function ResortDetailPage({ name }) {
   const selectedRooms = (resort.rooms || []).filter((room) =>
     selectedRoomIds.includes(room.id)
   );
+  const selectedRoomSummary = selectedRooms.length > 0
+    ? selectedRooms.map((room) => room.name).filter(Boolean).join(", ")
+    : "";
 
 const handleSubmitInquiry = async (submittedData) => {
     try {
@@ -198,7 +201,7 @@ const handleSubmitInquiry = async (submittedData) => {
         console.info("Client ticket link (for testing until email is enabled):", ticketUrl);
       }
       const inquiryMessage =
-        "Inquiry has been sent. Ticket link is prepared and logged in console for testing.";
+        "Your inquiry has been sent. The owner will review your request and confirm it via email.";
       persistentToast({
         message: inquiryMessage,
         color: "blue",
@@ -269,40 +272,10 @@ const handleSubmitInquiry = async (submittedData) => {
             <div className="overflow-visible rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_80px_-36px_rgba(15,23,42,0.45)]">
 
               <div className="p-6">
-                <RoomFilterPanel embedded />
+                <RoomFilterPanel embedded selectedRoomSummary={selectedRoomSummary} />
               </div>
 
               <div className="border-t border-slate-100 px-6 py-5 space-y-4 bg-slate-50/80 rounded-b-[2rem]">
-                <div className="rounded-2xl bg-white border border-slate-200 px-4 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
-                      Selected Rooms
-                    </p>
-                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-blue-700">
-                      {selectedRoomIds.length}
-                    </span>
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {selectedRooms.length > 0 ? (
-                      selectedRooms.map((room) => (
-                        <div
-                          key={room.id}
-                          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-                        >
-                          <p className="text-sm font-semibold text-slate-900">{room.name}</p>
-                          <p className="text-xs text-slate-500 mt-1">
-                            Sleeps {Number(room.guests || 0)} pax
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-slate-500">
-                        Select room cards on the left and they will be included in the inquiry modal.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
                 <button
                   className="w-full rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800"
                   onClick={() => setContactOpen(true)}
@@ -384,37 +357,12 @@ const handleSubmitInquiry = async (submittedData) => {
             </div>
             <div className="h-[calc(75vh-73px)] overflow-y-auto px-5 py-5">
               <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
-                <RoomFilterPanel embedded mobileSheet showTitle={false} />
-              </div>
-
-              <div className="mt-4 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
-                    Selected Rooms
-                  </p>
-                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-blue-700">
-                    {selectedRoomIds.length}
-                  </span>
-                </div>
-                <div className="mt-3 space-y-2">
-                  {selectedRooms.length > 0 ? (
-                    selectedRooms.map((room) => (
-                      <div
-                        key={room.id}
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-2"
-                      >
-                        <p className="text-sm font-semibold text-slate-900">{room.name}</p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          Sleeps {Number(room.guests || 0)} pax
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-slate-500">
-                      Select room cards first, then send the inquiry.
-                    </p>
-                  )}
-                </div>
+                <RoomFilterPanel
+                  embedded
+                  mobileSheet
+                  showTitle={false}
+                  selectedRoomSummary={selectedRoomSummary}
+                />
                 <button
                   className="mt-4 w-full rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white"
                   onClick={() => {

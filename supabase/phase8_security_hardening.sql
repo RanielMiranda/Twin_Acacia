@@ -33,7 +33,7 @@ begin
   elsif f = 'checked out' then
     return false;
   elsif f = 'declined' then
-    return false;
+    return t in ('inquiry');
   elsif f = 'cancelled' then
     return false;
   end if;
@@ -127,6 +127,7 @@ begin
      or old_verified is distinct from new_verified then
     insert into public.booking_status_audit (
       booking_id,
+      actor_role,
       actor_name,
       old_status,
       new_status,
@@ -141,6 +142,7 @@ begin
     )
     values (
       new.id,
+      coalesce(new.booking_form->>'lastActionRole', old.booking_form->>'lastActionRole', auth.jwt()->>'app_role', auth.jwt()->>'role', 'system'),
       coalesce(new.booking_form->>'lastActionBy', old.booking_form->>'lastActionBy', auth.jwt()->>'name', auth.jwt()->>'email', null),
       old_status,
       new_status,

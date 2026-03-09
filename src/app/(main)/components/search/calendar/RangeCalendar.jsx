@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function startOfMonth(date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
@@ -25,7 +26,7 @@ function isBetween(date, start, end) {
 export default function RangeCalendar({ startDate, endDate, onChange, activeDropdown }) {
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-  const [baseMonth] = useState(startOfMonth(todayUTC));
+  const [baseMonth, setBaseMonth] = useState(startOfMonth(todayUTC));
 
   function renderMonth(monthDate) {
     const start = startOfMonth(monthDate);
@@ -76,8 +77,8 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
                   }
 
                   if (isStart) {
-                    if (endDate && !isSameDay(startDate, endDate)) {
-                      onChange(endDate, endDate);
+                    if (endDate) {
+                      onChange(endDate, null);
                     } else {
                       onChange(null, null);
                     }
@@ -85,26 +86,24 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
                   }
 
                   if (isEnd) {
-                    onChange(startDate, startDate);
+                    onChange(startDate, null);
                     return;
                   }
 
-                  if (!startDate || (startDate && endDate && activeDropdown === "start")) {
-                    onChange(date, date);
+                  if (!startDate || (startDate && endDate)) {
+                    onChange(date, null);
                   } else if (activeDropdown === "end" && date < startDate) {
                     onChange(date, startDate);
                   } else {
                     onChange(startDate, date);
                   }
                 }}
-                className={`
-                  flex h-10 items-center justify-center px-3 text-sm
-                  ${isPast ? "cursor-not-allowed text-gray-300" : "hover:scale-110 hover:rounded-md hover:bg-blue-100"}
-                  ${isStart || isEnd ? "bg-blue-600 font-semibold text-white hover:bg-blue-300" : ""}
-                  ${isStart ? "rounded-bl-md rounded-tl-md" : ""}
-                  ${isEnd ? "rounded-br-md rounded-tr-md" : ""}
-                  ${inRange ? "bg-blue-100" : ""}
-                `}
+                className={[
+                  "flex h-10 w-10 items-center justify-center text-sm transition-colors",
+                  isPast ? "cursor-not-allowed text-gray-300" : "hover:bg-blue-100",
+                  inRange ? "rounded-md bg-blue-100 text-blue-700" : "rounded-full",
+                  isStart || isEnd ? "relative z-10 rounded-full bg-blue-600 font-semibold text-white hover:bg-blue-600" : "",
+                ].join(" ")}
                 disabled={isPast}
               >
                 {date.getUTCDate()}
@@ -117,9 +116,29 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
   }
 
   return (
-    <div className="flex gap-4 rounded-bl-2xl rounded-br-2xl bg-white p-4 shadow-xl">
-      {renderMonth(baseMonth)}
-      {renderMonth(addMonths(baseMonth, 1))}
+    <div className="rounded-bl-2xl rounded-br-2xl bg-white p-4 shadow-xl">
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setBaseMonth((prev) => addMonths(prev, -1))}
+          className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
+          aria-label="Previous month"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setBaseMonth((prev) => addMonths(prev, 1))}
+          className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
+          aria-label="Next month"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+      <div className="flex gap-4">
+        {renderMonth(baseMonth)}
+        {renderMonth(addMonths(baseMonth, 1))}
+      </div>
     </div>
   );
 }

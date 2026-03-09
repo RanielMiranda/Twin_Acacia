@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, ChevronDown, Users } from "lucide-react";
 import SideRangeCalendar from "./SideRangeCalendar";
 import { useFilters } from "@/components/useclient/ContextFilter"; 
 
@@ -7,6 +7,7 @@ export default function RoomFilterPanel({
   embedded = false,
   mobileSheet = false,
   showTitle = true,
+  selectedRoomSummary = "",
 }) {
   const { 
     selectedTags, 
@@ -78,23 +79,59 @@ export default function RoomFilterPanel({
           </label>
         </div>
 
-        <div className="border-t border-slate-300 px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
+        <div className="relative border-t border-slate-300 px-4 py-3">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-3 text-left"
+            onClick={() => setActiveDropdown((prev) => (prev === "guests" ? null : "guests"))}
+          >
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Guests</p>
               <p className="mt-1 text-sm font-semibold text-slate-900">
                 {totalGuests} guest{totalGuests === 1 ? "" : "s"}
+                {Number(guests.children || 0) > 0
+                  ? `, ${Number(guests.children || 0)} child${Number(guests.children || 0) > 1 ? "ren" : ""}`
+                  : ""}
               </p>
             </div>
-            <div className="rounded-full bg-slate-100 p-2 text-slate-500">
-              <Users size={16} />
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-slate-100 p-2 text-slate-500">
+                <Users size={16} />
+              </div>
+              <ChevronDown
+                size={16}
+                className={`text-slate-400 transition-transform ${activeDropdown === "guests" ? "rotate-180" : ""}`}
+              />
             </div>
-          </div>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-xs font-bold">
-            <GuestCounter label="Adults" value={guests.adults} min={1} onChange={(value) => setGuests((prev) => ({ ...prev, adults: value }))} />
-            <GuestCounter label="Children" value={guests.children} min={0} onChange={(value) => setGuests((prev) => ({ ...prev, children: value }))} />
-            <GuestCounter label="Rooms" value={guests.rooms} min={1} onChange={(value) => setGuests((prev) => ({ ...prev, rooms: value }))} />
-          </div>
+          </button>
+
+          {activeDropdown === "guests" ? (
+            <div className="absolute left-3 right-3 top-full z-[1000] mt-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+              <div className="space-y-3">
+                <GuestRow
+                  label="Adults"
+                  subtitle="Ages 13 or above"
+                  value={guests.adults}
+                  min={1}
+                  onChange={(value) => setGuests((prev) => ({ ...prev, adults: value }))}
+                />
+                <GuestRow
+                  label="Children"
+                  subtitle="Ages 12 or below"
+                  value={guests.children}
+                  min={0}
+                  onChange={(value) => setGuests((prev) => ({ ...prev, children: value }))}
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="border-t border-slate-300 px-4 py-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Selected Rooms</p>
+          <p className="mt-1 text-sm font-semibold text-slate-900">
+            {selectedRoomSummary || "Selected room cards will be included in the inquiry"}
+          </p>
         </div>
       </div>
 
@@ -151,7 +188,9 @@ function DateRangeField({
             onChange={(s, e) => {
               setStartDate(s);
               setEndDate(e);
-              if (activeDropdown === "start" && s && !e) setActiveDropdown("end");
+              if (activeDropdown === "start" && s && !e) {
+                setActiveDropdown("end");
+              }
             }}
           />
         </div>
@@ -160,14 +199,29 @@ function DateRangeField({
   );
 }
 
-function GuestCounter({ label, value, min = 0, onChange }) {
+function GuestRow({ label, subtitle, value, min = 0, onChange }) {
   return (
-    <div className="rounded-xl border border-slate-200 px-2 py-2 text-center">
-      <p className="text-[10px] uppercase tracking-wider text-slate-400">{label}</p>
-      <div className="mt-1 flex items-center justify-center gap-2">
-        <button className="h-6 w-6 rounded-full bg-slate-100" onClick={() => onChange(Math.max(min, Number(value || 0) - 1))}>-</button>
-        <span className="w-5 text-center">{value || 0}</span>
-        <button className="h-6 w-6 rounded-full bg-slate-100" onClick={() => onChange(Number(value || 0) + 1)}>+</button>
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <p className="text-sm font-semibold text-slate-900">{label}</p>
+        {subtitle ? <p className="text-xs text-slate-500">{subtitle}</p> : null}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="h-8 w-8 rounded-full border border-slate-200 text-slate-600"
+          onClick={() => onChange(Math.max(min, Number(value || 0) - 1))}
+        >
+          -
+        </button>
+        <span className="w-6 text-center text-sm font-semibold">{value || 0}</span>
+        <button
+          type="button"
+          className="h-8 w-8 rounded-full border border-slate-200 text-slate-600"
+          onClick={() => onChange(Number(value || 0) + 1)}
+        >
+          +
+        </button>
       </div>
     </div>
   );

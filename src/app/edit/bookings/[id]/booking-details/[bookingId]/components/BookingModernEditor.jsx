@@ -159,7 +159,7 @@ export default function BookingModernEditor({
   const approvedByName =
     approvalAuditFromForm?.actorName ||
     approvalAuditFromDb?.actor_name ||
-    approvalAuditFromDb?.actor_role ||
+    (approvalAuditFromDb?.actor_role === "audit" ? "system" : approvalAuditFromDb?.actor_role) ||
     "Not approved yet";
 
   const setField = (field, value) => setDraft((prev) => ({ ...prev, [field]: value }));
@@ -210,6 +210,8 @@ export default function BookingModernEditor({
         assignedRoomNames: selectedRoomNames,
         statusAudit,
         lastActionBy: actorMeta.name || "Owner",
+        lastActionRole: actorMeta.role || "owner",
+        lastActionById: actorMeta.id || "",
       },
     };
 

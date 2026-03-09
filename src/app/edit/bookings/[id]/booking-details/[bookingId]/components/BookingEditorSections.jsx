@@ -17,6 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { InfoItem, SectionLabel, StatusBadge } from "./BookingEditorAtoms";
 
+function getAuditActorLabel(entry) {
+  if (entry?.actor_name) return entry.actor_name;
+  if (entry?.actorRole) return entry.actorRole;
+  if (entry?.actor_role === "audit") return "system";
+  return entry?.actor_role || entry?.actor || "system";
+}
+
 export function ClientCardSection({ resortName, isEditing, draft, setField, status }) {
   return (
     <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
@@ -158,7 +165,7 @@ export function StatusAuditCardSection({ dbAudits, bookingFormAudits }) {
                 {entry.old_status || "Unknown"} {"->"} {entry.new_status || "Unknown"}
               </p>
               <p className="text-xs font-semibold text-slate-700 mt-1">
-                {entry.actor_name || entry.actor_role || "system"}
+                {getAuditActorLabel(entry)}
               </p>
               <p className="text-[11px] text-slate-500">{new Date(entry.changed_at).toLocaleString()}</p>
             </div>
@@ -169,7 +176,7 @@ export function StatusAuditCardSection({ dbAudits, bookingFormAudits }) {
                 {entry.from || "Unknown"} {"->"} {entry.to || "Unknown"}
               </p>
               <p className="text-xs font-semibold text-blue-700 mt-1">
-                {entry.actorName || entry.actorRole || entry.actor || "owner"}
+                {getAuditActorLabel(entry)}
               </p>
               <p className="text-[11px] text-blue-500">{entry.at ? new Date(entry.at).toLocaleString() : "-"}</p>
             </div>
@@ -447,4 +454,3 @@ export function MessagesInboxCardSection({
     </div>
   );
 }
-

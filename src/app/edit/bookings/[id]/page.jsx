@@ -29,7 +29,7 @@ export default function BookingManagementPage() {
   const { id } = useParams();
   const router = useRouter();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, refreshBookings } = useBookings();
+  const { bookings, refreshBookings, updateBookingById, deleteBookingById } = useBookings();
   const { listResortConcerns, updateConcernStatus } = useSupport();
   const [concerns, setConcerns] = useState([]);
   const [loadingConcerns, setLoadingConcerns] = useState(false);
@@ -65,7 +65,7 @@ export default function BookingManagementPage() {
     const source = bookings || [];
     const inquiry = source.filter((entry) => {
       const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-      return status.includes("inquiry") || status.includes("pending payment");
+      return (status.includes("inquiry") || status.includes("pending payment")) && !status.includes("declined");
     }).length;
     const checkout = source.filter((entry) => {
       const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
@@ -73,6 +73,15 @@ export default function BookingManagementPage() {
     }).length;
     return { inquiry, checkout };
   }, [bookings]);
+
+  const declinedBookings = useMemo(
+    () =>
+      (bookings || []).filter((entry) => {
+        const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
+        return status.includes("declined");
+      }),
+    [bookings]
+  );
 
   const loadConcerns = async () => {
     if (!resortId) return;
@@ -176,6 +185,34 @@ export default function BookingManagementPage() {
       setConcerns((prev) => prev.map((entry) => (entry.id === issueId ? { ...entry, status: "open" } : entry)));
     } catch (error) {
       console.error("Reopen concern error:", error.message);
+    }
+  };
+
+  const handleReopenDeclined = async (bookingId) => {
+    try {
+      await updateBookingById(bookingId, (entry) => ({
+        ...entry,
+        status: "Inquiry",
+        bookingForm: {
+          ...(entry.bookingForm || {}),
+          status: "Inquiry",
+          reopenedAt: new Date().toISOString(),
+        },
+      }));
+      await loadAudits();
+    } catch (error) {
+      console.error("Reopen declined inquiry error:", error.message);
+    }
+  };
+
+  const handleDeleteDeclined = async (bookingId) => {
+    const confirmed = window.confirm("Delete this declined inquiry?");
+    if (!confirmed) return;
+    try {
+      await deleteBookingById(bookingId);
+      await loadAudits();
+    } catch (error) {
+      console.error("Delete declined inquiry error:", error.message);
     }
   };
 
@@ -330,9 +367,12 @@ export default function BookingManagementPage() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <AuditArchivePanel
                 audits={audits}
+                declinedBookings={declinedBookings}
                 loading={loadingAudits}
                 onRefresh={loadAudits}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
+                onReopenDeclined={handleReopenDeclined}
+                onDeleteDeclined={handleDeleteDeclined}
               />
             </div>
           )}

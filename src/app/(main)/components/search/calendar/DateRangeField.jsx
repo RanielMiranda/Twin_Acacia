@@ -13,7 +13,6 @@ export default function DateRangeField({
   formatFullDate,
   formatWeekday
 }) {
-  
   return (
 
       <div className="relative flex items-center gap-2 border-gray-200 border rounded-xl px-3 py-2 flex-1">

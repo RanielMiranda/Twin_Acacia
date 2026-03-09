@@ -24,7 +24,6 @@ const DEFAULT_FORM = {
   bookingAgent: "Direct",
   turnoverAuthorizedPerson: "",
   paymentMethod: "Pending",
-  bookingMode: "full_day",
   paymentDeadline: "",
   confirmationStub: null,
   downpayment: 0,
@@ -202,13 +201,6 @@ export default function BookingConfirmation({
                 </select>
               </Field>
               <Field label="Base Rate"><input disabled={readOnly} className={inputClass} type="number" min="0" value={formData.baseRate} onChange={(e) => handleNumberChange("baseRate", e.target.value)} /></Field>
-              <Field label="Booking Mode">
-                <select disabled={readOnly} className={inputClass} value={formData.bookingMode || "full_day"} onChange={(e) => handleChange("bookingMode", e.target.value)}>
-                  <option value="full_day">Full Day</option>
-                  <option value="half_day">Half Day</option>
-                  <option value="hourly">Hourly</option>
-                </select>
-              </Field>
               <Field label="Payment Method">
                 <select disabled={readOnly} className={inputClass} value={formData.paymentMethod || "Pending"} onChange={(e) => handleChange("paymentMethod", e.target.value)}>
                   <option value="Pending">Pending</option>

@@ -36,7 +36,10 @@
     }, [bookings, resort?.rooms]);
 
     const grouped = useMemo(() => ({
-      inquiry: rows.filter((r) => r.normalizedStatus.includes("inquiry") || r.normalizedStatus.includes("pending payment")),
+      inquiry: rows.filter((r) => {
+        if (r.normalizedStatus.includes("declined")) return false;
+        return r.normalizedStatus.includes("inquiry") || r.normalizedStatus.includes("pending payment");
+      }),
       confirmed: rows.filter((r) => r.normalizedStatus.includes("confirm") || r.normalizedStatus.includes("ongoing")),
       checkout: rows.filter((r) => r.normalizedStatus.includes("pending checkout")),
     }), [rows]);

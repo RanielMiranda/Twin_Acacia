@@ -22,7 +22,7 @@ export default function BookingEditorActionBar({
 }) {
   return (
     <div className="fixed bottom-3 left-3 right-3 md:bottom-8 md:left-1/2 md:right-auto md:-translate-x-1/2 z-50 flex flex-col md:flex-row items-stretch md:items-center justify-center md:justify-start gap-2 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-2xl no-print max-h-[55vh] overflow-y-auto">
-      {showDecisionActions && (
+      {showDecisionActions && status === "Inquiry" && (
         <Button
           variant="ghost"
           className="rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 text-slate-400 hover:text-rose-600 font-bold"
