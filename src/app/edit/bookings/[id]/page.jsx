@@ -210,9 +210,12 @@ export default function BookingManagementPage() {
   }, [refreshBookings, resortId]);
 
   useEffect(() => {
+    if (activeTab !== "audits") return;
+    if (loadingAudits) return;
+
     loadAudits();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings]);
+    setLoadingAudits(true);
+  }, [activeTab]);
 
   const handleResolveConcern = async (issueId) => {
     try {
