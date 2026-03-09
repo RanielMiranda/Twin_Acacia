@@ -120,7 +120,8 @@ export default function BookingModernEditor({
   const totalStayDays = formatTotalStayDays(draft.checkInDate, draft.checkOutDate);
   const normalizedStatus = status.toLowerCase();
   const hasProof = !!draft.paymentProofUrl;
-  const balance = Math.max(0, Number(draft.totalAmount || 0) - Number(draft.downpayment || 0));
+  const effectivePaid = Number(draft.downpayment || 0) + (status === "Confirmed" ? Number(draft.pendingDownpayment || 0) : 0);
+  const balance = Math.max(0, Number(draft.totalAmount || 0) - effectivePaid);
   const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;
   const hasDeadline = paymentDeadlineDate && !Number.isNaN(paymentDeadlineDate.getTime());
   const isDeadlineExpired = hasDeadline && paymentDeadlineDate.getTime() < renderedAt;

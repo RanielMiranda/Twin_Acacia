@@ -290,7 +290,7 @@ export function PaymentCardSection({ isEditing, draft, setField, balance, status
             <span className="font-bold">PHP {Number(draft.downpayment || 0).toLocaleString()}</span>
           )}
         </div>
-        {draft.paymentPendingApproval && Number(draft.pendingDownpayment || 0) > 0 ? (
+        {status !== "Confirmed" && draft.paymentPendingApproval && Number(draft.pendingDownpayment || 0) > 0 ? (
           <div className="flex justify-between items-center gap-2">
             <span className="text-slate-400">Pending Approval</span>
             <span className="font-bold text-amber-300">

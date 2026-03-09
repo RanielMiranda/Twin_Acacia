@@ -2,87 +2,90 @@
 
 Quick reference for where key logic lives.
 
-## Contexts (`src/components/useclient`)
+## Client contexts (`src/components/useclient`)
 
 - `ContextFilter.jsx`
-  - Re-exports from `ResortDataClient`.
-  - Use `useFilters()` for search/filter state shared by home + resort detail:
-    - guests, dates, times, selected tags, price range
-    - `filteredResorts`
-    - `availabilityByResort` (viability + available rooms metadata)
-
-- `ResortDataClient.jsx`
-  - Main filter/search data source for public pages.
-  - Fetches resort list/details from Supabase.
-  - Builds sorted `filteredResorts`.
-  - Computes availability ranking for home results (viable first, low match later).
+  - Re-exports `ResortDataProvider` as `FilterProvider` and `useFilters` from `ResortDataClient.jsx`.
+  - Use `useFilters()` for search/filter state shared by home + resort detail: guests, dates, times, selected tags, price range, `filteredResorts`, `availabilityByResort`.
 
 - `ContextEditor.jsx`
-  - Re-exports from `ResortEditorClient`.
-  - Use `useResort()` for edit/detail resort state.
+  - Re-exports `ResortEditorProvider` as `ResortProvider` and `useResort` from `ResortEditorClient.jsx`.
+
+- `ResortDataClient.jsx`
+  - Main filter/search data source for public pages. Fetches resort list/details from Supabase, builds sorted `filteredResorts`, computes availability ranking (viable first, low match later). Exposes `fetchResortByIdentifier(identifier, isId)`.
 
 - `ResortEditorClient.jsx`
-  - Resort editor data flow (load/save/update/delete resort).
-  - Handles image upload + scoped draft caching for resort builder.
+  - Resort editor data flow: load/save/update/delete resort, scoped draft caching. `uploadImage(file, resortName, category, subFolder)`, `saveResort()`, `deleteResort()`, `setVisibility()`, `safeSrc()`.
 
 - `BookingsClient.jsx`
-  - Booking CRUD and booking cache for owner edit pages.
-  - `refreshBookings()` includes automatic status transitions:
-    - overdue unpaid pending payment -> `Cancelled`
-    - overdue confirmed checkout time -> `Pending Checkout`
+  - Booking CRUD and booking cache for owner edit pages. `refreshBookings()` (includes automatic status transitions: overdue unpaid -> Cancelled, overdue confirmed checkout -> Pending Checkout), `updateBookingById`, `deleteBookingById`, `createSignedProofUrl`, `createBookingTransaction`.
 
 - `SupportClient.jsx`
-  - Ticket issue/message loading + status update for booking support panels.
+  - Ticket issue/message loading and updates. `loadBookingSupport(bookingId)` (messages + issues + archived issues), `updateConcernStatus(issueId, status)`, `sendTicketMessage(payload)`, `listArchivedOwnerAdminMessages`, `archiveOwnerAdminMessage`. Uses `ticket_messages`, `ticket_issues`, `ticket_issues_archive`, `owner_admin_messages`.
 
-## Shared Utilities (`src/lib`)
+- `AccountsClient.jsx`
+  - Session and accounts management. `refreshSession()` (GET `/api/auth/session`), `refreshAccounts()` (GET `/api/accounts`), `createAccountInvite`, `updateAccount`, `deleteAccount`, profile image upload. Exposes `activeAccount`, `accounts`, `loading`, `loadingSession`.
+
+## Shared utilities (`src/lib`)
+
+- `supabase.js`
+  - Browser Supabase client (used by client components and pages).
 
 - `bookingDateTime.js`
-  - Shared date/time helpers:
-    - `toDateTimeMs(...)`
-    - `overlapsByDateTime(...)`
-    - `formatWeekdayLabel(...)`
-    - `formatTotalStayDays(...)`
-    - `isCheckoutOverdueRow(...)`
+  - Date/time helpers: `toDateTimeMs`, `overlapsByDateTime`, `formatWeekdayLabel`, `formatTotalStayDays`, `isCheckoutOverdueRow`.
 
 - `availability.js`
-  - Availability helpers used by home + resort detail:
-    - `buildRequestedRange(...)`
-    - `getUnavailableRoomIds(...)`
-    - status filtering for blocking bookings
-    - room id normalization
+  - Availability for home + resort detail: `buildRequestedRange`, `getUnavailableRoomIds`, status filtering, room id normalization.
 
 - `utils.js`
-  - General helpers (mostly image/storage):
-    - Supabase storage path extraction
-    - image transform/srcSet helpers
-    - bucket constants
-    - `convertImageFileToWebp()` (shared WebP conversion)
-    - `getResortStoragePath()` (e.g. resortname/payment)
+  - Image/storage: `BUCKET_NAME`, `getStoragePathFromPublicUrl`, `convertImageFileToWebp`, `getResortStoragePath`, `getPublicUrl`, `isSupabasePublicStorageUrl`, `getTransformedSupabaseImageUrl`, `getSupabaseSrcSet`.
 
 - `resortPaymentImage.js`
-  - Shared upload/delete for resort payment reference image (e.g. GCash QR).
-  - `uploadResortPaymentImage(supabase, file, resortName)` → converts to WebP, uploads to `[resortname]/payment` in bucket, returns public URL.
-  - `deleteResortPaymentImage(supabase, imageUrl)` → removes object from storage when image is removed/replaced.
+  - Resort payment reference image: `uploadResortPaymentImage(supabase, file, resortName)`, `deleteResortPaymentImage(supabase, imageUrl)`. Stores under `[resortname]/payment`, WebP.
 
 - `bookingFlow.js`
   - Booking confirmation stub generator.
 
 - `ticketAccess.js`
-  - Token generation/expiry checks for ticket access links.
+  - Ticket link token generation and expiry checks (`isTicketTokenValid`, etc.).
 
 - `caretakerNotifications.js`
-  - Notification write helper used after payment approval.
-  - Current hook point for future caretaker email/SMS delivery.
-
-- `server/bookingStatusAutomation.js`
-  - Server-only status automation runner.
-  - Auto-moves overdue confirmed/ongoing bookings to `Pending Checkout`.
+  - Notification write helper after payment approval (in-app; placeholder for future email/SMS).
 
 - `idempotency.js`
-  - Simple idempotency key generator for write actions/messages.
+  - Idempotency key generator for write actions/messages.
+
+- `supportConversation.js`
+  - Support UI helpers: `buildSupportConversationItems(messages, issues)`, `isResolvedConversationItem`. Merges messages and issues into a single sorted conversation list.
 
 - `emailTracking.js`
-  - Shared helper for writing real email delivery events into analytics log table.
+  - `logEmailDelivery(supabaseClient, payload)` — writes to `email_delivery_logs` for send/delivery tracking.
+
+## Server-only (`src/lib/server`)
+
+- `serviceSupabase.js`
+  - `createServiceSupabaseClient()` — Supabase client with service role key (server-only).
+
+- `accounts.js`
+  - Account CRUD and recovery: `listAccounts`, `getAccountById`, `getAccountByEmail`, `getAccountBySetupToken`, `createAccountInvite`, `updateAccount`, `deleteAccount`, `createRecoveryRequest`, `listRecoveryRequests`, `resolveRecoveryRequest`, `completeAccountSetup`, `sanitizeAccount`. Uses hashed passwords via `passwords.js`.
+
+- `passwords.js`
+  - `hashPassword`, `verifyPassword`, `shouldUpgradePasswordHash`, `upgradeLegacyPassword`. Scrypt-based hashing (server-only, Node crypto).
+
+- `session.js`
+  - Server session: `SESSION_COOKIE_NAME`, `createSession(payload)`, `verifySession(cookieHeader)`. HMAC-signed cookie; used by auth routes.
+
+- `bookingStatusAutomation.js`
+  - Server-only status automation: overdue confirmed/ongoing -> Pending Checkout. Consumed by `/api/internal/booking-status`.
+
+## App routes (`src/app`)
+
+- **`(main)`** — Public layout: home (`/`), resort detail `resort/[name]`, ticket `ticket/[bookingId]`. Uses `FilterProvider` / `useFilters`.
+- **`auth`** — Login `auth/login`, setup resort `auth/setup-resort` (token-based). Uses `session.js`, `passwords.js`, `accounts.js`.
+- **`admin`** — Dashboard `admin/dashboard`, accounts `admin/accounts`, analytics `admin/analytics`. Session-protected.
+- **`owner`** — Owner dashboard `owner/dashboard`. Session-protected.
+- **`edit`** — Resort builder `edit/resort-builder`, `edit/resort-builder/[id]`; bookings `edit/bookings/[id]`, booking detail `edit/bookings/[id]/booking-details/[bookingId]`; accounts `edit/accounts/[id]`. Uses `ResortEditorClient`, `BookingsClient`, `AccountsClient`.
+- **`api`** — Auth: `api/auth/login`, `api/auth/logout`, `api/auth/session`, `api/auth/forgot-password`. Accounts: `api/accounts`, `api/accounts/setup`, `api/accounts/[id]`. Recovery: `api/account-recovery`, `api/account-recovery/[id]`. Booking: `api/booking/approve-inquiry-email`. Internal: `api/internal/booking-status` (calls `bookingStatusAutomation`).
 
 ## Main Public Pages
 

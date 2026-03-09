@@ -18,11 +18,15 @@ export async function handleSetStatusAction({
     const next = { ...draft, status: nextStatus };
     if (nextStatus === "Confirmed" && !next.confirmationStub?.code) {
       next.confirmationStub = generateConfirmationStub(booking.id, resortName, draft.guestName);
-      if (next.paymentVerified) {
-        next.paymentPendingApproval = false;
-        next.pendingDownpayment = 0;
-        next.pendingPaymentMethod = null;
+      // When confirming, treat any pending payment as accepted: merge into downpayment so total due reflects it
+      const pending = Number(next.pendingDownpayment || 0);
+      if (pending > 0) {
+        next.downpayment = Number(next.downpayment || 0) + pending;
+        next.paymentMethod = next.pendingPaymentMethod || next.paymentMethod;
       }
+      next.paymentPendingApproval = false;
+      next.pendingDownpayment = 0;
+      next.pendingPaymentMethod = null;
     }
     setDraft(next);
     await persist(next);

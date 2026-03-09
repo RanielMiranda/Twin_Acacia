@@ -84,6 +84,21 @@ export function useTicketActions({
 
       if (error) throw error;
 
+      const amount = Number(downpayment || 0);
+      if (amount > 0) {
+        const totalAmount = Number(form.totalAmount || 0);
+        const existingPaid = Number(form.downpayment || 0);
+        const balanceAfter = Math.max(0, totalAmount - existingPaid - amount);
+        const { error: txError } = await supabase.from("booking_transactions").insert({
+          booking_id: booking.id,
+          method: paymentMethod || "Pending",
+          amount,
+          balance_after: balanceAfter,
+          note: "Payment proof submitted by client (pending approval)",
+        });
+        if (txError) console.error("Failed to record booking_transactions:", txError);
+      }
+
       setBooking((prev) => ({ ...prev, booking_form: bookingForm, status: nextStatus }));
       await fetchTicket();
       toast({

@@ -9,6 +9,8 @@ import { getTransformedSupabaseImageUrl } from "@/lib/utils";
 export function TicketPaymentCardSection({
   totalAmount,
   paid,
+  pendingPaid = 0,
+  paymentPendingApproval = false,
   balance,
   paymentMethod,
   setPaymentMethod,
@@ -19,9 +21,11 @@ export function TicketPaymentCardSection({
   isSubmitting,
   onSubmitDownpayment,
   resortPaymentImageUrl,
+  canSubmitPayment = true,
 }) {
   const hasReference = !!resortPaymentImageUrl && typeof resortPaymentImageUrl === "string";
   const [referenceExpanded, setReferenceExpanded] = useState(false);
+  const locked = !canSubmitPayment;
   const bigImageUrl = hasReference
     ? getTransformedSupabaseImageUrl(resortPaymentImageUrl, { width: 1024, quality: 95, format: "webp" })
     : null;
@@ -30,6 +34,17 @@ export function TicketPaymentCardSection({
       <h3 className="text-sm font-black text-emerald-600 uppercase tracking-[0.2em] mb-6 md:mb-8 flex items-center gap-2">
         <CreditCard size={18} /> Payment & Verification
       </h3>
+
+      {locked && (
+        <div className="mb-6 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 text-sm">
+          <p className="font-bold">Amount paid (verified): ₱{Number(paid || 0).toLocaleString()}</p>
+          {paymentPendingApproval && Number(pendingPaid || 0) > 0 && (
+            <p className="font-bold mt-1 text-amber-600">Amount submitted (pending approval): ₱{Number(pendingPaid || 0).toLocaleString()}</p>
+          )}
+          <p className="font-bold mt-1">Amount still due: ₱{Number(balance || 0).toLocaleString()}</p>
+          <p className="text-xs text-slate-500 mt-2">Payment has been submitted or confirmed. Use the form below only when requested to pay.</p>
+        </div>
+      )}
 
       <div className={`grid gap-6 md:gap-8 ${hasReference ? "grid-cols-1 lg:grid-cols-12" : "grid-cols-1 lg:grid-cols-12"}`}>
         {hasReference && (
@@ -82,9 +97,10 @@ export function TicketPaymentCardSection({
                 Payment Method
               </span>
               <select
-                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
+                disabled={locked}
               >
                 <option value="GCash">GCash</option>
                 <option value="Bank">Bank Transfer</option>
@@ -96,10 +112,11 @@ export function TicketPaymentCardSection({
                 Deposit Amount (PHP)
               </span>
               <input
-                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
                 type="number"
                 value={downpayment}
                 onChange={(e) => setDownpayment(Number(e.target.value))}
+                disabled={locked}
               />
             </label>
           </div>
@@ -108,11 +125,12 @@ export function TicketPaymentCardSection({
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
               Upload Screenshot / Receipt
             </span>
-            <div className="relative group border-2 border-dashed border-slate-200 rounded-2xl p-4 md:p-6 bg-slate-50/50 hover:bg-white hover:border-blue-400 transition-all cursor-pointer">
+            <div className={`relative group border-2 border-dashed border-slate-200 rounded-2xl p-4 md:p-6 bg-slate-50/50 transition-all ${locked ? "cursor-not-allowed opacity-60" : "hover:bg-white hover:border-blue-400 cursor-pointer"}`}>
               <input
-                className="absolute inset-0 opacity-0 cursor-pointer"
+                className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
                 type="file"
                 onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                disabled={locked}
               />
               <div className="flex flex-col items-center justify-center gap-2 text-slate-400 group-hover:text-blue-500">
                 {proofFile ? (
@@ -142,6 +160,12 @@ export function TicketPaymentCardSection({
                 <span className="text-slate-400">Already Paid</span>
                 <span className="font-bold">₱{Number(paid || 0).toLocaleString()}</span>
               </div>
+              {paymentPendingApproval && Number(pendingPaid || 0) > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-amber-400">Submitted (pending approval)</span>
+                  <span className="font-bold text-amber-300">₱{Number(pendingPaid || 0).toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex justify-between text-lg font-black text-blue-400 pt-2">
                 <span>Balance</span>
                 <span>₱{Number(balance || 0).toLocaleString()}</span>
@@ -150,8 +174,8 @@ export function TicketPaymentCardSection({
           </div>
 
           <Button
-            disabled={isSubmitting || !proofFile}
-            className="w-full mt-8 bg-emerald-500 hover:bg-emerald-600 h-14 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+            disabled={locked || isSubmitting || !proofFile}
+            className="w-full mt-8 bg-emerald-500 hover:bg-emerald-600 h-14 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             onClick={onSubmitDownpayment}
           >
             {isSubmitting ? (

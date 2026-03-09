@@ -326,22 +326,11 @@ create table if not exists public.booking_status_audit (
   id bigint generated always as identity primary key,
   booking_id text not null references public.bookings(id) on delete cascade,
   changed_at timestamptz not null default now(),
-  actor_role text not null default coalesce(auth.jwt()->>'app_role', auth.jwt()->>'role', 'system'),
-  actor_name text default coalesce(auth.jwt()->>'name', auth.jwt()->>'email', null),
+  actor_role text not null default 'system',
+  actor_name text,
   old_status text,
-  new_status text,
-  old_downpayment numeric,
-  new_downpayment numeric,
-  old_payment_method text,
-  new_payment_method text,
-  old_payment_verified boolean,
-  new_payment_verified boolean,
-  old_snapshot jsonb,
-  new_snapshot jsonb
+  new_status text
 );
-
-alter table public.booking_status_audit
-  add column if not exists actor_name text;
 
 create index if not exists booking_status_audit_booking_id_idx on public.booking_status_audit(booking_id);
 create index if not exists booking_status_audit_changed_at_idx on public.booking_status_audit(changed_at desc);
@@ -361,46 +350,21 @@ as $$
 declare
   old_status text := coalesce(old.status, old.booking_form->>'status');
   new_status text := coalesce(new.status, new.booking_form->>'status');
-  old_downpayment numeric := coalesce((old.booking_form->>'downpayment')::numeric, 0);
-  new_downpayment numeric := coalesce((new.booking_form->>'downpayment')::numeric, 0);
-  old_payment_method text := coalesce(old.booking_form->>'paymentMethod', 'Pending');
-  new_payment_method text := coalesce(new.booking_form->>'paymentMethod', 'Pending');
-  old_verified boolean := coalesce((old.booking_form->>'paymentVerified')::boolean, false);
-  new_verified boolean := coalesce((new.booking_form->>'paymentVerified')::boolean, false);
 begin
-  if old_status is distinct from new_status
-     or old_downpayment is distinct from new_downpayment
-     or old_payment_method is distinct from new_payment_method
-     or old_verified is distinct from new_verified then
+  if old_status is distinct from new_status then
     insert into public.booking_status_audit (
       booking_id,
       actor_role,
       actor_name,
       old_status,
-      new_status,
-      old_downpayment,
-      new_downpayment,
-      old_payment_method,
-      new_payment_method,
-      old_payment_verified,
-      new_payment_verified,
-      old_snapshot,
-      new_snapshot
+      new_status
     )
     values (
       new.id,
       coalesce(new.booking_form->>'lastActionRole', old.booking_form->>'lastActionRole', auth.jwt()->>'app_role', auth.jwt()->>'role', 'system'),
       coalesce(new.booking_form->>'lastActionBy', old.booking_form->>'lastActionBy', auth.jwt()->>'name', auth.jwt()->>'email', null),
       old_status,
-      new_status,
-      old_downpayment,
-      new_downpayment,
-      old_payment_method,
-      new_payment_method,
-      old_verified,
-      new_verified,
-      old.booking_form,
-      new.booking_form
+      new_status
     );
   end if;
   return new;

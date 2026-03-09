@@ -74,7 +74,9 @@ export default function ClientTicketPage() {
 
   const totalAmount = Number(form.totalAmount || 0);
   const paid = Number(form.downpayment || 0);
-  const balance = Math.max(0, totalAmount - paid);
+  const pendingPaid = form.paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
+  const effectivePaid = paid + pendingPaid;
+  const balance = Math.max(0, totalAmount - effectivePaid);
   const status = String(booking.status || "").toLowerCase();
   const isConcernOnlyMode =
     status.includes("confirm") ||
@@ -105,22 +107,23 @@ export default function ClientTicketPage() {
         entryCode={stayInfoPayload?.entryCode}
       />
 
-      {status.includes("pending payment") ? (
-        <TicketPaymentCardSection
-          totalAmount={totalAmount}
-          paid={paid}
-          balance={balance}
-          paymentMethod={paymentMethod}
-          setPaymentMethod={setPaymentMethod}
-          downpayment={downpayment}
-          setDownpayment={setDownpayment}
-          proofFile={proofFile}
-          setProofFile={setProofFile}
-          isSubmitting={isSubmitting}
-          onSubmitDownpayment={handleSubmitDownpayment}
-          resortPaymentImageUrl={resort?.payment_image_url}
-        />
-      ) : null}
+      <TicketPaymentCardSection
+        totalAmount={totalAmount}
+        paid={paid}
+        pendingPaid={pendingPaid}
+        paymentPendingApproval={!!form.paymentPendingApproval}
+        balance={balance}
+        paymentMethod={paymentMethod}
+        setPaymentMethod={setPaymentMethod}
+        downpayment={downpayment}
+        setDownpayment={setDownpayment}
+        proofFile={proofFile}
+        setProofFile={setProofFile}
+        isSubmitting={isSubmitting}
+        onSubmitDownpayment={handleSubmitDownpayment}
+        resortPaymentImageUrl={resort?.payment_image_url}
+        canSubmitPayment={status.includes("pending payment")}
+      />
 
       <TicketSupportDeskCardSection
         resort={resort}
