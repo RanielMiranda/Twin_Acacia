@@ -31,7 +31,7 @@ export default function ClientTicketPage() {
   const [paymentDraft, setPaymentDraft] = useState({ method: null, downpayment: null });
   const [proofFile, setProofFile] = useState(null);
 
-  const { loading, booking, setBooking, resort, messages, loadingMessages, fetchTicket, fetchMessages } = useTicketData({
+  const { loading, booking, setBooking, resort, messages, issues, loadingMessages, fetchTicket, fetchMessages } = useTicketData({
     normalizedBookingId,
     accessToken,
     toast,
@@ -126,6 +126,8 @@ export default function ClientTicketPage() {
         resort={resort}
         loadingMessages={loadingMessages}
         messages={messages}
+        issues={issues}
+        onRefreshMessages={() => fetchMessages(booking.id)}
         isConcernOnlyMode={isConcernOnlyMode}
         chatMessage={chatMessage}
         setChatMessage={setChatMessage}

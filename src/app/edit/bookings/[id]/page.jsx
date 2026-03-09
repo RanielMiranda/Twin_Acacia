@@ -12,8 +12,6 @@ import {
   LayoutDashboard,
   ChevronRight,
   MessageCircleWarning,
-  AlertTriangle,
-  Clock4,
   Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,12 +22,13 @@ import BookingCalendar from "./components/BookingsCalendar";
 import RentalManager from "./components/RentalManager";
 import LiveConcernsPanel from "./components/LiveConcernsPanel";
 import AuditArchivePanel from "./components/AuditArchivePanel";
+import BookingSummaryCards from "./components/BookingSummaryCards";
 
 export default function BookingManagementPage() {
   const { id } = useParams();
   const router = useRouter();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, refreshBookings } = useBookings();
+  const { bookings, refreshBookings, updateBookingById, deleteBookingById } = useBookings();
   const { listResortConcerns, updateConcernStatus } = useSupport();
   const [concerns, setConcerns] = useState([]);
   const [loadingConcerns, setLoadingConcerns] = useState(false);
@@ -65,7 +64,7 @@ export default function BookingManagementPage() {
     const source = bookings || [];
     const inquiry = source.filter((entry) => {
       const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-      return status.includes("inquiry") || status.includes("pending payment");
+      return (status.includes("inquiry") || status.includes("pending payment")) && !status.includes("declined");
     }).length;
     const checkout = source.filter((entry) => {
       const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
@@ -73,6 +72,32 @@ export default function BookingManagementPage() {
     }).length;
     return { inquiry, checkout };
   }, [bookings]);
+
+  const declinedBookings = useMemo(
+    () =>
+      (bookings || []).filter((entry) => {
+        const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
+        return status.includes("declined");
+      }),
+    [bookings]
+  );
+  const auditArchiveCount = audits.length + declinedBookings.length;
+  const openConcernCount = concerns.filter((item) => item.status !== "resolved").length;
+
+  const TabBadge = ({ count, tone = "blue" }) =>
+    count > 0 ? (
+      <span
+        className={`ml-1 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black leading-none ${
+          tone === "rose"
+            ? "bg-rose-100 text-rose-700"
+            : tone === "indigo"
+              ? "bg-indigo-100 text-indigo-700"
+              : "bg-blue-100 text-blue-700"
+        }`}
+      >
+        {count}
+      </span>
+    ) : null;
 
   const loadConcerns = async () => {
     if (!resortId) return;
@@ -179,6 +204,34 @@ export default function BookingManagementPage() {
     }
   };
 
+  const handleReopenDeclined = async (bookingId) => {
+    try {
+      await updateBookingById(bookingId, (entry) => ({
+        ...entry,
+        status: "Inquiry",
+        bookingForm: {
+          ...(entry.bookingForm || {}),
+          status: "Inquiry",
+          reopenedAt: new Date().toISOString(),
+        },
+      }));
+      await loadAudits();
+    } catch (error) {
+      console.error("Reopen declined inquiry error:", error.message);
+    }
+  };
+
+  const handleDeleteDeclined = async (bookingId) => {
+    const confirmed = window.confirm("Delete this declined inquiry?");
+    if (!confirmed) return;
+    try {
+      await deleteBookingById(bookingId);
+      await loadAudits();
+    } catch (error) {
+      console.error("Delete declined inquiry error:", error.message);
+    }
+  };
+
   const openForm = (guestData = {}, targetBookingId = null) => {
     if (targetBookingId) {
       router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}/form`);
@@ -226,39 +279,13 @@ export default function BookingManagementPage() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
-            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Priority Workflow</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><Clock4 size={16} className="text-blue-600" /> Pending Inquiries</p>
-                <p className="text-2xl font-black text-blue-600">{workflowCounts.inquiry}</p>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><AlertTriangle size={16} className="text-rose-600" /> Pending Checkout</p>
-                <p className="text-2xl font-black text-rose-600">{workflowCounts.checkout}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm">
-            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Live Concerns</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><MessageCircleWarning size={16} className="text-rose-600" /> Open Tickets</p>
-                <p className="text-2xl font-black text-rose-600">
-                  {concerns.filter((item) => item.status !== "resolved").length}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                className="rounded-xl text-xs font-bold"
-                onClick={() => setActiveTab("concerns")}
-              >
-                View Concerns
-              </Button>
-            </div>
-          </div>
-        </div>
+        <BookingSummaryCards
+          workflowCounts={workflowCounts}
+          openConcernCount={openConcernCount}
+          auditArchiveCount={auditArchiveCount}
+          onOpenConcerns={() => setActiveTab("concerns")}
+          onOpenAudits={() => setActiveTab("audits")}
+        />
 
         <div className="flex items-center gap-4 md:gap-8 border-b border-slate-200 mb-8 overflow-x-auto whitespace-nowrap">
           <button
@@ -269,6 +296,7 @@ export default function BookingManagementPage() {
           >
             <ClipboardList size={18} />
             Guest Workflow
+            <TabBadge count={workflowCounts.inquiry} tone="blue" />
             {activeTab === "workflow" && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-full" />}
           </button>
 
@@ -291,6 +319,7 @@ export default function BookingManagementPage() {
           >
             <MessageCircleWarning size={18} />
             Live Concerns
+            <TabBadge count={openConcernCount} tone="rose" />
             {activeTab === "concerns" && <div className="absolute bottom-0 left-0 w-full h-1 bg-rose-600 rounded-t-full" />}
           </button>
 
@@ -302,6 +331,7 @@ export default function BookingManagementPage() {
           >
             <Archive size={18} />
             Audit Archive
+            <TabBadge count={auditArchiveCount} tone="indigo" />
             {activeTab === "audits" && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 rounded-t-full" />}
           </button>
         </div>
@@ -330,9 +360,12 @@ export default function BookingManagementPage() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <AuditArchivePanel
                 audits={audits}
+                declinedBookings={declinedBookings}
                 loading={loadingAudits}
                 onRefresh={loadAudits}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
+                onReopenDeclined={handleReopenDeclined}
+                onDeleteDeclined={handleDeleteDeclined}
               />
             </div>
           )}

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function startOfMonth(date) {
-  // Return the first day of the month in UTC
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
 
@@ -23,14 +23,21 @@ function isBetween(date, start, end) {
   return date > start && date < end;
 }
 
-export default function SideRangeCalendar({ startDate, endDate, onChange, activeDropdown, onClose }) {
+export default function SideRangeCalendar({
+  startDate,
+  endDate,
+  onChange,
+  activeDropdown,
+  onClose,
+  monthCount = 2,
+  mobileCentered = false,
+}) {
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-  const [baseMonth] = useState(startOfMonth(todayUTC));
+  const [baseMonth, setBaseMonth] = useState(startOfMonth(todayUTC));
 
-  // ESC key listener to close the panel
   useEffect(() => {
-    const handleEsc = (e) => e.key === "Escape" && onClose();
+    const handleEsc = (event) => event.key === "Escape" && onClose();
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
@@ -43,32 +50,29 @@ export default function SideRangeCalendar({ startDate, endDate, onChange, active
     const days = [];
     const firstDay = start.getUTCDay();
 
-    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 0; i < firstDay; i += 1) days.push(null);
 
-    let d = new Date(Date.UTC(year, month, 1));
-    while (d.getUTCMonth() === month) {
-      days.push(new Date(d));
-      d.setUTCDate(d.getUTCDate() + 1);
+    const cursor = new Date(Date.UTC(year, month, 1));
+    while (cursor.getUTCMonth() === month) {
+      days.push(new Date(cursor));
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     return (
       <div className="w-[200px]">
-        {/* Month Header */}
-        <div className="font-semibold mb-2 text-center text-gray-800">
+        <div className="mb-2 text-center font-semibold text-gray-800">
           {start.toLocaleString("default", { month: "long" })} {year}
         </div>
 
-        {/* Weekdays */}
-        <div className="grid grid-cols-7 gap-1 text-[11px] text-center font-bold text-gray-400 uppercase mb-2">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-            <div key={d} className="h-8 flex items-center justify-center">{d}</div>
+        <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-bold uppercase text-gray-400">
+          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+            <div key={day} className="flex h-8 items-center justify-center">{day}</div>
           ))}
         </div>
 
-        {/* Dates */}
         <div className="grid grid-cols-7 gap-1 text-center">
-          {days.map((date, i) => {
-            if (!date) return <div key={i} className="h-10" />;
+          {days.map((date, index) => {
+            if (!date) return <div key={index} className="h-10" />;
 
             const isStart = isSameDay(date, startDate);
             const isEnd = isSameDay(date, endDate);
@@ -77,18 +81,16 @@ export default function SideRangeCalendar({ startDate, endDate, onChange, active
 
             return (
               <button
-                key={i}
+                key={index}
                 disabled={isPast}
                 onClick={() => {
                   if (isPast) return;
 
-                  // ===== SAME DAY selected as both start & end =====
                   if (isStart && isEnd) {
                     onChange(null, null);
                     return;
                   }
 
-                  // ===== CLICKING START =====
                   if (isStart) {
                     if (endDate) {
                       onChange(endDate, null);
@@ -98,13 +100,11 @@ export default function SideRangeCalendar({ startDate, endDate, onChange, active
                     return;
                   }
 
-                  // ===== CLICKING END =====
                   if (isEnd) {
                     onChange(startDate, null);
                     return;
                   }
 
-                  // ===== NORMAL SELECTION FLOW =====
                   if (!startDate || (startDate && endDate)) {
                     onChange(date, null);
                   } else if (activeDropdown === "end" && date < startDate) {
@@ -113,14 +113,12 @@ export default function SideRangeCalendar({ startDate, endDate, onChange, active
                     onChange(startDate, date);
                   }
                 }}
-                className={`
-                  h-10 flex items-center justify-center text-sm px-3
-                  ${isPast ? "text-gray-300 cursor-not-allowed" : "hover:bg-blue-100 hover:rounded-md hover:-translate-y-1/16"}
-                  ${isStart || isEnd ? "bg-blue-600 text-white font-semibold hover:bg-blue-300" : ""}
-                  ${isStart ? "rounded-bl-md rounded-tl-md" : ""}
-                  ${isEnd ? "rounded-tr-md rounded-br-md" : ""}
-                  ${inRange ? "bg-blue-100" : ""}
-                `}
+                className={[
+                  "flex h-10 w-10 items-center justify-center text-sm transition-colors",
+                  isPast ? "cursor-not-allowed text-gray-300" : "hover:bg-blue-100",
+                  inRange ? "rounded-md bg-blue-100 text-blue-700" : "rounded-full",
+                  isStart || isEnd ? "relative z-10 rounded-full bg-blue-600 font-semibold text-white hover:bg-blue-600" : "",
+                ].join(" ")}
               >
                 {date.getUTCDate()}
               </button>
@@ -133,32 +131,50 @@ export default function SideRangeCalendar({ startDate, endDate, onChange, active
 
   return (
     <>
-      <div
-        className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-[999]"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-[999] bg-black/20 backdrop-blur-[1px]" onClick={onClose} />
 
       <div
-        className="absolute top-0 left-full ml-4 z-[1000] bg-white shadow-2xl rounded-2xl flex flex-col p-4 gap-4 border border-gray-100 min-w-max"
-        onClick={(e) => e.stopPropagation()}
+        className={`z-[1000] flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl ${
+          mobileCentered
+            ? "fixed left-1/2 top-1/2 w-[min(92vw,360px)] -translate-x-1/2 -translate-y-1/2"
+            : "absolute left-0 top-full mt-2 w-[min(92vw,460px)]"
+        }`}
+        onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex justify-between items-center px-1">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setBaseMonth((prev) => addMonths(prev, -1))}
+              className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setBaseMonth((prev) => addMonths(prev, 1))}
+              className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
+              aria-label="Next month"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
           <h3 className="font-bold text-gray-800">
             {activeDropdown === "start" ? "Check-in" : "Check-out"}
           </h3>
-          <button 
-            onClick={onClose} 
-            className="text-gray-400 hover:text-gray-600 p-1"
-          >
-            ✕
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+            x
           </button>
         </div>
 
-        <div className="flex gap-6">
-          {renderMonth(baseMonth)}
-          {renderMonth(addMonths(baseMonth, 1))}
+        <div className={`flex ${monthCount > 1 ? "gap-6" : "justify-center"}`}>
+          {Array.from({ length: monthCount }).map((_, index) => (
+            <React.Fragment key={index}>
+              {renderMonth(addMonths(baseMonth, index))}
+            </React.Fragment>
+          ))}
         </div>
-
       </div>
     </>
   );

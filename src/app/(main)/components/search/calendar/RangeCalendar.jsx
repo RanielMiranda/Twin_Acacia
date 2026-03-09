@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function startOfMonth(date) {
-  // Return the first day of the month in UTC
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
 
@@ -26,8 +26,7 @@ function isBetween(date, start, end) {
 export default function RangeCalendar({ startDate, endDate, onChange, activeDropdown }) {
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
-
-  const [baseMonth] = useState(startOfMonth(todayUTC));
+  const [baseMonth, setBaseMonth] = useState(startOfMonth(todayUTC));
 
   function renderMonth(monthDate) {
     const start = startOfMonth(monthDate);
@@ -37,70 +36,60 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
     const days = [];
     const firstDay = start.getUTCDay();
 
-    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 0; i < firstDay; i += 1) days.push(null);
 
-    let d = new Date(Date.UTC(year, month, 1));
-    while (d.getUTCMonth() === month) {
-      days.push(new Date(d));
-      d.setUTCDate(d.getUTCDate() + 1);
+    const cursor = new Date(Date.UTC(year, month, 1));
+    while (cursor.getUTCMonth() === month) {
+      days.push(new Date(cursor));
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
 
     return (
       <div className="w-[200px]">
-        {/* Month Header */}
-        <div className="font-semibold mb-2 text-center">
+        <div className="mb-2 text-center font-semibold">
           {start.toLocaleString("default", { month: "long" })} {year}
         </div>
 
-        {/* Weekdays */}
-        <div className="grid grid-cols-7 gap-1 text-sm text-center font-medium mb-2">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-            <div key={d} className="h-8 flex items-center justify-center">{d}</div>
+        <div className="mb-2 grid grid-cols-7 gap-1 text-center text-sm font-medium">
+          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+            <div key={day} className="flex h-8 items-center justify-center">{day}</div>
           ))}
         </div>
 
-        {/* Dates */}
         <div className="grid grid-cols-7 gap-1 text-center">
-          {days.map((date, i) => {
-            if (!date) return <div key={i} className="h-10" />;
+          {days.map((date, index) => {
+            if (!date) return <div key={index} className="h-10" />;
 
             const isStart = isSameDay(date, startDate);
             const isEnd = isSameDay(date, endDate);
             const inRange = isBetween(date, startDate, endDate);
-
             const isPast = date < todayUTC;
 
             return (
               <button
-                key={i}
+                key={index}
                 onClick={() => {
                   if (isPast) return;
 
-                  // ===== SAME DAY selected as both start & end =====
                   if (isStart && isEnd) {
                     onChange(null, null);
                     return;
                   }
 
-                  // ===== CLICKING START =====
                   if (isStart) {
                     if (endDate) {
-                      // Shift range forward (end becomes new start)
                       onChange(endDate, null);
                     } else {
-                      // Only start existed → clear
                       onChange(null, null);
                     }
                     return;
                   }
 
-                  // ===== CLICKING END =====
                   if (isEnd) {
                     onChange(startDate, null);
                     return;
                   }
 
-                  // ===== NORMAL SELECTION FLOW =====
                   if (!startDate || (startDate && endDate)) {
                     onChange(date, null);
                   } else if (activeDropdown === "end" && date < startDate) {
@@ -109,14 +98,12 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
                     onChange(startDate, date);
                   }
                 }}
-                className={`
-                  h-10 flex items-center justify-center text-sm px-3
-                  ${isPast ? "text-gray-300 cursor-not-allowed" : "hover:bg-blue-100 hover:rounded-md hover:scale-110"}
-                  ${isStart || isEnd ? "bg-blue-600 text-white font-semibold hover:bg-blue-300" : ""}
-                  ${isStart ? "rounded-bl-md rounded-tl-md" : ""}
-                  ${isEnd ? "rounded-tr-md rounded-br-md" : ""}
-                  ${inRange ? "bg-blue-100" : ""}
-                `}
+                className={[
+                  "flex h-10 w-10 items-center justify-center text-sm transition-colors",
+                  isPast ? "cursor-not-allowed text-gray-300" : "hover:bg-blue-100",
+                  inRange ? "rounded-md bg-blue-100 text-blue-700" : "rounded-full",
+                  isStart || isEnd ? "relative z-10 rounded-full bg-blue-600 font-semibold text-white hover:bg-blue-600" : "",
+                ].join(" ")}
                 disabled={isPast}
               >
                 {date.getUTCDate()}
@@ -129,9 +116,29 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
   }
 
   return (
-    <div className="bg-white shadow-xl rounded-bl-2xl rounded-br-2xl flex p-4 gap-4">
-      {renderMonth(baseMonth)}
-      {renderMonth(addMonths(baseMonth, 1))}
+    <div className="rounded-bl-2xl rounded-br-2xl bg-white p-4 shadow-xl">
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setBaseMonth((prev) => addMonths(prev, -1))}
+          className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
+          aria-label="Previous month"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setBaseMonth((prev) => addMonths(prev, 1))}
+          className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
+          aria-label="Next month"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+      <div className="flex gap-4">
+        {renderMonth(baseMonth)}
+        {renderMonth(addMonths(baseMonth, 1))}
+      </div>
     </div>
   );
 }

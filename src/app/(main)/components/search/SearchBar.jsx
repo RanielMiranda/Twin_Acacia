@@ -59,7 +59,7 @@ export default function SearchBar() {
   return (
     <div
       ref={containerRef}
-      className="relative z-[120] flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap gap-2 bg-white rounded-xl p-[1vh]"
+      className="relative z-20 flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap gap-2 bg-white rounded-xl p-[1vh]"
     >
       <DestinationField
         destination={destination}

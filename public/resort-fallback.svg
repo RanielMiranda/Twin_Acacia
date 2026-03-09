@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Resort fallback image">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dbeafe" />
+      <stop offset="50%" stop-color="#bfdbfe" />
+      <stop offset="100%" stop-color="#e0f2fe" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)" />
+  <circle cx="1270" cy="170" r="86" fill="#fef3c7" />
+  <path d="M0 700 C180 640 330 620 520 690 C760 780 980 760 1210 670 C1370 608 1480 610 1600 640 V900 H0 Z" fill="#0f766e" opacity="0.85" />
+  <path d="M0 760 C200 700 370 705 560 760 C770 820 980 814 1220 730 C1380 674 1490 682 1600 720 V900 H0 Z" fill="#115e59" opacity="0.9" />
+  <rect x="210" y="242" width="1180" height="360" rx="34" fill="#ffffff" fill-opacity="0.22" stroke="#ffffff" stroke-opacity="0.45" />
+  <text x="800" y="382" text-anchor="middle" font-family="Arial, sans-serif" font-size="74" font-weight="700" fill="#0f172a">Twin Acacia</text>
+  <text x="800" y="456" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#334155">Resort stays, day tours, and private room inquiries</text>
+</svg>

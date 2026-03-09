@@ -13,9 +13,17 @@ import {
   CheckCircle,
   Clock,
   ReceiptText,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { buildSupportConversationItems, getSupportConversationLabel, isResolvedConversationItem } from "@/lib/supportConversation";
 import { InfoItem, SectionLabel, StatusBadge } from "./BookingEditorAtoms";
+
+function getAuditActorLabel(entry) {
+  if (entry?.actor_name) return entry.actor_name;
+  if (entry?.actorRole) return entry.actorRole;
+  return entry?.actor || "system";
+}
 
 export function ClientCardSection({ resortName, isEditing, draft, setField, status }) {
   return (
@@ -158,7 +166,7 @@ export function StatusAuditCardSection({ dbAudits, bookingFormAudits }) {
                 {entry.old_status || "Unknown"} {"->"} {entry.new_status || "Unknown"}
               </p>
               <p className="text-xs font-semibold text-slate-700 mt-1">
-                {entry.actor_name || entry.actor_role || "system"}
+                {getAuditActorLabel(entry)}
               </p>
               <p className="text-[11px] text-slate-500">{new Date(entry.changed_at).toLocaleString()}</p>
             </div>
@@ -169,7 +177,7 @@ export function StatusAuditCardSection({ dbAudits, bookingFormAudits }) {
                 {entry.from || "Unknown"} {"->"} {entry.to || "Unknown"}
               </p>
               <p className="text-xs font-semibold text-blue-700 mt-1">
-                {entry.actorName || entry.actorRole || entry.actor || "owner"}
+                {getAuditActorLabel(entry)}
               </p>
               <p className="text-[11px] text-blue-500">{entry.at ? new Date(entry.at).toLocaleString() : "-"}</p>
             </div>
@@ -380,59 +388,77 @@ export function AssignRoomsCardSection({
 }
 
 export function MessagesInboxCardSection({
-  draft,
   issues,
   onResolveIssue,
   messages,
+  onRefreshMessages,
+  refreshingMessages = false,
   ownerReply,
   setOwnerReply,
   onSendReply,
 }) {
+  const conversationItems = buildSupportConversationItems({
+    messages,
+    issues: (issues || []).map((issue) => ({
+      ...issue,
+      issueId: issue.id,
+    })),
+    newestFirst: true,
+    issueFallbackSubject: "Concern",
+  });
+
   return (
     <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
-      <SectionLabel icon={<Mail size={14} />} label="Client Messaging" />
-      {draft.notes ? (
-        <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
-          <p className="text-[10px] font-black uppercase text-blue-700">Inquiry</p>
-          <p className="text-xs text-slate-700 mt-1">{draft.notes}</p>
-        </div>
-      ) : null}
-      {issues.length > 0 && (
-        <div className="space-y-2">
-          {issues.map((issue) => {
-            const resolved = String(issue.status || "").toLowerCase() === "resolved";
+      <div className="flex items-center justify-between gap-3">
+        <SectionLabel icon={<Mail size={14} />} label="Client Messaging" />
+        <Button
+          type="button"
+          variant="outline"
+          className="h-8 px-3 text-[11px] font-bold flex items-center justify-center"
+          onClick={onRefreshMessages}
+        >
+          <RefreshCw size={12} className={`mr-2 ${refreshingMessages ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+      <div className="max-h-52 overflow-auto space-y-2">
+        {conversationItems.length === 0 ? (
+          <p className="text-xs text-slate-400">No messages sent yet.</p>
+        ) : (
+          conversationItems.map((item) => {
+            const isOwner = item.senderRole === "owner";
+            const isIssue = item.kind === "issue";
+            const resolved = isResolvedConversationItem(item);
             return (
-              <div key={issue.id} className={`p-3 rounded-xl border ${resolved ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-100"}`}>
-                <div className="flex items-center justify-between gap-2">
-                  <p className={`text-[10px] font-black uppercase ${resolved ? "text-emerald-700" : "text-amber-700"}`}>
-                    {issue.subject || "Concern"} {resolved ? "(Resolved)" : ""}
-                  </p>
-                  {!resolved ? (
+              <div
+                key={item.id}
+                className={`p-2.5 rounded-xl text-xs ${
+                  isOwner
+                    ? "bg-blue-50 text-blue-700 ml-8"
+                    : isIssue
+                      ? resolved
+                        ? "bg-emerald-50 text-emerald-700 mr-8 border border-emerald-200"
+                        : "bg-amber-50 text-amber-700 mr-8 border border-amber-200"
+                      : "bg-slate-50 text-slate-700 mr-8"
+                }`}
+              >
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <p className="font-black uppercase text-[9px]">{getSupportConversationLabel(item)}</p>
+                  {isIssue && !resolved ? (
                     <Button
+                      type="button"
                       variant="outline"
-                      className="h-7 px-2 text-[10px] font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                      onClick={() => onResolveIssue?.(issue.id)}
+                      className="h-6 px-2 text-[10px] font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => onResolveIssue?.(item.issueId)}
                     >
                       Resolve
                     </Button>
                   ) : null}
                 </div>
-                <p className="text-xs text-slate-700 mt-1">{issue.message}</p>
+                <p>{item.body}</p>
               </div>
             );
-          })}
-        </div>
-      )}
-      <div className="max-h-52 overflow-auto space-y-2">
-        {messages.length === 0 ? (
-          <p className="text-xs text-slate-400">No messages sent yet.</p>
-        ) : (
-          messages.map((msg) => (
-            <div key={msg.id} className={`p-2.5 rounded-xl text-xs ${msg.sender_role === "owner" ? "bg-blue-50 text-blue-700 ml-8" : "bg-slate-50 text-slate-700 mr-8"}`}>
-              <p className="font-black uppercase text-[9px] mb-1">{msg.sender_role}</p>
-              <p>{msg.message}</p>
-            </div>
-          ))
+          })
         )}
       </div>
       <div className="flex gap-2">
@@ -447,4 +473,3 @@ export function MessagesInboxCardSection({
     </div>
   );
 }
-

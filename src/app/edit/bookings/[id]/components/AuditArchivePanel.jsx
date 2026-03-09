@@ -10,12 +10,21 @@ function toActionLabel(row) {
   return `${from} -> ${to}`;
 }
 
+function getActorName(row) {
+  return row?.actor_name || "system";
+}
+
 export default function AuditArchivePanel({
   audits = [],
+  declinedBookings = [],
   loading = false,
   onRefresh,
   onOpenBooking,
+  onReopenDeclined,
+  onDeleteDeclined,
 }) {
+  const visibleAudits = audits || [];
+
   return (
     <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-5 md:p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
@@ -38,14 +47,64 @@ export default function AuditArchivePanel({
         </Button>
       </div>
 
-      {audits.length === 0 ? (
+      {visibleAudits.length === 0 && declinedBookings.length === 0 ? (
         <div className="p-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
           <Archive className="mx-auto text-slate-300 mb-2" size={26} />
           <p className="text-sm font-semibold text-slate-500">No audit entries yet.</p>
         </div>
       ) : (
         <div className="space-y-2.5 max-h-[65vh] overflow-auto pr-1">
-          {audits.map((item) => (
+          {declinedBookings.map((item) => (
+            <div
+              key={`declined-${item.id}`}
+              className="p-3 rounded-xl border border-rose-200 bg-rose-50/60"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight bg-rose-600 text-white inline-flex items-center gap-1">
+                      <ArrowRightLeft size={10} />
+                      Declined Inquiry
+                    </span>
+                    <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                      <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-700 leading-snug break-words">
+                    Ticket: <span className="font-black text-slate-900">#{item.id}</span>
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1.5 inline-flex items-center gap-1">
+                    <User2 size={11} />
+                    {item.bookingForm?.guestName || "Guest"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    className="h-8 px-3 text-xs font-bold"
+                    onClick={() => onOpenBooking?.(item.id)}
+                  >
+                    Open Booking
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 px-3 text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                    onClick={() => onReopenDeclined?.(item.id)}
+                  >
+                    Reopen
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 px-3 text-xs font-bold border-rose-200 text-rose-700 hover:bg-rose-50"
+                    onClick={() => onDeleteDeclined?.(item.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {visibleAudits.map((item) => (
             <div
               key={item.id}
               className="p-3 rounded-xl border border-indigo-100 bg-indigo-50/40"
@@ -69,7 +128,7 @@ export default function AuditArchivePanel({
                   </p>
                   <p className="text-[11px] text-slate-500 mt-1.5 inline-flex items-center gap-1">
                     <User2 size={11} />
-                    {item.actor_name || item.actor_role || "system"}
+                    {getActorName(item)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -89,4 +148,3 @@ export default function AuditArchivePanel({
     </div>
   );
 }
-

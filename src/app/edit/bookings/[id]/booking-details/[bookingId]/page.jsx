@@ -23,6 +23,7 @@ export default function BookingDetailsPage() {
   const [issues, setIssues] = useState([]);
   const [ownerReply, setOwnerReply] = useState("");
   const [statusAudits, setStatusAudits] = useState([]);
+  const [refreshingMessages, setRefreshingMessages] = useState(false);
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -63,6 +64,7 @@ export default function BookingDetailsPage() {
   }, [booking?.id]);
 
   const loadSupportData = async (activeBookingId) => {
+    setRefreshingMessages(true);
     try {
       const { messages: messageRows, issues: issueRows, missingTables } = await loadBookingSupport(activeBookingId);
       setMessages(messageRows);
@@ -75,6 +77,8 @@ export default function BookingDetailsPage() {
       }
     } catch (err) {
       toast({ message: `Unable to load support data: ${err.message}`, color: "red" });
+    } finally {
+      setRefreshingMessages(false);
     }
   };
 
@@ -173,6 +177,8 @@ export default function BookingDetailsPage() {
       ownerReply={ownerReply}
       setOwnerReply={setOwnerReply}
       onSendReply={handleSendReply}
+      onRefreshMessages={() => loadSupportData(booking.id)}
+      refreshingMessages={refreshingMessages}
       onResolveIssue={handleResolveIssue}
       conflicts={bookingConflicts}
       createSignedProofUrl={createSignedProofUrl}

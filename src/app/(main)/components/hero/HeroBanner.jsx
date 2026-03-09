@@ -1,18 +1,16 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import SearchBar from "../search/SearchBar";
-import { useResort } from "@/components/useclient/ContextEditor";
 import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
-export default function HeroBanner() {
-  const [heroImages, setHeroImages] = useState([]);
-  const [heroIndex, setHeroIndex] = useState(0);
-  const { safeSrc } = useResort();
+const FALLBACK_HERO_IMAGE = "/resort-fallback.svg";
 
-  // Fetch showcase images
+export default function HeroBanner() {
+  const [heroImages, setHeroImages] = useState([FALLBACK_HERO_IMAGE]);
+  const [heroIndex, setHeroIndex] = useState(0);
+
   useEffect(() => {
     const fetchImages = async () => {
       const { data, error } = await supabase
@@ -24,61 +22,50 @@ export default function HeroBanner() {
         return;
       }
 
-      const images = data.flatMap((resort) =>
-        (resort.gallery || []).slice(0, 2)
-      );
+      const images = (data || [])
+        .flatMap((resort) => (resort.gallery || []).filter(Boolean).slice(0, 1))
+        .filter(Boolean)
+        .slice(0, 6);
 
-      setHeroImages(images);
+      setHeroImages(images.length > 0 ? images : [FALLBACK_HERO_IMAGE]);
     };
 
     fetchImages();
   }, []);
 
-  // Auto rotation
   useEffect(() => {
-    if (!heroImages.length) return;
+    if (!heroImages.length || heroImages.length === 1) return;
 
     const interval = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % heroImages.length);
-    }, 6000);
+    }, 7000);
 
     return () => clearInterval(interval);
   }, [heroImages]);
 
   if (!heroImages.length) return null;
 
-  const nextIndex = (heroIndex + 1) % heroImages.length;
+  const activeImage = heroImages[heroIndex] || FALLBACK_HERO_IMAGE;
+  const heroSrc = getTransformedSupabaseImageUrl(activeImage, { width: 1280, quality: 72, format: "webp" });
+  const heroSrcSet = getSupabaseSrcSet(activeImage, [640, 960, 1280], 72);
 
   return (
     <div className="relative h-[80vh] group">
       <div className="absolute inset-0 overflow-hidden">
-        {/* BACKGROUND (next image always loaded underneath) */}
         <img
-          src={getTransformedSupabaseImageUrl(safeSrc(heroImages[nextIndex]), { width: 1600, quality: 80, format: "webp" })}
-          srcSet={getSupabaseSrcSet(safeSrc(heroImages[nextIndex]))}
+          key={activeImage}
+          src={heroSrc}
+          srcSet={heroSrcSet}
           sizes="100vw"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
           className="
             absolute w-full h-full object-cover
-            transition-transform duration-[6000ms] ease-out
+            transition-transform duration-[7000ms] ease-out
             group-hover:scale-105
           "
-          alt=""
-        />
-
-        {/* FOREGROUND (current image fades out) */}
-        <motion.img
-          key={heroIndex}
-          src={getTransformedSupabaseImageUrl(
-            safeSrc(heroImages[heroIndex]),
-            { width: 1600, quality: 80, format: "webp" }
-          )}
-          srcSet={getSupabaseSrcSet(safeSrc(heroImages[heroIndex]))}
-          sizes="100vw"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
-          transition={{ duration: 2, ease: [0.4, 0, 0.2, 1] }}
-          className="absolute w-full h-full object-cover transition-transform duration-[6000ms] ease-out group-hover:scale-105"
-          alt=""
+          alt="Featured resort view"
         />
       </div>
 
@@ -93,7 +80,7 @@ export default function HeroBanner() {
       </div>
 
       {/* Search */}
-      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-[200]">
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-20">
         <SearchBar />
       </div>
 

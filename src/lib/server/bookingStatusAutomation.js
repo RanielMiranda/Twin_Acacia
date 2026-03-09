@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { isCheckoutOverdueRow } from "@/lib/bookingDateTime";
+import { createServiceSupabaseClient } from "@/lib/server/serviceSupabase";
 
 const BOOKING_AUTOMATION_COLUMNS = [
   "id",
@@ -9,17 +9,6 @@ const BOOKING_AUTOMATION_COLUMNS = [
   "check_out_time",
   "booking_form",
 ].join(", ");
-
-function createServiceSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  }
-  return createClient(url, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
 
 function shouldAutoMoveToPendingCheckout(status) {
   const normalized = String(status || "").toLowerCase();

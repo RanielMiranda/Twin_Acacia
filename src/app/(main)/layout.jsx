@@ -1,4 +1,5 @@
 "use client";
+
 import TopBar from "./layout/TopBar";
 import Footer from "./layout/Footer";
 import { Analytics } from "@vercel/analytics/react";
