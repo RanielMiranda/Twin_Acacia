@@ -126,6 +126,7 @@ export default function ClientTicketPage() {
         resort={resort}
         loadingMessages={loadingMessages}
         messages={messages}
+        onRefreshMessages={fetchMessages}
         isConcernOnlyMode={isConcernOnlyMode}
         chatMessage={chatMessage}
         setChatMessage={setChatMessage}

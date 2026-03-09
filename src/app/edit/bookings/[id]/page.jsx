@@ -12,8 +12,6 @@ import {
   LayoutDashboard,
   ChevronRight,
   MessageCircleWarning,
-  AlertTriangle,
-  Clock4,
   Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +22,7 @@ import BookingCalendar from "./components/BookingsCalendar";
 import RentalManager from "./components/RentalManager";
 import LiveConcernsPanel from "./components/LiveConcernsPanel";
 import AuditArchivePanel from "./components/AuditArchivePanel";
+import BookingSummaryCards from "./components/BookingSummaryCards";
 
 export default function BookingManagementPage() {
   const { id } = useParams();
@@ -82,6 +81,8 @@ export default function BookingManagementPage() {
       }),
     [bookings]
   );
+  const auditArchiveCount = audits.length + declinedBookings.length;
+  const openConcernCount = concerns.filter((item) => item.status !== "resolved").length;
 
   const loadConcerns = async () => {
     if (!resortId) return;
@@ -263,39 +264,13 @@ export default function BookingManagementPage() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
-            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Priority Workflow</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><Clock4 size={16} className="text-blue-600" /> Pending Inquiries</p>
-                <p className="text-2xl font-black text-blue-600">{workflowCounts.inquiry}</p>
-              </div>
-              <div>
-                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><AlertTriangle size={16} className="text-rose-600" /> Pending Checkout</p>
-                <p className="text-2xl font-black text-rose-600">{workflowCounts.checkout}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm">
-            <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Live Concerns</p>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-900 flex items-center gap-2"><MessageCircleWarning size={16} className="text-rose-600" /> Open Tickets</p>
-                <p className="text-2xl font-black text-rose-600">
-                  {concerns.filter((item) => item.status !== "resolved").length}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                className="rounded-xl text-xs font-bold"
-                onClick={() => setActiveTab("concerns")}
-              >
-                View Concerns
-              </Button>
-            </div>
-          </div>
-        </div>
+        <BookingSummaryCards
+          workflowCounts={workflowCounts}
+          openConcernCount={openConcernCount}
+          auditArchiveCount={auditArchiveCount}
+          onOpenConcerns={() => setActiveTab("concerns")}
+          onOpenAudits={() => setActiveTab("audits")}
+        />
 
         <div className="flex items-center gap-4 md:gap-8 border-b border-slate-200 mb-8 overflow-x-auto whitespace-nowrap">
           <button

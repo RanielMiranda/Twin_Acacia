@@ -13,6 +13,7 @@ import {
   CheckCircle,
   Clock,
   ReceiptText,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InfoItem, SectionLabel, StatusBadge } from "./BookingEditorAtoms";
@@ -390,13 +391,26 @@ export function MessagesInboxCardSection({
   issues,
   onResolveIssue,
   messages,
+  onRefreshMessages,
+  refreshingMessages = false,
   ownerReply,
   setOwnerReply,
   onSendReply,
 }) {
   return (
     <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
-      <SectionLabel icon={<Mail size={14} />} label="Client Messaging" />
+      <div className="flex items-center justify-between gap-3">
+        <SectionLabel icon={<Mail size={14} />} label="Client Messaging" />
+        <Button
+          type="button"
+          variant="outline"
+          className="h-8 px-3 text-[11px] font-bold flex items-center justify-center"
+          onClick={onRefreshMessages}
+        >
+          <RefreshCw size={12} className={`mr-2 ${refreshingMessages ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
       {draft.notes ? (
         <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
           <p className="text-[10px] font-black uppercase text-blue-700">Inquiry</p>

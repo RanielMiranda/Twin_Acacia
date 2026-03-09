@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MessageSquare, Phone, Mail } from "lucide-react";
+import { MessageSquare, Phone, Mail, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +9,7 @@ export function TicketSupportDeskCardSection({
   resort,
   loadingMessages,
   messages,
+  onRefreshMessages,
   isConcernOnlyMode,
   chatMessage,
   setChatMessage,
@@ -26,6 +27,15 @@ export function TicketSupportDeskCardSection({
           <MessageSquare size={18} className="text-blue-600" /> Support Desk
         </h3>
         <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={onRefreshMessages}
+            className="p-2 bg-slate-50 rounded-full flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 transition-colors"
+            aria-label="Refresh support messages"
+          >
+            <RefreshCw size={16} className={loadingMessages ? "animate-spin" : ""} />
+            <p className = "text-xs">Refresh</p>
+          </button>
           <a
             href={`tel:${resort?.contactPhone}`}
             className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-600 transition-colors"

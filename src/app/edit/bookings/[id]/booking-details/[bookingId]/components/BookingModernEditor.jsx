@@ -40,6 +40,8 @@ export default function BookingModernEditor({
   ownerReply,
   setOwnerReply,
   onSendReply,
+  onRefreshMessages,
+  refreshingMessages = false,
   onResolveIssue,
   conflicts = [],
   createSignedProofUrl,
@@ -322,6 +324,8 @@ export default function BookingModernEditor({
             issues={issues}
             onResolveIssue={onResolveIssue}
             messages={messages}
+            onRefreshMessages={onRefreshMessages}
+            refreshingMessages={refreshingMessages}
             ownerReply={ownerReply}
             setOwnerReply={setOwnerReply}
             onSendReply={onSendReply}

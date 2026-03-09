@@ -92,7 +92,7 @@ export default function BookingEditorActionBar({
           disabled={actionBusy}
           className="items-center justify-center w-full md:w-auto bg-slate-900 hover:bg-black text-white rounded-full px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg flex gap-2"
         >
-          <Edit3 size={18} /> Edit Inline
+          <Edit3 size={18} /> Edit
         </Button>
       ) : (
         <>
