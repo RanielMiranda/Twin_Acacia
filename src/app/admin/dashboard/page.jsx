@@ -73,7 +73,7 @@ export default function Page() {
       }
       if (ownerMsgError && isMissingOwnerAdminTableError(ownerMsgError)) {
         toast({
-          message: "Owner-admin support table is missing. Run phase4_owner_admin_messages.sql.",
+          message: "Owner-admin support table is missing. Run supabase/schema.sql.",
           color: "amber",
         });
       }

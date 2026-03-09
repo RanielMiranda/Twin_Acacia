@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { Users, UserPlus, Search, ShieldCheck, ShieldAlert, ShieldX, CheckCircle2 } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Users, UserPlus, Search, ShieldCheck, ShieldAlert, ShieldX, CheckCircle2, KeyRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -24,10 +24,26 @@ export default function Page() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+  const [recoveryRequests, setRecoveryRequests] = useState([]);
+
+  const loadRecoveryRequests = useCallback(async () => {
+    try {
+      const response = await fetch("/api/account-recovery", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.error || "Failed to load recovery requests.");
+      setRecoveryRequests(body.requests || []);
+    } catch (error) {
+      toast({ message: error.message, color: "red" });
+    }
+  }, [toast]);
 
   useEffect(() => {
     refreshAccounts();
-  }, [refreshAccounts]);
+    loadRecoveryRequests();
+  }, [loadRecoveryRequests, refreshAccounts]);
 
   const mappedAccounts = useMemo(
     () =>
@@ -37,7 +53,6 @@ export default function Page() {
         name: entry.full_name || "Unknown",
         email: entry.email || "-",
         phone: entry.phone || "-",
-        password: entry.password || "",
         resortName:
           entry.resorts?.name ||
           ((entry.role || "").toLowerCase() === "admin" ? "Admin Account" : "Unassigned Resort"),
@@ -111,6 +126,22 @@ export default function Page() {
     toast({ message: "Account deleted.", color: "red", icon: ShieldAlert });
   };
 
+  const handleResolveRecoveryRequest = async (requestId) => {
+    try {
+      const response = await fetch(`/api/account-recovery/${Number(requestId)}`, {
+        method: "PATCH",
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.error || "Failed to resolve request.");
+      setRecoveryRequests((prev) =>
+        prev.map((entry) => (entry.id === body.request?.id ? body.request : entry))
+      );
+      toast({ message: "Recovery request marked as resolved.", color: "green", icon: CheckCircle2 });
+    } catch (error) {
+      toast({ message: error.message, color: "red" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 pt-20 my-10">
       <div className="max-w-7xl mx-auto">
@@ -120,7 +151,7 @@ export default function Page() {
               <Users className="text-blue-600" /> Account Management
             </h1>
             <p className="text-slate-500 mt-1 font-medium">
-              Name, resort, role, email, number, password, and actions.
+              Name, resort, role, email, number, and actions.
             </p>
           </div>
           <Button
@@ -148,6 +179,45 @@ export default function Page() {
             </Card>
           ))}
         </div>
+
+        <Card className="p-6 bg-white border-none shadow-sm rounded-3xl mb-8">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <KeyRound size={18} className="text-amber-600" /> Recovery Requests
+              </h2>
+              <p className="text-sm text-slate-500">Password recovery requests submitted from the login page.</p>
+            </div>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+              {recoveryRequests.filter((entry) => entry.status === "open").length} open
+            </p>
+          </div>
+          <div className="space-y-3">
+            {recoveryRequests.length === 0 ? (
+              <p className="text-sm text-slate-400">No recovery requests yet.</p>
+            ) : (
+              recoveryRequests.slice(0, 8).map((request) => (
+                <div key={request.id} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{request.email || "Unknown email"}</p>
+                    <p className="text-xs text-slate-500">{request.message || "No message provided."}</p>
+                    <p className="text-[11px] text-slate-400 mt-1">{new Date(request.created_at).toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${request.status === "resolved" ? "text-emerald-600" : "text-amber-600"}`}>
+                      {request.status}
+                    </span>
+                    {request.status !== "resolved" ? (
+                      <Button className="h-9 rounded-xl" onClick={() => handleResolveRecoveryRequest(request.id)}>
+                        Mark Resolved
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
 
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">

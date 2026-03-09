@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionFromRequest } from "@/lib/server/session";
 
 const ADMIN_PREFIX = "/admin";
 const OWNER_PREFIX = "/owner";
@@ -15,11 +16,12 @@ const parseAccountEditId = (pathname: string) => {
   return match ? match[1] : null;
 };
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const isAuthed = request.cookies.get("app_auth")?.value === "1";
-  const role = request.cookies.get("app_role")?.value || "";
-  const accountId = request.cookies.get("app_account_id")?.value || "";
+  const session = await getSessionFromRequest(request);
+  const isAuthed = !!session;
+  const role = session?.role || "";
+  const accountId = session?.accountId ? String(session.accountId) : "";
 
   if (pathname === LOGIN_PATH && isAuthed) {
     const redirectTo = role === "admin" ? "/admin/dashboard" : "/owner/dashboard";

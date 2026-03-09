@@ -142,22 +142,18 @@ Quick reference for where key logic lives.
 
 ## Supabase SQL
 
-- `supabase/bookings_schema.sql`
-  - Base bookings table + trigger + current RLS baseline.
-
-- `supabase/booking_system_related_schema.sql`
-  - Combined schema phases (bookings, transactions, support messaging, accounts, archive).
-
-- `supabase/add_resort_payment_image.sql`
-  - Adds `payment_image_url` (text) to `resorts` for optional payment reference image (e.g. GCash QR). Storage: `[resortname]/payment` in resort-images bucket.
-
-- `supabase/phase8_security_hardening.sql`
-  - Status transition enforcement trigger.
-  - Booking status/payment audit table + trigger.
-  - Ticket message idempotency column/index + safe insert RPC.
-
-- `supabase/phase9_email_tracking.sql`
-  - Adds `email_delivery_logs` for send/failed email tracking and analytics.
+- `supabase/schema.sql`
+  - Canonical schema file for clean setup and local/dev alignment.
+  - Sections preserve the original phased rollout:
+    - bookings
+    - payments / guest breakdown / issues
+    - support messaging
+    - accounts
+    - archives
+    - status hardening + audit
+    - lean email usage logging
+    - auth hardening + recovery requests
+    - resort payment reference image
 
 ## Server Automation
 

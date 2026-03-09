@@ -17,6 +17,7 @@ function LoginPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [isSubmittingRecovery, setIsSubmittingRecovery] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -54,11 +55,25 @@ function LoginPageContent() {
     }
   };
 
-  const handleForgotSubmit = (e) => {
+  const handleForgotSubmit = async (e) => {
     e.preventDefault();
-    alert("Request sent to main admin!");
-    setForgotData({ email: "", message: "" });
-    setShowForgotModal(false);
+    setIsSubmittingRecovery(true);
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(forgotData),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.error || "Failed to send request.");
+      toast({ message: "Recovery request sent to admin.", color: "green" });
+      setForgotData({ email: "", message: "" });
+      setShowForgotModal(false);
+    } catch (error) {
+      toast({ message: error.message || "Failed to send request.", color: "red" });
+    } finally {
+      setIsSubmittingRecovery(false);
+    }
   };
 
   return (
@@ -188,7 +203,9 @@ function LoginPageContent() {
                   >
                     Cancel
                   </button>
-                  <Button type="submit">Send Request</Button>
+                  <Button type="submit" disabled={isSubmittingRecovery}>
+                    {isSubmittingRecovery ? "Sending..." : "Send Request"}
+                  </Button>
                 </div>
               </form>
             </div>

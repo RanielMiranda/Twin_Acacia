@@ -39,7 +39,7 @@ export default function EditAccountPage() {
           full_name: row.full_name || "",
           email: row.email || "",
           phone: row.phone || "",
-          password: row.password || "",
+          password: "",
           role: row.role || "owner",
           status: row.status || "pending",
           setup_token: row.setup_token || "",
@@ -74,7 +74,7 @@ export default function EditAccountPage() {
         full_name: form.full_name,
         email: form.email,
         phone: form.phone,
-        password: form.password,
+        password: form.password || undefined,
         role: form.role,
         status: form.status,
         },
@@ -143,7 +143,12 @@ export default function EditAccountPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field label="Password" value={form.password} onChange={(value) => setForm((prev) => ({ ...prev, password: value }))} />
+            <Field
+              label="New Password (Optional)"
+              type="password"
+              value={form.password}
+              onChange={(value) => setForm((prev) => ({ ...prev, password: value }))}
+            />
             <Field label="Contact Number" value={form.phone} onChange={(value) => setForm((prev) => ({ ...prev, phone: value }))} />
           </div>
 
@@ -222,11 +227,12 @@ export default function EditAccountPage() {
   );
 }
 
-function Field({ label, value, onChange }) {
+function Field({ label, value, onChange, type = "text" }) {
   return (
     <div className="space-y-2">
       <label className="text-xs font-black uppercase text-slate-400 ml-1">{label}</label>
       <input
+        type={type}
         className="w-full px-4 py-3 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none"
         value={value}
         onChange={(e) => onChange(e.target.value)}

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Building2, Mail, Phone, Lock, ShieldCheck, UserCircle } from "lucide-react";
+import { Building2, Mail, Phone, ShieldCheck, UserCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ActionMenu from "./ActionMenu";
@@ -16,7 +16,7 @@ export default function AccountCard({ account, onToggleStatus, onApprove, onView
 
   return (
     <Card className="p-4 bg-white shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl group relative">
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_180px_1fr_1fr_1fr_220px] gap-4 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_180px_1fr_1fr_220px] gap-4 items-center">
         <div className="min-w-0 flex items-center gap-3">
           <div className="h-11 w-11 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
             {account.profileImage ? (
@@ -53,14 +53,6 @@ export default function AccountCard({ account, onToggleStatus, onApprove, onView
         <div>
           <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Number</p>
           <p className="text-sm font-medium text-slate-700 flex items-center gap-1"><Phone size={12} />{account.phone || "-"}</p>
-        </div>
-
-        <div>
-          <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Password</p>
-          <p className="text-sm font-semibold text-slate-700 flex items-center gap-1 break-all">
-            <Lock size={12} />
-            <span className="font-mono">{account.password || "-"}</span>
-          </p>
         </div>
 
         <div className="flex items-center justify-end gap-3">

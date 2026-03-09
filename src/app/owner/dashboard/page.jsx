@@ -138,7 +138,7 @@ export default function Page() {
       if (isMissingOwnerAdminTableError(error)) {
         setAdminMessages([]);
         toast({
-          message: "Owner-admin support table is not installed yet. Run phase4_owner_admin_messages.sql.",
+          message: "Owner-admin support table is not installed yet. Run supabase/schema.sql.",
           color: "amber",
         });
         return;
@@ -184,7 +184,7 @@ export default function Page() {
     if (error) {
       if (isMissingOwnerAdminTableError(error)) {
         toast({
-          message: "Owner-admin support table is missing. Run phase4_owner_admin_messages.sql.",
+          message: "Owner-admin support table is missing. Run supabase/schema.sql.",
           color: "amber",
         });
         return;

@@ -71,7 +71,7 @@ function SetupResortPageContent() {
     try {
       const profileUrl = await uploadProfilePhoto();
       await completeSetup(token, {
-        password: form.password || account?.password || "",
+        password: form.password,
         profile_image: profileUrl || account?.profile_image || null,
       });
 

@@ -124,7 +124,7 @@ export function useTicketActions({
       toast({ message: "Issue sent to owner support.", color: "green" });
     } catch (err) {
       if (isMissingSupportTableError(err)) {
-        toast({ message: "Issue table missing. Ask admin to run phase3 SQL.", color: "amber" });
+        toast({ message: "Issue table missing. Ask admin to run supabase/schema.sql.", color: "amber" });
         return;
       }
       toast({ message: `Issue send failed: ${err.message}`, color: "red" });
@@ -148,7 +148,7 @@ export function useTicketActions({
       toast({ message: "Message sent to owner.", color: "green" });
     } catch (err) {
       if (isMissingSupportTableError(err)) {
-        toast({ message: "Messaging table missing. Ask admin to run phase4 SQL.", color: "amber" });
+        toast({ message: "Messaging table missing. Ask admin to run supabase/schema.sql.", color: "amber" });
         return;
       }
       toast({ message: `Message send failed: ${err.message}`, color: "red" });

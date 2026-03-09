@@ -185,10 +185,11 @@ create index if not exists accounts_setup_token_idx on public.accounts(setup_tok
 alter table public.accounts enable row level security;
 
 drop policy if exists accounts_all_access on public.accounts;
-create policy accounts_all_access on public.accounts
-for all
-using (true)
-with check (true);
+drop policy if exists accounts_service_only on public.accounts;
+create policy accounts_service_only on public.accounts
+  for all
+  using (false)
+  with check (false);
 
 -- Optional seed admin:
 -- insert into public.accounts (

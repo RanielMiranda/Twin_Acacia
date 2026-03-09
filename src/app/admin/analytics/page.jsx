@@ -296,7 +296,7 @@ export default function AdminAnalyticsPage() {
             </div>
             {!emailStats.trackingInstalled ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-                Install `supabase/phase9_email_tracking.sql` to enable this panel.
+                Run `supabase/schema.sql` to enable this panel.
               </div>
             ) : (
               <div className="space-y-3">

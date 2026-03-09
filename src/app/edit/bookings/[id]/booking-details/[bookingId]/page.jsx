@@ -71,7 +71,7 @@ export default function BookingDetailsPage() {
       setIssues(issueRows);
       if (missingTables) {
         toast({
-          message: "Support tables are not installed yet. Run phase3 + phase4 SQL.",
+          message: "Support tables are not installed yet. Run supabase/schema.sql.",
           color: "amber",
         });
       }
@@ -141,7 +141,7 @@ export default function BookingDetailsPage() {
       toast({ message: "Reply sent to client.", color: "green" });
     } catch (err) {
       if (isMissingSupportTableError(err)) {
-        toast({ message: "Messaging table missing. Run phase4_messaging.sql first.", color: "amber" });
+        toast({ message: "Messaging table missing. Run supabase/schema.sql first.", color: "amber" });
         return;
       }
       toast({ message: `Reply failed: ${err.message}`, color: "red" });

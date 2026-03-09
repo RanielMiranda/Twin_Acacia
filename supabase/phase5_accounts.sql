@@ -30,13 +30,12 @@ create index if not exists accounts_setup_token_idx on public.accounts(setup_tok
 -- ==========================================
 alter table public.accounts enable row level security;
 
--- NOTE: Currently set to 'all access'. 
--- In a production environment, you'll want to restrict this based on auth.uid()
 drop policy if exists accounts_all_access on public.accounts;
-create policy accounts_all_access on public.accounts
+drop policy if exists accounts_service_only on public.accounts;
+create policy accounts_service_only on public.accounts
   for all
-  using (true)
-  with check (true);
+  using (false)
+  with check (false);
 
 -- ==========================================
 -- 4. Seed Data: Initial Admin Account
@@ -56,7 +55,7 @@ values (
   'Example Admin',
   'admin@email.com',
   '',
-  '12345', -- Ensure you hash this in your application logic!
+  '12345', -- Legacy bootstrap value. The app upgrades this to a hash on first successful login.
   'admin',
   'active',
   null,
