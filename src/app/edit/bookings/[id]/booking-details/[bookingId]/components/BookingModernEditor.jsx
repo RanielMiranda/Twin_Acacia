@@ -320,7 +320,6 @@ export default function BookingModernEditor({
           />
 
           <MessagesInboxCardSection
-            draft={draft}
             issues={issues}
             onResolveIssue={onResolveIssue}
             messages={messages}

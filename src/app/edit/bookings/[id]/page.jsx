@@ -84,6 +84,21 @@ export default function BookingManagementPage() {
   const auditArchiveCount = audits.length + declinedBookings.length;
   const openConcernCount = concerns.filter((item) => item.status !== "resolved").length;
 
+  const TabBadge = ({ count, tone = "blue" }) =>
+    count > 0 ? (
+      <span
+        className={`ml-1 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black leading-none ${
+          tone === "rose"
+            ? "bg-rose-100 text-rose-700"
+            : tone === "indigo"
+              ? "bg-indigo-100 text-indigo-700"
+              : "bg-blue-100 text-blue-700"
+        }`}
+      >
+        {count}
+      </span>
+    ) : null;
+
   const loadConcerns = async () => {
     if (!resortId) return;
     setLoadingConcerns(true);
@@ -281,6 +296,7 @@ export default function BookingManagementPage() {
           >
             <ClipboardList size={18} />
             Guest Workflow
+            <TabBadge count={workflowCounts.inquiry} tone="blue" />
             {activeTab === "workflow" && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-full" />}
           </button>
 
@@ -303,6 +319,7 @@ export default function BookingManagementPage() {
           >
             <MessageCircleWarning size={18} />
             Live Concerns
+            <TabBadge count={openConcernCount} tone="rose" />
             {activeTab === "concerns" && <div className="absolute bottom-0 left-0 w-full h-1 bg-rose-600 rounded-t-full" />}
           </button>
 
@@ -314,6 +331,7 @@ export default function BookingManagementPage() {
           >
             <Archive size={18} />
             Audit Archive
+            <TabBadge count={auditArchiveCount} tone="indigo" />
             {activeTab === "audits" && <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 rounded-t-full" />}
           </button>
         </div>

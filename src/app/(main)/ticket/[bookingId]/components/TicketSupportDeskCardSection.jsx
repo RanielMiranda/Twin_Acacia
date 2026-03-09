@@ -4,11 +4,13 @@ import React from "react";
 import { MessageSquare, Phone, Mail, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { buildSupportConversationItems, getSupportConversationLabel, isResolvedConversationItem } from "@/lib/supportConversation";
 
 export function TicketSupportDeskCardSection({
   resort,
   loadingMessages,
   messages,
+  issues = [],
   onRefreshMessages,
   isConcernOnlyMode,
   chatMessage,
@@ -20,6 +22,13 @@ export function TicketSupportDeskCardSection({
   setIssueMessage,
   onSendIssue,
 }) {
+  const conversationItems = buildSupportConversationItems({
+    messages,
+    issues,
+    newestFirst: true,
+    issueFallbackSubject: "Issue Report",
+  });
+
   return (
     <Card className="p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-6">
       <div className="flex justify-between items-start">
@@ -55,22 +64,24 @@ export function TicketSupportDeskCardSection({
         <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 max-h-56 overflow-auto space-y-2">
           {loadingMessages ? (
             <p className="text-xs text-slate-400">Loading conversation...</p>
-          ) : messages?.length === 0 ? (
+          ) : conversationItems.length === 0 ? (
             <p className="text-xs text-slate-400">No messages yet.</p>
           ) : (
-            messages.map((msg) => (
+            conversationItems.map((msg) => (
               <div
                 key={msg.id}
                 className={`p-2.5 rounded-xl text-xs ${
-                  msg.sender_role === "client"
-                    ? "bg-blue-50 text-blue-700 ml-8"
+                  msg.senderRole === "client"
+                    ? msg.kind === "issue"
+                      ? isResolvedConversationItem(msg)
+                        ? "bg-emerald-50 text-emerald-700 ml-8 border border-emerald-200"
+                        : "bg-amber-50 text-amber-700 ml-8 border border-amber-200"
+                      : "bg-blue-50 text-blue-700 ml-8"
                     : "bg-white text-slate-700 mr-8 border border-slate-100"
                 }`}
               >
-                <p className="font-black uppercase tracking-wider text-[9px] mb-1">
-                  {msg.sender_role} {msg.sender_name ? `- ${msg.sender_name}` : ""}
-                </p>
-                <p>{msg.message}</p>
+                <p className="font-black uppercase tracking-wider text-[9px] mb-1">{getSupportConversationLabel(msg)}</p>
+                <p>{msg.body}</p>
               </div>
             ))
           )}

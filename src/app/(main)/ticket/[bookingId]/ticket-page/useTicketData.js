@@ -6,27 +6,85 @@ import { BOOKING_TICKET_COLUMNS, TICKET_MESSAGE_COLUMNS } from "./constants";
 import { isMissingSupportTableError } from "./helpers";
 import { isTicketTokenValid } from "@/lib/ticketAccess";
 
+const TICKET_ISSUE_COLUMNS = ["id", "booking_id", "guest_name", "guest_email", "subject", "message", "status", "created_at"].join(", ");
+const TICKET_ISSUE_ARCHIVE_COLUMNS = [
+  "id",
+  "source_issue_id",
+  "booking_id",
+  "resort_id",
+  "guest_name",
+  "guest_email",
+  "subject",
+  "message",
+  "status",
+  "created_at",
+  "resolved_at",
+  "archived_at",
+].join(", ");
+
 export function useTicketData({ normalizedBookingId, accessToken, toast }) {
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(null);
   const [resort, setResort] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [issues, setIssues] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
   const fetchMessages = useCallback(
     async (activeBookingId) => {
+      if (!activeBookingId) return;
       setLoadingMessages(true);
       try {
-        const { data, error } = await supabase
-          .from("ticket_messages")
-          .select(TICKET_MESSAGE_COLUMNS)
-          .eq("booking_id", activeBookingId)
-          .order("created_at", { ascending: true });
-        if (error) throw error;
-        setMessages(data || []);
+        const [
+          { data: messageRows, error: messageError },
+          { data: issueRows, error: issueError },
+          { data: archivedIssueRows, error: archivedIssueError },
+        ] = await Promise.all([
+          supabase
+            .from("ticket_messages")
+            .select(TICKET_MESSAGE_COLUMNS)
+            .eq("booking_id", activeBookingId)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("ticket_issues")
+            .select(TICKET_ISSUE_COLUMNS)
+            .eq("booking_id", activeBookingId)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("ticket_issues_archive")
+            .select(TICKET_ISSUE_ARCHIVE_COLUMNS)
+            .eq("booking_id", activeBookingId)
+            .order("created_at", { ascending: true }),
+        ]);
+        if (messageError) throw messageError;
+        if (issueError && !isMissingSupportTableError(issueError)) throw issueError;
+        if (archivedIssueError && !isMissingSupportTableError(archivedIssueError)) throw archivedIssueError;
+
+        const archivedIssues = (archivedIssueRows || []).map((issue) => ({
+          id: `arch:${issue.id}`,
+          booking_id: issue.booking_id,
+          guest_name: issue.guest_name,
+          guest_email: issue.guest_email,
+          subject: issue.subject,
+          message: issue.message,
+          status: issue.status || "resolved",
+          created_at: issue.created_at,
+          resolved_at: issue.resolved_at,
+          archived_at: issue.archived_at,
+          isArchived: true,
+          source_issue_id: issue.source_issue_id,
+        }));
+
+        setMessages(messageRows || []);
+        setIssues(
+          [...(issueRows || []), ...archivedIssues].sort(
+            (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+          )
+        );
       } catch (err) {
         if (isMissingSupportTableError(err)) {
           setMessages([]);
+          setIssues([]);
           return;
         }
         toast({ message: `Unable to load messages: ${err.message}`, color: "red" });
@@ -98,6 +156,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     setBooking,
     resort,
     messages,
+    issues,
     loadingMessages,
     fetchTicket,
     fetchMessages,
