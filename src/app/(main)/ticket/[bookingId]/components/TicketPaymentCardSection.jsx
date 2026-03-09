@@ -16,8 +16,8 @@ export function TicketPaymentCardSection({
   setPaymentMethod,
   downpayment,
   setDownpayment,
-  proofFile,
-  setProofFile,
+  proofFiles,
+  setProofFiles,
   isSubmitting,
   onSubmitDownpayment,
   resortPaymentImageUrl,
@@ -42,7 +42,11 @@ export function TicketPaymentCardSection({
             <p className="font-bold mt-1 text-amber-600">Amount submitted (pending approval): ₱{Number(pendingPaid || 0).toLocaleString()}</p>
           )}
           <p className="font-bold mt-1">Amount still due: ₱{Number(balance || 0).toLocaleString()}</p>
-          <p className="text-xs text-slate-500 mt-2">Payment has been submitted or confirmed. Use the form below only when requested to pay.</p>
+          <p className="text-xs text-slate-500 mt-2">
+            {paymentPendingApproval
+              ? "Your last payment submission is still pending approval. Wait for the owner to accept it before sending another one."
+              : "Payment has been submitted or confirmed. Use the form below only when requested to pay."}
+          </p>
         </div>
       )}
 
@@ -129,18 +133,27 @@ export function TicketPaymentCardSection({
               <input
                 className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
                 type="file"
-                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                multiple
+                accept="image/*"
+                onChange={(e) => setProofFiles(Array.from(e.target.files || []))}
                 disabled={locked}
               />
               <div className="flex flex-col items-center justify-center gap-2 text-slate-400 group-hover:text-blue-500">
-                {proofFile ? (
+                {proofFiles?.length ? (
                   <CheckCircle2 size={24} className="text-emerald-500" />
                 ) : (
                   <Upload size={24} />
                 )}
                 <p className="text-xs font-bold uppercase tracking-tighter text-center">
-                  {proofFile ? proofFile.name : "Tap to browse or drop files here"}
+                  {proofFiles?.length
+                    ? `${proofFiles.length} file${proofFiles.length === 1 ? "" : "s"} selected`
+                    : "Tap to browse or drop files here"}
                 </p>
+                {proofFiles?.length ? (
+                  <p className="text-[11px] text-slate-500 text-center">
+                    {proofFiles.map((file) => file.name).join(", ")}
+                  </p>
+                ) : null}
               </div>
             </div>
           </label>
@@ -174,7 +187,7 @@ export function TicketPaymentCardSection({
           </div>
 
           <Button
-            disabled={locked || isSubmitting || !proofFile}
+            disabled={locked || isSubmitting || !proofFiles?.length}
             className="w-full mt-8 bg-emerald-500 hover:bg-emerald-600 h-14 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             onClick={onSubmitDownpayment}
           >

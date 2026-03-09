@@ -19,6 +19,29 @@ import { Button } from "@/components/ui/button";
 const GROUP_COLORS = ["bg-blue-600", "bg-orange-500", "bg-emerald-600", "bg-amber-500"];
 const GROUP_COLOR_HEX = ["#2563eb", "#f97316", "#059669", "#f59e0b"];
 
+function getNormalizedStatus(booking) {
+  return String(booking?.status || booking?.bookingForm?.status || "").toLowerCase();
+}
+
+function shouldShowOnCalendar(booking) {
+  const normalizedStatus = getNormalizedStatus(booking);
+  return !["pending checkout", "checked out", "cancelled", "declined"].includes(normalizedStatus);
+}
+
+function getBookingRoomIds(booking) {
+  if (Array.isArray(booking?.roomIds) && booking.roomIds.length > 0) return booking.roomIds;
+  if (Array.isArray(booking?.bookingForm?.assignedRoomIds)) return booking.bookingForm.assignedRoomIds;
+  return [];
+}
+
+function getBookingStartDate(booking) {
+  return booking?.startDate || booking?.bookingForm?.checkInDate || null;
+}
+
+function getBookingEndDate(booking) {
+  return booking?.endDate || booking?.bookingForm?.checkOutDate || getBookingStartDate(booking);
+}
+
 export default function BookingCalendar() {
   const { resort } = useResort();
   const { bookings, createBooking, updateBookingById, deleteBookingById } = useBookings();
@@ -50,13 +73,17 @@ export default function BookingCalendar() {
 
   const getDateBookings = (dateString) =>
     bookingList.filter((booking) => {
-      const roomMatch = booking.roomIds?.some((rid) => selectedRooms.includes(rid));
-      if (!roomMatch || !booking.startDate) return false;
-      if (!booking.endDate) return booking.startDate === dateString;
+      if (!shouldShowOnCalendar(booking)) return false;
+      const bookingRoomIds = getBookingRoomIds(booking);
+      const startDate = getBookingStartDate(booking);
+      const endDate = getBookingEndDate(booking);
+      const roomMatch = bookingRoomIds.some((rid) => selectedRooms.includes(rid));
+      if (!roomMatch || !startDate) return false;
+      if (!endDate) return startDate === dateString;
       return (
-        booking.startDate === dateString ||
-        booking.endDate === dateString ||
-        (dateString > booking.startDate && dateString < booking.endDate)
+        startDate === dateString ||
+        endDate === dateString ||
+        (dateString > startDate && dateString < endDate)
       );
     });
 
@@ -162,8 +189,8 @@ export default function BookingCalendar() {
             const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const dateBookings = getDateBookings(dateString);
             const orderedBookings = [...dateBookings].sort((a, b) => {
-              const startA = a.startDate || "";
-              const startB = b.startDate || "";
+              const startA = getBookingStartDate(a) || "";
+              const startB = getBookingStartDate(b) || "";
               if (startA !== startB) return startA.localeCompare(startB);
               return String(a.id || "").localeCompare(String(b.id || ""));
             });
@@ -188,20 +215,20 @@ export default function BookingCalendar() {
                 className={`h-9 w-full rounded-lg text-sm transition-all relative 
                   ${booking ? "text-white" : "hover:bg-slate-100 text-slate-600"} 
                   ${isActive ? "ring-2 ring-offset-2 ring-slate-400 scale-90 z-10" : ""} 
-                  ${booking?.startDate === dateString ? "rounded-r-none" : ""} 
-                  ${booking?.endDate === dateString ? "rounded-l-none" : ""} 
-                  ${booking && booking.startDate !== dateString && booking.endDate !== dateString ? "rounded-none opacity-80" : ""}
+                  ${getBookingStartDate(booking) === dateString ? "rounded-r-none" : ""} 
+                  ${getBookingEndDate(booking) === dateString ? "rounded-l-none" : ""} 
+                  ${booking && getBookingStartDate(booking) !== dateString && getBookingEndDate(booking) !== dateString ? "rounded-none opacity-80" : ""}
                 `}
               >
                 {booking ? (
                   hasSplit ? (
                     <span
                       style={splitGradientStyle}
-                      className={`absolute inset-0 rounded-[inherit] ${booking?.startDate !== dateString && booking?.endDate !== dateString ? "opacity-90" : ""}`}
+                      className={`absolute inset-0 rounded-[inherit] ${getBookingStartDate(booking) !== dateString && getBookingEndDate(booking) !== dateString ? "opacity-90" : ""}`}
                     />
                   ) : (
                     <span
-                      className={`absolute inset-0 rounded-[inherit] ${primaryColor} ${booking?.startDate !== dateString && booking?.endDate !== dateString ? "opacity-90" : ""}`}
+                      className={`absolute inset-0 rounded-[inherit] ${primaryColor} ${getBookingStartDate(booking) !== dateString && getBookingEndDate(booking) !== dateString ? "opacity-90" : ""}`}
                     />
                   )
                 ) : null}
@@ -274,15 +301,16 @@ return (
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Ranges for these rooms</p>
           <div className="flex flex-wrap gap-3">
             {bookingList
-              .filter((booking) => booking.roomIds?.some((rid) => selectedRooms.includes(rid)))
+              .filter((booking) => shouldShowOnCalendar(booking) && getBookingRoomIds(booking).some((rid) => selectedRooms.includes(rid)))
               .map((booking) => {
                 const checkIn = booking?.checkInTime || booking?.bookingForm?.checkInTime || "--:--";
                 const checkOut = booking?.checkOutTime || booking?.bookingForm?.checkOutTime || "--:--";
                 const guestName = booking?.bookingForm?.guestName || "Guest";
-                const roomNames = (booking.roomIds || [])
+                const bookingRoomIds = getBookingRoomIds(booking);
+                const roomNames = bookingRoomIds
                   .map((rid) => rooms.find((room) => room.id === rid)?.name)
                   .filter(Boolean);
-                const roomLabel = roomNames.length > 0 ? roomNames.join(", ") : `${booking.roomIds?.length || 0} Rooms`;
+                const roomLabel = roomNames.length > 0 ? roomNames.join(", ") : `${bookingRoomIds.length || 0} Rooms`;
 
                 return (
                   <div
@@ -297,7 +325,7 @@ return (
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black text-slate-400 uppercase">{roomLabel}</span>
                       <span className="text-xs font-black text-slate-800">{guestName}</span>
-                      <span className="text-xs font-bold text-slate-700">{booking.startDate || "..."} - {booking.endDate || "..."}</span>
+                      <span className="text-xs font-bold text-slate-700">{getBookingStartDate(booking) || "..."} - {getBookingEndDate(booking) || "..."}</span>
                       <span className="text-[10px] text-slate-500 flex items-center gap-1"><Clock3 size={10} /> {checkIn} to {checkOut}</span>
                     </div>
                     <button onClick={(event) => { event.stopPropagation(); navigateToForm(booking.id); }} className="ml-1 text-slate-400 hover:text-blue-600" title="Edit booking form"><Edit2 size={14} /></button>

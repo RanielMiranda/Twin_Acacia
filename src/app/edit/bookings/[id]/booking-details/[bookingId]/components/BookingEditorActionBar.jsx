@@ -23,6 +23,12 @@ export default function BookingEditorActionBar({
 }) {
   const normalizedStatus = String(status || "").toLowerCase();
   const isDeclined = normalizedStatus === "declined";
+  const primaryActionLabel =
+    status === "Pending Payment"
+      ? "Confirm Stay"
+      : status === "Pending Checkout"
+        ? "Confirm Checkout"
+        : "Approve";
 
   return (
     <div className="fixed bottom-3 left-3 right-3 md:bottom-8 md:left-1/2 md:right-auto md:-translate-x-1/2 z-50 flex flex-col md:flex-row items-stretch md:items-center justify-center md:justify-start gap-2 bg-white/90 backdrop-blur-xl p-3 rounded-2xl border border-slate-200 shadow-2xl no-print max-h-[55vh] overflow-y-auto">
@@ -72,7 +78,7 @@ export default function BookingEditorActionBar({
             disabled={actionBusy}
           >
             <CheckCircle size={18} />
-            {status === "Pending Payment" ? "Confirm Stay" : "Approve"}
+            {primaryActionLabel}
           </Button>
         )
       ) : null}

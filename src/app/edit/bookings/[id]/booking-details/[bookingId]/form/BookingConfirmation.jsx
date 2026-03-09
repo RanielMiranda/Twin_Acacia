@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 
 const DEFAULT_FORM = {
   status: "Inquiry",
@@ -28,6 +29,7 @@ const DEFAULT_FORM = {
   confirmationStub: null,
   downpayment: 0,
   totalAmount: 0,
+  resortServices: [],
   notes: "",
 };
 
@@ -101,6 +103,23 @@ export default function BookingConfirmation({
       alert("For same-day bookings, check-out time must be later than check-in time.");
       return;
     }
+    if (formData.status === "Checked Out") {
+      const isSettled = isCheckoutAmountSettled({
+        totalAmount: formData.totalAmount,
+        paidAmount: formData.downpayment,
+      });
+      if (!isSettled) {
+        alert(
+          getCheckoutMismatchMessage({
+            totalAmount: formData.totalAmount,
+            paidAmount: formData.downpayment,
+          })
+        );
+        return;
+      }
+      const confirmed = window.confirm("Confirm checkout for this booking?");
+      if (!confirmed) return;
+    }
 
     if (storageKey && typeof window !== "undefined") {
       localStorage.removeItem(storageKey);
@@ -118,6 +137,34 @@ export default function BookingConfirmation({
 
   const inputClass =
     "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500";
+
+  const updateAddon = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      resortServices: (prev.resortServices || []).map((service, serviceIndex) =>
+        serviceIndex === index
+          ? {
+              ...service,
+              [field]: field === "cost" ? Number(value) || 0 : value,
+            }
+          : service
+      ),
+    }));
+  };
+
+  const addAddon = () => {
+    setFormData((prev) => ({
+      ...prev,
+      resortServices: [...(prev.resortServices || []), { name: "", cost: 0 }],
+    }));
+  };
+
+  const removeAddon = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      resortServices: (prev.resortServices || []).filter((_, serviceIndex) => serviceIndex !== index),
+    }));
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 mt-[8vh]">
@@ -247,6 +294,46 @@ export default function BookingConfirmation({
               onChange={(e) => handleChange("notes", e.target.value)}
               placeholder="Special requests, payment remarks, or internal notes"
             />
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Add-ons</h2>
+            <div className="space-y-3">
+              {(formData.resortServices || []).length > 0 ? (
+                formData.resortServices.map((service, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_160px_auto] gap-3">
+                    <input
+                      disabled={readOnly}
+                      className={inputClass}
+                      value={service?.name || ""}
+                      onChange={(e) => updateAddon(index, "name", e.target.value)}
+                      placeholder="Add-on name"
+                    />
+                    <input
+                      disabled={readOnly}
+                      className={inputClass}
+                      type="number"
+                      min="0"
+                      value={Number(service?.cost || 0)}
+                      onChange={(e) => updateAddon(index, "cost", e.target.value)}
+                      placeholder="Cost"
+                    />
+                    {!readOnly ? (
+                      <Button type="button" variant="outline" className="border-rose-200 text-rose-600 hover:bg-rose-50" onClick={() => removeAddon(index)}>
+                        Remove
+                      </Button>
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-400">No add-ons added.</p>
+              )}
+              {!readOnly ? (
+                <Button type="button" variant="outline" className="rounded-full" onClick={addAddon}>
+                  Add Add-on
+                </Button>
+              ) : null}
+            </div>
           </section>
         </Card>
       </form>

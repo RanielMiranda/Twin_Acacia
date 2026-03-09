@@ -1,3 +1,13 @@
+function normalizeProofUrls(form) {
+  if (Array.isArray(form.paymentProofUrls) && form.paymentProofUrls.length > 0) {
+    return form.paymentProofUrls.filter(Boolean);
+  }
+  if (form.paymentProofUrl) {
+    return [form.paymentProofUrl];
+  }
+  return [];
+}
+
 export function buildDraftFromBooking(booking) {
   const form = booking.bookingForm || {};
   const adults = Number(form.adultCount || 0);
@@ -7,6 +17,7 @@ export function buildDraftFromBooking(booking) {
   const paymentPendingApproval = !!form.paymentPendingApproval && !paymentVerified;
   const pendingDownpayment = paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
   const pendingPaymentMethod = paymentPendingApproval ? form.pendingPaymentMethod || null : null;
+  const paymentProofUrls = normalizeProofUrls(form);
   const roomNameFromAssigned =
     (form.assignedRoomNames || []).length > 0
       ? form.assignedRoomNames.join(", ")
@@ -35,12 +46,13 @@ export function buildDraftFromBooking(booking) {
     paymentPendingApproval,
     totalAmount: Number(form.totalAmount || 0),
     paymentDeadline: form.paymentDeadline || booking.paymentDeadline || null,
-    paymentProofUrl: form.paymentProofUrl || null,
+    paymentProofUrl: paymentProofUrls[0] || null,
+    paymentProofUrls,
     paymentSubmittedAt: form.paymentSubmittedAt || null,
     paymentVerified,
     paymentVerifiedAt: form.paymentVerifiedAt || null,
     confirmationStub: form.confirmationStub || null,
-    resortServices: form.resortServices || [],
+    resortServices: Array.isArray(form.resortServices) ? form.resortServices : [],
   };
 }
 

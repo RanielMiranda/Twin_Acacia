@@ -184,6 +184,7 @@ export default function BookingDetailsPage() {
       createSignedProofUrl={createSignedProofUrl}
       createBookingTransaction={createBookingTransaction}
       resortRooms={currentResort?.rooms || []}
+      resortExtraServices={currentResort?.extraServices || []}
       allBookings={bookings || []}
       statusAudits={statusAudits}
       resortPaymentImageUrl={currentResort?.payment_image_url}

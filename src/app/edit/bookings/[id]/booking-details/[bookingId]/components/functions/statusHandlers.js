@@ -1,5 +1,6 @@
 import { generateConfirmationStub } from "@/lib/bookingFlow";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
+import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { PREVIOUS_STATUS } from "../bookingEditorConfig";
 
 export async function handleSetStatusAction({
@@ -13,6 +14,23 @@ export async function handleSetStatusAction({
   persist,
 }) {
   if (actionBusy) return;
+  if (nextStatus === "Checked Out") {
+    const isSettled = isCheckoutAmountSettled({
+      totalAmount: draft.totalAmount,
+      paidAmount: draft.downpayment,
+    });
+    if (!isSettled) {
+      window.alert(
+        getCheckoutMismatchMessage({
+          totalAmount: draft.totalAmount,
+          paidAmount: draft.downpayment,
+        })
+      );
+      return;
+    }
+    const confirmed = window.confirm("Confirm checkout for this booking?");
+    if (!confirmed) return;
+  }
   setActionBusy(true);
   try {
     const next = { ...draft, status: nextStatus };

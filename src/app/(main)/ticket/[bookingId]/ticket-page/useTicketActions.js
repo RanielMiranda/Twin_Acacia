@@ -12,10 +12,11 @@ export function useTicketActions({
   normalizedBookingId,
   paymentMethod,
   downpayment,
-  proofFile,
+  proofFiles,
   fetchTicket,
   fetchMessages,
   setBooking,
+  setProofFiles,
   issueSubject,
   setIssueSubject,
   issueMessage,
@@ -25,31 +26,50 @@ export function useTicketActions({
   toast,
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingAddOns, setIsSavingAddOns] = useState(false);
 
-  const uploadProof = async () => {
-    if (!proofFile) return null;
+  const uploadProofs = async () => {
+    if (!Array.isArray(proofFiles) || proofFiles.length === 0) return [];
     const resortName = resort?.name || form?.resortName || `resort-${booking?.resort_id || "unknown"}`;
     const safeResort = toSafeSegment(resortName);
     const safeTicket = toSafeSegment(normalizedBookingId);
-    const path = `resort-bookings/${safeResort}/${safeTicket}/proof.webp`;
-    const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, proofFile, {
-      upsert: true,
-      contentType: proofFile.type || "image/webp",
-    });
-    if (error) throw error;
-    const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path);
-    return urlData.publicUrl;
+    const uploadedUrls = [];
+    for (const [index, proofFile] of proofFiles.entries()) {
+      const extension = ((proofFile.name?.split(".").pop() || "webp").replace(/[^a-z0-9]/gi, "").toLowerCase() || "webp");
+      const path = `resort-bookings/${safeResort}/${safeTicket}/proof-${index + 1}.${extension}`;
+      const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, proofFile, {
+        upsert: true,
+        contentType: proofFile.type || "image/webp",
+      });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path);
+      if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl);
+    }
+    return uploadedUrls;
   };
 
   const handleSubmitDownpayment = async () => {
     if (!booking) return;
-    if (!proofFile) {
-      toast({ message: "Please attach proof of payment image before submitting.", color: "red" });
+    if (booking.booking_form?.paymentPendingApproval) {
+      toast({
+        message: "Your previous payment submission is still waiting for owner approval.",
+        color: "amber",
+      });
+      return;
+    }
+    if (!Array.isArray(proofFiles) || proofFiles.length === 0) {
+      toast({ message: "Please attach at least one proof of payment image before submitting.", color: "red" });
       return;
     }
     setIsSubmitting(true);
     try {
-      const proofUrl = await uploadProof();
+      const existingProofUrls = Array.isArray(booking.booking_form?.paymentProofUrls)
+        ? booking.booking_form.paymentProofUrls.filter(Boolean)
+        : booking.booking_form?.paymentProofUrl
+          ? [booking.booking_form.paymentProofUrl]
+          : [];
+      const uploadedProofUrls = await uploadProofs();
+      const nextProofUrls = uploadedProofUrls.length > 0 ? uploadedProofUrls : existingProofUrls;
       const bookingForm = {
         ...(booking.booking_form || {}),
         pendingPaymentMethod: paymentMethod,
@@ -57,7 +77,8 @@ export function useTicketActions({
         paymentPendingApproval: true,
         paymentVerified: false,
         paymentVerifiedAt: null,
-        paymentProofUrl: proofUrl || booking.booking_form?.paymentProofUrl || null,
+        paymentProofUrl: nextProofUrls[0] || null,
+        paymentProofUrls: nextProofUrls,
         paymentSubmittedAt: new Date().toISOString(),
       };
 
@@ -100,6 +121,7 @@ export function useTicketActions({
       }
 
       setBooking((prev) => ({ ...prev, booking_form: bookingForm, status: nextStatus }));
+      setProofFiles?.([]);
       await fetchTicket();
       toast({
         message: "Payment proof submitted. Waiting for owner approval.",
@@ -170,9 +192,65 @@ export function useTicketActions({
     }
   };
 
+  const handleSubmitAddOns = async (services) => {
+    if (!booking) return;
+    const normalizedServices = (services || [])
+      .map((service) => ({
+        name: String(service?.name || "").trim(),
+        cost: Number(service?.cost || 0),
+      }))
+      .filter((service) => service.name);
+
+    setIsSavingAddOns(true);
+    try {
+      const bookingForm = {
+        ...(booking.booking_form || {}),
+        resortServices: normalizedServices,
+        addOnsUpdatedAt: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from("bookings")
+        .update({ booking_form: bookingForm })
+        .eq("id", booking.id);
+
+      if (error) throw error;
+
+      try {
+        await supabase.from("ticket_messages").insert({
+          booking_id: booking.id,
+          resort_id: booking.resort_id,
+          sender_role: "client",
+          sender_name: form.guestName || "Client",
+          message:
+            normalizedServices.length > 0
+              ? `Requested add-on update: ${normalizedServices
+                  .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
+                  .join(", ")}`
+              : "Requested add-on update: cleared requested add-ons.",
+        });
+      } catch (messageError) {
+        if (!isMissingSupportTableError(messageError)) {
+          console.error("Failed to create add-on request message:", messageError);
+        }
+      }
+
+      setBooking((prev) => ({ ...prev, booking_form: bookingForm }));
+      await fetchTicket();
+      await fetchMessages(booking.id);
+      toast({ message: "Add-on request sent to owner.", color: "green" });
+    } catch (err) {
+      toast({ message: `Add-on update failed: ${err.message}`, color: "red" });
+    } finally {
+      setIsSavingAddOns(false);
+    }
+  };
+
   return {
     isSubmitting,
+    isSavingAddOns,
     handleSubmitDownpayment,
+    handleSubmitAddOns,
     handleSendIssue,
     handleSendMessage,
   };

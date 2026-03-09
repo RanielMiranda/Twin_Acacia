@@ -1,4 +1,5 @@
 import { buildDraftFromBooking } from "../bookingEditorUtils";
+import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 
 export function syncPaxFromCounts({ adultCount, childrenCount, guestCount, setDraft }) {
   const adults = Number(adultCount || 0);
@@ -27,6 +28,7 @@ export function loadDraftFromStorage({ booking, inlineDraftKey, isEditing }) {
       pendingPaymentMethod: base.pendingPaymentMethod,
       paymentPendingApproval: base.paymentPendingApproval,
       paymentProofUrl: base.paymentProofUrl,
+      paymentProofUrls: base.paymentProofUrls,
       paymentSubmittedAt: base.paymentSubmittedAt,
       paymentVerified: base.paymentVerified,
       paymentVerifiedAt: base.paymentVerifiedAt,
@@ -48,8 +50,27 @@ export async function handleSaveInlineAction({
   draft,
   inlineDraftKey,
   setIsEditing,
+  booking,
 }) {
   if (actionBusy) return;
+  const currentStatus = booking?.bookingForm?.status || booking?.status || "Inquiry";
+  if (draft.status === "Checked Out" && currentStatus !== "Checked Out") {
+    const isSettled = isCheckoutAmountSettled({
+      totalAmount: draft.totalAmount,
+      paidAmount: draft.downpayment,
+    });
+    if (!isSettled) {
+      window.alert(
+        getCheckoutMismatchMessage({
+          totalAmount: draft.totalAmount,
+          paidAmount: draft.downpayment,
+        })
+      );
+      return;
+    }
+    const confirmed = window.confirm("Confirm checkout for this booking?");
+    if (!confirmed) return;
+  }
   setActionBusy(true);
   try {
     await persist(draft);

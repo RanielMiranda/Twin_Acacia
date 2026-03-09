@@ -11,7 +11,7 @@ import {
   formatWeekdayLabel,
   formatTotalStayDays,
 } from "./bookingEditorUtils";
-import { PAYMENT_CHANNELS, PREVIOUS_STATUS, STATUS_PHASES } from "./bookingEditorConfig";
+import { PAYMENT_CHANNELS, STATUS_PHASES } from "./bookingEditorConfig";
 import BookingEditorActionBar from "./BookingEditorActionBar";
 import {
   AddOnsCardSection,
@@ -47,8 +47,10 @@ export default function BookingModernEditor({
   createSignedProofUrl,
   createBookingTransaction,
   resortRooms = [],
+  resortExtraServices = [],
   allBookings = [],
   statusAudits = [],
+  resortPaymentImageUrl,
 }) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -56,7 +58,7 @@ export default function BookingModernEditor({
   const [renderedAt] = useState(() => Date.now());
   const inlineDraftKey = `booking_inline_draft:${booking.id}`;
   const [draft, setDraft] = useState(() => buildDraftFromBooking(booking));
-  const [proofPreviewUrl, setProofPreviewUrl] = useState(() => buildDraftFromBooking(booking).paymentProofUrl || null);
+  const [proofPreviewUrls, setProofPreviewUrls] = useState(() => buildDraftFromBooking(booking).paymentProofUrls || []);
   const [assignedRoomIds, setAssignedRoomIds] = useState(() => booking.roomIds || []);
   const [actorMeta, setActorMeta] = useState({ name: "Owner", role: "owner", id: "" });
 
@@ -95,14 +97,16 @@ export default function BookingModernEditor({
   }, [booking, inlineDraftKey, isEditing]);
 
   useEffect(() => {
-    setProofPreviewUrl(draft.paymentProofUrl || null);
-  }, [draft.paymentProofUrl]);
+    setProofPreviewUrls(Array.isArray(draft.paymentProofUrls) ? draft.paymentProofUrls : []);
+  }, [draft.paymentProofUrls]);
 
-  const resolveSignedProofUrl = async () => {
-    if (!draft.paymentProofUrl) return;
+  const resolveSignedProofUrls = async () => {
+    if (!Array.isArray(draft.paymentProofUrls) || draft.paymentProofUrls.length === 0) return;
     try {
-      const signed = await createSignedProofUrl?.(draft.paymentProofUrl, 60 * 60);
-      if (signed) setProofPreviewUrl(signed);
+      const signedUrls = await Promise.all(
+        draft.paymentProofUrls.map(async (proofUrl) => (await createSignedProofUrl?.(proofUrl, 60 * 60)) || proofUrl)
+      );
+      setProofPreviewUrls(signedUrls.filter(Boolean));
     } catch {
       // Keep original URL when signing fails.
     }
@@ -119,13 +123,13 @@ export default function BookingModernEditor({
   const status = draft.status || "Inquiry";
   const totalStayDays = formatTotalStayDays(draft.checkInDate, draft.checkOutDate);
   const normalizedStatus = status.toLowerCase();
-  const hasProof = !!draft.paymentProofUrl;
+  const hasProof = Array.isArray(draft.paymentProofUrls) && draft.paymentProofUrls.length > 0;
   const effectivePaid = Number(draft.downpayment || 0) + (status === "Confirmed" ? Number(draft.pendingDownpayment || 0) : 0);
   const balance = Math.max(0, Number(draft.totalAmount || 0) - effectivePaid);
   const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;
   const hasDeadline = paymentDeadlineDate && !Number.isNaN(paymentDeadlineDate.getTime());
   const isDeadlineExpired = hasDeadline && paymentDeadlineDate.getTime() < renderedAt;
-  const showDecisionActions = !normalizedStatus.includes("confirm");
+  const showDecisionActions = ["inquiry", "approved inquiry", "pending payment", "pending checkout", "declined"].includes(normalizedStatus);
   const bookingFormAudits = Array.isArray(draft.statusAudit) ? draft.statusAudit : [];
   const dbAudits = Array.isArray(statusAudits) ? statusAudits : [];
   const approvedByName = resolveApprovedByName({ bookingFormAudits, dbAudits });
@@ -148,7 +152,15 @@ export default function BookingModernEditor({
   };
 
   const handleSaveInline = async () => {
-    await handleSaveInlineAction({ actionBusy, setActionBusy, persist, draft, inlineDraftKey, setIsEditing });
+    await handleSaveInlineAction({
+      actionBusy,
+      setActionBusy,
+      persist,
+      draft,
+      inlineDraftKey,
+      setIsEditing,
+      booking,
+    });
   };
 
   useEffect(() => {
@@ -165,7 +177,13 @@ export default function BookingModernEditor({
   }, [assignedRoomIds]);
 
   const handleCancelInline = () => {
-    handleCancelInlineAction({ booking, setDraft, setProofPreviewUrl, inlineDraftKey, setIsEditing });
+    handleCancelInlineAction({
+      booking,
+      setDraft,
+      setProofPreviewUrl: (value) => setProofPreviewUrls(value ? [value] : []),
+      inlineDraftKey,
+      setIsEditing,
+    });
   };
 
   const handleSetStatus = async (nextStatus) => {
@@ -286,7 +304,13 @@ export default function BookingModernEditor({
               />
             </div>
 
-            <AddOnsCardSection draft={draft} />
+            <AddOnsCardSection
+              draft={draft}
+              isEditing={isEditing}
+              setField={setField}
+              onStartEditing={() => setIsEditing(true)}
+              availableServices={resortExtraServices}
+            />
 
             <StatusAuditCardSection dbAudits={dbAudits} bookingFormAudits={bookingFormAudits} />
           </div>
@@ -294,10 +318,11 @@ export default function BookingModernEditor({
           <div className="space-y-6">
             <ProofCardSection
               hasProof={hasProof}
-              proofPreviewUrl={proofPreviewUrl}
+              proofPreviewUrls={proofPreviewUrls}
               draft={draft}
-              resolveSignedProofUrl={resolveSignedProofUrl}
+              resolveSignedProofUrl={resolveSignedProofUrls}
               handleVerifyProof={handleVerifyProof}
+              resortPaymentImageUrl={resortPaymentImageUrl}
             />
 
             <PaymentCardSection
@@ -342,7 +367,7 @@ export default function BookingModernEditor({
         onBackOneStep={handleRevertStep}
         onApproveInquiry={handleApproveInquiry}
         onRequestPayment={handleRequestPayment}
-        onConfirmStay={() => handleSetStatus("Confirmed")}
+        onConfirmStay={() => handleSetStatus(status === "Pending Checkout" ? "Checked Out" : "Confirmed")}
         onDeleteTicket={() => {
           const confirmed = window.confirm("Delete this declined ticket and related data?");
           if (!confirmed) return;
