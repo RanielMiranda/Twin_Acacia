@@ -183,7 +183,11 @@ export function ResortDataProvider({ children }) {
       const next = {};
       allResorts.forEach((resort) => {
         const rooms = resort.rooms || [];
-        const blockedSet = getUnavailableRoomIds(byResortBookings[Number(resort.id)] || [], requestedRange);
+        const blockedSet = getUnavailableRoomIds(
+          byResortBookings[Number(resort.id)] || [],
+          requestedRange,
+          (rooms || []).map((room) => room?.id)
+        );
         const availableRooms = rooms.filter((room) => !blockedSet.has(room?.id?.toString()));
         const totalAvailablePax = availableRooms.reduce((sum, room) => sum + Number(room?.guests || 0), 0);
         const requestedRooms = Number(guests.rooms || 1);

@@ -51,8 +51,8 @@ export default function BookingDetailsPage() {
   );
   const bookingConflicts = (bookings || []).filter((entry) => {
     if (!booking || entry.id?.toString() === booking.id?.toString()) return false;
-    const sharedRoom = (entry.roomIds || []).some((rid) => (booking.roomIds || []).includes(rid));
-    if (!sharedRoom) return false;
+    const normalizedStatus = String(entry.status || entry.bookingForm?.status || "").toLowerCase();
+    if (["pending checkout", "checked out", "cancelled", "declined"].includes(normalizedStatus)) return false;
     return overlapsByDateTime(booking, entry);
   });
 

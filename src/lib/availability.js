@@ -16,6 +16,7 @@ export function normalizeRoomIds(roomIds) {
 export function isBlockingStatus(status) {
   const normalized = String(status || "").toLowerCase();
   return !(
+    normalized.includes("pending checkout") ||
     normalized.includes("cancel") ||
     normalized.includes("declined") ||
     normalized.includes("checked out")
@@ -44,13 +45,22 @@ export function toBookingRange(bookingRow) {
   };
 }
 
-export function getUnavailableRoomIds(bookings, requestedRange) {
+export function getUnavailableRoomIds(bookings, requestedRange, resortRoomIds = []) {
   if (!requestedRange) return new Set();
   const blocked = new Set();
-  (bookings || []).forEach((row) => {
+  const overlappingRows = (bookings || []).filter((row) => {
     if (!isBlockingStatus(row.status || row.booking_form?.status)) return;
     const overlaps = overlapsByDateTime(toBookingRange(row), requestedRange);
-    if (!overlaps) return;
+    return overlaps;
+  });
+  if (overlappingRows.length === 0) return blocked;
+
+  if (Array.isArray(resortRoomIds) && resortRoomIds.length > 0) {
+    resortRoomIds.map((id) => id?.toString()).filter(Boolean).forEach((id) => blocked.add(id));
+    return blocked;
+  }
+
+  overlappingRows.forEach((row) => {
     normalizeRoomIds(row.room_ids).forEach((id) => blocked.add(id));
   });
   return blocked;

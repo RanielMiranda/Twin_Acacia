@@ -70,7 +70,11 @@ export default function ResortDetailPage({ name }) {
         if (!cancelled) setUnavailableRoomIds([]);
         return;
       }
-      const blockedSet = getUnavailableRoomIds(data || [], requestedRange);
+      const blockedSet = getUnavailableRoomIds(
+        data || [],
+        requestedRange,
+        (resort?.rooms || []).map((room) => room?.id)
+      );
       if (!cancelled) setUnavailableRoomIds(Array.from(blockedSet));
     };
     loadRoomAvailability();

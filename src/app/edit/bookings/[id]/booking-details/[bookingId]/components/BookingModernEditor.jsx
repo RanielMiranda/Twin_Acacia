@@ -25,7 +25,7 @@ import {
 } from "./BookingEditorSections";
 import { buildPersistPayload } from "./functions/payloadHandlers";
 import { handleCancelInlineAction, handleSaveInlineAction, loadDraftFromStorage, persistDraftToStorage, syncPaxFromCounts } from "./functions/editHandlers";
-import { handleApproveInquiryAction, handleDeclineAction, handleRequestPaymentAction, handleRevertStepAction, handleSetStatusAction, handleVerifyProofAction } from "./functions/statusHandlers";
+import { handleApproveInquiryAction, handleDeclineAction, handleDeclineProofAction, handleRequestPaymentAction, handleRevertStepAction, handleSetStatusAction, handleVerifyProofAction } from "./functions/statusHandlers";
 import { isRoomConflictingForBooking, resolveApprovedByName } from "./functions/utilHandlers";
 export default function BookingModernEditor({
   booking,
@@ -236,6 +236,16 @@ export default function BookingModernEditor({
     });
   };
 
+  const handleDeclineProof = async () => {
+    await handleDeclineProofAction({
+      draft,
+      actionBusy,
+      setActionBusy,
+      setDraft,
+      persist,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-52 md:pb-32 pt-10 px-4 md:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -322,6 +332,7 @@ export default function BookingModernEditor({
               draft={draft}
               resolveSignedProofUrl={resolveSignedProofUrls}
               handleVerifyProof={handleVerifyProof}
+              handleDeclineProof={handleDeclineProof}
               resortPaymentImageUrl={resortPaymentImageUrl}
             />
 
@@ -343,6 +354,7 @@ export default function BookingModernEditor({
             assignedRoomIds={assignedRoomIds}
             toggleAssignedRoom={toggleAssignedRoom}
             isRoomConflicting={isRoomConflicting}
+            isEditing={isEditing}
           />
 
           <MessagesInboxCardSection

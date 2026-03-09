@@ -177,6 +177,9 @@ export async function handleVerifyProofAction({
     const approvedAmount = Number(draft.pendingDownpayment || 0);
     const nextDownpayment = Number(draft.downpayment || 0) + approvedAmount;
     const nextMethod = draft.pendingPaymentMethod || draft.paymentMethod;
+    const isFullyPaid = Number(draft.totalAmount || 0) > 0
+      ? nextDownpayment >= Number(draft.totalAmount || 0)
+      : false;
 
     const next = {
       ...draft,
@@ -187,6 +190,10 @@ export async function handleVerifyProofAction({
       pendingDownpayment: 0,
       pendingPaymentMethod: null,
       paymentPendingApproval: false,
+      status:
+        draft.status === "Pending Payment" && isFullyPaid
+          ? "Confirmed"
+          : draft.status,
     };
     setDraft(next);
     await persist(next);
@@ -212,6 +219,37 @@ export async function handleVerifyProofAction({
         method: nextMethod,
       });
     }
+  } finally {
+    setActionBusy(false);
+  }
+}
+
+export async function handleDeclineProofAction({
+  draft,
+  actionBusy,
+  setActionBusy,
+  setDraft,
+  persist,
+}) {
+  if (!draft.paymentPendingApproval || actionBusy) return;
+  const confirmed = window.confirm("Decline this submitted payment and allow the client to upload again?");
+  if (!confirmed) return;
+
+  setActionBusy(true);
+  try {
+    const next = {
+      ...draft,
+      paymentPendingApproval: false,
+      pendingDownpayment: 0,
+      pendingPaymentMethod: null,
+      paymentSubmittedAt: null,
+      paymentVerified: false,
+      paymentVerifiedAt: null,
+      paymentProofUrl: null,
+      paymentProofUrls: [],
+    };
+    setDraft(next);
+    await persist(next);
   } finally {
     setActionBusy(false);
   }

@@ -1,5 +1,10 @@
 import { overlapsByDateTime } from "../bookingEditorUtils";
 
+function isBlockingStatus(status) {
+  const normalized = String(status || "").toLowerCase();
+  return !["pending checkout", "checked out", "cancelled", "declined"].includes(normalized);
+}
+
 export function resolveApprovedByName({ bookingFormAudits = [], dbAudits = [] }) {
   const approvalAuditFromDb = dbAudits.find((entry) => {
     const next = String(entry?.new_status || "").toLowerCase();
@@ -24,9 +29,9 @@ export function isRoomConflictingForBooking({
   draft,
   allBookings = [],
 }) {
+  void roomId;
   const probe = {
     id: booking.id,
-    roomIds: [roomId],
     startDate: draft.checkInDate || booking.startDate,
     endDate: draft.checkOutDate || booking.endDate || draft.checkInDate || booking.startDate,
     checkInTime: draft.checkInTime || booking.checkInTime,
@@ -39,7 +44,7 @@ export function isRoomConflictingForBooking({
 
   return (allBookings || []).some((entry) => {
     if (entry.id?.toString() === booking.id?.toString()) return false;
-    if (!(entry.roomIds || []).includes(roomId)) return false;
+    if (!isBlockingStatus(entry.status || entry.bookingForm?.status)) return false;
     return overlapsByDateTime(entry, probe);
   });
 }

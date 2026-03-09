@@ -265,6 +265,7 @@ export function ProofCardSection({
   draft,
   resolveSignedProofUrl,
   handleVerifyProof,
+  handleDeclineProof,
 }) {
   const proofUrls =
     Array.isArray(proofPreviewUrls) && proofPreviewUrls.length > 0
@@ -314,10 +315,22 @@ export function ProofCardSection({
                 Pending approval: PHP {Number(draft.pendingDownpayment || 0).toLocaleString()} ({draft.pendingPaymentMethod || "Pending"})
               </p>
             ) : null}
-            <button onClick={handleVerifyProof} className="flex items-center gap-2 text-xs font-black text-emerald-600 uppercase tracking-tighter">
-              {draft.paymentVerified ? <CheckCircle size={14} /> : <ShieldCheck size={14} />}
-              {draft.paymentVerified ? "Payment Accepted" : "Accept Payment"}
-            </button>
+            {draft.paymentPendingApproval ? (
+              <div className="flex flex-wrap gap-2">
+                <button onClick={handleVerifyProof} className="flex items-center gap-2 text-xs font-black text-emerald-600 uppercase tracking-tighter">
+                  <ShieldCheck size={14} />
+                  Accept Payment
+                </button>
+                <button onClick={handleDeclineProof} className="flex items-center gap-2 text-xs font-black text-rose-600 uppercase tracking-tighter">
+                  Decline Payment
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs font-black text-emerald-600 uppercase tracking-tighter">
+                <CheckCircle size={14} />
+                Payment Accepted
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -403,6 +416,7 @@ export function AssignRoomsCardSection({
   assignedRoomIds,
   toggleAssignedRoom,
   isRoomConflicting,
+  isEditing = false,
 }) {
   return (
     <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-4">
@@ -421,7 +435,7 @@ export function AssignRoomsCardSection({
               }`}
             >
               <div className="flex items-center gap-2">
-                <input type="checkbox" checked={selected} onChange={() => toggleAssignedRoom(roomId)} />
+                <input type="checkbox" checked={selected} onChange={() => toggleAssignedRoom(roomId)} disabled={!isEditing} />
                 <div>
                   <p className="text-sm font-bold text-slate-800">{room.name || `Room ${roomId}`}</p>
                   <p className="text-[11px] text-slate-500">Sleeps {Number(room.guests || 0)} pax</p>
@@ -443,6 +457,7 @@ export function AssignRoomsCardSection({
             ? (resortRooms || []).filter((room) => assignedRoomIds.includes(room.id)).map((room) => room.name).join(", ")
             : "No room assigned yet."}
         </p>
+        {!isEditing ? <p className="mt-2 text-[11px] text-slate-500">Click Edit, then Save Changes to update assigned rooms.</p> : null}
       </div>
     </div>
   );

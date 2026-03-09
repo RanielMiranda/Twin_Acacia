@@ -146,6 +146,7 @@ export default function BookingDetailsFormPage() {
         data={initialData}
         resortName={currentResort?.name}
         roomOptions={currentResort?.rooms || []}
+        availableServices={currentResort?.extraServices || []}
         storageKey={storageKey}
         onCancel={() => router.back()}
         onSave={handleSave}

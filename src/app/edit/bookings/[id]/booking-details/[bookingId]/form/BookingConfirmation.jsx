@@ -49,6 +49,7 @@ export default function BookingConfirmation({
   data,
   resortName,
   roomOptions = [],
+  availableServices = [],
   readOnly = false,
   title = "Booking Form",
   onSave,
@@ -138,32 +139,24 @@ export default function BookingConfirmation({
   const inputClass =
     "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500";
 
-  const updateAddon = (index, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      resortServices: (prev.resortServices || []).map((service, serviceIndex) =>
-        serviceIndex === index
-          ? {
-              ...service,
-              [field]: field === "cost" ? Number(value) || 0 : value,
-            }
-          : service
-      ),
-    }));
-  };
-
-  const addAddon = () => {
-    setFormData((prev) => ({
-      ...prev,
-      resortServices: [...(prev.resortServices || []), { name: "", cost: 0 }],
-    }));
-  };
-
-  const removeAddon = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      resortServices: (prev.resortServices || []).filter((_, serviceIndex) => serviceIndex !== index),
-    }));
+  const toggleAddon = (service) => {
+    setFormData((prev) => {
+      const selected = Array.isArray(prev.resortServices) ? prev.resortServices : [];
+      const exists = selected.some((entry) => entry?.name === service?.name);
+      return {
+        ...prev,
+        resortServices: exists
+          ? selected.filter((entry) => entry?.name !== service?.name)
+          : [
+              ...selected,
+              {
+                name: service?.name || "",
+                description: service?.description || "",
+                cost: Number(service?.cost || 0),
+              },
+            ],
+      };
+    });
   };
 
   return (
@@ -299,40 +292,41 @@ export default function BookingConfirmation({
           <section className="space-y-3">
             <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Add-ons</h2>
             <div className="space-y-3">
-              {(formData.resortServices || []).length > 0 ? (
-                formData.resortServices.map((service, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_160px_auto] gap-3">
-                    <input
+              {availableServices.length > 0 ? (
+                availableServices.map((service, index) => {
+                  const selected = (formData.resortServices || []).some((entry) => entry?.name === service?.name);
+                  return (
+                    <button
+                      key={`${service?.name || "service"}-${index}`}
+                      type="button"
                       disabled={readOnly}
-                      className={inputClass}
-                      value={service?.name || ""}
-                      onChange={(e) => updateAddon(index, "name", e.target.value)}
-                      placeholder="Add-on name"
-                    />
-                    <input
-                      disabled={readOnly}
-                      className={inputClass}
-                      type="number"
-                      min="0"
-                      value={Number(service?.cost || 0)}
-                      onChange={(e) => updateAddon(index, "cost", e.target.value)}
-                      placeholder="Cost"
-                    />
-                    {!readOnly ? (
-                      <Button type="button" variant="outline" className="border-rose-200 text-rose-600 hover:bg-rose-50" onClick={() => removeAddon(index)}>
-                        Remove
-                      </Button>
-                    ) : null}
-                  </div>
-                ))
+                      onClick={() => toggleAddon(service)}
+                      className={`w-full text-left rounded-xl border px-4 py-4 transition-all disabled:opacity-60 ${
+                        selected
+                          ? "border-blue-300 bg-blue-50 ring-1 ring-blue-100"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-black text-slate-800">{service?.name || "Service"}</p>
+                          {service?.description ? (
+                            <p className="mt-1 text-xs text-slate-500">{service.description}</p>
+                          ) : null}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-black text-blue-600">PHP {Number(service?.cost || 0).toLocaleString()}</p>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            {selected ? "Selected" : "Tap to add"}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
               ) : (
-                <p className="text-sm text-slate-400">No add-ons added.</p>
+                <p className="text-sm text-slate-400">This resort has no configured extra services yet.</p>
               )}
-              {!readOnly ? (
-                <Button type="button" variant="outline" className="rounded-full" onClick={addAddon}>
-                  Add Add-on
-                </Button>
-              ) : null}
             </div>
           </section>
         </Card>
