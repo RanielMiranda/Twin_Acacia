@@ -9,6 +9,7 @@ export default function RoomsSection({
   unavailableRoomIds = [],
   selectedRoomIds = [],
   onToggleRoomSelection,
+  className = "max-w-6xl mx-auto px-4 pb-16",
 }) {
   const { resort } = useResort(); 
   const { selectedTags } = useFilters(); 
@@ -23,9 +24,7 @@ export default function RoomsSection({
   });
 
   return (
-    <div id="rooms" className="max-w-6xl mx-auto px-4 pb-16">
-      <h2 className="text-2xl font-bold mb-6">Available Accommodations</h2>
-      
+    <div id="rooms" className={className}>
       <div className="flex flex-col gap-6">
         {displayedRooms.length === 0 ? (
           <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">

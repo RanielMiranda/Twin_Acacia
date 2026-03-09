@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 
-export default function FacilitySection({ facilities, onOpen, summary = "" }) {
+export default function FacilitySection({ facilities, onOpen, summary = "", className = "max-w-6xl mx-auto px-4" }) {
   const safeFacilities = Array.isArray(facilities) ? facilities : [];
   const maxVisible = 10;
   const visibleFacilities = safeFacilities.slice(0, maxVisible);
@@ -34,7 +34,7 @@ export default function FacilitySection({ facilities, onOpen, summary = "" }) {
   };
 
   return (
-    <div id="facilities" className="max-w-6xl mx-auto px-4">
+    <section id="facilities" className={className}>
       <h2 className="text-2xl font-semibold mb-4">Facilities</h2>
       {summary ? (
         <div className="mb-5 w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 text-slate-600">
@@ -75,6 +75,6 @@ export default function FacilitySection({ facilities, onOpen, summary = "" }) {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

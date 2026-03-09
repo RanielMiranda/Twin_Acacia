@@ -1,13 +1,13 @@
 import { MapPin, Mail, Phone, Facebook, DollarSign } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 
-export default function ProfileSection() {
+export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-10" }) {
   const { resort } = useResort();
 
   if (!resort) return null;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <section id="overview" className={className}>
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {resort.profileImage && (
           <img
@@ -88,6 +88,6 @@ export default function ProfileSection() {
           {resort.description?.summary}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

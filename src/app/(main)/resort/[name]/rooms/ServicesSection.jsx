@@ -1,8 +1,8 @@
-export default function ServicesTable({ services }) {
+export default function ServicesTable({ services, className = "max-w-6xl mx-auto px-4 my-4" }) {
   if (!services?.length) return null;
 
   return (
-    <div id="extra-services" className="max-w-6xl mx-auto px-4 my-4">
+    <section id="extra-services" className={className}>
       <h2 className="text-2xl font-semibold mb-4">Extra Services</h2>
 
       <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
@@ -33,6 +33,6 @@ export default function ServicesTable({ services }) {
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

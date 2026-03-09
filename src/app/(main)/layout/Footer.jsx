@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import ContactModal from "@/components/ui/modals/ContactModal";
 
 export default function Footer() {
@@ -7,82 +7,61 @@ export default function Footer() {
   return (
     <>
       <footer id="about" className="bg-gray-950 text-gray-400">
-        <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
-
-          {/* Quick Links */}
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-3">
           <div>
-            <h3 className="text-white font-medium mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li><a href="#rooms" className="hover:text-sky-400 transition">Rooms</a></li>
-              <li><a href="#facilities" className="hover:text-sky-400 transition">Facilities</a></li>
-              <li><a href="#gallery" className="hover:text-sky-400 transition">Gallery</a></li>
-              <li><a href="#contact" className="hover:text-sky-400 transition">Contact</a></li>
-            </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-white font-medium mb-4">Contact</h3>
+            <h3 className="mb-4 font-medium text-white">Contact</h3>
             <ul className="space-y-2 text-sm">
-              <li>📍 Calamba, Philippines</li>
-              <li>📞 +63 11 111 1111</li>
-              <li>✉️ twinacacia@gmail.com</li>
+              <li>Calamba, Philippines</li>
+              <li>+63 11 111 1111</li>
+              <li>twinacacia@gmail.com</li>
             </ul>
           </div>
 
-          {/* Social */}
           <div>
-            <h3 className="text-white font-medium mb-4">Follow Us</h3>
+            <h3 className="mb-4 font-medium text-white">Follow Us</h3>
             <div className="flex space-x-4">
-              <a href="#" className="hover:text-sky-400 transition">Facebook</a>
-              <a href="#" className="hover:text-sky-400 transition">Instagram</a>
+              <a href="#" className="transition hover:text-sky-400">Facebook</a>
+              <a href="#" className="transition hover:text-sky-400">Instagram</a>
             </div>
           </div>
 
-          {/* Contact CTA */}
           <div>
-            <h2 className="text-white text-lg font-semibold mb-4">
-              Contact Us
-            </h2>
-            <p className="text-gray-500 text-sm mb-6">
-              Have questions about availability, amenities, or group bookings?
-              Send us a message and we’ll get back to you.
+            <h2 className="mb-4 text-lg font-semibold text-white">Contact Us</h2>
+            <p className="mb-5 text-sm text-gray-500">
+              Have questions about availability, amenities, or group bookings? Send us a
+              message and we will get back to you.
             </p>
 
             <button
               onClick={() => setOpen(true)}
-              className="bg-sky-500 hover:bg-sky-600 text-white px-6 py-3 rounded-lg transition font-medium"
+              className="rounded-lg bg-sky-500 px-6 py-3 font-medium text-white transition hover:bg-sky-600"
             >
               Send a Message
             </button>
           </div>
-
         </div>
 
-        {/* Bottom Divider */}
-        <div className="border-t border-gray-800 mt-6">
-          <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
-            <p>© {new Date().getFullYear()} Twin Acacia. All rights reserved.</p>
-            <div className="space-x-4 mt-3 md:mt-0">
-              <a href="#" className="hover:text-sky-400 transition">Privacy Policy</a>
-              <a href="#" className="hover:text-sky-400 transition">Terms of Service</a>
+        <div className="border-t border-gray-800">
+          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between px-6 py-4 text-xs text-gray-500 md:flex-row">
+            <p>(c) {new Date().getFullYear()} Twin Acacia. All rights reserved.</p>
+            <div className="mt-3 space-x-4 md:mt-0">
+              <a href="#" className="transition hover:text-sky-400">Privacy Policy</a>
+              <a href="#" className="transition hover:text-sky-400">Terms of Service</a>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* --- MODAL --- */}
-      {open && (
-        <div className="fixed inset-0 flex justify-center items-center z-50">
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
           <ContactModal
             open={open}
             onClose={() => setOpen(false)}
             panelClass="bg-white text-black"
             overlayClass="bg-black/70 backdrop-blur-sm"
           />
-
         </div>
-      )}
+      ) : null}
     </>
   );
 }

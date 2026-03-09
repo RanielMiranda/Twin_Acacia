@@ -25,7 +25,7 @@ import { supabase } from "@/lib/supabase";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 
 export default function ResortDetailPage({ name }) {
-  const { resort, setResort, loadResort, loading } = useResort();
+  const { resort, loadResort, loading } = useResort();
 
   const [facilityIndex, setFacilityIndex] = useState(0);
   const [facilityOpen, setFacilityOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function ResortDetailPage({ name }) {
   const [roomActiveIndex, setRoomActiveIndex] = useState(0);
   const [roomImages, setRoomImages] = useState([]);
   const [contactOpen, setContactOpen] = useState(false);
-  const [price, setPrice] = useState(5000);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [unavailableRoomIds, setUnavailableRoomIds] = useState([]);
   const [selectedRoomIds, setSelectedRoomIds] = useState([]);
   const { startDate, endDate, checkInTime, checkOutTime } = useFilters();
@@ -85,6 +85,14 @@ export default function ResortDetailPage({ name }) {
     );
   }, [unavailableRoomIds]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    document.body.style.overflow = mobileFiltersOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileFiltersOpen]);
+
   if (loading && !resort) {
     return (
       <div className="mt-10 p-20 text-center text-gray-500">
@@ -105,6 +113,10 @@ export default function ResortDetailPage({ name }) {
     setFacilityIndex(index);
     setFacilityOpen(true);
   };
+
+  const selectedRooms = (resort.rooms || []).filter((room) =>
+    selectedRoomIds.includes(room.id)
+  );
 
 const handleSubmitInquiry = async (submittedData) => {
     try {
@@ -211,45 +223,95 @@ const handleSubmitInquiry = async (submittedData) => {
       />
 
       <ShortcutBar />
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-8 xl:gap-12 items-start">
+          <div className="min-w-0 space-y-10">
+            <ProfileSection className="px-0 py-0" />
 
-      <ProfileSection/>
+            <FacilitySection
+              facilities={resort.facilities}
+              summary={resort.description?.facilitiesSummary || ""}
+              onOpen={handleOpenFacility}
+              className="px-0"
+            />
 
-      <FacilitySection 
-        facilities={resort.facilities} 
-        summary={resort.description?.facilitiesSummary || ""}
-        onOpen={handleOpenFacility} 
-      />
+            <ServicesSection services={resort.extraServices} className="px-0 my-0" />
 
-      <ServicesSection services={resort.extraServices} />      
+            <section className="px-0">
+              <div className="border-b border-slate-200 pb-5 mb-6">
+                <p className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-400 mb-2">
+                  Available Accommodations
+                </p>
+                <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
+                  Choose the rooms that fit this stay
+                </h2>
+              </div>
 
-      <div className="flex flex-col max-w-6xl mx-auto px-4 mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">Available Rooms</h2>
-        <p className="text-sm text-slate-500 mt-1">
-          Click on a room card to select it for your inquiry.
-        </p>
-      </div>  
+              <RoomsSection
+                className="px-0 pb-10"
+                unavailableRoomIds={unavailableRoomIds}
+                selectedRoomIds={selectedRoomIds}
+                onToggleRoomSelection={(roomId) =>
+                  setSelectedRoomIds((prev) =>
+                    prev.includes(roomId) ? prev.filter((id) => id !== roomId) : [...prev, roomId]
+                  )
+                }
+                onOpenRoomGallery={(images, index = 0) => {
+                  setRoomImages(images);
+                  setRoomActiveIndex(index);
+                  setRoomGalleryOpen(true);
+                }}
+              />
+            </section>
+          </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 px-4 lg:px-0 max-w-6xl mx-auto pb-10">
-        <div className="lg:w-80 w-full lg:sticky lg:top-24">
-          <RoomFilterPanel price={price} setPrice={setPrice} />
-        </div>
+          <aside className="hidden xl:sticky xl:top-24 xl:self-start xl:block">
+            <div className="overflow-visible rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_80px_-36px_rgba(15,23,42,0.45)]">
 
-        <div className="flex-1 w-full">
-          <RoomsSection
-            price={price}
-            unavailableRoomIds={unavailableRoomIds}
-            selectedRoomIds={selectedRoomIds}
-            onToggleRoomSelection={(roomId) =>
-              setSelectedRoomIds((prev) =>
-                prev.includes(roomId) ? prev.filter((id) => id !== roomId) : [...prev, roomId]
-              )
-            }
-            onOpenRoomGallery={(images, index = 0) => {
-              setRoomImages(images);
-              setRoomActiveIndex(index);
-              setRoomGalleryOpen(true);
-            }}
-          />
+              <div className="p-6">
+                <RoomFilterPanel embedded />
+              </div>
+
+              <div className="border-t border-slate-100 px-6 py-5 space-y-4 bg-slate-50/80 rounded-b-[2rem]">
+                <div className="rounded-2xl bg-white border border-slate-200 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                      Selected Rooms
+                    </p>
+                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-blue-700">
+                      {selectedRoomIds.length}
+                    </span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {selectedRooms.length > 0 ? (
+                      selectedRooms.map((room) => (
+                        <div
+                          key={room.id}
+                          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                        >
+                          <p className="text-sm font-semibold text-slate-900">{room.name}</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Sleeps {Number(room.guests || 0)} pax
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        Select room cards on the left and they will be included in the inquiry modal.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  className="w-full rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800"
+                  onClick={() => setContactOpen(true)}
+                >
+                  Contact Owner
+                </button>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
 
@@ -290,16 +352,83 @@ const handleSubmitInquiry = async (submittedData) => {
           onSubmitInquiry={handleSubmitInquiry}
         />
       )}
-      <div className="fixed bottom-5 right-5 z-40 w-[280px] bg-white border border-slate-200 shadow-2xl rounded-2xl p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Want to inquire?</p>
-        <p className="text-sm font-semibold text-slate-800 mb-3">Message the owner here</p>
+      <div className="xl:hidden fixed inset-x-0 bottom-4 z-40 px-4">
         <button
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition font-bold text-sm"
-          onClick={() => setContactOpen(true)}
+          className="mx-auto flex w-full max-w-sm items-center justify-center rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white shadow-2xl"
+          onClick={() => setMobileFiltersOpen(true)}
         >
-          Contact Owner
+          Filters
+          {selectedRoomIds.length > 0 ? ` • ${selectedRoomIds.length} selected` : ""}
         </button>
       </div>
+      {mobileFiltersOpen ? (
+        <div className="xl:hidden fixed inset-0 z-[120] bg-black/45 backdrop-blur-[2px]">
+          <div
+            className="absolute inset-0"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+          <div className="absolute bottom-0 left-0 right-0 mx-auto h-[75vh] max-w-xl rounded-t-[2rem] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  Filters
+                </p>
+                <h3 className="text-lg font-semibold text-slate-900">Plan this stay</h3>
+              </div>
+              <button
+                className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600"
+                onClick={() => setMobileFiltersOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="h-[calc(75vh-73px)] overflow-y-auto px-5 py-5">
+              <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                <RoomFilterPanel embedded mobileSheet showTitle={false} />
+              </div>
+
+              <div className="mt-4 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                    Selected Rooms
+                  </p>
+                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-blue-700">
+                    {selectedRoomIds.length}
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {selectedRooms.length > 0 ? (
+                    selectedRooms.map((room) => (
+                      <div
+                        key={room.id}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-2"
+                      >
+                        <p className="text-sm font-semibold text-slate-900">{room.name}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Sleeps {Number(room.guests || 0)} pax
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      Select room cards first, then send the inquiry.
+                    </p>
+                  )}
+                </div>
+                <button
+                  className="mt-4 w-full rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white"
+                  onClick={() => {
+                    setMobileFiltersOpen(false);
+                    setContactOpen(true);
+                  }}
+                >
+                  Contact Owner
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     <Toast/>
     <PersistentToast />
     </div>

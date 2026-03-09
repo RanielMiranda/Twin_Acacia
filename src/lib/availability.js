@@ -24,8 +24,8 @@ export function isBlockingStatus(status) {
 
 export function buildRequestedRange({ startDate, endDate, checkInTime, checkOutTime }) {
   const start = normalizeDateInput(startDate);
-  const end = normalizeDateInput(endDate);
-  if (!start || !end) return null;
+  const end = normalizeDateInput(endDate) || start;
+  if (!start) return null;
   return {
     startDate: start,
     endDate: end,
