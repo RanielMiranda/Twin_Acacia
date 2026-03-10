@@ -18,7 +18,7 @@ Quick reference for where key logic lives.
   - Resort editor data flow: load/save/update/delete resort, scoped draft caching. `uploadImage(file, resortName, category, subFolder)`, `saveResort()`, `deleteResort()`, `setVisibility()`, `safeSrc()`.
 
 - `BookingsClient.jsx`
-  - Booking CRUD and booking cache for owner edit pages. `refreshBookings()` (includes automatic status transitions: overdue unpaid -> Cancelled, overdue confirmed checkout -> Pending Checkout), `updateBookingById`, `deleteBookingById`, `createSignedProofUrl`, `createBookingTransaction`.
+  - Booking CRUD and booking cache for owner edit pages. `refreshBookings()` (includes automatic status transitions: overdue unpaid -> Cancelled, Confirmed -> Ongoing when check-in starts, overdue confirmed/ongoing checkout -> Pending Checkout), `updateBookingById`, `deleteBookingById`, `createSignedProofUrl`, `createBookingTransaction`.
 
 - `SupportClient.jsx`
   - Ticket issue/message loading and updates. `loadBookingSupport(bookingId)` (messages + issues + archived issues), `updateConcernStatus(issueId, status)`, `sendTicketMessage(payload)`, `listArchivedOwnerAdminMessages`, `archiveOwnerAdminMessage`. Uses `ticket_messages`, `ticket_issues`, `ticket_issues_archive`, `owner_admin_messages`.
@@ -32,7 +32,7 @@ Quick reference for where key logic lives.
   - Browser Supabase client (used by client components and pages).
 
 - `bookingDateTime.js`
-  - Date/time helpers: `toDateTimeMs`, `overlapsByDateTime`, `formatWeekdayLabel`, `formatTotalStayDays`, `isCheckoutOverdueRow`.
+  - Date/time helpers: `toDateTimeMs`, `overlapsByDateTime`, `formatWeekdayLabel`, `formatTotalStayDays`, `isCheckoutOverdueRow`, `isCheckinStartedRow`.
 
 - `availability.js`
   - Availability for home + resort detail: `buildRequestedRange`, `getUnavailableRoomIds`, status filtering, room id normalization.
@@ -76,7 +76,7 @@ Quick reference for where key logic lives.
   - Server session: `SESSION_COOKIE_NAME`, `createSession(payload)`, `verifySession(cookieHeader)`. HMAC-signed cookie; used by auth routes.
 
 - `bookingStatusAutomation.js`
-  - Server-only status automation: overdue confirmed/ongoing -> Pending Checkout. Consumed by `/api/internal/booking-status`.
+  - Server-only status automation: Confirmed -> Ongoing (when check-in starts), overdue confirmed/ongoing -> Pending Checkout. Consumed by `/api/internal/booking-status`.
 
 ## App routes (`src/app`)
 

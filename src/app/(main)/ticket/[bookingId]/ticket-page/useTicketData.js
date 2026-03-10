@@ -120,6 +120,10 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
       const cookieRoleMatch = typeof document !== "undefined" ? document.cookie.match(/(?:^|;\s*)app_role=([^;]+)/) : null;
       const role = cookieRoleMatch ? decodeURIComponent(cookieRoleMatch[1] || "").toLowerCase() : "";
       const isStaff = role === "admin" || role === "owner";
+      const normalizedStatus = String(bookingData?.status || bookingData?.booking_form?.status || "").toLowerCase();
+      if (!isStaff && normalizedStatus.includes("checked out")) {
+        throw new Error("Ticket is no longer accessible.");
+      }
       if (!isStaff && !isTicketTokenValid(bookingData?.booking_form || {}, accessToken)) {
         throw new Error("Ticket access token is missing, invalid, or expired.");
       }

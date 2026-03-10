@@ -40,3 +40,11 @@ export function isCheckoutOverdueRow(row, nowMs = Date.now()) {
   if (checkoutMs === null) return false;
   return checkoutMs < nowMs;
 }
+
+export function isCheckinStartedRow(row, nowMs = Date.now()) {
+  const checkinDate = row.start_date || row.booking_form?.checkInDate;
+  const checkinTime = row.check_in_time || row.booking_form?.checkInTime || "14:00";
+  const checkinMs = toDateTimeMs(checkinDate, checkinTime, "00:00");
+  if (checkinMs === null) return false;
+  return checkinMs <= nowMs;
+}

@@ -126,9 +126,7 @@ export default function BookingManagementPage() {
     }
     setLoadingAudits(true);
     try {
-      const baseQuery = supabase
-        .from("booking_status_audit")
-        .eq("booking_id", bookingIds[0]);
+      const baseQuery = supabase.from("booking_status_audit");
       const { error: tableCheckError } = await baseQuery.select("id").limit(1);
       if (tableCheckError) {
         setAudits([]);
@@ -138,11 +136,18 @@ export default function BookingManagementPage() {
       const withActorName = await supabase
         .from("booking_status_audit")
         .select("id, booking_id, changed_at, actor_role, actor_name, old_status, new_status")
-        .in("booking_id", bookingIds)
         .order("changed_at", { ascending: false })
-        .limit(300);
+        .limit(600);
       if (!withActorName.error) {
-        setAudits(withActorName.data || []);
+        const rows = withActorName.data || [];
+        const scoped = rows.filter((row) => bookingIds.includes(row.booking_id?.toString()));
+        const scopedOrAll = scoped.length > 0 ? scoped : rows;
+        const checkoutOnly = scopedOrAll.filter(
+          (row) =>
+            String(row?.old_status || "").toLowerCase().includes("pending checkout") &&
+            String(row?.new_status || "").toLowerCase().includes("checked out")
+        );
+        setAudits(checkoutOnly);
         return;
       }
 
@@ -158,12 +163,35 @@ export default function BookingManagementPage() {
       const fallback = await supabase
         .from("booking_status_audit")
         .select("id, booking_id, changed_at, actor_role, old_status, new_status")
-        .in("booking_id", bookingIds)
         .order("changed_at", { ascending: false })
-        .limit(300);
-      setAudits(fallback.data || []);
+        .limit(600);
+      const rows = fallback.data || [];
+      const scoped = rows.filter((row) => bookingIds.includes(row.booking_id?.toString()));
+      const scopedOrAll = scoped.length > 0 ? scoped : rows;
+      const checkoutOnly = scopedOrAll.filter(
+        (row) =>
+          String(row?.old_status || "").toLowerCase().includes("pending checkout") &&
+          String(row?.new_status || "").toLowerCase().includes("checked out")
+      );
+      setAudits(checkoutOnly);
     } finally {
       setLoadingAudits(false);
+    }
+  };
+
+  const clearAuditRecord = async (bookingId) => {
+    if (!bookingId) return;
+    const confirmed = window.confirm(`Clear audit history for Ticket #${bookingId}? This cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      const { error } = await supabase
+        .from("booking_status_audit")
+        .delete()
+        .eq("booking_id", bookingId.toString());
+      if (error) throw error;
+      await loadAudits();
+    } catch (error) {
+      console.error("Clear audit error:", error.message);
     }
   };
 
@@ -188,9 +216,12 @@ export default function BookingManagementPage() {
   }, [refreshBookings, resortId]);
 
   useEffect(() => {
+    if (activeTab !== "audits") return;
+    if (loadingAudits) return;
+
     loadAudits();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings]);
+    setLoadingAudits(true);
+  }, [activeTab]);
 
   const handleResolveConcern = async (issueId) => {
     const confirmed = window.confirm("Resolve and permanently delete this concern?");
@@ -378,11 +409,10 @@ export default function BookingManagementPage() {
                 loading={loadingAudits}
                 onRefresh={loadAudits}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
+                onOpenTicket={(bookingTargetId) => router.push(`/ticket/${bookingTargetId}`)}
                 onReopenDeclined={handleReopenDeclined}
                 onDeleteDeclined={handleDeleteDeclined}
-                onResolveCheckedOut={handleResolveCheckedOut}
-                hasUnresolvedConcerns={openConcernCount > 0}
-                unresolvedConcernCount={openConcernCount}
+                onClearAudit={clearAuditRecord}
               />
             </div>
           )}

@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { supabase } from "@/lib/supabase";
 import { useResort } from "./ResortEditorClient";
 import { BUCKET_NAME, getStoragePathFromPublicUrl } from "@/lib/utils";
-import { isCheckoutOverdueRow } from "@/lib/bookingDateTime";
+import { isCheckinStartedRow, isCheckoutOverdueRow } from "@/lib/bookingDateTime";
 
 const BookingsContext = createContext(null);
 const BOOKING_COLUMNS = [
@@ -132,8 +132,15 @@ export function BookingsProvider({ children }) {
       });
       const overdueCheckoutRows = rows.filter((row) => {
         const status = (row.status || row.booking_form?.status || "").toLowerCase();
-        const isConfirmed = status.includes("confirmed");
-        return isConfirmed && isCheckoutOverdueRow(row);
+        const confirmedOrOngoing = status.includes("confirmed") || status.includes("ongoing");
+        return confirmedOrOngoing && isCheckoutOverdueRow(row);
+      });
+      const ongoingRows = rows.filter((row) => {
+        const status = (row.status || row.booking_form?.status || "").toLowerCase();
+        const isConfirmed = status.includes("confirmed") && !status.includes("ongoing");
+        if (!isConfirmed) return false;
+        if (isCheckoutOverdueRow(row)) return false;
+        return isCheckinStartedRow(row);
       });
 
       if (expiredRows.length > 0) {
@@ -150,6 +157,24 @@ export function BookingsProvider({ children }) {
                   status: "Cancelled",
                   autoCancelledAt: nowIso,
                   cancellationReason: "Payment deadline expired",
+                },
+              })
+              .eq("id", row.id)
+          )
+        );
+      }
+      if (ongoingRows.length > 0) {
+        const nowIso = new Date().toISOString();
+        await Promise.all(
+          ongoingRows.map((row) =>
+            supabase
+              .from("bookings")
+              .update({
+                status: "Ongoing",
+                booking_form: {
+                  ...(row.booking_form || {}),
+                  status: "Ongoing",
+                  autoOngoingAt: nowIso,
                 },
               })
               .eq("id", row.id)
@@ -177,8 +202,9 @@ export function BookingsProvider({ children }) {
 
       const normalizedRows = rows.map((row) => {
         const shouldCancel = expiredRows.some((entry) => entry.id === row.id);
+        const shouldMoveToOngoing = ongoingRows.some((entry) => entry.id === row.id);
         const shouldMoveToPendingCheckout = overdueCheckoutRows.some((entry) => entry.id === row.id);
-        if (!shouldCancel && !shouldMoveToPendingCheckout) return row;
+        if (!shouldCancel && !shouldMoveToOngoing && !shouldMoveToPendingCheckout) return row;
         if (shouldCancel) {
           return {
             ...row,
@@ -186,6 +212,16 @@ export function BookingsProvider({ children }) {
             booking_form: {
               ...(row.booking_form || {}),
               status: "Cancelled",
+            },
+          };
+        }
+        if (shouldMoveToOngoing) {
+          return {
+            ...row,
+            status: "Ongoing",
+            booking_form: {
+              ...(row.booking_form || {}),
+              status: "Ongoing",
             },
           };
         }

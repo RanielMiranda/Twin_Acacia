@@ -20,6 +20,7 @@ export default function BookingEditorActionBar({
   onApproveInquiry,
   onRequestPayment,
   onConfirmStay,
+  onConfirmCheckout,
   onDeleteTicket,
   onOpenEditInline,
   onSaveInline,
@@ -102,38 +103,25 @@ export default function BookingEditorActionBar({
             <Clock size={18} />
             Request Payment
           </Button>
-        ) : isPendingCheckout && !checkoutPaymentRequested && !checkoutPaymentApproved ? (
+        ) : status === "Pending Payment" ? (
           <Button
             className="rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-amber-600 hover:bg-amber-700 text-white"
             onClick={() => runWithConfirmation("Request final payment for checkout?", onRequestPayment)}
             disabled={actionBusy}
           >
-            <Clock size={18} />
-            Request Payment
+            <CheckCircle size={18} />
+            Confirm Stay
           </Button>
-        ) : isPendingCheckout ? (
-          checkoutPaymentApproved && !showPaymentReviewActions ? (
-            <Button
-              className="rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={() => runWithConfirmation("Are you sure you want to confirm checkout?", onConfirmStay)}
-              disabled={actionBusy}
-            >
-              <CheckCircle size={18} />
-              Confirm Checkout
-            </Button>
-          ) : null
-        ) : (
-          !showPaymentReviewActions ? (
-            <Button
-              className="rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={() => runWithConfirmation(`Are you sure you want to ${primaryActionLabel.toLowerCase()}?`, onConfirmStay)}
-              disabled={actionBusy}
-            >
-              <CheckCircle size={18} />
-              {primaryActionLabel}
-            </Button>
-          ) : null
-        )
+        ) : status === "Pending Checkout" ? (
+          <Button
+            className="rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+            onClick={onConfirmCheckout}
+            disabled={actionBusy}
+          >
+            <CheckCircle size={18} />
+            Confirm Checkout
+          </Button>
+        ) : null
       ) : null}
       {showDecisionActions && isDeclined ? (
         <Button

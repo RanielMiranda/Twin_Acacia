@@ -78,7 +78,7 @@ export default function Page() {
       .from("bookings")
       .select("id", { count: "exact", head: true })
       .eq("resort_id", OWNER_RESORT_ID)
-      .in("status", ["Inquiry", "Approved Inquiry", "Pending Payment", "Pending"]);
+      .in("status", ["Inquiry", "Approved Inquiry", "Pending Payment", "Pending", "Pending Checkout"]);
 
     if (!inquiryErr) total += Number(inquiryCount || 0);
 

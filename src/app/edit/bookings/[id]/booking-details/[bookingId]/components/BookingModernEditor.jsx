@@ -132,7 +132,10 @@ export default function BookingModernEditor({
   const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;
   const hasDeadline = paymentDeadlineDate && !Number.isNaN(paymentDeadlineDate.getTime());
   const isDeadlineExpired = hasDeadline && paymentDeadlineDate.getTime() < renderedAt;
-  const showDecisionActions = ["inquiry", "approved inquiry", "pending payment", "pending checkout", "declined"].includes(normalizedStatus);
+  const showDecisionActions =
+    !normalizedStatus.includes("checked out") &&
+    !normalizedStatus.includes("cancel") &&
+    !normalizedStatus.includes("declin");
   const bookingFormAudits = Array.isArray(draft.statusAudit) ? draft.statusAudit : [];
   const dbAudits = Array.isArray(statusAudits) ? statusAudits : [];
   const approvedByName = resolveApprovedByName({ bookingFormAudits, dbAudits });
@@ -395,12 +398,11 @@ export default function BookingModernEditor({
         draftStatus={draft.status}
         isEditing={isEditing}
         onDecline={handleDecline}
-        onAcceptPayment={handleVerifyProof}
-    onDeclinePayment={handleDeclineProof}
-    onBackOneStep={handleRevertStep}
-    onApproveInquiry={handleApproveInquiry}
-    onRequestPayment={handleRequestPayment}
-    onConfirmStay={() => handleSetStatus(status === "Pending Checkout" ? "Checked Out" : "Confirmed")}
+        onBackOneStep={handleRevertStep}
+        onApproveInquiry={handleApproveInquiry}
+        onRequestPayment={handleRequestPayment}
+        onConfirmStay={() => handleSetStatus("Confirmed")}
+        onConfirmCheckout={() => handleSetStatus("Checked Out")}
         onDeleteTicket={() => {
           const confirmed = window.confirm("Delete this declined ticket and related data?");
           if (!confirmed) return;
