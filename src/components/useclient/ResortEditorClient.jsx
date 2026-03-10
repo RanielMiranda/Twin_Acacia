@@ -22,6 +22,7 @@ const RESORT_DB_COLUMNS = [
   "contactMedia",
   "profileImage",
   "payment_image_url",
+  "bank_payment_image_url",
   "description",
   "extraServices",
   "facilities",
@@ -62,6 +63,9 @@ const collectResortImageUrls = (resortLike) => {
   });
   if (typeof resortLike.payment_image_url === "string" && resortLike.payment_image_url) {
     urls.add(resortLike.payment_image_url);
+  }
+  if (typeof resortLike.bank_payment_image_url === "string" && resortLike.bank_payment_image_url) {
+    urls.add(resortLike.bank_payment_image_url);
   }
   return urls;
 };
@@ -295,7 +299,7 @@ export function ResortEditorProvider({ children }) {
       const rName = resort.name;
       const { data: existingResort } = await supabase
         .from("resorts")
-        .select("profileImage, payment_image_url, gallery, facilities, rooms")
+        .select("profileImage, payment_image_url, bank_payment_image_url, gallery, facilities, rooms")
         .eq("id", resort.id)
         .single();
 
@@ -308,6 +312,10 @@ export function ResortEditorProvider({ children }) {
         resort.payment_image_url instanceof File
           ? await uploadResortPaymentImage(supabase, resort.payment_image_url, rName)
           : resort.payment_image_url;
+      const updatedBankPaymentImageUrl =
+        resort.bank_payment_image_url instanceof File
+          ? await uploadResortPaymentImage(supabase, resort.bank_payment_image_url, rName)
+          : resort.bank_payment_image_url;
 
       const updatedGallery = await Promise.all(
         (resort.gallery || []).map(async (item) =>
@@ -340,6 +348,7 @@ export function ResortEditorProvider({ children }) {
         ...resort,
         profileImage: updatedProfileImage,
         payment_image_url: updatedPaymentImageUrl,
+        bank_payment_image_url: updatedBankPaymentImageUrl,
         gallery: updatedGallery,
         facilities: updatedFacilities,
         rooms: updatedRooms,

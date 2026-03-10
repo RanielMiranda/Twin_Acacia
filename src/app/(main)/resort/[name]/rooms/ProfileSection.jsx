@@ -25,19 +25,6 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
               <MapPin size={16} />
               <span className="font-medium">{resort.location}</span>
             </div>
-            {resort.contactMedia && (
-              <div className="flex items-center gap-2">
-                <Facebook size={16} />
-                <a
-                  href={resort.contactMedia}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline font-medium"
-                >
-                  Visit our Facebook Page
-                </a>
-              </div>
-            )}
 
             <div className="flex items-center gap-2">
               <Mail size={16} />
@@ -48,6 +35,20 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
               <Phone size={16} />
               <span>{resort.contactPhone}</span>
             </div>
+            
+            {resort.contactMedia && (
+              <div className="flex items-center gap-2">
+                <Facebook size={16} />
+                <a
+                  href={resort.contactMedia}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 font-medium"
+                >
+                  Visit our Facebook Page
+                </a>
+              </div>
+            )}
 
             {resort.price && (
               <div className="flex items-center gap-2 font-semibold text-blue-600">

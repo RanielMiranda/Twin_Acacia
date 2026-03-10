@@ -21,13 +21,18 @@ export function TicketPaymentCardSection({
   isSubmitting,
   onSubmitDownpayment,
   resortPaymentImageUrl,
+  resortBankPaymentImageUrl,
   canSubmitPayment = true,
 }) {
-  const hasReference = !!resortPaymentImageUrl && typeof resortPaymentImageUrl === "string";
+  const chosenReferenceUrl =
+    paymentMethod === "Bank"
+      ? resortBankPaymentImageUrl || resortPaymentImageUrl
+      : resortPaymentImageUrl || resortBankPaymentImageUrl;
+  const hasReference = !!chosenReferenceUrl && typeof chosenReferenceUrl === "string";
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const locked = !canSubmitPayment;
   const bigImageUrl = hasReference
-    ? getTransformedSupabaseImageUrl(resortPaymentImageUrl, { width: 1024, quality: 95, format: "webp" })
+    ? getTransformedSupabaseImageUrl(chosenReferenceUrl, { width: 1024, quality: 95, format: "webp" })
     : null;
   return (
     <Card className="p-6 md:p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem]">
@@ -61,7 +66,7 @@ export function TicketPaymentCardSection({
               aria-label="View payment reference larger"
             >
               <img
-                src={getTransformedSupabaseImageUrl(resortPaymentImageUrl, { width: 512, quality: 90, format: "webp" })}
+                src={getTransformedSupabaseImageUrl(chosenReferenceUrl, { width: 512, quality: 90, format: "webp" })}
                 alt="Payment reference"
                 className="w-full h-full object-contain pointer-events-none"
               />

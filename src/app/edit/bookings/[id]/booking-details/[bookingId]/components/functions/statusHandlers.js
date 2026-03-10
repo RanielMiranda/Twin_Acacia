@@ -76,6 +76,7 @@ export async function handleRequestPaymentAction({
             ...draft,
             checkoutPaymentRequestedAt: draft.checkoutPaymentRequestedAt || new Date().toISOString(),
             checkoutPaymentDeadline: deadline,
+            paymentDeadline: deadline,
           }
         : {
             ...draft,

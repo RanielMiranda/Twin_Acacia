@@ -502,4 +502,5 @@ create policy account_recovery_requests_service_only on public.account_recovery_
 -- Add-on: Resort Payment Reference Image
 -- ==========================================
 alter table public.resorts
-  add column if not exists payment_image_url text;
+  add column if not exists payment_image_url text,
+  add column if not exists bank_payment_image_url text;

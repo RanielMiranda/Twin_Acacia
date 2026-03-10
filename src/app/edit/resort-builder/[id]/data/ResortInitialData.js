@@ -8,6 +8,7 @@ const resortInitialData = {
   profileImage:
     "",
   payment_image_url: null,
+  bank_payment_image_url: null,
 
   description: {
     summary:

@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useSupport } from "@/components/useclient/SupportClient";
 import {
-  Plus, 
   Calendar as CalendarIcon, 
   ClipboardList, 
   LayoutDashboard,
@@ -14,7 +13,6 @@ import {
   MessageCircleWarning,
   Archive,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 
 // Components
@@ -27,7 +25,6 @@ import BookingSummaryCards from "./components/BookingSummaryCards";
 export default function BookingManagementPage() {
   const { id } = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { resort, loadResort, setResort, loading } = useResort();
   const { bookings, refreshBookings, updateBookingById, deleteBookingById } = useBookings();
   const { listResortConcerns, updateConcernStatus } = useSupport();
@@ -264,17 +261,6 @@ export default function BookingManagementPage() {
     }
   };
 
-  const openForm = (guestData = {}, targetBookingId = null) => {
-    if (targetBookingId) {
-      router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}/form`);
-      return;
-    }
-    const payload = { ...guestData, resortName: currentResort?.name };
-    const draftKey = `booking-form:${Date.now()}`;
-    sessionStorage.setItem(draftKey, JSON.stringify(payload));
-    router.push(`/edit/bookings/${id}/booking-details/new/form?draft=${encodeURIComponent(draftKey)}`);
-  };
-
   const openDetails = (targetBookingId) => {
     router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}`);
   };
@@ -299,15 +285,6 @@ export default function BookingManagementPage() {
                 Booking Console
               </h1>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <Button 
-              onClick={() => openForm({ status: "Inquiry" })}
-              className="w-full md:w-auto bg-blue-600 items-center justify-center hover:bg-blue-700 text-white rounded-2xl px-6 md:px-8 h-12 md:h-14 font-black shadow-lg shadow-blue-100 transition-all hover:scale-[1.02] md:hover:scale-105 flex gap-3"
-            >
-              <Plus size={20} /> Create New Entry
-            </Button>
           </div>
         </header>
 

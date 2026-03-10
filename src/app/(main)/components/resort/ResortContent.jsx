@@ -39,8 +39,7 @@ export default function ResortContent({ resort }) {
       </div>
 
       {/* Tags Section */}
-      <h1 className="pt-2 ml-[1vh]">Tags</h1>
-      <div className="flex flex-wrap gap-2">
+      <div className="mt-1 flex flex-wrap gap-2">
         {tags.map((tag, index) => (
           <span
             key={index}

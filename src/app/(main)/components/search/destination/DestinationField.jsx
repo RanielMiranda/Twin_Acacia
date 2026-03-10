@@ -10,13 +10,7 @@ export default function DestinationField({
   setActiveDropdown
 }) {
   const { allResorts } = useFilters();
-  const fallbackDestinations = [
-    "Calamba, Laguna",
-    "Los Banos, Laguna",
-    "Pansol, Laguna",
-    "Liliw, Laguna",
-    "San Pablo, Laguna",
-  ];
+
   const locationSuggestions = Array.from(
     new Set(
       (allResorts || [])
@@ -24,7 +18,7 @@ export default function DestinationField({
         .filter(Boolean)
     )
   );
-  const suggestions = Array.from(new Set([...fallbackDestinations, ...locationSuggestions]));
+  const suggestions = Array.from(new Set([ ...locationSuggestions]));
   const normalizedQuery = destination?.trim().toLowerCase();
   const visibleSuggestions = normalizedQuery
     ? suggestions.filter((item) => item.toLowerCase().includes(normalizedQuery))

@@ -28,8 +28,7 @@ export default function RoomsSection({
       <div className="flex flex-col gap-6">
         {displayedRooms.length === 0 ? (
           <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-            <p className="text-slate-500 font-medium">No rooms match your selected amenities.</p>
-            <p className="text-sm text-slate-400 mt-1">Try deselecting some tags in the filter panel.</p>
+            <p className="text-slate-500 font-medium">No rooms match your selected period.</p>
           </div>
         ) : (
           displayedRooms.map((room) => {

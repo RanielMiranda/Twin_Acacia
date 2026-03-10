@@ -44,5 +44,6 @@ export function getSupportConversationLabel(item) {
   if (item?.kind === "issue") {
     return `${item.subject || "Concern"}${isResolvedConversationItem(item) ? " (Resolved)" : ""}`;
   }
-  return `${item?.senderRole || "message"}${item?.senderName ? ` - ${item.senderName}` : ""}`;
+  if (item?.senderName) return item.senderName;
+  return item?.senderRole || "message";
 }

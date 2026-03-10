@@ -35,6 +35,7 @@ const RESORT_DETAIL_COLUMNS = [
   "gallery",
   "profileImage",
   "payment_image_url",
+  "bank_payment_image_url",
   "contactEmail",
   "contactPhone",
   "contactMedia",

@@ -176,13 +176,15 @@ export default function ProfileEditor() {
           <div className="flex flex-col gap-2 text-gray-800">
              {[
                 { icon: MapPin, field: "location", placeholder: "Location" },
-                { icon: DollarSign, field: "price", placeholder: "Average Price", type: "number" },
-                { icon: Facebook, field: "contactMedia", placeholder: "Facebook Link" }, 
                 { icon: Mail, field: "contactEmail", placeholder: "Email" }, 
-                { icon: Phone, field: "contactPhone", placeholder: "Phone" }
+                { icon: Phone, field: "contactPhone", placeholder: "Phone" },
+
+                { icon: Facebook, field: "contactMedia", placeholder: "Facebook Link" },                
+                { icon: DollarSign, field: "price", placeholder: "Average Price", type: "number" },
+                 
              ].map(item => (
                 <div key={item.field} className="flex items-center gap-2 group/input relative">
-                  <item.icon size={16} className={resort[item.field] ? "text-blue-600" : "text-slate-400"} />
+                  <item.icon size={16} className={resort[item.field] ? "" : "text-slate-400"} />
                   <input 
                     type={item.type || "text"}
                     className="bg-transparent border-none p-1 focus:ring-0 hover:bg-slate-50 rounded w-full pr-8" 

@@ -68,8 +68,6 @@ export async function handleSaveInlineAction({
       );
       return;
     }
-    const confirmed = window.confirm("Confirm checkout for this booking?");
-    if (!confirmed) return;
   }
   setActionBusy(true);
   try {

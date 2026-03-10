@@ -23,9 +23,16 @@ export function buildDraftFromBooking(booking) {
       ? form.assignedRoomNames.join(", ")
       : (form.roomName || "");
 
+  const baseStatus = form.status || booking.status || "Inquiry";
+  const paymentDeadline =
+    form.paymentDeadline ||
+    (String(baseStatus).toLowerCase() === "pending checkout" ? form.checkoutPaymentDeadline : null) ||
+    booking.paymentDeadline ||
+    null;
+
   return {
     ...form,
-    status: form.status || booking.status || "Inquiry",
+    status: baseStatus,
     guestName: form.guestName || "Guest",
     email: form.email || "",
     phoneNumber: form.phoneNumber || "",
@@ -46,7 +53,7 @@ export function buildDraftFromBooking(booking) {
     pendingPaymentMethod,
     paymentPendingApproval,
     totalAmount: Number(form.totalAmount || 0),
-    paymentDeadline: form.paymentDeadline || booking.paymentDeadline || null,
+    paymentDeadline,
     paymentProofUrl: paymentProofUrls[0] || null,
     paymentProofUrls,
     paymentSubmittedAt: form.paymentSubmittedAt || null,

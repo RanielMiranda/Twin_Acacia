@@ -147,7 +147,10 @@ export default function BookingEditorActionBar({
       ) : null}
       {!isEditing ? (
         <Button
-          onClick={() => runWithConfirmation("Open edit mode for this booking?", onOpenEditInline)}
+          onClick={() => {
+            if (actionBusy) return;
+            onOpenEditInline?.();
+          }}
           disabled={actionBusy}
           className="items-center justify-center w-full md:w-auto bg-slate-900 hover:bg-black text-white rounded-full px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg flex gap-2"
         >
@@ -156,7 +159,10 @@ export default function BookingEditorActionBar({
       ) : (
         <>
           <Button
-            onClick={() => runWithConfirmation("Save all booking changes?", onSaveInline)}
+            onClick={() => {
+              if (actionBusy) return;
+              onSaveInline?.();
+            }}
             disabled={actionBusy}
             className="w-full md:w-auto bg-blue-600 flex items-center justify-center hover:bg-blue-700 text-white rounded-full px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg"
           >
@@ -164,7 +170,10 @@ export default function BookingEditorActionBar({
           </Button>
           <Button
             variant="outline"
-            onClick={() => runWithConfirmation("Discard unsaved booking changes?", onCancelInline)}
+            onClick={() => {
+              if (actionBusy) return;
+              onCancelInline?.();
+            }}
             disabled={actionBusy}
             className="w-full md:w-auto rounded-full px-6 md:px-8 h-11 md:h-12 text-slate-600 border-slate-300"
           >
