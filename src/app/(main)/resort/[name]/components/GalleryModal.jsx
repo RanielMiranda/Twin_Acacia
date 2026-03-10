@@ -51,7 +51,7 @@ return (
               setActiveIndex(i);
             }}
             className={`h-16 w-24 object-cover rounded cursor-pointer ${
-              i === activeIndex ? "ring-2 ring-blue-500" : "opacity-50"
+              i === activeIndex ? "ring-2 ring-[var(--theme-primary-500)]" : "opacity-50"
             }`}
           />
         ))}

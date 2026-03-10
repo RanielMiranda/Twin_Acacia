@@ -14,28 +14,28 @@ export default function ShortcutBar() {
         
         <button
           onClick={() => scrollTo("overview")}
-          className="hover:text-blue-600 flex items-center"
+          className="hover:text-[var(--theme-primary-600)] flex items-center"
         >
           Overview
         </button>
 
         <button
           onClick={() => scrollTo("facilities")}
-          className="hover:text-blue-600 flex items-center"
+          className="hover:text-[var(--theme-primary-600)] flex items-center"
         >
           Facilities
         </button>
 
         <button
           onClick={() => scrollTo("extra-services")}
-          className="hover:text-blue-600 flex items-center"
+          className="hover:text-[var(--theme-primary-600)] flex items-center"
         >
           Additional Services
         </button>
 
         <button
           onClick={() => scrollTo("rooms")}
-          className="hover:text-blue-600 flex items-center"
+          className="hover:text-[var(--theme-primary-600)] flex items-center"
         >
           Available Rooms
         </button>

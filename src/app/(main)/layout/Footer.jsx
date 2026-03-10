@@ -20,8 +20,8 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 font-medium text-white">Follow Us</h3>
             <div className="flex space-x-4">
-              <a href="#" className="transition hover:text-sky-400">Facebook</a>
-              <a href="#" className="transition hover:text-sky-400">Instagram</a>
+              <a href="#" className="transition hover:text-[var(--theme-primary-500)]">Facebook</a>
+              <a href="#" className="transition hover:text-[var(--theme-primary-500)]">Instagram</a>
             </div>
           </div>
 
@@ -34,7 +34,7 @@ export default function Footer() {
 
             <button
               onClick={() => setOpen(true)}
-              className="rounded-lg bg-sky-500 px-6 py-3 font-medium text-white transition hover:bg-sky-600"
+              className="rounded-lg bg-[var(--theme-primary-600)] px-6 py-3 font-medium text-white transition hover:bg-[var(--theme-primary-700)]"
             >
               Send a Message
             </button>
@@ -45,8 +45,8 @@ export default function Footer() {
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between px-6 py-4 text-xs text-gray-500 md:flex-row">
             <p>(c) {new Date().getFullYear()} Twin Acacia. All rights reserved.</p>
             <div className="mt-3 space-x-4 md:mt-0">
-              <a href="#" className="transition hover:text-sky-400">Privacy Policy</a>
-              <a href="#" className="transition hover:text-sky-400">Terms of Service</a>
+              <a href="#" className="transition hover:text-[var(--theme-primary-500)]">Privacy Policy</a>
+              <a href="#" className="transition hover:text-[var(--theme-primary-500)]">Terms of Service</a>
             </div>
           </div>
         </div>

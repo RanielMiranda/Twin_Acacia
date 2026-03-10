@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
@@ -17,6 +17,7 @@ import { TicketLoadingSkeleton } from "./ticket-page/TicketLoadingSkeleton";
 import { useTicketData } from "./ticket-page/useTicketData";
 import { useTicketActions } from "./ticket-page/useTicketActions";
 import { useTicketImageActions } from "./ticket-page/useTicketImageActions";
+import { buildThemeStyle, DEFAULT_THEME_STYLE } from "@/lib/theme";
 
 export default function ClientTicketPage() {
   const { bookingId } = useParams();
@@ -37,6 +38,10 @@ export default function ClientTicketPage() {
     accessToken,
     toast,
   });
+  const themeStyle = useMemo(
+    () => buildThemeStyle(resort?.description?.theme?.primaryColor),
+    [resort?.description?.theme?.primaryColor]
+  );
 
   const form = useMemo(() => booking?.booking_form || {}, [booking]);
   const paymentMethod = paymentDraft.method ?? (form.paymentMethod === "Bank" ? "Bank" : DEFAULT_PAYMENT_METHOD);
@@ -68,6 +73,19 @@ export default function ClientTicketPage() {
   const { openPrintEntryPass, downloadTicket } = useTicketImageActions({ booking, toast });
 
   const stayInfoPayload = useMemo(() => buildStayInfoPayload(booking, form, resort), [booking, form, resort]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    const root = document.documentElement;
+    Object.entries(themeStyle).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+    return () => {
+      Object.entries(DEFAULT_THEME_STYLE).forEach(([key, value]) => {
+        root.style.setProperty(key, value);
+      });
+    };
+  }, [themeStyle]);
 
   if (loading && !booking) {
     return <TicketLoadingSkeleton />;

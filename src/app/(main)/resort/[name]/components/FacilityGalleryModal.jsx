@@ -55,7 +55,7 @@ export default function FacilityGalleryModal({
                 key={`${item?.name || "facility"}-${idx}`}
                 onClick={() => setActiveIndex?.(idx)}
                 className={`h-12 w-12 rounded-lg overflow-hidden border-2 shrink-0 ${
-                  idx === currentIndex ? "border-blue-400" : "border-white/40"
+                  idx === currentIndex ? "border-[var(--theme-primary-400)]" : "border-white/40"
                 }`}
               >
                 {item?.image ? (
@@ -69,7 +69,7 @@ export default function FacilityGalleryModal({
         </div>
 
         <aside className="bg-white rounded-2xl p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[72vh] overflow-auto">
-          <p className="text-[11px] uppercase tracking-[0.2em] font-black text-blue-600">Facility</p>
+          <p className="text-[11px] uppercase tracking-[0.2em] font-black text-[var(--theme-primary-600)]">Facility</p>
           <h3 className="mt-2 text-2xl font-black text-slate-900">{facility?.name || "Unnamed Facility"}</h3>
           <p className="mt-4 text-sm text-slate-600 leading-relaxed">
             {facility?.description ||

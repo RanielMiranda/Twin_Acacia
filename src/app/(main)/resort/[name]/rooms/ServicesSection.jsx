@@ -17,7 +17,7 @@ export default function ServicesTable({ services, className = "max-w-6xl mx-auto
         {services.map((service, i) => (
           <div
             key={i}
-            className="grid grid-cols-12 px-6 py-5 border-t border-slate-100 hover:bg-blue-50/40 transition"
+            className="grid grid-cols-12 px-6 py-5 border-t border-slate-100 hover:bg-[rgb(var(--theme-primary-50-rgb)/0.4)] transition"
           >
             <div className="col-span-3 font-semibold text-slate-900">
               {service.name}
@@ -27,7 +27,7 @@ export default function ServicesTable({ services, className = "max-w-6xl mx-auto
               {service.description}
             </div>
 
-            <div className="col-span-2 text-right font-bold text-blue-600">
+            <div className="col-span-2 text-right font-bold text-[var(--theme-primary-600)]">
               ₱{service.cost?.toLocaleString()}
             </div>
           </div>

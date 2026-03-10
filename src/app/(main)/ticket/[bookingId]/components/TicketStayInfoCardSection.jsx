@@ -22,7 +22,7 @@ export function TicketStayInfoCardSection({
       id={id}
       className="p-8 md:p-10 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] relative overflow-hidden"
     >
-      <h2 className="text-sm font-black text-blue-600 uppercase tracking-[0.2em] mb-6 border-b border-slate-50 pb-4">
+      <h2 className="text-sm font-black text-[var(--theme-primary-600)] uppercase tracking-[0.2em] mb-6 border-b border-slate-50 pb-4">
         Stay Information
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

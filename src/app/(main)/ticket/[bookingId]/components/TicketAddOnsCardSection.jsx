@@ -35,7 +35,7 @@ export function TicketAddOnsCardSection({
   return (
     <Card className="p-6 md:p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
+        <h3 className="text-sm font-black text-[var(--theme-primary-600)] uppercase tracking-[0.2em] flex items-center gap-2">
           <Briefcase size={18} /> Add-ons
         </h3>
         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -59,7 +59,7 @@ export function TicketAddOnsCardSection({
                 disabled={!canEdit || isSubmitting}
                 className={`w-full text-left rounded-2xl border px-4 py-4 transition-all disabled:opacity-60 ${
                   selected
-                    ? "border-blue-300 bg-blue-50 ring-1 ring-blue-100"
+                    ? "border-[var(--theme-primary-300)] bg-[var(--theme-primary-50)] ring-1 ring-[var(--theme-primary-100)]"
                     : "border-slate-100 bg-slate-50 hover:border-slate-200"
                 }`}
               >
@@ -71,7 +71,7 @@ export function TicketAddOnsCardSection({
                     ) : null}
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-blue-600">PHP {Number(service?.cost || 0).toLocaleString()}</p>
+                    <p className="text-sm font-black text-[var(--theme-primary-600)]">PHP {Number(service?.cost || 0).toLocaleString()}</p>
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                       {selected ? "Selected" : "Tap to add"}
                     </p>

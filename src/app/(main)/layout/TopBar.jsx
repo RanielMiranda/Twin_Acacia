@@ -30,7 +30,7 @@ export default function TopBar() {
           {/* Logo */}
           <Link
             href="/"
-            className="text-2xl font-bold text-blue-600"
+            className="text-2xl font-bold text-[var(--theme-primary-600)]"
             onClick={() => {
               window.scrollTo({ top: 0, behavior: "smooth" });
               setIsMenuOpen(false);
@@ -43,7 +43,7 @@ export default function TopBar() {
           <div className="hidden md:flex gap-8 font-medium text-gray-700 items-center">
             <button
               onClick={scrollToResorts}
-              className="hover:text-blue-600 transition"
+              className="hover:text-[var(--theme-primary-600)] transition"
             >
               Resorts
             </button>
@@ -53,21 +53,21 @@ export default function TopBar() {
                 const element = document.getElementById("about");
                 if (element) element.scrollIntoView({ behavior: "smooth" });
               }}
-              className="hover:text-blue-600 transition"
+              className="hover:text-[var(--theme-primary-600)] transition"
             >
               About
             </button>
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="hover:text-blue-600 transition"
+              className="hover:text-[var(--theme-primary-600)] transition"
             >
               Contact
             </button>
             
             <div className="w-[1px] h-6 bg-slate-200 mx-2" />
 
-            <Link href="/auth/login" className="hover:text-blue-600 transition">
+            <Link href="/auth/login" className="hover:text-[var(--theme-primary-600)] transition">
               Login Page
             </Link>
           </div>
@@ -90,7 +90,7 @@ export default function TopBar() {
           <div className="flex flex-col gap-4 px-4 font-medium text-gray-700">
             <button
               onClick={scrollToResorts}
-              className="text-left hover:text-blue-600 transition"
+              className="text-left hover:text-[var(--theme-primary-600)] transition"
             >
               Resorts
             </button>
@@ -101,7 +101,7 @@ export default function TopBar() {
                 if (element) element.scrollIntoView({ behavior: "smooth" });
                 setIsMenuOpen(false);
               }}
-              className="text-left hover:text-blue-600 transition"
+              className="text-left hover:text-[var(--theme-primary-600)] transition"
             >
               About
             </button>
@@ -111,7 +111,7 @@ export default function TopBar() {
                 setIsModalOpen(true);
                 setIsMenuOpen(false);
               }}
-              className="text-left hover:text-blue-600 transition"
+              className="text-left hover:text-[var(--theme-primary-600)] transition"
             >
               Contact
             </button>
@@ -119,7 +119,7 @@ export default function TopBar() {
             <Link
               href="/auth/login"
               onClick={() => setIsMenuOpen(false)}
-              className="hover:text-blue-600 transition"
+              className="hover:text-[var(--theme-primary-600)] transition"
             >
               Login Page
             </Link>

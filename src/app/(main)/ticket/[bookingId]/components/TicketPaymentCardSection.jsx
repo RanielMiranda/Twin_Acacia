@@ -106,7 +106,7 @@ export function TicketPaymentCardSection({
                 Payment Method
               </span>
               <select
-                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 focus:ring-2 focus:ring-[var(--theme-primary-100)] outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 disabled={locked}
@@ -121,7 +121,7 @@ export function TicketPaymentCardSection({
                 Deposit Amount (PHP)
               </span>
               <input
-                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[var(--theme-primary-100)] disabled:opacity-60 disabled:cursor-not-allowed"
                 type="number"
                 value={downpayment}
                 onChange={(e) => setDownpayment(Number(e.target.value))}
@@ -134,7 +134,7 @@ export function TicketPaymentCardSection({
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
               Upload Screenshot / Receipt
             </span>
-            <div className={`relative group border-2 border-dashed border-slate-200 rounded-2xl p-4 md:p-6 bg-slate-50/50 transition-all ${locked ? "cursor-not-allowed opacity-60" : "hover:bg-white hover:border-blue-400 cursor-pointer"}`}>
+            <div className={`relative group border-2 border-dashed border-slate-200 rounded-2xl p-4 md:p-6 bg-slate-50/50 transition-all ${locked ? "cursor-not-allowed opacity-60" : "hover:bg-white hover:border-[var(--theme-primary-400)] cursor-pointer"}`}>
               <input
                 className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
                 type="file"
@@ -143,7 +143,7 @@ export function TicketPaymentCardSection({
                 onChange={(e) => setProofFiles(Array.from(e.target.files || []))}
                 disabled={locked}
               />
-              <div className="flex flex-col items-center justify-center gap-2 text-slate-400 group-hover:text-blue-500">
+              <div className="flex flex-col items-center justify-center gap-2 text-slate-400 group-hover:text-[var(--theme-primary-500)]">
                 {proofFiles?.length ? (
                   <CheckCircle2 size={24} className="text-emerald-500" />
                 ) : (
@@ -184,7 +184,7 @@ export function TicketPaymentCardSection({
                   <span className="font-bold text-amber-300">₱{Number(pendingPaid || 0).toLocaleString()}</span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-black text-blue-400 pt-2">
+              <div className="flex justify-between text-lg font-black text-emerald-400 pt-2">
                 <span>Balance</span>
                 <span>₱{Number(balance || 0).toLocaleString()}</span>
               </div>

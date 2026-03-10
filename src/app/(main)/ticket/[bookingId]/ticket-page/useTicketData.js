@@ -133,7 +133,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
       if (bookingData?.resort_id) {
         const { data: resortData, error: resortError } = await supabase
           .from("resorts")
-          .select("id, name, location, contactEmail, contactPhone, contactMedia, rooms, extraServices, payment_image_url, bank_payment_image_url")
+          .select("id, name, location, contactEmail, contactPhone, contactMedia, rooms, extraServices, payment_image_url, bank_payment_image_url, description")
           .eq("id", bookingData.resort_id)
           .single();
         if (resortError) throw resortError;

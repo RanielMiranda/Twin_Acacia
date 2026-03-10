@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 import HeroSection from "./rooms/HeroSection";
@@ -23,9 +23,14 @@ import Toast from "@/components/ui/toast/Toast"
 import PersistentToast from "@/components/ui/toast/PersistentToast";
 import { supabase } from "@/lib/supabase";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
+import { buildThemeStyle, DEFAULT_THEME_STYLE } from "@/lib/theme";
 
 export default function ResortDetailPage({ name }) {
   const { resort, loadResort, loading } = useResort();
+  const themeStyle = useMemo(
+    () => buildThemeStyle(resort?.description?.theme?.primaryColor),
+    [resort?.description?.theme?.primaryColor]
+  );
 
   const [facilityIndex, setFacilityIndex] = useState(0);
   const [facilityOpen, setFacilityOpen] = useState(false);
@@ -48,6 +53,19 @@ export default function ResortDetailPage({ name }) {
       loadResort(decodedName, false);
     }
   }, [name, loadResort, resort]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    const root = document.documentElement;
+    Object.entries(themeStyle).forEach(([key, value]) => {
+      root.style.setProperty(key, value);
+    });
+    return () => {
+      Object.entries(DEFAULT_THEME_STYLE).forEach(([key, value]) => {
+        root.style.setProperty(key, value);
+      });
+    };
+  }, [themeStyle]);
 
   useEffect(() => {
     let cancelled = false;
@@ -233,7 +251,7 @@ const handleSubmitInquiry = async (submittedData) => {
   };
 
   return (
-    <div className="bg-white min-h-screen mt-10">
+    <div className="bg-white min-h-screen mt-10" style={themeStyle}>
       <HeroSection
         onOpen={(index) => {
           setActiveIndex(index);
@@ -298,7 +316,7 @@ const handleSubmitInquiry = async (submittedData) => {
                   </div>
                 ) : null}
                 <button
-                  className="w-full rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800"
+                  className="w-full rounded-2xl bg-[var(--theme-primary-500)] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[var(--theme-primary-600)]"
                   onClick={() => {
                     if (hasAvailabilityConflict) {
                       toast({

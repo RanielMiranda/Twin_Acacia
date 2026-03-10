@@ -248,7 +248,7 @@ export default function ContactOwnerModal({
         <div className="px-8 mt-6">
           <div className="flex gap-2 h-1.5 w-full bg-slate-100 rounded-full">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className={`flex-1 transition-all duration-500 rounded-full ${step >= i ? 'bg-blue-600' : 'bg-slate-200'}`} />
+              <div key={i} className={`flex-1 transition-all duration-500 rounded-full ${step >= i ? 'bg-[var(--theme-primary-600)]' : 'bg-slate-200'}`} />
             ))}
           </div>
         </div>
@@ -259,21 +259,21 @@ export default function ContactOwnerModal({
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
               <div className="space-y-1">
                 <label className="text-xs font-black uppercase text-slate-400 ml-1">Full Name</label>
-                <input name="guestName" value={formData.guestName ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="John Doe" />
+                <input name="guestName" value={formData.guestName ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" placeholder="John Doe" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Email</label>
-                  <input name="email" value={formData.email ?? ""} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="john@example.com" />
+                  <input name="email" value={formData.email ?? ""} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" placeholder="john@example.com" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Contact Number</label>
-                  <input name="contactNumber" value={formData.contactNumber ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
+                  <input name="contactNumber" value={formData.contactNumber ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" placeholder="+(63) 917 180 2394" />
                 </div>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-black uppercase text-slate-400 ml-1">Your Address</label>
-                <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
+                <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" placeholder="Street, city, province" />
               </div>
             </div>
           )}
@@ -285,11 +285,11 @@ export default function ContactOwnerModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-in Date</label>
-                  <input name="checkInDate" value={formData.checkInDate ?? ""} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkInDate" value={formData.checkInDate ?? ""} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Check-out Date</label>
-                  <input name="checkOutDate" value={formData.checkOutDate ?? ""} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkOutDate" value={formData.checkOutDate ?? ""} onChange={handleChange} type="date" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" />
                 </div>
               </div>
 
@@ -297,11 +297,11 @@ export default function ContactOwnerModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time In</label>
-                  <input name="checkInTime" value={formData.checkInTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkInTime" value={formData.checkInTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Time Out</label>
-                  <input name="checkOutTime" value={formData.checkOutTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input name="checkOutTime" value={formData.checkOutTime ?? ""} onChange={handleChange} type="time" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" />
                 </div>
               </div>
 
@@ -309,11 +309,11 @@ export default function ContactOwnerModal({
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Adults</label>
-                  <input name="adultCount" value={formData.adultCount ?? 0} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="adultCount" value={formData.adultCount ?? 0} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" placeholder="0" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Children</label>
-                  <input name="childrenCount" value={formData.childrenCount ?? 0} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="childrenCount" value={formData.childrenCount ?? 0} onChange={handleChange} type="number" min="0" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" placeholder="0" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Total Pax</label>
@@ -334,7 +334,7 @@ export default function ContactOwnerModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Sleeping Guests</label>
-                  <input name="sleepingGuests" value={formData.sleepingGuests ?? 0} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" />
+                  <input name="sleepingGuests" value={formData.sleepingGuests ?? 0} onChange={handleChange} type="number" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)]" placeholder="0" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Selected Rooms</label>
@@ -355,7 +355,7 @@ export default function ContactOwnerModal({
                         onClick={() => toggleRoomSelection(room)}
                         className={`text-left px-4 py-3 rounded-xl border-2 transition-all ${
                           isSelected
-                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                            ? "border-[var(--theme-primary-600)] bg-[var(--theme-primary-50)] text-[var(--theme-primary-700)]"
                             : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                         }`}
                       >
@@ -385,18 +385,18 @@ export default function ContactOwnerModal({
                       onClick={() => toggleService(service.name)}
                       className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
                         formData.selectedServices.includes(service.name)
-                          ? "border-blue-600 bg-blue-50"
+                          ? "border-[var(--theme-primary-600)] bg-[var(--theme-primary-50)]"
                           : "border-slate-100 bg-white hover:border-slate-200"
                       }`}
                     >
                       <div className="flex flex-col items-start">
-                        <span className={`font-bold text-sm ${formData.selectedServices.includes(service.name) ? "text-blue-700" : "text-slate-700"}`}>
+                        <span className={`font-bold text-sm ${formData.selectedServices.includes(service.name) ? "text-[var(--theme-primary-700)]" : "text-slate-700"}`}>
                           {service.name}
                         </span>
                         {service.price && <span className="text-xs text-slate-400">₱{service.price}</span>}
                       </div>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                        formData.selectedServices.includes(service.name) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-300"
+                        formData.selectedServices.includes(service.name) ? "bg-[var(--theme-primary-600)] text-white" : "bg-slate-100 text-slate-300"
                       }`}>
                         <Check size={14} strokeWidth={4} />
                       </div>
@@ -410,15 +410,15 @@ export default function ContactOwnerModal({
               </div>
               <div className="space-y-1 mt-4">
                 <label className="text-xs font-black uppercase text-slate-400 ml-1">Message section</label>
-                <textarea name="message" value={formData.message ?? ""} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none" placeholder="Anything else we should know?" />
+                <textarea name="message" value={formData.message ?? ""} onChange={handleChange} className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-[var(--theme-primary-500)] h-24 resize-none" placeholder="Anything else we should know?" />
               </div>
             </div>
           )}
 
           {step === 4 && (
             <div className="animate-in zoom-in-95 space-y-6">
-              <div className="bg-blue-50 rounded-3xl p-6 border border-blue-100">
-                <h4 className="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-4 text-center">Inquiry Summary</h4>
+              <div className="bg-[var(--theme-primary-50)] rounded-3xl p-6 border border-[var(--theme-primary-100)]">
+                <h4 className="text-[var(--theme-primary-600)] font-black uppercase text-[10px] tracking-widest mb-4 text-center">Inquiry Summary</h4>
                 <div className="grid grid-cols-2 gap-y-6">
                   <SummaryItem icon={User} label="Guest" value={formData.guestName || "Not set"} />
                   <SummaryItem icon={MapPin} label="Pax" value={`${formData.pax} People`} />
@@ -448,14 +448,14 @@ export default function ContactOwnerModal({
                       id="terms"
                       checked={agreed}
                       onChange={(e) => setAgreed(e.target.checked)}
-                      className="w-5 h-5 rounded-md border-2 border-slate-200 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      className="w-5 h-5 rounded-md border-2 border-slate-200 text-[var(--theme-primary-600)] focus:ring-[var(--theme-primary-500)] cursor-pointer"
                     />
                   </div>
                   <label htmlFor="terms" className="text-xs text-slate-500 leading-relaxed cursor-pointer">
                     I have read and agree to the resort&apos;s{" "}
-                    <button type="button" className="text-blue-600 font-bold underline hover:text-blue-700">Rules and Regulations</button>
+                    <button type="button" className="text-[var(--theme-primary-600)] font-bold underline hover:text-[var(--theme-primary-700)]">Rules and Regulations</button>
                     {" "}and{" "}
-                    <button type="button" className="text-blue-600 font-bold underline hover:text-blue-700">Terms and Conditions</button>.
+                    <button type="button" className="text-[var(--theme-primary-600)] font-bold underline hover:text-[var(--theme-primary-700)]">Terms and Conditions</button>.
                   </label>
                 </div>
               </div>
@@ -476,7 +476,7 @@ export default function ContactOwnerModal({
             className={`flex items-center justify-center flex-1 h-12 rounded-2xl font-bold shadow-lg transition-all 
               ${step === 4 
                 ? (agreed ? "bg-green-600 hover:bg-green-700" : "bg-slate-300 cursor-not-allowed") 
-                : "bg-blue-600 hover:bg-blue-700"
+                : "bg-[var(--theme-primary-600)] hover:bg-[var(--theme-primary-700)]"
               }`}
           >
             {step === 4 ? "Send Inquiry" : "Continue"} 
@@ -491,7 +491,7 @@ export default function ContactOwnerModal({
 function SummaryItem({ icon: Icon, label, value }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm border border-blue-100">
+      <div className="p-2 bg-white rounded-lg text-[var(--theme-primary-600)] shadow-sm border border-[var(--theme-primary-100)]">
         <Icon size={14} />
       </div>
       <div className="flex-1 min-w-0">
@@ -501,3 +501,4 @@ function SummaryItem({ icon: Icon, label, value }) {
     </div>
   );
 }
+

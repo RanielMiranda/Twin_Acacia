@@ -43,7 +43,7 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
                   href={resort.contactMedia}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 font-medium"
+                  className="text-[var(--theme-primary-600)] font-medium"
                 >
                   Visit our Facebook Page
                 </a>
@@ -51,7 +51,7 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
             )}
 
             {resort.price && (
-              <div className="flex items-center gap-2 font-semibold text-blue-600">
+              <div className="flex items-center gap-2 font-semibold text-[var(--theme-primary-600)]">
                 <DollarSign size={16} />
                 PHP {Number(resort.price || 0).toLocaleString()}
               </div>
@@ -77,7 +77,7 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
         {resort.tags?.map((tag, index) => (
           <span
             key={index}
-            className="px-3 py-1 text-[11px] font-bold uppercase text-blue-700 bg-blue-50 border border-blue-100 rounded-full shadow-sm"
+            className="px-3 py-1 text-[11px] font-bold uppercase text-[var(--theme-primary-700)] bg-[var(--theme-primary-50)] border border-[var(--theme-primary-100)] rounded-full shadow-sm"
           >
             {tag}
           </span>

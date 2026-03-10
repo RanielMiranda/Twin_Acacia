@@ -40,7 +40,7 @@ export default function RoomsSection({
                 onClick={() => onToggleRoomSelection?.(room.id)}
                 className={`rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-md border-2 cursor-pointer transition-all ${
                   selectedRoomIds.includes(room.id)
-                    ? "border-blue-500 ring-2 ring-blue-200"
+                    ? "border-[var(--theme-primary-500)] ring-2 ring-[var(--theme-primary-200)]"
                     : "border-transparent hover:border-slate-200"
                 }`}
               >
@@ -116,16 +116,16 @@ export default function RoomsSection({
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <h3 className="text-xl font-semibold">{room.name}</h3>
                       {selectedRoomIds.includes(room.id) ? (
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 border border-blue-200 rounded-full px-2 py-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-[var(--theme-primary-100)] text-[var(--theme-primary-700)] border border-[var(--theme-primary-200)] rounded-full px-2 py-1">
                           Selected
                         </span>
                       ) : null}
                     </div>
                     <div className="flex gap-2 text-sm mb-4">
-                      <span className="flex items-center gap-2 bg-blue-100/50 text-blue-700 px-3 py-1 rounded-2xl font-medium">
+                      <span className="flex items-center gap-2 bg-[rgb(var(--theme-primary-100-rgb)/0.5)] text-[var(--theme-primary-700)] px-3 py-1 rounded-2xl font-medium">
                         <Users size={16} /> {room.guests} Guests
                       </span>
-                      <span className="flex items-center gap-2 bg-blue-100/50 text-blue-700 px-3 py-1 rounded-2xl font-medium">
+                      <span className="flex items-center gap-2 bg-[rgb(var(--theme-primary-100-rgb)/0.5)] text-[var(--theme-primary-700)] px-3 py-1 rounded-2xl font-medium">
                         <BedDouble size={16} /> {room.beds} Beds
                       </span>
                     </div>
