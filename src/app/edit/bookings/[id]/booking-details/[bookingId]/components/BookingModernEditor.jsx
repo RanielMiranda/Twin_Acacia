@@ -54,7 +54,7 @@ export default function BookingModernEditor({
   statusAudits = [],
   resortPaymentImageUrl,
 }) {
-  const { toast } = useToast();
+  const { toast, persistentToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [renderedAt] = useState(() => Date.now());
@@ -199,6 +199,12 @@ export default function BookingModernEditor({
       booking,
       resortName,
       persist,
+      onStayConfirmed: (message) => {
+        persistentToast?.({
+          message: message || "Caretaker notification prepared for confirmed stay.",
+          color: "emerald",
+        });
+      },
     });
   };
 

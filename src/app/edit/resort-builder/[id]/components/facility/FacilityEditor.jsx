@@ -148,13 +148,6 @@ export default function FacilityEditor() {
     e.target.value = "";
   };
 
-  const setFacilitiesSummary = (value) => {
-    updateResort("description", {
-      ...(resort.description || {}),
-      facilitiesSummary: value,
-    });
-  };
-
   return (
     <div id="facilities" className="max-w-6xl mx-auto px-4 mt-8">
       <div className="flex items-center justify-between mb-4">
@@ -228,17 +221,6 @@ export default function FacilityEditor() {
           onClose={() => setModalOpen(false)}
         />
       )}
-
-      <div className="mt-8">
-        <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Facilities Description</p>
-        <textarea
-          className="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-6 text-slate-600 outline-none focus:border-blue-400 focus:bg-white transition"
-          rows={4}
-          value={resort.description?.facilitiesSummary || ""}
-          onChange={(e) => setFacilitiesSummary(e.target.value)}
-          placeholder="Describe overall facility highlights..."
-        />
-      </div>
     </div>
   );
 }

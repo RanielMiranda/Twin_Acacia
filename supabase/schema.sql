@@ -499,6 +499,27 @@ create policy account_recovery_requests_service_only on public.account_recovery_
   with check (false);
 
 -- ==========================================
+-- Phase 11: Resort Caretakers
+-- ==========================================
+create table if not exists public.resort_caretakers (
+  id bigint generated always as identity primary key,
+  resort_id bigint not null references public.resorts(id) on delete cascade,
+  name text not null,
+  phone text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists resort_caretakers_resort_id_idx on public.resort_caretakers(resort_id);
+
+alter table public.resort_caretakers enable row level security;
+
+drop policy if exists resort_caretakers_all_access on public.resort_caretakers;
+create policy resort_caretakers_all_access on public.resort_caretakers
+  for all
+  using (true)
+  with check (true);
+
+-- ==========================================
 -- Add-on: Resort Payment Reference Image
 -- ==========================================
 alter table public.resorts
