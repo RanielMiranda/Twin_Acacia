@@ -21,10 +21,11 @@ export default function AuditArchivePanel({
   loading = false,
   onRefresh,
   onOpenBooking,
-  onOpenTicket,
   onReopenDeclined,
   onDeleteDeclined,
-  onClearAudit,
+  onResolveCheckedOut,
+  hasUnresolvedConcerns = false,
+  unresolvedConcernCount = 0,
 }) {
   const visibleAudits = audits || [];
 
@@ -186,27 +187,13 @@ export default function AuditArchivePanel({
                     {getActorName(item)}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     className="h-8 px-3 text-xs font-bold"
                     onClick={() => onOpenBooking?.(item.booking_id)}
                   >
                     Open Booking
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 px-3 text-xs font-bold"
-                    onClick={() => onOpenTicket?.(item.booking_id)}
-                  >
-                    Open Ticket
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 px-3 text-xs font-bold border-rose-200 text-rose-700 hover:bg-rose-50"
-                    onClick={() => onClearAudit?.(item.booking_id)}
-                  >
-                    Clear record
                   </Button>
                 </div>
               </div>

@@ -90,9 +90,6 @@ export default function ClientTicketPage() {
     status.includes("ongoing") ||
     status.includes("pending checkout") ||
     status.includes("checked out");
-  const paymentBlocked =
-    status.includes("checked out") || status.includes("cancel") || status.includes("declin");
-  const canSubmitPayment = !paymentBlocked && balance > 0;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 space-y-8 mt-16 pb-20">
@@ -127,7 +124,21 @@ export default function ClientTicketPage() {
         isSubmitting={isSubmitting}
         onSubmitDownpayment={handleSubmitDownpayment}
         resortPaymentImageUrl={resort?.payment_image_url}
-        canSubmitPayment={canSubmitPayment}
+        resortBankPaymentImageUrl={resort?.bank_payment_image_url}
+        canSubmitPayment={
+          (status.includes("pending payment") ||
+            (status.includes("pending checkout") && !!form.checkoutPaymentRequestedAt)) &&
+          !form.paymentPendingApproval
+        }
+      />
+
+      <TicketAddOnsCardSection
+        key={`${booking.id}:${form.addOnsUpdatedAt || ""}:${JSON.stringify(form.resortServices || [])}`}
+        initialServices={Array.isArray(form.resortServices) ? form.resortServices : []}
+        availableServices={Array.isArray(resort?.extraServices) ? resort.extraServices : []}
+        onSubmit={handleSubmitAddOns}
+        isSubmitting={isSavingAddOns}
+        canEdit={!status.includes("checked out") && !status.includes("cancel") && !status.includes("declined")}
       />
 
       <TicketSupportDeskCardSection

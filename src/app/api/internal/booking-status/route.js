@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runOngoingAutomation, runPendingCheckoutAutomation } from "@/lib/server/bookingStatusAutomation";
+import { runPendingCheckoutAutomation } from "@/lib/server/bookingStatusAutomation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,11 +21,8 @@ async function handle(request) {
   const limit = Number.isFinite(limitParam) ? Math.max(1, Math.min(5000, limitParam)) : 500;
 
   try {
-    const [ongoingResult, pendingCheckoutResult] = await Promise.all([
-      runOngoingAutomation({ limit }),
-      runPendingCheckoutAutomation({ limit }),
-    ]);
-    return NextResponse.json({ ok: true, result: { ongoingResult, pendingCheckoutResult } }, { status: 200 });
+    const result = await runPendingCheckoutAutomation({ limit });
+    return NextResponse.json({ ok: true, result }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error?.message || "Automation failed" },

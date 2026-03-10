@@ -164,7 +164,7 @@ export default function BookingCalendar() {
               : undefined;
             const hasInquiryOverlay = inquiryBookings.length > 0;
 
-            const className = `h-9 w-full rounded-lg text-sm transition-all relative 
+            const className = `h-9 w-full rounded-lg text-sm transition-all relative flex items-center justify-center
               ${booking ? "text-white cursor-pointer" : "hover:bg-slate-100 text-slate-600"} 
               ${getBookingStartDate(booking) === dateString ? "rounded-r-none" : ""} 
               ${getBookingEndDate(booking) === dateString ? "rounded-l-none" : ""} 
