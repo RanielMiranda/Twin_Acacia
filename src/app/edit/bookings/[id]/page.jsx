@@ -81,7 +81,15 @@ export default function BookingManagementPage() {
       }),
     [bookings]
   );
-  const auditArchiveCount = audits.length + declinedBookings.length;
+  const checkedOutBookings = useMemo(
+    () =>
+      (bookings || []).filter((entry) => {
+        const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
+        return status.includes("checked out");
+      }),
+    [bookings]
+  );
+  const auditArchiveCount = audits.length + declinedBookings.length + checkedOutBookings.length;
   const openConcernCount = concerns.filter((item) => item.status !== "resolved").length;
 
   const TabBadge = ({ count, tone = "blue" }) =>
@@ -244,6 +252,17 @@ export default function BookingManagementPage() {
     }
   };
 
+  const handleResolveCheckedOut = async (bookingId) => {
+    const confirmed = window.confirm("Resolve and permanently delete this checked-out booking?");
+    if (!confirmed) return;
+    try {
+      await deleteBookingById(bookingId);
+      await loadAudits();
+    } catch (error) {
+      console.error("Delete checked-out booking error:", error.message);
+    }
+  };
+
   const openForm = (guestData = {}, targetBookingId = null) => {
     if (targetBookingId) {
       router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}/form`);
@@ -373,11 +392,13 @@ export default function BookingManagementPage() {
               <AuditArchivePanel
                 audits={audits}
                 declinedBookings={declinedBookings}
+                checkedOutBookings={checkedOutBookings}
                 loading={loadingAudits}
                 onRefresh={loadAudits}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
                 onReopenDeclined={handleReopenDeclined}
                 onDeleteDeclined={handleDeleteDeclined}
+                onResolveCheckedOut={handleResolveCheckedOut}
               />
             </div>
           )}

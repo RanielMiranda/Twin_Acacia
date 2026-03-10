@@ -17,11 +17,13 @@ function getActorName(row) {
 export default function AuditArchivePanel({
   audits = [],
   declinedBookings = [],
+  checkedOutBookings = [],
   loading = false,
   onRefresh,
   onOpenBooking,
   onReopenDeclined,
   onDeleteDeclined,
+  onResolveCheckedOut,
 }) {
   const visibleAudits = audits || [];
 
@@ -47,13 +49,56 @@ export default function AuditArchivePanel({
         </Button>
       </div>
 
-      {visibleAudits.length === 0 && declinedBookings.length === 0 ? (
+      {visibleAudits.length === 0 && declinedBookings.length === 0 && checkedOutBookings.length === 0 ? (
         <div className="p-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
           <Archive className="mx-auto text-slate-300 mb-2" size={26} />
           <p className="text-sm font-semibold text-slate-500">No audit entries yet.</p>
         </div>
       ) : (
         <div className="space-y-2.5 max-h-[65vh] overflow-auto pr-1">
+          {checkedOutBookings.map((item) => (
+            <div
+              key={`checkedout-${item.id}`}
+              className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/60"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight bg-emerald-600 text-white inline-flex items-center gap-1">
+                      <ArrowRightLeft size={10} />
+                      Checked Out
+                    </span>
+                    <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                      <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-700 leading-snug break-words">
+                    Ticket: <span className="font-black text-slate-900">#{item.id}</span>
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-1.5 inline-flex items-center gap-1">
+                    <User2 size={11} />
+                    {item.bookingForm?.guestName || "Guest"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    className="h-8 px-3 text-xs font-bold"
+                    onClick={() => onOpenBooking?.(item.id)}
+                  >
+                    Open Booking
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 px-3 text-xs font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => onResolveCheckedOut?.(item.id)}
+                  >
+                    Resolve
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
           {declinedBookings.map((item) => (
             <div
               key={`declined-${item.id}`}
