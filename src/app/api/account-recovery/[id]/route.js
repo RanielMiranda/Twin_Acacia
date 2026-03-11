@@ -92,16 +92,7 @@ export async function PATCH(request, { params }) {
   const supabase = createServiceSupabaseClient();
   if (!resendResponse.ok) {
     try {
-      await logEmailDelivery(supabase, {
-        templateKey: "account_recovery_setup",
-        recipientEmail: account.email,
-        recipientName: account.full_name || null,
-        accountId: account.id,
-        provider: "resend",
-        status: "failed",
-        errorMessage: resendBody?.message || resendBody?.error || "Resend request failed",
-        metadata: { setupLink },
-      });
+      await logEmailDelivery(supabase);
     } catch {
       // ignore logging errors
     }
@@ -112,16 +103,7 @@ export async function PATCH(request, { params }) {
   }
 
   try {
-    await logEmailDelivery(supabase, {
-      templateKey: "account_recovery_setup",
-      recipientEmail: account.email,
-      recipientName: account.full_name || null,
-      accountId: account.id,
-      provider: "resend",
-      providerMessageId: resendBody?.id || null,
-      status: "sent",
-      metadata: { setupLink },
-    });
+    await logEmailDelivery(supabase);
   } catch {
     // ignore logging errors
   }

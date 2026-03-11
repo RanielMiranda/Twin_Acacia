@@ -446,25 +446,10 @@ grant execute on function public.send_ticket_message_safe(text, bigint, text, te
 -- ==========================================
 create table if not exists public.email_delivery_logs (
   id bigint generated always as identity primary key,
-  template_key text not null,
-  recipient_email text,
-  recipient_name text,
-  booking_id text references public.bookings(id) on delete set null,
-  resort_id bigint references public.resorts(id) on delete set null,
-  account_id bigint references public.accounts(id) on delete set null,
-  provider text,
-  provider_message_id text,
-  status text not null default 'sent' check (status in ('sent', 'failed')),
-  error_message text,
-  metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 
 create index if not exists email_delivery_logs_created_at_idx on public.email_delivery_logs(created_at desc);
-create index if not exists email_delivery_logs_status_idx on public.email_delivery_logs(status);
-create index if not exists email_delivery_logs_template_idx on public.email_delivery_logs(template_key);
-create index if not exists email_delivery_logs_booking_idx on public.email_delivery_logs(booking_id);
-create index if not exists email_delivery_logs_resort_idx on public.email_delivery_logs(resort_id);
 
 alter table public.email_delivery_logs enable row level security;
 

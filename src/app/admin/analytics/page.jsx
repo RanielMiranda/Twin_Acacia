@@ -17,11 +17,13 @@ const TABLES = [
   { name: "ticket_issues", label: "Ticket Issues" },
   { name: "owner_admin_messages", label: "Owner/Admin Messages" },
   { name: "booking_transactions", label: "Transactions" },
-  { name: "email_delivery_logs", label: "Email Logs" },
+  { name: "email_delivery_logs", label: "Email Usage Logs" },
 ];
 
 const ESTIMATED_DB_RECORD_LIMIT = 50000;
 const ESTIMATED_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1GB
+const DAILY_EMAIL_LIMIT = 100;
+const MONTHLY_EMAIL_LIMIT = 3000;
 
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -44,10 +46,11 @@ export default function AdminAnalyticsPage() {
   const [lastCheckedAt, setLastCheckedAt] = useState(null);
   const [emailStats, setEmailStats] = useState({
     todaySent: 0,
-    todayFailed: 0,
-    sevenDaySent: 0,
+    monthSent: 0,
+    remainingToday: DAILY_EMAIL_LIMIT,
+    remainingMonth: MONTHLY_EMAIL_LIMIT,
     daily: [],
-    trackingInstalled: true,
+    usageInstalled: true,
   });
 
   const computeBucketUsage = useCallback(async () => {
@@ -111,14 +114,14 @@ export default function AdminAnalyticsPage() {
       }
 
       try {
-        const since = new Date();
-        since.setDate(since.getDate() - 6);
-        since.setHours(0, 0, 0, 0);
-        const todayKey = new Date().toISOString().slice(0, 10);
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        monthStart.setHours(0, 0, 0, 0);
+        const todayKey = now.toISOString().slice(0, 10);
         const { data, error } = await supabase
           .from("email_delivery_logs")
-          .select("created_at, status")
-          .gte("created_at", since.toISOString())
+          .select("created_at")
+          .gte("created_at", monthStart.toISOString())
           .order("created_at", { ascending: true });
 
         if (error) {
@@ -128,10 +131,11 @@ export default function AdminAnalyticsPage() {
           if (tableMissing) {
             setEmailStats({
               todaySent: 0,
-              todayFailed: 0,
-              sevenDaySent: 0,
+              monthSent: 0,
+              remainingToday: DAILY_EMAIL_LIMIT,
+              remainingMonth: MONTHLY_EMAIL_LIMIT,
               daily: [],
-              trackingInstalled: false,
+              usageInstalled: false,
             });
           } else {
             throw error;
@@ -142,33 +146,33 @@ export default function AdminAnalyticsPage() {
             const date = new Date();
             date.setDate(date.getDate() - (6 - offset));
             const key = date.toISOString().slice(0, 10);
-            byDay.set(key, { date: key, sent: 0, failed: 0 });
+            byDay.set(key, { date: key, sent: 0 });
           }
 
           (data || []).forEach((row) => {
             const key = String(row.created_at || "").slice(0, 10);
             if (!byDay.has(key)) return;
             const entry = byDay.get(key);
-            const status = String(row.status || "").toLowerCase();
-            if (status === "failed") {
-              entry.failed += 1;
-            } else if (status === "sent") {
-              entry.sent += 1;
-            }
+            entry.sent += 1;
           });
 
           const daily = Array.from(byDay.values());
+          const monthSent = Number(data?.length || 0);
+          const todaySent = daily.find((entry) => entry.date === todayKey)?.sent || 0;
+          const remainingToday = Math.max(0, DAILY_EMAIL_LIMIT - todaySent);
+          const remainingMonth = Math.max(0, MONTHLY_EMAIL_LIMIT - monthSent);
           setEmailStats({
-            todaySent: daily.find((entry) => entry.date === todayKey)?.sent || 0,
-            todayFailed: daily.find((entry) => entry.date === todayKey)?.failed || 0,
-            sevenDaySent: daily.reduce((sum, entry) => sum + entry.sent, 0),
+            todaySent,
+            monthSent,
+            remainingToday,
+            remainingMonth,
             daily,
-            trackingInstalled: true,
+            usageInstalled: true,
           });
         }
       } catch (err) {
         toast({
-          message: `Email tracking check failed: ${err.message}`,
+          message: `Email usage check failed: ${err.message}`,
           color: "amber",
         });
       }
@@ -188,8 +192,8 @@ export default function AdminAnalyticsPage() {
     () => tableCounts.reduce((sum, row) => sum + Number(row.count || 0), 0),
     [tableCounts]
   );
-  const dbUsagePct = Math.min(100, Math.round((totalRecords / ESTIMATED_DB_RECORD_LIMIT) * 100));
-  const storageUsagePct = Math.min(100, Math.round((bucketBytes / ESTIMATED_STORAGE_LIMIT_BYTES) * 100));
+  const dbUsagePct = Math.min(100, (totalRecords / ESTIMATED_DB_RECORD_LIMIT) * 100);
+  const storageUsagePct = Math.min(100, (bucketBytes / ESTIMATED_STORAGE_LIMIT_BYTES) * 100);
   const isStorageNearFull = storageUsagePct >= 80;
   const isDbNearFull = dbUsagePct >= 80;
 
@@ -227,7 +231,7 @@ export default function AdminAnalyticsPage() {
               <h2 className="font-bold text-slate-900">Database Load (Estimate)</h2>
             </div>
             <p className="text-3xl font-black text-slate-900">{totalRecords.toLocaleString()} records</p>
-            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">{dbUsagePct}% of estimated safe threshold</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">{dbUsagePct.toFixed(2)}% of estimated safe threshold</p>
             <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
               <div className={`h-full ${isDbNearFull ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${dbUsagePct}%` }} />
             </div>
@@ -246,7 +250,7 @@ export default function AdminAnalyticsPage() {
               <h2 className="font-bold text-slate-900">Image Storage (Bucket)</h2>
             </div>
             <p className="text-3xl font-black text-slate-900">{formatBytes(bucketBytes)}</p>
-            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">{storageUsagePct}% of 1GB estimate</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">{storageUsagePct.toFixed(2)}% of 1GB estimate</p>
             <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
               <div className={`h-full ${isStorageNearFull ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${storageUsagePct}%` }} />
             </div>
@@ -264,46 +268,53 @@ export default function AdminAnalyticsPage() {
               <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
                 <Mail size={20} />
               </div>
-              <h2 className="font-bold text-slate-900">Email Delivery</h2>
+              <h2 className="font-bold text-slate-900">Email Usage</h2>
             </div>
             <p className="text-3xl font-black text-slate-900">{emailStats.todaySent.toLocaleString()}</p>
             <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">Emails sent today</p>
             <div className="mt-5 space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Last 7 days</span>
-                <span className="font-bold text-slate-900">{emailStats.sevenDaySent.toLocaleString()}</span>
+                <span className="text-slate-500">This month</span>
+                <span className="font-bold text-slate-900">{emailStats.monthSent.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Failed today</span>
-                <span className={`font-bold ${emailStats.todayFailed > 0 ? "text-rose-600" : "text-slate-900"}`}>
-                  {emailStats.todayFailed.toLocaleString()}
+                <span className="text-slate-500">Remaining today</span>
+                <span className={`font-bold ${emailStats.remainingToday === 0 ? "text-rose-600" : "text-slate-900"}`}>
+                  {emailStats.remainingToday.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Remaining this month</span>
+                <span className={`font-bold ${emailStats.remainingMonth === 0 ? "text-rose-600" : "text-slate-900"}`}>
+                  {emailStats.remainingMonth.toLocaleString()}
                 </span>
               </div>
             </div>
-            <p className="mt-4 text-sm font-semibold text-slate-600">
-              {emailStats.trackingInstalled
-                ? "Counts come from real email delivery log entries."
-                : "Email tracking table is not installed yet."}
+            <p className={`mt-4 text-sm font-semibold ${emailStats.remainingToday === 0 || emailStats.remainingMonth === 0 ? "text-rose-600" : "text-slate-600"}`}>
+              {emailStats.usageInstalled
+                ? emailStats.remainingToday === 0 || emailStats.remainingMonth === 0
+                  ? "Email limit reached. Consider upgrading."
+                  : "Counts are based on email send attempts."
+                : "Email usage table is not installed yet."}
             </p>
           </Card>
 
           <Card className="p-6 rounded-2xl border bg-white border-slate-100">
             <div className="flex items-center justify-between gap-3 mb-4">
               <div>
-                <h2 className="font-bold text-slate-900">Daily Email Counter</h2>
-                <p className="text-sm text-slate-500">Sent and failed emails over the last 7 days.</p>
+                <h2 className="font-bold text-slate-900">Daily Email Usage</h2>
+                <p className="text-sm text-slate-500">Send attempts over the last 7 days.</p>
               </div>
             </div>
-            {!emailStats.trackingInstalled ? (
+            {!emailStats.usageInstalled ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
                 Run `supabase/schema.sql` to enable this panel.
               </div>
             ) : (
               <div className="space-y-3">
                 {emailStats.daily.map((entry) => {
-                  const total = entry.sent + entry.failed;
-                  const sentWidth = total > 0 ? Math.max(8, Math.round((entry.sent / total) * 100)) : 0;
-                  const failedWidth = total > 0 ? Math.max(0, 100 - sentWidth) : 0;
+                  const maxCount = Math.max(...emailStats.daily.map((row) => row.sent), 1);
+                  const sentWidth = Math.max(8, Math.round((entry.sent / maxCount) * 100));
                   return (
                     <div key={entry.date} className="grid grid-cols-[92px_1fr_auto] items-center gap-3">
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -315,16 +326,9 @@ export default function AdminAnalyticsPage() {
                           style={{ width: `${sentWidth}%` }}
                           title={`Sent: ${entry.sent}`}
                         />
-                        <div
-                          className="h-full bg-rose-400"
-                          style={{ width: `${failedWidth}%` }}
-                          title={`Failed: ${entry.failed}`}
-                        />
                       </div>
                       <span className="text-sm font-bold text-slate-900">
                         {entry.sent}
-                        <span className="text-slate-400"> / </span>
-                        <span className={entry.failed > 0 ? "text-rose-600" : "text-slate-400"}>{entry.failed}</span>
                       </span>
                     </div>
                   );
