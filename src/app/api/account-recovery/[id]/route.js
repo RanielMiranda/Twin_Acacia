@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   ensureAccountSetupToken,
+  deleteRecoveryRequest,
   getAccountByEmail,
   getAccountById,
   getRecoveryRequestById,
@@ -113,4 +114,20 @@ export async function PATCH(request, { params }) {
     { ok: true, request: resolved, setupLink, providerMessageId: resendBody?.id || null },
     { status: 200 }
   );
+}
+
+export async function DELETE(request, { params }) {
+  const session = await getSessionFromRequest(request);
+  if (!session || session.role !== "admin") {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const requestId = Number(id);
+  if (!Number.isFinite(requestId)) {
+    return NextResponse.json({ ok: false, error: "Invalid request id." }, { status: 400 });
+  }
+
+  await deleteRecoveryRequest(requestId);
+  return NextResponse.json({ ok: true }, { status: 200 });
 }

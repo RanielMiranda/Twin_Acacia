@@ -232,6 +232,15 @@ export async function resolveRecoveryRequest(requestId) {
   return data;
 }
 
+export async function deleteRecoveryRequest(requestId) {
+  const supabase = createServiceSupabaseClient();
+  const { error } = await supabase
+    .from("account_recovery_requests")
+    .delete()
+    .eq("id", Number(requestId));
+  if (error) throw normalizeSupabaseError(error);
+}
+
 export async function ensureAccountSetupToken(accountId) {
   const supabase = createServiceSupabaseClient();
   const { data: existing, error: loadError } = await supabase
