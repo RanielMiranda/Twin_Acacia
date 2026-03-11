@@ -50,9 +50,9 @@ export default function LiveConcernsPanel({
                   : "bg-rose-50/40 border-rose-100"
               }`}
             >
-              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                <div className="min-w-0 lg:flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight ${
                         issue.status === "resolved"
@@ -65,16 +65,16 @@ export default function LiveConcernsPanel({
                     <span className="text-[10px] font-bold text-slate-500 uppercase">
                       {issue.subject || "Concern"}
                     </span>
+                    <span className="text-[11px] text-slate-500">
+                      {issue.guest_name || "Guest"}{issue.guest_email ? ` - ${issue.guest_email}` : ""}
+                    </span>
                     <span className="text-[10px] text-slate-400 flex items-center gap-1">
                       <Clock3 size={10} /> {new Date(issue.created_at).toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-700 leading-snug break-words">{issue.message}</p>
-                  <p className="text-[11px] text-slate-500 mt-1.5">
-                    {issue.guest_name || "Guest"}{issue.guest_email ? ` - ${issue.guest_email}` : ""}
-                  </p>
+                  <p className="text-sm text-slate-700 leading-snug break-words mt-1">{issue.message}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 lg:justify-end lg:shrink-0">
                   <Button
                     variant="ghost"
                     className="h-8 px-3 text-xs font-bold"

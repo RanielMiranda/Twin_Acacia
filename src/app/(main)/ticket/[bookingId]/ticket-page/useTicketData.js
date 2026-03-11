@@ -29,6 +29,20 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
   const [messages, setMessages] = useState([]);
   const [issues, setIssues] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [staffRole, setStaffRole] = useState("");
+
+  const refreshSessionRole = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/session", { method: "GET", cache: "no-store" });
+      const body = await response.json().catch(() => ({}));
+      const role = String(body?.account?.role || "").toLowerCase();
+      setStaffRole(role);
+      return role;
+    } catch {
+      setStaffRole("");
+      return "";
+    }
+  }, []);
 
   const fetchMessages = useCallback(
     async (activeBookingId) => {
@@ -99,6 +113,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     if (!normalizedBookingId) return;
     setLoading(true);
     try {
+      const sessionRole = staffRole || (await refreshSessionRole());
       const { data: bookingRows, error: bookingError } = await supabase
         .from("bookings")
         .select(BOOKING_TICKET_COLUMNS)
@@ -117,9 +132,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
       }
 
       const bookingData = bookingRows[0];
-      const cookieRoleMatch = typeof document !== "undefined" ? document.cookie.match(/(?:^|;\s*)app_role=([^;]+)/) : null;
-      const role = cookieRoleMatch ? decodeURIComponent(cookieRoleMatch[1] || "").toLowerCase() : "";
-      const isStaff = role === "admin" || role === "owner";
+      const isStaff = sessionRole === "admin" || sessionRole === "owner";
       if (!isStaff && !isTicketTokenValid(bookingData?.booking_form || {}, accessToken)) {
         throw new Error("Ticket access token is missing, invalid, or expired.");
       }
@@ -144,11 +157,51 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, fetchMessages, normalizedBookingId, toast]);
+  }, [accessToken, fetchMessages, normalizedBookingId, refreshSessionRole, staffRole, toast]);
 
   useEffect(() => {
     fetchTicket();
   }, [fetchTicket]);
+
+  useEffect(() => {
+    if (!normalizedBookingId) return undefined;
+    const channel = supabase
+      .channel(`ticket-live-${normalizedBookingId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ticket_messages", filter: `booking_id=eq.${normalizedBookingId}` },
+        () => fetchMessages(normalizedBookingId)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ticket_issues", filter: `booking_id=eq.${normalizedBookingId}` },
+        () => fetchMessages(normalizedBookingId)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ticket_issues_archive", filter: `booking_id=eq.${normalizedBookingId}` },
+        () => fetchMessages(normalizedBookingId)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `id=eq.${normalizedBookingId}` },
+        () => fetchTicket()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchMessages, fetchTicket, normalizedBookingId]);
+
+  useEffect(() => {
+    if (!normalizedBookingId) return undefined;
+    const interval = setInterval(() => {
+      fetchTicket();
+      fetchMessages(normalizedBookingId);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [fetchMessages, fetchTicket, normalizedBookingId]);
 
   return {
     loading,

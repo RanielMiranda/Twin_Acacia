@@ -31,24 +31,24 @@ export default function ContactFormModal({
           <input
             type="text"
             placeholder="Your Name"
-            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
 
           <input
             type="email"
             placeholder="Your Email"
-            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
 
           <textarea
             placeholder="Your Message"
             rows="4"
-            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full bg-black/20 opacity-50 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
 
           <button
             type="submit"
-            className="w-full bg-sky-500 hover:bg-sky-600 text-white py-3 rounded-lg transition font-medium"
+            className="w-full bg-blue-600 hover:bg-blue-600 text-white py-3 rounded-lg transition font-medium"
           >
             Send Message
           </button>

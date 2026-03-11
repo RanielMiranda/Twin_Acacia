@@ -117,17 +117,7 @@ export async function POST(request) {
 
   if (!resendResponse.ok) {
     try {
-      await logEmailDelivery(supabase, {
-        templateKey: "booking_approved_inquiry",
-        recipientEmail,
-        recipientName: booking.booking_form?.guestName || null,
-        bookingId: booking.id,
-        resortId: booking.resort_id,
-        provider: "resend",
-        status: "failed",
-        errorMessage: resendBody?.message || resendBody?.error || "Resend request failed",
-        metadata: { ticketUrl },
-      });
+      await logEmailDelivery(supabase);
     } catch {
       // Keep email failure as primary error.
     }
@@ -149,17 +139,7 @@ export async function POST(request) {
     .eq("id", booking.id);
 
   try {
-    await logEmailDelivery(supabase, {
-      templateKey: "booking_approved_inquiry",
-      recipientEmail,
-      recipientName: booking.booking_form?.guestName || null,
-      bookingId: booking.id,
-      resortId: booking.resort_id,
-      provider: "resend",
-      providerMessageId: resendBody?.id || null,
-      status: "sent",
-      metadata: { ticketUrl },
-    });
+    await logEmailDelivery(supabase);
   } catch {
     // Do not fail successful email delivery because analytics logging is missing.
   }

@@ -61,9 +61,17 @@
               >
                 <tab.icon size={16} className={isActive ? tab.color : ""} />
                 {tab.label}
-                <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? `${tab.bg} ${tab.color}` : "bg-slate-200 text-slate-500"}`}>
-                  {count}
-                </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] ${
+                      isActive
+                        ? `${tab.bg} ${tab.color}`
+                        : tab.id === "confirmed"
+                        ? "bg-slate-200 text-slate-500"
+                        : "bg-red-600 text-white"
+                    }`}
+                  >
+                    {count}
+                  </span>
               </button>
             );
           })}
@@ -79,30 +87,28 @@
             grouped[activeTab].map((item) => (
               <div
                 key={item.bookingId}
-                className="group grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 items-center p-3 rounded-xl border border-slate-100 bg-white hover:border-blue-200 transition-all"
+                className="group flex flex-col lg:flex-row lg:items-center gap-3 p-3 rounded-xl border border-slate-100 bg-white hover:border-blue-200 transition-all"
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 lg:flex-1">
                   <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
                     <User size={16} />
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-black text-slate-900 truncate">{item.guestName}</h3>
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-500 uppercase tracking-tight">{item.room}</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 uppercase tracking-tight">
                         {item.status}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <p className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                      </span>                      
+                      <h3 className="text-sm font-black text-slate-900 truncate">{item.guestName}</h3>
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded-md text-slate-500 uppercase tracking-tight">{item.room}</span>
+                      <span className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
                         {item.checkInDate} <ChevronRight size={10}/> {item.checkOutDate}
-                      </p>
+                      </span>
                       <span className="text-[11px] text-slate-400 truncate">{item.email}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 justify-end">
+                <div className="flex items-center gap-2 justify-end lg:shrink-0">
                   <Button 
                     variant="ghost" 
                     className="items-center justify-center rounded-xl font-bold text-xs h-9 hover:bg-slate-50 flex gap-2"

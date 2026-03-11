@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runPendingCheckoutAutomation } from "@/lib/server/bookingStatusAutomation";
+import { runBookingStatusAutomation } from "@/lib/server/bookingStatusAutomation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ async function handle(request) {
   const limit = Number.isFinite(limitParam) ? Math.max(1, Math.min(5000, limitParam)) : 500;
 
   try {
-    const result = await runPendingCheckoutAutomation({ limit });
+    const result = await runBookingStatusAutomation({ limit });
     return NextResponse.json({ ok: true, result }, { status: 200 });
   } catch (error) {
     return NextResponse.json(

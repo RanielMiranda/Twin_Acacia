@@ -54,18 +54,24 @@ export function buildPersistPayload({
   const nextStatus = nextDraft.status || booking.bookingForm?.status || booking.status || "Inquiry";
   const statusAudit = buildStatusAudit({ booking, nextDraft: { ...nextDraft, status: nextStatus }, actorMeta });
 
+  const normalizedCheckInDate = nextDraft.checkInDate || booking.startDate || "";
+  const normalizedCheckOutDate =
+    nextDraft.checkOutDate || booking.endDate || normalizedCheckInDate || "";
+
   return {
     ...booking,
     roomIds: assignedRoomIds,
     status: nextStatus,
-    startDate: nextDraft.checkInDate || booking.startDate,
-    endDate: nextDraft.checkOutDate || booking.endDate,
+    startDate: normalizedCheckInDate,
+    endDate: normalizedCheckOutDate,
     checkInTime: nextDraft.checkInTime || booking.checkInTime,
     checkOutTime: nextDraft.checkOutTime || booking.checkOutTime,
     paymentDeadline: nextDraft.paymentDeadline || null,
     bookingForm: {
       ...(booking.bookingForm || {}),
       ...nextDraft,
+      checkInDate: normalizedCheckInDate,
+      checkOutDate: normalizedCheckOutDate,
       roomCount: assignedRoomIds.length || nextDraft.roomCount || booking.roomIds?.length || 1,
       roomName: selectedRoomNames.length > 0 ? selectedRoomNames.join(", ") : nextDraft.roomName || "",
       assignedRoomIds,

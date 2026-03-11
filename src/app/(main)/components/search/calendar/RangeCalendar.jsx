@@ -1,48 +1,27 @@
 ﻿import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  addMonths,
+  buildMonthDays,
+  getNextRange,
+  getUtcToday,
+  isBetween,
+  isSameDay,
+  startOfMonth,
+} from "@/lib/rangeCalendarUtils";
 
-function startOfMonth(date) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-}
-
-function addMonths(date, count) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + count, 1));
-}
-
-function isSameDay(a, b) {
-  if (!a || !b) return false;
-  return (
-    a.getUTCFullYear() === b.getUTCFullYear() &&
-    a.getUTCMonth() === b.getUTCMonth() &&
-    a.getUTCDate() === b.getUTCDate()
-  );
-}
-
-function isBetween(date, start, end) {
-  if (!start || !end) return false;
-  return date > start && date < end;
-}
-
-export default function RangeCalendar({ startDate, endDate, onChange, activeDropdown }) {
-  const today = new Date();
-  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+export default function RangeCalendar({
+  startDate,
+  endDate,
+  onChange,
+  activeDropdown,
+  blockedRanges = [],
+}) {
+  const todayUTC = getUtcToday();
   const [baseMonth, setBaseMonth] = useState(startOfMonth(todayUTC));
 
   function renderMonth(monthDate) {
-    const start = startOfMonth(monthDate);
-    const month = start.getUTCMonth();
-    const year = start.getUTCFullYear();
-
-    const days = [];
-    const firstDay = start.getUTCDay();
-
-    for (let i = 0; i < firstDay; i += 1) days.push(null);
-
-    const cursor = new Date(Date.UTC(year, month, 1));
-    while (cursor.getUTCMonth() === month) {
-      days.push(new Date(cursor));
-      cursor.setUTCDate(cursor.getUTCDate() + 1);
-    }
+    const { start, year, days } = buildMonthDays(monthDate);
 
     return (
       <div className="w-[200px]">
@@ -64,6 +43,10 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
             const isEnd = isSameDay(date, endDate);
             const inRange = isBetween(date, startDate, endDate);
             const isPast = date < todayUTC;
+            const isBlocked = (blockedRanges || []).some((range) => {
+              if (!range?.start || !range?.end) return false;
+              return date >= range.start && date <= range.end;
+            });
 
             return (
               <button
@@ -71,37 +54,19 @@ export default function RangeCalendar({ startDate, endDate, onChange, activeDrop
                 onClick={() => {
                   if (isPast) return;
 
-                  if (isStart && isEnd) {
-                    onChange(null, null);
-                    return;
-                  }
-
-                  if (isStart) {
-                    if (endDate) {
-                      onChange(endDate, null);
-                    } else {
-                      onChange(null, null);
-                    }
-                    return;
-                  }
-
-                  if (isEnd) {
-                    onChange(startDate, null);
-                    return;
-                  }
-
-                  if (!startDate || (startDate && endDate)) {
-                    onChange(date, null);
-                  } else if (activeDropdown === "end" && date < startDate) {
-                    onChange(date, startDate);
-                  } else {
-                    onChange(startDate, date);
-                  }
+                  const next = getNextRange({
+                    date,
+                    startDate,
+                    endDate,
+                    activeDropdown,
+                  });
+                  onChange(next.start, next.end);
                 }}
                 className={[
                   "flex h-10 w-10 items-center justify-center text-sm transition-colors",
                   isPast ? "cursor-not-allowed text-gray-300" : "hover:bg-blue-100",
                   inRange ? "rounded-md bg-blue-100 text-blue-700" : "rounded-full",
+                  isBlocked && !inRange && !isStart && !isEnd ? "rounded-md bg-rose-100 text-rose-700" : "",
                   isStart || isEnd ? "relative z-10 rounded-full bg-blue-600 font-semibold text-white hover:bg-blue-600" : "",
                 ].join(" ")}
                 disabled={isPast}

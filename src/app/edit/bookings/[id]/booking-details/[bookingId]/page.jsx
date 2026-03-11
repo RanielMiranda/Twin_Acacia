@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useResort } from "@/components/useclient/ContextEditor";
@@ -18,13 +18,32 @@ export default function BookingDetailsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, updateBookingById, deleteBookingById, loadingBookings, createSignedProofUrl, createBookingTransaction } = useBookings();
+  const { bookings, updateBookingById, deleteBookingById, loadingBookings, createSignedProofUrl, createBookingTransaction, refreshBookings } = useBookings();
   const { loadBookingSupport, updateConcernStatus, sendTicketMessage, isMissingSupportTableError } = useSupport();
   const [messages, setMessages] = useState([]);
   const [issues, setIssues] = useState([]);
   const [ownerReply, setOwnerReply] = useState("");
   const [statusAudits, setStatusAudits] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [refreshingMessages, setRefreshingMessages] = useState(false);
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const lastOwnerReplySentAtRef = useRef(0);
+
+  const hashString = (value) => {
+    let hash = 0;
+    for (let i = 0; i < value.length; i += 1) {
+      hash = (hash << 5) - hash + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  };
+
+  const buildOwnerIdempotencyKey = (message) => {
+    const bucket = Math.floor(Date.now() / 5000);
+    const base = `${booking?.id || ""}:owner:${message}`.toLowerCase().trim();
+    return `ticket-msg:${bucket}:${hashString(base)}`;
+  };
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -64,6 +83,60 @@ export default function BookingDetailsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?.id]);
 
+  useEffect(() => {
+    if (!booking?.id) return;
+    const channel = supabase
+      .channel(`booking-live-${booking.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ticket_messages", filter: `booking_id=eq.${booking.id}` },
+        () => loadSupportData(booking.id)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ticket_issues", filter: `booking_id=eq.${booking.id}` },
+        () => loadSupportData(booking.id)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ticket_issues_archive", filter: `booking_id=eq.${booking.id}` },
+        () => loadSupportData(booking.id)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `id=eq.${booking.id}` },
+        () => {
+          refreshBookings();
+          loadStatusAudits(booking.id);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "booking_status_audit", filter: `booking_id=eq.${booking.id}` },
+        () => loadStatusAudits(booking.id)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "booking_transactions", filter: `booking_id=eq.${booking.id}` },
+        () => loadStatusAudits(booking.id)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [booking?.id, refreshBookings]);
+
+  useEffect(() => {
+    if (!booking?.id || isEditing) return undefined;
+    const interval = setInterval(() => {
+      loadSupportData(booking.id);
+      loadStatusAudits(booking.id);
+      refreshBookings();
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [booking?.id, isEditing, refreshBookings]);
+
   const loadSupportData = async (activeBookingId) => {
     setRefreshingMessages(true);
     try {
@@ -92,7 +165,6 @@ export default function BookingDetailsPage() {
         .order("changed_at", { ascending: false });
       if (!error) {
         setStatusAudits(data || []);
-        return;
       }
       const missingActorName =
         error.message?.includes("actor_name") &&
@@ -108,6 +180,18 @@ export default function BookingDetailsPage() {
       setStatusAudits(fallback.data || []);
     } catch {
       setStatusAudits([]);
+    }
+
+    try {
+      const { data: transactionRows, error: transactionError } = await supabase
+        .from("booking_transactions")
+        .select("id, booking_id, method, amount, balance_after, note, created_at")
+        .eq("booking_id", activeBookingId)
+        .order("created_at", { ascending: false });
+      if (transactionError) throw transactionError;
+      setTransactions(transactionRows || []);
+    } catch {
+      setTransactions([]);
     }
   };
 
@@ -128,13 +212,22 @@ export default function BookingDetailsPage() {
 
   const handleSendReply = async () => {
     if (!ownerReply.trim()) return;
+    if (isSendingReply) return;
+    const now = Date.now();
+    if (now - lastOwnerReplySentAtRef.current < 5000) {
+      toast({ message: "Please wait a few seconds before sending another message.", color: "amber" });
+      return;
+    }
     try {
+      setIsSendingReply(true);
+      lastOwnerReplySentAtRef.current = now;
       const payload = {
         booking_id: booking.id,
         resort_id: booking.resortId || booking.resort_id || Number(id),
         sender_role: "owner",
         sender_name: "Owner",
         message: ownerReply.trim(),
+        idempotency_key: buildOwnerIdempotencyKey(ownerReply),
       };
       await sendTicketMessage(payload);
       setOwnerReply("");
@@ -146,6 +239,8 @@ export default function BookingDetailsPage() {
         return;
       }
       toast({ message: `Reply failed: ${err.message}`, color: "red" });
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -159,6 +254,26 @@ export default function BookingDetailsPage() {
     }
   };
 
+  const cancelBookingWithConfirmation = async () => {
+    if (!booking) return;
+    const confirmed = window.confirm("Cancel this booking?");
+    if (!confirmed) return;
+    try {
+      await updateBookingById(booking.id, (entry) => ({
+        ...entry,
+        status: "Cancelled",
+        bookingForm: {
+          ...(entry.bookingForm || {}),
+          status: "Cancelled",
+          cancelledAt: new Date().toISOString(),
+        },
+      }));
+      toast({ message: "Booking cancelled.", color: "green" });
+    } catch (err) {
+      toast({ message: `Cancel failed: ${err.message}`, color: "red" });
+    }
+  };
+
   return (
     <div>
     <BookingModernEditor
@@ -167,10 +282,7 @@ export default function BookingDetailsPage() {
       resortName={currentResort?.name}
       onBack={() => router.push(`/edit/bookings/${id}`)}
       onSave={(next) => updateBookingById(booking.id, next)}
-      onDelete={() => {
-        deleteBookingById(booking.id);
-        router.push(`/edit/bookings/${id}`);
-      }}
+      onDelete={cancelBookingWithConfirmation}
       onOpenForm={() => router.push(`/edit/bookings/${id}/booking-details/${booking.id}/form`)}
       onOpenTicket={() => router.push(`/ticket/${booking.id}`)}
       onOpenBooking={(targetId) => router.push(`/edit/bookings/${id}/booking-details/${targetId}`)}
@@ -190,7 +302,9 @@ export default function BookingDetailsPage() {
       resortExtraServices={currentResort?.extraServices || []}
       allBookings={bookings || []}
       statusAudits={statusAudits}
+      transactions={transactions}
       resortPaymentImageUrl={currentResort?.payment_image_url}
+      onEditingChange={setIsEditing}
     />
     <Toast />
     <PersistentToast />

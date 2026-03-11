@@ -23,7 +23,7 @@ export default function HeroBanner() {
       }
 
       const images = (data || [])
-        .flatMap((resort) => (resort.gallery || []).filter(Boolean).slice(0, 1))
+        .flatMap((resort) => (resort.gallery || []).filter(Boolean).slice(0, 2))
         .filter(Boolean)
         .slice(0, 6);
 
@@ -62,7 +62,7 @@ export default function HeroBanner() {
           decoding="async"
           className="
             absolute w-full h-full object-cover
-            transition-transform duration-[7000ms] ease-out
+            transition-transform duration-[5000ms] ease-out
             group-hover:scale-105
           "
           alt="Featured resort view"

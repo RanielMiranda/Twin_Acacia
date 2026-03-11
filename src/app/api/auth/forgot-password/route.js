@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createRecoveryRequest } from "@/lib/server/accounts";
+import { createRecoveryRequest, getAccountByEmail } from "@/lib/server/accounts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +16,11 @@ export async function POST(request) {
   const message = String(body?.message || "").trim();
   if (!email) {
     return NextResponse.json({ ok: false, error: "Email is required." }, { status: 400 });
+  }
+
+  const account = await getAccountByEmail(email);
+  if (!account) {
+    return NextResponse.json({ ok: false, error: "No account found for this email." }, { status: 404 });
   }
 
   await createRecoveryRequest({ email, message });

@@ -220,6 +220,20 @@ export async function handleVerifyProofAction({
     };
     setDraft(next);
     await persist(next);
+    if (createBookingTransaction && approvedAmount > 0) {
+      try {
+        const totalAmount = Number(next.totalAmount || 0);
+        await createBookingTransaction({
+          booking_id: booking.id,
+          method: nextMethod || "Pending",
+          amount: approvedAmount,
+          balance_after: Math.max(0, totalAmount - nextDownpayment),
+          note: "Payment approved",
+        });
+      } catch {
+        // Non-blocking: transaction logs are best-effort.
+      }
+    }
   } finally {
     setActionBusy(false);
   }

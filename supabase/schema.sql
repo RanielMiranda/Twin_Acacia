@@ -4,6 +4,9 @@
 
 create extension if not exists pgcrypto;
 
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
 -- ==========================================
 -- Phase 1: Core Bookings
 -- ==========================================
@@ -446,25 +449,10 @@ grant execute on function public.send_ticket_message_safe(text, bigint, text, te
 -- ==========================================
 create table if not exists public.email_delivery_logs (
   id bigint generated always as identity primary key,
-  template_key text not null,
-  recipient_email text,
-  recipient_name text,
-  booking_id text references public.bookings(id) on delete set null,
-  resort_id bigint references public.resorts(id) on delete set null,
-  account_id bigint references public.accounts(id) on delete set null,
-  provider text,
-  provider_message_id text,
-  status text not null default 'sent' check (status in ('sent', 'failed')),
-  error_message text,
-  metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 
 create index if not exists email_delivery_logs_created_at_idx on public.email_delivery_logs(created_at desc);
-create index if not exists email_delivery_logs_status_idx on public.email_delivery_logs(status);
-create index if not exists email_delivery_logs_template_idx on public.email_delivery_logs(template_key);
-create index if not exists email_delivery_logs_booking_idx on public.email_delivery_logs(booking_id);
-create index if not exists email_delivery_logs_resort_idx on public.email_delivery_logs(resort_id);
 
 alter table public.email_delivery_logs enable row level security;
 
@@ -499,7 +487,64 @@ create policy account_recovery_requests_service_only on public.account_recovery_
   with check (false);
 
 -- ==========================================
--- Phase 11: Resort Caretakers
+-- Phase 11: Supabase Cron Booking Automation
+-- ==========================================
+create or replace function public.run_booking_status_automation()
+returns void
+language plpgsql
+as $$
+declare
+  automation_url text := (select value from public.automation_settings where key = 'booking_automation_url');
+  automation_secret text := (select value from public.automation_settings where key = 'booking_automation_secret');
+begin
+  if automation_url is null or automation_url = '' then
+    raise notice 'booking_automation_url is not set';
+    return;
+  end if;
+
+  perform net.http_post(
+    url := automation_url,
+    headers := jsonb_build_object('authorization', format('Bearer %s', coalesce(automation_secret, ''))),
+    body := '{}'::jsonb
+  );
+end;
+$$;
+
+create table if not exists public.automation_settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.automation_settings enable row level security;
+drop policy if exists automation_settings_service_only on public.automation_settings;
+create policy automation_settings_service_only on public.automation_settings
+  for all
+  using (false)
+  with check (false);
+
+do $$
+declare
+  existing_job_id int;
+begin
+  select jobid into existing_job_id
+  from cron.job
+  where jobname = 'booking_status_automation';
+
+  if existing_job_id is not null then
+    perform cron.unschedule(existing_job_id);
+  end if;
+
+  perform cron.schedule(
+    'booking_status_automation',
+    '*/10 * * * *',
+    $$select public.run_booking_status_automation();$$
+  );
+end;
+$$;
+
+-- ==========================================
+-- Phase 12: Resort Caretakers
 -- ==========================================
 create table if not exists public.resort_caretakers (
   id bigint generated always as identity primary key,

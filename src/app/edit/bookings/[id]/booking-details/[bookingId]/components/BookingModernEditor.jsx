@@ -5,11 +5,13 @@ import { ChevronLeft, FileText, AlertCircle, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast/Toast";
 import { useToast } from "@/components/ui/toast/ToastProvider";
+import { useAccounts } from "@/components/useclient/AccountsClient";
 import {
   buildDraftFromBooking,
   formatWeekdayLabel,
   formatTotalStayDays,
 } from "./bookingEditorUtils";
+import { overlapsByDateTime } from "./bookingEditorUtils";
 import { PAYMENT_CHANNELS, STATUS_PHASES } from "./bookingEditorConfig";
 import BookingEditorActionBar from "./BookingEditorActionBar";
 import {
@@ -45,16 +47,18 @@ export default function BookingModernEditor({
   onRefreshMessages,
   refreshingMessages = false,
   onResolveIssue,
-  conflicts = [],
   createSignedProofUrl,
   createBookingTransaction,
   resortRooms = [],
   resortExtraServices = [],
   allBookings = [],
   statusAudits = [],
+  transactions = [],
   resortPaymentImageUrl,
+  onEditingChange,
 }) {
   const { toast, persistentToast } = useToast();
+  const { activeAccount } = useAccounts();
   const [isEditing, setIsEditing] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [renderedAt] = useState(() => Date.now());
@@ -63,27 +67,98 @@ export default function BookingModernEditor({
   const [proofPreviewUrls, setProofPreviewUrls] = useState(() => buildDraftFromBooking(booking).paymentProofUrls || []);
   const [assignedRoomIds, setAssignedRoomIds] = useState(() => booking.roomIds || []);
   const [actorMeta, setActorMeta] = useState({ name: "Owner", role: "owner", id: "" });
-  const hasConflicts = conflicts.length > 0;
+  useEffect(() => {
+    onEditingChange?.(isEditing);
+  }, [isEditing, onEditingChange]);
+  const dynamicConflicts = React.useMemo(() => {
+    const probe = {
+      id: booking.id,
+      startDate: draft.checkInDate || booking.startDate,
+      endDate: draft.checkOutDate || booking.endDate || draft.checkInDate || booking.startDate,
+      checkInTime: draft.checkInTime || booking.checkInTime,
+      checkOutTime: draft.checkOutTime || booking.checkOutTime,
+      bookingForm: {
+        checkInTime: draft.checkInTime || booking.checkInTime,
+        checkOutTime: draft.checkOutTime || booking.checkOutTime,
+      },
+    };
+
+    return (allBookings || []).filter((entry) => {
+      if (entry.id?.toString() === booking.id?.toString()) return false;
+      const normalized = String(entry.status || entry.bookingForm?.status || "").toLowerCase();
+      if (!normalized.includes("confirm") && !normalized.includes("ongoing")) return false;
+      return overlapsByDateTime(entry, probe);
+    });
+  }, [allBookings, booking, draft]);
+
+  const hasConflicts = dynamicConflicts.length > 0;
+  const blockedRanges = React.useMemo(() => {
+    const normalizeRoomIds = (value) => {
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string") {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    };
+    const roomIds =
+      assignedRoomIds.length > 0
+        ? assignedRoomIds
+        : normalizeRoomIds(booking.roomIds || booking.room_ids);
+    if (!roomIds || roomIds.length === 0) return [];
+    return (allBookings || [])
+      .filter((entry) => {
+        if (entry.id?.toString() === booking.id?.toString()) return false;
+        const normalized = String(entry.status || entry.bookingForm?.status || "").toLowerCase();
+        if (!normalized.includes("confirm") && !normalized.includes("ongoing") && !normalized.includes("pending checkout")) {
+          return false;
+        }
+        const entryRoomIds = normalizeRoomIds(
+          entry.roomIds || entry.room_ids || entry.bookingForm?.assignedRoomIds
+        );
+        return entryRoomIds.some((roomId) => roomIds.includes(roomId));
+      })
+      .map((entry) => {
+        const startValue =
+          entry.startDate ||
+          entry.checkInDate ||
+          entry.bookingForm?.checkInDate ||
+          entry.bookingForm?.checkIn ||
+          "";
+        const endValue =
+          entry.endDate ||
+          entry.checkOutDate ||
+          entry.bookingForm?.checkOutDate ||
+          entry.bookingForm?.checkOut ||
+          startValue;
+        if (!startValue) return null;
+        const start = new Date(`${startValue}T00:00:00Z`);
+        const end = new Date(`${(endValue || startValue)}T00:00:00Z`);
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+        return { start, end };
+      })
+      .filter(Boolean);
+  }, [allBookings, assignedRoomIds, booking.id, booking.roomIds]);
 
   useEffect(() => {
     setAssignedRoomIds(booking.roomIds || []);
   }, [booking.id, booking.roomIds]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = sessionStorage.getItem("active_account_v1");
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      setActorMeta({
-        name: parsed?.full_name || parsed?.email || "Owner",
-        role: parsed?.role || "owner",
-        id: parsed?.id ? String(parsed.id) : "",
-      });
-    } catch {
-      // keep default actor
+    if (!activeAccount) {
+      setActorMeta({ name: "Owner", role: "owner", id: "" });
+      return;
     }
-  }, []);
+    setActorMeta({
+      name: activeAccount?.full_name || activeAccount?.email || "Owner",
+      role: activeAccount?.role || "owner",
+      id: activeAccount?.id ? String(activeAccount.id) : "",
+    });
+  }, [activeAccount]);
 
   useEffect(() => {
     syncPaxFromCounts({
@@ -125,6 +200,10 @@ export default function BookingModernEditor({
 
   const status = draft.status || "Inquiry";
   const totalStayDays = formatTotalStayDays(draft.checkInDate, draft.checkOutDate);
+  const isStayRangeInvalid =
+    !!draft.checkInDate &&
+    !!draft.checkOutDate &&
+    new Date(draft.checkOutDate).getTime() < new Date(draft.checkInDate).getTime();
   const normalizedStatus = status.toLowerCase();
   const hasProof = Array.isArray(draft.paymentProofUrls) && draft.paymentProofUrls.length > 0;
   const effectivePaid = Number(draft.downpayment || 0) + (status === "Confirmed" ? Number(draft.pendingDownpayment || 0) : 0);
@@ -279,14 +358,11 @@ export default function BookingModernEditor({
             <Button
               variant="outline"
               onClick={() => {
-                const confirmed = window.confirm("Delete this booking and all related form data?");
-                if (!confirmed) return;
-                if (typeof window !== "undefined") localStorage.removeItem(inlineDraftKey);
                 onDelete();
               }}
               className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs px-4 sm:px-6"
             >
-              Delete Booking
+              Cancel Booking
             </Button>
           </div>
         </div>
@@ -324,15 +400,17 @@ export default function BookingModernEditor({
                 approvedByName={approvedByName}
                 assignedRoomIds={assignedRoomIds}
                 resortRooms={resortRooms}
-                conflicts={conflicts}
+                conflicts={dynamicConflicts}
                 formatWeekdayLabel={formatWeekdayLabel}
                 onOpenConflict={() => {
-                  const conflictBooking = conflicts[0];
+                  const conflictBooking = dynamicConflicts[0];
                   if (!conflictBooking?.id) return;
                   onOpenBooking?.(conflictBooking.id);
                 }}
-                onOpenCalendar={onOpenCalendar}
-              />
+              onOpenCalendar={onOpenCalendar}
+              isStayRangeInvalid={isStayRangeInvalid}
+              blockedRanges={blockedRanges}
+            />
             </div>
 
             <AddOnsCardSection
@@ -342,7 +420,7 @@ export default function BookingModernEditor({
               availableServices={resortExtraServices}
             />
 
-            <StatusAuditCardSection dbAudits={dbAudits} bookingFormAudits={bookingFormAudits} />
+            <StatusAuditCardSection dbAudits={dbAudits} bookingFormAudits={bookingFormAudits} transactions={transactions} />
           </div>
 
           <div className="space-y-6">
@@ -417,6 +495,7 @@ export default function BookingModernEditor({
         onSaveInline={handleSaveInline}
         onCancelInline={handleCancelInline}
         actionBusy={actionBusy}
+        disableSave={isStayRangeInvalid}
       />
       <Toast/>
     </div>

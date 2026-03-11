@@ -8,8 +8,7 @@ export async function notifyCaretakerOnPaymentApproval({
   method,
 }) {
   const message = `Payment approved for booking ${bookingId}. Guest: ${guestName || "Guest"}, Amount: PHP ${Number(amount || 0).toLocaleString()}, Method: ${method || "Pending"}.`;
-  // Hook point for future SMS/email integration.
-  console.info("[CaretakerHook]", message);
+  return message;
 }
 
 export function buildCaretakerConfirmationMessage({
@@ -26,7 +25,5 @@ export function buildCaretakerConfirmationMessage({
 
 export async function notifyCaretakerOnBookingConfirmed(payload) {
   const message = buildCaretakerConfirmationMessage(payload);
-  // Hook point for future SMS/email integration.
-  console.info("[CaretakerHook]", message);
   return message;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   User,
   MapPin,
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { buildSupportConversationItems, getSupportConversationLabel, isResolvedConversationItem } from "@/lib/supportConversation";
 import { getTransformedSupabaseImageUrl } from "@/lib/utils";
 import { InfoItem, SectionLabel, StatusBadge } from "./BookingEditorAtoms";
+import DateRangeField from "@/app/(main)/components/search/calendar/DateRangeField";
 
 function getAuditActorLabel(entry) {
   if (entry?.actor_name) return entry.actor_name;
@@ -106,36 +107,80 @@ export function StayCardSection({
   formatWeekdayLabel,
   onOpenConflict,
   onOpenCalendar,
+  isStayRangeInvalid = false,
+  blockedRanges = [],
 }) {
   const hasConflicts = conflicts.length > 0;
+  const parseUtcDate = (value) => (value ? new Date(`${value}T00:00:00Z`) : null);
+  const rangeStart = parseUtcDate(draft.checkInDate);
+  const rangeEnd = parseUtcDate(draft.checkOutDate);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const formatFullDate = (date) =>
+    date
+      ? date.toLocaleDateString("default", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "";
+  const formatWeekday = (date) =>
+    date ? date.toLocaleDateString("default", { weekday: "short" }) : "";
+
+  const toIsoDate = (date) => (date ? date.toISOString().slice(0, 10) : "");
+  const setCheckInDate = (date) => {
+    if (!date) {
+      setField("checkInDate", "");
+      setField("checkOutDate", "");
+      return;
+    }
+    const start = rangeStart;
+    const end = rangeEnd;
+    if (start && end) {
+      setField("checkInDate", toIsoDate(date));
+      setField("checkOutDate", "");
+      return;
+    }
+    if (!start || date <= start) {
+      const nextStart = date;
+      const nextEnd = start && start >= date ? start : end;
+      setField("checkInDate", toIsoDate(nextStart));
+      setField("checkOutDate", toIsoDate(nextEnd));
+      return;
+    }
+    setField("checkInDate", toIsoDate(start));
+    setField("checkOutDate", toIsoDate(date));
+  };
+  const setCheckOutDate = (date) => {
+    if (!date) {
+      setField("checkOutDate", "");
+      return;
+    }
+    const start = rangeStart;
+    const end = rangeEnd;
+    if (!start) {
+      setField("checkInDate", toIsoDate(date));
+      setField("checkOutDate", "");
+      return;
+    }
+    const nextStart = date < start ? date : start;
+    const nextEnd = date < start ? start : date;
+    if (start && end) {
+      if (date < start) {
+        setField("checkInDate", toIsoDate(date));
+        setField("checkOutDate", toIsoDate(start));
+      } else {
+        setField("checkInDate", toIsoDate(start));
+        setField("checkOutDate", toIsoDate(date));
+      }
+      return;
+    }
+    setField("checkInDate", toIsoDate(nextStart));
+    setField("checkOutDate", toIsoDate(nextEnd));
+  };
+
   return (
     <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
       <SectionLabel icon={<Calendar size={14} />} label="Stay" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <InfoItem label="Check-In" value={draft.checkInDate} editing={isEditing} type="date" onChange={(val) => setField("checkInDate", val)} />
-        <InfoItem label="Check-Out" value={draft.checkOutDate} editing={isEditing} type="date" onChange={(val) => setField("checkOutDate", val)} />
-        <InfoItem label="Check-In-Day" value={formatWeekdayLabel(draft.checkInDate)} editing={isEditing} type="date" onChange={(val) => setField("checkInDate", val)} />
-        <InfoItem label="Check-Out-Day" value={formatWeekdayLabel(draft.checkOutDate)} editing={isEditing} type="date" onChange={(val) => setField("checkOutDate", val)} />
-        <InfoItem label="Total Days Stay" value={totalStayDays} />  
-        <InfoItem
-          label="Room"
-          value={
-            (assignedRoomIds.length > 0
-              ? (resortRooms || [])
-                  .filter((room) => assignedRoomIds.includes(room.id))
-                  .map((room) => room.name)
-                  .join(", ")
-              : draft.roomName) || "Not assigned"
-          }
-        />
-        <InfoItem label="Pax" value={draft.guestCount} editing={isEditing} type="number" onChange={(val) => setField("guestCount", Number(val) || 0)} />
-        <InfoItem label="Sleeping" value={draft.sleepingGuests || 0} editing={isEditing} type="number" onChange={(val) => setField("sleepingGuests", Number(val) || 0)} />
-        <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
-        <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
-        <InfoItem label="Adults" value={draft.adultCount || 0} editing={isEditing} type="number" onChange={(val) => setField("adultCount", Number(val) || 0)} />
-        <InfoItem label="Children" value={draft.childrenCount || 0} editing={isEditing} type="number" onChange={(val) => setField("childrenCount", Number(val) || 0)} />
-        <InfoItem label="Approved By" value={approvedByName} />        
-      </div>
       <div className={`rounded-xl px-3 py-2 border ${conflicts.length > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`}>
         <p className="text-[10px] uppercase tracking-wider font-black text-slate-500">Availability Check</p>
         <p className={`text-xs font-bold ${conflicts.length > 0 ? "text-rose-700" : "text-emerald-700"}`}>
@@ -166,6 +211,57 @@ export function StayCardSection({
           ) : null}
         </div>
       </div>
+      {isEditing ? (
+        <div className="mt-3">
+          <DateRangeField
+            startDate={rangeStart}
+            endDate={rangeEnd}
+            setStartDate={setCheckInDate}
+            setEndDate={setCheckOutDate}
+            activeDropdown={activeDropdown}
+            setActiveDropdown={setActiveDropdown}
+            formatFullDate={formatFullDate}
+            formatWeekday={formatWeekday}
+            blockedRanges={blockedRanges}
+            inline
+            autoAdvance={false}
+          />
+        </div>
+      ) : null}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {!isEditing ? (
+          <>
+            <InfoItem label="Check-In Date" value={draft.checkInDate} />
+            <InfoItem label="Check-Out Date" value={draft.checkOutDate} />
+            <InfoItem label="Check-In Day" value={formatWeekdayLabel(draft.checkInDate)} />
+            <InfoItem label="Check-Out Day" value={formatWeekdayLabel(draft.checkOutDate)} />
+          </>
+        ) : null }
+        <InfoItem label="Total Days Stay" value={totalStayDays} />
+        <InfoItem
+          label="Room"
+          value={
+            (assignedRoomIds.length > 0
+              ? (resortRooms || [])
+                  .filter((room) => assignedRoomIds.includes(room.id))
+                  .map((room) => room.name)
+                  .join(", ")
+              : draft.roomName) || "Not assigned"
+          }
+        />
+        <InfoItem label="Pax" value={draft.guestCount} editing={isEditing} type="number" onChange={(val) => setField("guestCount", Number(val) || 0)} />
+        <InfoItem label="Sleeping" value={draft.sleepingGuests || 0} editing={isEditing} type="number" onChange={(val) => setField("sleepingGuests", Number(val) || 0)} />
+        <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
+        <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
+        <InfoItem label="Adults" value={draft.adultCount || 0} editing={isEditing} type="number" onChange={(val) => setField("adultCount", Number(val) || 0)} />
+        <InfoItem label="Children" value={draft.childrenCount || 0} editing={isEditing} type="number" onChange={(val) => setField("childrenCount", Number(val) || 0)} />
+        <InfoItem label="Approved By" value={approvedByName} />        
+      </div>
+      {isStayRangeInvalid ? (
+        <p className="text-[11px] font-bold text-rose-600">
+          Check-out must be the same day or after check-in.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -260,34 +356,90 @@ export function AddOnsCardSection({
   );
 }
 
-export function StatusAuditCardSection({ dbAudits, bookingFormAudits }) {
+export function StatusAuditCardSection({ dbAudits, bookingFormAudits, transactions = [] }) {
+  const mergedAudits = [
+    ...(dbAudits || []).map((entry) => ({
+      id: `db-${entry.id}`,
+      type: "status",
+      title: `${entry.old_status || "Unknown"} -> ${entry.new_status || "Unknown"}`,
+      actor: getAuditActorLabel(entry),
+      at: entry.changed_at,
+    })),
+    ...(bookingFormAudits || []).map((entry, index) => ({
+      id: `form-${index}`,
+      type: "form",
+      title: `${entry.from || "Unknown"} -> ${entry.to || "Unknown"}`,
+      actor: getAuditActorLabel(entry),
+      at: entry.at,
+    })),
+    ...(transactions || []).map((entry) => ({
+      id: `txn-${entry.id}`,
+      type: "transaction",
+      title: entry.note || "Payment",
+      actor: entry.method ? `Method: ${entry.method}` : "Transaction",
+      at: entry.created_at,
+      amount: Number(entry.amount || 0),
+      balance: Number(entry.balance_after || 0),
+    })),
+  ].sort((a, b) => new Date(b.at || 0).getTime() - new Date(a.at || 0).getTime());
+
   return (
     <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
       <SectionLabel icon={<Clock size={14} />} label="Status Audit" />
-      {dbAudits.length === 0 && bookingFormAudits.length === 0 ? (
+      {mergedAudits.length === 0 ? (
         <p className="text-xs text-slate-400">No audit entries yet.</p>
       ) : (
         <div className="space-y-2 max-h-72 overflow-auto pr-1">
-          {dbAudits.map((entry) => (
-            <div key={`db-${entry.id}`} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-[10px] font-black uppercase text-slate-500">
-                {entry.old_status || "Unknown"} {"->"} {entry.new_status || "Unknown"}
+          {mergedAudits.map((entry) => (
+            <div
+              key={entry.id}
+              className={`rounded-xl border px-3 py-2 ${
+                entry.type === "transaction"
+                  ? "border-emerald-200 bg-emerald-50/60"
+                  : entry.type === "form"
+                    ? "border-blue-100 bg-blue-50"
+                    : "border-slate-200 bg-slate-50"
+              }`}
+            >
+              <p
+                className={`text-[10px] font-black uppercase ${
+                  entry.type === "transaction"
+                    ? "text-emerald-700"
+                    : entry.type === "form"
+                      ? "text-blue-600"
+                      : "text-slate-500"
+                }`}
+              >
+                {entry.title}
               </p>
-              <p className="text-xs font-semibold text-slate-700 mt-1">
-                {getAuditActorLabel(entry)}
+              <p
+                className={`text-xs font-semibold mt-1 ${
+                  entry.type === "transaction"
+                    ? "text-emerald-700"
+                    : entry.type === "form"
+                      ? "text-blue-700"
+                      : "text-slate-700"
+                }`}
+              >
+                {entry.actor || "System"}
+                {entry.type === "transaction" ? (
+                  <span className="ml-2 text-[11px] font-bold text-emerald-700">
+                    +PHP {Number(entry.amount || 0).toLocaleString()}
+                    <span className="text-emerald-600"> • Balance: PHP {Number(entry.balance || 0).toLocaleString()}</span>
+                  </span>
+                ) : null}
               </p>
-              <p className="text-[11px] text-slate-500">{new Date(entry.changed_at).toLocaleString()}</p>
-            </div>
-          ))}
-          {bookingFormAudits.map((entry, index) => (
-            <div key={`form-${index}`} className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
-              <p className="text-[10px] font-black uppercase text-blue-600">
-                {entry.from || "Unknown"} {"->"} {entry.to || "Unknown"}
+              <p
+                className={`text-[11px] ${
+                  entry.type === "transaction"
+                    ? "text-emerald-600"
+                    : entry.type === "form"
+                      ? "text-blue-500"
+                      : "text-slate-500"
+                }`}
+              >
+                {entry.at ? new Date(entry.at).toLocaleString() : "-"}
               </p>
-              <p className="text-xs font-semibold text-blue-700 mt-1">
-                {getAuditActorLabel(entry)}
-              </p>
-              <p className="text-[11px] text-blue-500">{entry.at ? new Date(entry.at).toLocaleString() : "-"}</p>
             </div>
           ))}
         </div>

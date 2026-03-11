@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Calendar } from "lucide-react";
 import RangeCalendar from "./RangeCalendar";
 
@@ -11,11 +11,26 @@ export default function DateRangeField({
   activeDropdown,
   setActiveDropdown,
   formatFullDate,
-  formatWeekday
+  formatWeekday,
+  blockedRanges = [],
+  inline = false,
+  autoAdvance = true,
 }) {
-  return (
+  const containerRef = useRef(null);
 
-      <div className="relative flex items-center gap-2 border-gray-200 border rounded-xl px-3 py-2 flex-1">
+  useEffect(() => {
+    if (!inline) return undefined;
+    const handleClick = (event) => {
+      if (!activeDropdown) return;
+      if (containerRef.current && containerRef.current.contains(event.target)) return;
+      setActiveDropdown(null);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [activeDropdown, inline, setActiveDropdown]);
+
+  return (
+      <div ref={containerRef} className="relative flex items-center gap-2 border-gray-200 border rounded-xl px-3 py-2 flex-1">
         <Calendar size={16} />
 
         {/* START DATE */}
@@ -47,17 +62,25 @@ export default function DateRangeField({
         </button>
 
         {(activeDropdown === "start" || activeDropdown === "end") && (
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 translate-y-1/10 mt-0 z-[9999] w-[420px] shadow-2xl">
+          <div
+            className={`${
+              inline
+                ? "absolute left-0 top-full mt-3 z-50 w-[420px]"
+                : "fixed top-1/2 left-1/2 -translate-x-1/2 translate-y-1/10 mt-0 z-[9999] w-[420px]"
+            } shadow-2xl`}
+          >
             <RangeCalendar
               startDate={startDate}
               endDate={endDate}
               activeDropdown={activeDropdown}
+              blockedRanges={blockedRanges}
               onChange={(s, e) => {
                 setStartDate(s);
                 setEndDate(e);
 
-                if (activeDropdown === "start" && s)
+                if (autoAdvance && activeDropdown === "start" && s) {
                   setActiveDropdown("end");
+                }
               }}
             />
           </div>

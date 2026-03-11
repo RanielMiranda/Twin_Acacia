@@ -62,7 +62,7 @@ export default function BookingManagementPage() {
     const source = bookings || [];
     const inquiry = source.filter((entry) => {
       const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-      return (status.includes("inquiry") || status.includes("pending payment")) && !status.includes("declined");
+      return (status.includes("inquiry") || status.includes("pending payment") || status.includes("pending checkout")) && !status.includes("declined");
     }).length;
     const checkout = source.filter((entry) => {
       const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
@@ -83,12 +83,21 @@ export default function BookingManagementPage() {
     () =>
       (bookings || []).filter((entry) => {
         const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-        return status.includes("checked out");
+        return status.includes("checked out") || status.includes("cancelled");
       }),
     [bookings]
   );
   const auditArchiveCount = audits.length + declinedBookings.length + checkedOutBookings.length;
   const openConcernCount = concerns.filter((item) => item.status !== "resolved").length;
+  const unresolvedIssueBookingIds = useMemo(() => {
+    const ids = new Set();
+    (concerns || []).forEach((issue) => {
+      if (issue.status !== "resolved" && issue.booking_id) {
+        ids.add(issue.booking_id.toString());
+      }
+    });
+    return ids;
+  }, [concerns]);
 
   const TabBadge = ({ count, tone = "blue" }) =>
     count > 0 ? (
@@ -166,6 +175,7 @@ export default function BookingManagementPage() {
       setLoadingAudits(false);
     }
   };
+
 
   useEffect(() => {
     if (!resortId) return;
@@ -251,11 +261,11 @@ export default function BookingManagementPage() {
   };
 
   const handleResolveCheckedOut = async (bookingId) => {
-    if (openConcernCount > 0) {
-      window.alert("Resolve blocked: please clear all live concerns first.");
+    if (unresolvedIssueBookingIds.has(bookingId?.toString())) {
+      window.alert("Resolve blocked: this booking has unresolved issues.");
       return;
     }
-    const confirmed = window.confirm("Resolve and permanently delete this checked-out booking?");
+    const confirmed = window.confirm("Resolve and permanently delete this booking?");
     if (!confirmed) return;
     try {
       await deleteBookingById(bookingId);
@@ -381,8 +391,7 @@ export default function BookingManagementPage() {
                 onReopenDeclined={handleReopenDeclined}
                 onDeleteDeclined={handleDeleteDeclined}
                 onResolveCheckedOut={handleResolveCheckedOut}
-                hasUnresolvedConcerns={openConcernCount > 0}
-                unresolvedConcernCount={openConcernCount}
+                unresolvedIssueBookingIds={unresolvedIssueBookingIds}
               />
             </div>
           )}

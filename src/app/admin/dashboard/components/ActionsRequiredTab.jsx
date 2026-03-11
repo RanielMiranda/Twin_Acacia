@@ -2,10 +2,19 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Mail, ShieldCheck, KeyRound } from "lucide-react";
+import { CheckCircle2, Mail, ShieldCheck, KeyRound, Send, Trash2 } from "lucide-react";
 import { tabs } from "./data/data";
 
-export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab, messages, onResolve, archives }) {
+export default function ActionsRequiredTab({
+  activeActionTab,
+  setActiveActionTab,
+  messages,
+  onResolve,
+  archives,
+  tabCounts = {},
+  onSendMessage,
+  onDeleteArchive,
+}) {
 
   const [showArchives, setShowArchives] = useState(false);
 
@@ -30,6 +39,11 @@ export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab
           >
             <tab.icon size={16} />
             {tab.label}
+            {tabCounts[tab.id] > 0 && (
+              <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                {tabCounts[tab.id]}
+              </span>
+            )}
           </button>
         ))}
 
@@ -94,7 +108,7 @@ export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab
                     {msg.requestedBy || "Unknown User"}
                   </span>
                   <span className="text-[11px] text-slate-400 uppercase tracking-tighter font-bold">
-                    Owner
+                    {msg.requesterRole || "Owner"}
                   </span>
                 </div>
               </div>
@@ -103,11 +117,34 @@ export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab
               {!showArchives && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
-                    onClick={() => onResolve(msg.id)}
+                    variant="outline"
+                    onClick={() => onSendMessage?.(msg)}
+                    className={`h-10 px-4 rounded-xl flex items-center gap-2 text-slate-700 border-slate-200 hover:bg-slate-50 ${
+                      msg?.resort_id ? "" : "opacity-60 cursor-not-allowed"
+                    }`}
+                    disabled={!msg?.resort_id}
+                  >
+                    <Send size={16} />
+                    <span className="font-semibold">Send Message</span>
+                  </Button>
+                  <Button
+                    onClick={() => onResolve(msg)}
                     className="bg-emerald-500 hover:bg-emerald-600 text-white h-10 px-4 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-sm shadow-emerald-100"
                   >
                     <CheckCircle2 size={18} />
-                    <span className="font-semibold">Resolve</span>
+                    <span className="font-semibold">{msg.actionLabel || "Resolve"}</span>
+                  </Button>
+                </div>
+              )}
+              {showArchives && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    onClick={() => onDeleteArchive?.(msg)}
+                    className="rounded-xl flex items-center justify-center border-rose-200 text-rose-600 hover:bg-rose-50"
+                    aria-label="Delete archived message"
+                  >
+                    <Trash2 size={18} />
                   </Button>
                 </div>
               )}

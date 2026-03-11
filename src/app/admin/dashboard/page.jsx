@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/toast/ToastProvider";
 import ResortCard from "./components/ResortCard";
 import SearchBar from "./components/SearchBar";
 import ActionsRequiredTab from "./components/ActionsRequiredTab"; 
+import MessageOwnerModal from "../accounts/components/MessageOwnerModal";
 
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useSupport } from "@/components/useclient/SupportClient";
@@ -34,6 +35,8 @@ export default function Page() {
   const { toast } = useToast();
   const [messages, setMessages] = useState({ resort: [], account: [], support: [] });
   const { listArchivedOwnerAdminMessages, archiveOwnerAdminMessage, isMissingSupportTableError } = useSupport();
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   
   const router = useRouter();
   const { resetResort, deleteResort } = useResort();
@@ -94,6 +97,45 @@ export default function Page() {
       const accountMsgs = normalized.filter((msg) => msg.category === "account");
       const supportMsgs = normalized.filter((msg) => msg.category !== "resort" && msg.category !== "account");
 
+      let recoveryRows = [];
+      try {
+        const response = await fetch("/api/account-recovery", { method: "GET", cache: "no-store" });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error || "Failed to load recovery requests.");
+        recoveryRows = body.requests || [];
+      } catch (error) {
+        toast({ message: error.message, color: "red" });
+      }
+
+      const recoveryMsgs = (recoveryRows || [])
+        .filter((row) => row.status !== "resolved")
+        .map((row) => ({
+          id: `recovery:${row.id}`,
+          title: "Password reset request",
+          content: row.message || "No message provided.",
+          requestedBy: row.email || "Unknown email",
+          senderImage: null,
+          status: row.status || "open",
+          category: "account",
+          created_at: row.created_at,
+          requesterRole: "Requester",
+          actionLabel: "Send Setup Link",
+        }));
+      const recoveryArchives = (recoveryRows || [])
+        .filter((row) => row.status === "resolved")
+        .map((row) => ({
+          id: `recovery-arch:${row.id}`,
+          title: "Password reset request",
+          content: row.message || "No message provided.",
+          requestedBy: row.email || "Unknown email",
+          senderImage: null,
+          status: row.status || "resolved",
+          category: "account",
+          created_at: row.created_at,
+          requesterRole: "Requester",
+          archived_at: row.resolved_at || row.created_at,
+        }));
+
       let archivedRows = [];
       try {
         archivedRows = await listArchivedOwnerAdminMessages();
@@ -117,12 +159,15 @@ export default function Page() {
 
       setMessages({
         resort: resortMsgs || [],
-        account: accountMsgs || [],
+        account: [...(accountMsgs || []), ...recoveryMsgs],
         support: supportMsgs,
       });
       setArchives({
         resort: normalizedArchived.filter((msg) => msg.category === "resort"),
-        account: normalizedArchived.filter((msg) => msg.category === "account"),
+        account: [
+          ...normalizedArchived.filter((msg) => msg.category === "account"),
+          ...recoveryArchives,
+        ],
         support: normalizedArchived.filter((msg) => msg.category !== "resort" && msg.category !== "account"),
       });
     } catch (err) {
@@ -135,14 +180,34 @@ export default function Page() {
     fetchMessages();
   }, [fetchMessages, fetchResorts]);
 
-  const handleResolve = async (id) => {
-    const resolvedMsg = messages[activeActionTab].find(msg => msg.id === id);
+  const handleResolve = async (msg) => {
+    if (!msg) return;
+    if (typeof msg.id === "string" && msg.id.startsWith("recovery:")) {
+      const requestId = Number(msg.id.replace("recovery:", ""));
+      if (!Number.isFinite(requestId)) return;
+      try {
+        const response = await fetch(`/api/account-recovery/${requestId}`, { method: "PATCH" });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error || "Failed to send setup link.");
+        toast({
+          message: body?.setupLink ? "Setup link sent to account email." : "Recovery request resolved.",
+          color: "green",
+          icon: CheckCircle2,
+        });
+        fetchMessages();
+      } catch (error) {
+        toast({ message: error.message, color: "red" });
+      }
+      return;
+    }
+
+    const resolvedMsg = messages[activeActionTab].find(entry => entry.id === msg.id);
     if (!resolvedMsg) return;
 
     const { data: sourceRow, error: loadError } = await supabase
       .from("owner_admin_messages")
       .select("id, resort_id, sender_name, sender_image, subject, message, status, created_at")
-      .eq("id", id)
+      .eq("id", msg.id)
       .maybeSingle();
     if (loadError) {
       toast({
@@ -169,6 +234,73 @@ export default function Page() {
       icon: CheckCircle2,
     });
     fetchMessages();
+  };
+
+  const handleOpenMessageModal = (msg) => {
+    const resortId = msg?.resort_id ?? null;
+    setSelectedAccount({
+      id: msg?.id || "",
+      resortId,
+      name: msg?.requestedBy || "Owner",
+      resortName: resortId ? `Resort #${resortId}` : "Account Request",
+    });
+    setIsMessageModalOpen(true);
+  };
+
+  const handleSendMessage = async (_, data) => {
+    if (!selectedAccount?.resortId) {
+      toast({ message: "No resort linked for this request.", color: "amber" });
+      return;
+    }
+    const normalizedSubject = ["resort", "account", "support"].includes(String(data.subject || "").toLowerCase())
+      ? String(data.subject).toLowerCase()
+      : "support";
+    const payload = {
+      resort_id: selectedAccount.resortId,
+      sender_role: "admin",
+      sender_name: "Admin",
+      subject: normalizedSubject,
+      message: data.message,
+      status: "pending",
+    };
+    const { error } = await supabase.from("owner_admin_messages").insert(payload);
+    if (error) {
+      toast({ message: `Failed to send message: ${error.message}`, color: "red" });
+      return;
+    }
+    toast({ message: "Message sent to owner inbox.", color: "blue", icon: CheckCircle2 });
+  };
+
+  const handleDeleteArchive = async (msg) => {
+    if (!msg) return;
+    const confirmed = window.confirm("Are you sure you want to delete this archived message?");
+    if (!confirmed) return;
+
+    toast({ icon: CheckCircle2, message: `Archived Message has been deleted`, color: "green" });
+
+    if (typeof msg.id === "string" && msg.id.startsWith("recovery-arch:")) {
+      const requestId = Number(msg.id.replace("recovery-arch:", ""));
+      if (!Number.isFinite(requestId)) return;
+      try {
+        const response = await fetch(`/api/account-recovery/${requestId}`, { method: "DELETE" });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error || "Failed to delete recovery request.");
+        fetchMessages();
+      } catch (error) {
+        toast({ message: error.message, color: "red" });
+      }
+      return;
+    }
+
+    if (typeof msg.id === "string" && msg.id.startsWith("arch:")) {
+      const archiveId = msg.id.slice(5);
+      const { error } = await supabase.from("owner_admin_messages_archive").delete().eq("id", archiveId);
+      if (error) {
+        toast({ message: `Failed to delete archive: ${error.message}`, color: "red" });
+        return;
+      }
+      fetchMessages();
+    }
   };
 
   const filteredResorts = resorts.filter(
@@ -312,11 +444,24 @@ export default function Page() {
             setActiveActionTab={setActiveActionTab}
             messages={messages}
             onResolve={handleResolve}
-            archives={archives} 
+            archives={archives}
+            tabCounts={{
+              resort: messages.resort.length,
+              account: messages.account.length,
+              support: messages.support.length,
+            }}
+            onSendMessage={handleOpenMessageModal}
+            onDeleteArchive={handleDeleteArchive}
           />
         )}
       </div>
       <Toast/>
+      <MessageOwnerModal
+        isOpen={isMessageModalOpen}
+        onClose={() => setIsMessageModalOpen(false)}
+        account={selectedAccount}
+        onSendMessage={handleSendMessage}
+      />
     </div>
   );
 }

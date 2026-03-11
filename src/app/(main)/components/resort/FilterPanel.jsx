@@ -80,7 +80,7 @@ export default function FilterPanel() {
         <button
           onClick={applyFilters}
           disabled={loading}
-          className="w-full rounded-xl bg-blue-600 text-white text-xs font-bold uppercase tracking-wider py-3 hover:bg-black disabled:opacity-60"
+          className="w-full rounded-xl hover:scale-105 transition bg-blue-600 text-white text-xs font-bold uppercase tracking-wider py-3 hover:bg-blue-700 disabled:opacity-60"
         >
           {loading ? "Applying filters..." : "Search"}
         </button>
