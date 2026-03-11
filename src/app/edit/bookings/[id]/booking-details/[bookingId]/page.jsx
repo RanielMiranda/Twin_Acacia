@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useResort } from "@/components/useclient/ContextEditor";
@@ -25,6 +25,23 @@ export default function BookingDetailsPage() {
   const [ownerReply, setOwnerReply] = useState("");
   const [statusAudits, setStatusAudits] = useState([]);
   const [refreshingMessages, setRefreshingMessages] = useState(false);
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const lastOwnerReplySentAtRef = useRef(0);
+
+  const hashString = (value) => {
+    let hash = 0;
+    for (let i = 0; i < value.length; i += 1) {
+      hash = (hash << 5) - hash + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  };
+
+  const buildOwnerIdempotencyKey = (message) => {
+    const bucket = Math.floor(Date.now() / 5000);
+    const base = `${booking?.id || ""}:owner:${message}`.toLowerCase().trim();
+    return `ticket-msg:${bucket}:${hashString(base)}`;
+  };
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -128,13 +145,22 @@ export default function BookingDetailsPage() {
 
   const handleSendReply = async () => {
     if (!ownerReply.trim()) return;
+    if (isSendingReply) return;
+    const now = Date.now();
+    if (now - lastOwnerReplySentAtRef.current < 5000) {
+      toast({ message: "Please wait a few seconds before sending another message.", color: "amber" });
+      return;
+    }
     try {
+      setIsSendingReply(true);
+      lastOwnerReplySentAtRef.current = now;
       const payload = {
         booking_id: booking.id,
         resort_id: booking.resortId || booking.resort_id || Number(id),
         sender_role: "owner",
         sender_name: "Owner",
         message: ownerReply.trim(),
+        idempotency_key: buildOwnerIdempotencyKey(ownerReply),
       };
       await sendTicketMessage(payload);
       setOwnerReply("");
@@ -146,6 +172,8 @@ export default function BookingDetailsPage() {
         return;
       }
       toast({ message: `Reply failed: ${err.message}`, color: "red" });
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -159,6 +187,30 @@ export default function BookingDetailsPage() {
     }
   };
 
+  const archiveAndDeleteBooking = async () => {
+    if (!booking) return;
+    const confirmed = window.confirm("Archive and delete this booking?");
+    if (!confirmed) return;
+    try {
+      const { error: archiveError } = await supabase.from("bookings_archive").insert({
+        source_booking_id: booking.id,
+        resort_id: booking.resortId || booking.resort_id || Number(id),
+        status: booking.status || booking.bookingForm?.status || null,
+        booking_form: booking.bookingForm || {},
+        room_ids: booking.roomIds || [],
+        start_date: booking.startDate || null,
+        end_date: booking.endDate || null,
+        check_in_time: booking.checkInTime || null,
+        check_out_time: booking.checkOutTime || null,
+      });
+      if (archiveError) throw archiveError;
+      await deleteBookingById(booking.id);
+      router.push(`/edit/bookings/${id}`);
+    } catch (err) {
+      toast({ message: `Archive failed: ${err.message}`, color: "red" });
+    }
+  };
+
   return (
     <div>
     <BookingModernEditor
@@ -167,10 +219,7 @@ export default function BookingDetailsPage() {
       resortName={currentResort?.name}
       onBack={() => router.push(`/edit/bookings/${id}`)}
       onSave={(next) => updateBookingById(booking.id, next)}
-      onDelete={() => {
-        deleteBookingById(booking.id);
-        router.push(`/edit/bookings/${id}`);
-      }}
+      onDelete={archiveAndDeleteBooking}
       onOpenForm={() => router.push(`/edit/bookings/${id}/booking-details/${booking.id}/form`)}
       onOpenTicket={() => router.push(`/ticket/${booking.id}`)}
       onOpenBooking={(targetId) => router.push(`/edit/bookings/${id}/booking-details/${targetId}`)}

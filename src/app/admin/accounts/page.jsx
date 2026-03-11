@@ -136,7 +136,11 @@ export default function Page() {
       setRecoveryRequests((prev) =>
         prev.map((entry) => (entry.id === body.request?.id ? body.request : entry))
       );
-      toast({ message: "Recovery request marked as resolved.", color: "green", icon: CheckCircle2 });
+      toast({
+        message: body?.setupLink ? "Setup link sent to account email." : "Recovery request marked as resolved.",
+        color: "green",
+        icon: CheckCircle2,
+      });
     } catch (error) {
       toast({ message: error.message, color: "red" });
     }
@@ -209,7 +213,7 @@ export default function Page() {
                     </span>
                     {request.status !== "resolved" ? (
                       <Button className="h-9 rounded-xl" onClick={() => handleResolveRecoveryRequest(request.id)}>
-                        Mark Resolved
+                        Send Setup Link
                       </Button>
                     ) : null}
                   </div>

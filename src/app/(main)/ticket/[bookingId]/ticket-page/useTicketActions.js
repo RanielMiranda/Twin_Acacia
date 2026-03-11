@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BUCKET_NAME } from "@/lib/utils";
 import { isMissingSupportTableError, toSafeSegment } from "./helpers";
+import { useSupport } from "@/components/useclient/SupportClient";
 
 export function useTicketActions({
   booking,
@@ -27,6 +28,27 @@ export function useTicketActions({
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingAddOns, setIsSavingAddOns] = useState(false);
+  const [isSendingIssue, setIsSendingIssue] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const { sendTicketMessage, createTicketIssueSafe } = useSupport();
+  const lastIssueSentAtRef = useRef(0);
+  const lastMessageSentAtRef = useRef(0);
+  const lastAddOnsSentAtRef = useRef(0);
+
+  const hashString = (value) => {
+    let hash = 0;
+    for (let i = 0; i < value.length; i += 1) {
+      hash = (hash << 5) - hash + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+  };
+
+  const buildMessageIdempotencyKey = (message, senderRole) => {
+    const bucket = Math.floor(Date.now() / 5000);
+    const base = `${normalizedBookingId}:${senderRole}:${message}`.toLowerCase().trim();
+    return `ticket-msg:${bucket}:${hashString(base)}`;
+  };
 
   const uploadProofs = async () => {
     if (!Array.isArray(proofFiles) || proofFiles.length === 0) return [];
@@ -130,6 +152,7 @@ export function useTicketActions({
   };
 
   const handleSendIssue = async () => {
+    if (isSendingIssue) return;
     if (!issueMessage.trim() || !booking) {
       if (!issueMessage.trim()) {
         toast({ message: "Issue message cannot be empty.", color: "red" });
@@ -137,7 +160,15 @@ export function useTicketActions({
       return;
     }
 
+    const now = Date.now();
+    if (now - lastIssueSentAtRef.current < 5000) {
+      toast({ message: "Please wait a few seconds before sending another issue.", color: "amber" });
+      return;
+    }
+
+    setIsSendingIssue(true);
     try {
+      lastIssueSentAtRef.current = now;
       const payload = {
         booking_id: booking.id,
         resort_id: booking.resort_id,
@@ -148,8 +179,11 @@ export function useTicketActions({
         status: "open",
       };
 
-      const { error } = await supabase.from("ticket_issues").insert(payload);
-      if (error) throw error;
+      const result = await createTicketIssueSafe(payload);
+      if (result?.skipped) {
+        toast({ message: "Issue already sent. Please wait for a response.", color: "amber" });
+        return;
+      }
 
       setIssueSubject("");
       setIssueMessage("");
@@ -160,21 +194,31 @@ export function useTicketActions({
         return;
       }
       toast({ message: `Issue send failed: ${err.message}`, color: "red" });
+    } finally {
+      setIsSendingIssue(false);
     }
   };
 
   const handleSendMessage = async () => {
+    if (isSendingMessage) return;
     if (!chatMessage.trim() || !booking) return;
+    const now = Date.now();
+    if (now - lastMessageSentAtRef.current < 5000) {
+      toast({ message: "Please wait a few seconds before sending another message.", color: "amber" });
+      return;
+    }
+    setIsSendingMessage(true);
     try {
+      lastMessageSentAtRef.current = now;
       const payload = {
         booking_id: booking.id,
         resort_id: booking.resort_id,
         sender_role: "client",
         sender_name: form.guestName || "Client",
         message: chatMessage.trim(),
+        idempotency_key: buildMessageIdempotencyKey(chatMessage, "client"),
       };
-      const { error } = await supabase.from("ticket_messages").insert(payload);
-      if (error) throw error;
+      await sendTicketMessage(payload);
       setChatMessage("");
       await fetchMessages(booking.id);
       toast({ message: "Message sent to owner.", color: "green" });
@@ -184,11 +228,18 @@ export function useTicketActions({
         return;
       }
       toast({ message: `Message send failed: ${err.message}`, color: "red" });
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
   const handleSubmitAddOns = async (services) => {
     if (!booking) return;
+    const now = Date.now();
+    if (now - lastAddOnsSentAtRef.current < 5000) {
+      toast({ message: "Please wait a few seconds before sending another add-on request.", color: "amber" });
+      return;
+    }
     const normalizedServices = (services || [])
       .map((service) => ({
         name: String(service?.name || "").trim(),
@@ -198,6 +249,7 @@ export function useTicketActions({
 
     setIsSavingAddOns(true);
     try {
+      lastAddOnsSentAtRef.current = now;
       const bookingForm = {
         ...(booking.booking_form || {}),
         resortServices: normalizedServices,
@@ -212,7 +264,7 @@ export function useTicketActions({
       if (error) throw error;
 
       try {
-        await supabase.from("ticket_messages").insert({
+        await sendTicketMessage({
           booking_id: booking.id,
           resort_id: booking.resort_id,
           sender_role: "client",
@@ -223,6 +275,12 @@ export function useTicketActions({
                   .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
                   .join(", ")}`
               : "Requested add-on update: cleared requested add-ons.",
+          idempotency_key: buildMessageIdempotencyKey(
+            normalizedServices.length > 0
+              ? normalizedServices.map((service) => `${service.name}:${Number(service.cost || 0)}`).join("|")
+              : "cleared",
+            "client-addons"
+          ),
         });
       } catch (messageError) {
         if (!isMissingSupportTableError(messageError)) {
@@ -244,6 +302,8 @@ export function useTicketActions({
   return {
     isSubmitting,
     isSavingAddOns,
+    isSendingIssue,
+    isSendingMessage,
     handleSubmitDownpayment,
     handleSubmitAddOns,
     handleSendIssue,

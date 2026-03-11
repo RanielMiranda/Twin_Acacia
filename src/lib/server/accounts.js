@@ -206,6 +206,17 @@ export async function listRecoveryRequests() {
   return data || [];
 }
 
+export async function getRecoveryRequestById(requestId) {
+  const supabase = createServiceSupabaseClient();
+  const { data, error } = await supabase
+    .from("account_recovery_requests")
+    .select("id, account_id, email, message, status, created_at, resolved_at")
+    .eq("id", Number(requestId))
+    .maybeSingle();
+  if (error) throw normalizeSupabaseError(error);
+  return data || null;
+}
+
 export async function resolveRecoveryRequest(requestId) {
   const supabase = createServiceSupabaseClient();
   const { data, error } = await supabase
@@ -219,4 +230,27 @@ export async function resolveRecoveryRequest(requestId) {
     .single();
   if (error) throw normalizeSupabaseError(error);
   return data;
+}
+
+export async function ensureAccountSetupToken(accountId) {
+  const supabase = createServiceSupabaseClient();
+  const { data: existing, error: loadError } = await supabase
+    .from("accounts")
+    .select("id, setup_token")
+    .eq("id", Number(accountId))
+    .maybeSingle();
+  if (loadError) throw loadError;
+  if (!existing) return null;
+  if (existing.setup_token) return existing.setup_token;
+
+  const token = `setup-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  const { error: updateError } = await supabase
+    .from("accounts")
+    .update({
+      setup_token: token,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", Number(accountId));
+  if (updateError) throw updateError;
+  return token;
 }

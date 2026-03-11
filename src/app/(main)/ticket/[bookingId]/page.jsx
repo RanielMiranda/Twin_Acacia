@@ -44,7 +44,16 @@ export default function ClientTicketPage() {
   const setPaymentMethod = (method) => setPaymentDraft((prev) => ({ ...prev, method }));
   const setDownpayment = (value) => setPaymentDraft((prev) => ({ ...prev, downpayment: value }));
 
-  const { isSubmitting, isSavingAddOns, handleSubmitDownpayment, handleSubmitAddOns, handleSendIssue, handleSendMessage } = useTicketActions({
+  const {
+    isSubmitting,
+    isSavingAddOns,
+    isSendingIssue,
+    isSendingMessage,
+    handleSubmitDownpayment,
+    handleSubmitAddOns,
+    handleSendIssue,
+    handleSendMessage,
+  } = useTicketActions({
     booking,
     resort,
     form,
@@ -151,11 +160,13 @@ export default function ClientTicketPage() {
         chatMessage={chatMessage}
         setChatMessage={setChatMessage}
         onSendMessage={handleSendMessage}
+        isSendingMessage={isSendingMessage}
         issueSubject={issueSubject}
         setIssueSubject={setIssueSubject}
         issueMessage={issueMessage}
         setIssueMessage={setIssueMessage}
         onSendIssue={handleSendIssue}
+        isSendingIssue={isSendingIssue}
       />
 
       <Toast />

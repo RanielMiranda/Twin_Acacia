@@ -94,7 +94,7 @@ export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab
                     {msg.requestedBy || "Unknown User"}
                   </span>
                   <span className="text-[11px] text-slate-400 uppercase tracking-tighter font-bold">
-                    Owner
+                    {msg.requesterRole || "Owner"}
                   </span>
                 </div>
               </div>
@@ -103,11 +103,11 @@ export default function ActionsRequiredTab({ activeActionTab, setActiveActionTab
               {!showArchives && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
-                    onClick={() => onResolve(msg.id)}
+                    onClick={() => onResolve(msg)}
                     className="bg-emerald-500 hover:bg-emerald-600 text-white h-10 px-4 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-sm shadow-emerald-100"
                   >
                     <CheckCircle2 size={18} />
-                    <span className="font-semibold">Resolve</span>
+                    <span className="font-semibold">{msg.actionLabel || "Resolve"}</span>
                   </Button>
                 </div>
               )}

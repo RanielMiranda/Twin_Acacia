@@ -94,6 +94,31 @@ export default function Page() {
       const accountMsgs = normalized.filter((msg) => msg.category === "account");
       const supportMsgs = normalized.filter((msg) => msg.category !== "resort" && msg.category !== "account");
 
+      let recoveryRows = [];
+      try {
+        const response = await fetch("/api/account-recovery", { method: "GET", cache: "no-store" });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error || "Failed to load recovery requests.");
+        recoveryRows = body.requests || [];
+      } catch (error) {
+        toast({ message: error.message, color: "red" });
+      }
+
+      const recoveryMsgs = (recoveryRows || [])
+        .filter((row) => row.status !== "resolved")
+        .map((row) => ({
+          id: `recovery:${row.id}`,
+          title: "Password reset request",
+          content: row.message || "No message provided.",
+          requestedBy: row.email || "Unknown email",
+          senderImage: null,
+          status: row.status || "open",
+          category: "account",
+          created_at: row.created_at,
+          requesterRole: "Requester",
+          actionLabel: "Send Setup Link",
+        }));
+
       let archivedRows = [];
       try {
         archivedRows = await listArchivedOwnerAdminMessages();
@@ -117,7 +142,7 @@ export default function Page() {
 
       setMessages({
         resort: resortMsgs || [],
-        account: accountMsgs || [],
+        account: [...(accountMsgs || []), ...recoveryMsgs],
         support: supportMsgs,
       });
       setArchives({
@@ -135,8 +160,28 @@ export default function Page() {
     fetchMessages();
   }, [fetchMessages, fetchResorts]);
 
-  const handleResolve = async (id) => {
-    const resolvedMsg = messages[activeActionTab].find(msg => msg.id === id);
+  const handleResolve = async (msg) => {
+    if (!msg) return;
+    if (typeof msg.id === "string" && msg.id.startsWith("recovery:")) {
+      const requestId = Number(msg.id.replace("recovery:", ""));
+      if (!Number.isFinite(requestId)) return;
+      try {
+        const response = await fetch(`/api/account-recovery/${requestId}`, { method: "PATCH" });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error || "Failed to send setup link.");
+        toast({
+          message: body?.setupLink ? "Setup link sent to account email." : "Recovery request resolved.",
+          color: "green",
+          icon: CheckCircle2,
+        });
+        fetchMessages();
+      } catch (error) {
+        toast({ message: error.message, color: "red" });
+      }
+      return;
+    }
+
+    const resolvedMsg = messages[activeActionTab].find(entry => entry.id === msg.id);
     if (!resolvedMsg) return;
 
     const { data: sourceRow, error: loadError } = await supabase

@@ -22,6 +22,7 @@ import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast"
 import PersistentToast from "@/components/ui/toast/PersistentToast";
 import { supabase } from "@/lib/supabase";
+import { useSupport } from "@/components/useclient/SupportClient";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 
 export default function ResortDetailPage({ name }) {
@@ -41,6 +42,7 @@ export default function ResortDetailPage({ name }) {
   const { startDate, endDate, checkInTime, checkOutTime } = useFilters();
 
   const { toast, persistentToast } = useToast();
+  const { sendTicketMessage, isMissingSupportTableError } = useSupport();
   useEffect(() => {
     if (!name) return;
         const decodedName = decodeURIComponent(name);
@@ -201,7 +203,7 @@ const handleSubmitInquiry = async (submittedData) => {
       if (error) throw error;
       if (submittedData.message) {
         try {
-          await supabase.from("ticket_messages").insert({
+          await sendTicketMessage({
             booking_id: bookingId,
             resort_id: Number(resort.id),
             sender_role: "client",
@@ -209,7 +211,9 @@ const handleSubmitInquiry = async (submittedData) => {
             message: submittedData.message,
           });
         } catch (messageError) {
-          console.error("Failed to save inquiry message:", messageError?.message || messageError);
+          if (!isMissingSupportTableError(messageError)) {
+            console.error("Failed to save inquiry message:", messageError?.message || messageError);
+          }
         }
       }
       if (typeof window !== "undefined") {

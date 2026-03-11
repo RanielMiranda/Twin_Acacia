@@ -16,11 +16,13 @@ export function TicketSupportDeskCardSection({
   chatMessage,
   setChatMessage,
   onSendMessage,
+  isSendingMessage,
   issueSubject,
   setIssueSubject,
   issueMessage,
   setIssueMessage,
   onSendIssue,
+  isSendingIssue,
 }) {
   const conversationItems = buildSupportConversationItems({
     messages,
@@ -82,6 +84,11 @@ export function TicketSupportDeskCardSection({
               >
                 <p className="font-black uppercase tracking-wider text-[9px] mb-1">{getSupportConversationLabel(msg)}</p>
                 <p>{msg.body}</p>
+                {msg.createdAt ? (
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    {new Date(msg.createdAt).toLocaleString()}
+                  </p>
+                ) : null}
               </div>
             ))
           )}
@@ -95,8 +102,8 @@ export function TicketSupportDeskCardSection({
               value={chatMessage}
               onChange={(e) => setChatMessage(e.target.value)}
             />
-            <Button className="rounded-2xl h-12" onClick={onSendMessage}>
-              Send
+            <Button className="rounded-2xl h-12" onClick={onSendMessage} disabled={isSendingMessage}>
+              {isSendingMessage ? "Sending..." : "Send"}
             </Button>
           </div>
         ) : (
@@ -117,8 +124,9 @@ export function TicketSupportDeskCardSection({
             <Button
               className="rounded-full px-8 h-11 bg-slate-900 font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all"
               onClick={onSendIssue}
+              disabled={isSendingIssue}
             >
-              Send Issue Report
+              {isSendingIssue ? "Sending..." : "Send Issue Report"}
             </Button>
           </div>
         )}

@@ -4,7 +4,6 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { supabase } from "@/lib/supabase";
 import { useResort } from "./ResortEditorClient";
 import { BUCKET_NAME, getStoragePathFromPublicUrl } from "@/lib/utils";
-import { isCheckoutOverdueRow } from "@/lib/bookingDateTime";
 
 const BookingsContext = createContext(null);
 const BOOKING_COLUMNS = [
@@ -78,13 +77,6 @@ function toRow(booking, resortId) {
   };
 }
 
-function isPastDeadline(deadline) {
-  if (!deadline) return false;
-  const date = new Date(deadline);
-  if (Number.isNaN(date.getTime())) return false;
-  return date.getTime() < Date.now();
-}
-
 export function BookingsProvider({ children }) {
   const { resort, updateResort } = useResort();
   const [bookings, setBookings] = useState([]);
@@ -123,83 +115,7 @@ export function BookingsProvider({ children }) {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      const rows = data || [];
-      const expiredRows = rows.filter((row) => {
-        const status = (row.status || row.booking_form?.status || "").toLowerCase();
-        const pendingPayment = status.includes("pending payment");
-        const unpaid = Number(row.booking_form?.downpayment || 0) <= 0;
-        return pendingPayment && unpaid && isPastDeadline(row.payment_deadline || row.booking_form?.paymentDeadline);
-      });
-      const overdueCheckoutRows = rows.filter((row) => {
-        const status = (row.status || row.booking_form?.status || "").toLowerCase();
-        const isConfirmed = status.includes("confirmed");
-        return isConfirmed && isCheckoutOverdueRow(row);
-      });
-
-      if (expiredRows.length > 0) {
-        const nowIso = new Date().toISOString();
-        await Promise.all(
-          expiredRows.map((row) =>
-            supabase
-              .from("bookings")
-              .update({
-                status: "Cancelled",
-                payment_deadline: row.payment_deadline || row.booking_form?.paymentDeadline || null,
-                booking_form: {
-                  ...(row.booking_form || {}),
-                  status: "Cancelled",
-                  autoCancelledAt: nowIso,
-                  cancellationReason: "Payment deadline expired",
-                },
-              })
-              .eq("id", row.id)
-          )
-        );
-      }
-      if (overdueCheckoutRows.length > 0) {
-        const nowIso = new Date().toISOString();
-        await Promise.all(
-          overdueCheckoutRows.map((row) =>
-            supabase
-              .from("bookings")
-              .update({
-                status: "Pending Checkout",
-                booking_form: {
-                  ...(row.booking_form || {}),
-                  status: "Pending Checkout",
-                  autoPendingCheckoutAt: nowIso,
-                },
-              })
-              .eq("id", row.id)
-          )
-        );
-      }
-
-      const normalizedRows = rows.map((row) => {
-        const shouldCancel = expiredRows.some((entry) => entry.id === row.id);
-        const shouldMoveToPendingCheckout = overdueCheckoutRows.some((entry) => entry.id === row.id);
-        if (!shouldCancel && !shouldMoveToPendingCheckout) return row;
-        if (shouldCancel) {
-          return {
-            ...row,
-            status: "Cancelled",
-            booking_form: {
-              ...(row.booking_form || {}),
-              status: "Cancelled",
-            },
-          };
-        }
-        return {
-          ...row,
-          status: "Pending Checkout",
-          booking_form: {
-            ...(row.booking_form || {}),
-            status: "Pending Checkout",
-          },
-        };
-      });
-
-      const mapped = normalizedRows.map(toModel);
+      const mapped = (data || []).map(toModel);
       syncResortBookings(mapped);
       const fetchedAt = new Date().toISOString();
       setLastFetchedAt(fetchedAt);

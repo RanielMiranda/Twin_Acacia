@@ -29,6 +29,17 @@ const isMissingSupportTableError = (error) =>
     error.message.includes("does not exist") ||
     error.message.includes("schema cache"));
 
+const ISSUE_DEDUP_WINDOW_MS = 10_000;
+const recentIssueKeys = new Map();
+
+const buildIssueDedupKey = (payload) => {
+  const bookingId = String(payload?.booking_id || "");
+  const guestEmail = String(payload?.guest_email || "").trim().toLowerCase();
+  const subject = String(payload?.subject || "").trim().toLowerCase();
+  const message = String(payload?.message || "").trim().toLowerCase();
+  return `${bookingId}::${guestEmail}::${subject}::${message}`;
+};
+
 export function SupportProvider({ children }) {
   const loadBookingSupport = useCallback(async (bookingId) => {
     const [{ data: messageRows, error: messageError }, { data: issueRows, error: issueError }, { data: archivedIssueRows, error: archivedIssueError }] = await Promise.all([
@@ -257,18 +268,39 @@ export function SupportProvider({ children }) {
     if (plainInsertError) throw plainInsertError;
   }, []);
 
+  const createTicketIssueSafe = useCallback(async (payload) => {
+    const dedupKey = buildIssueDedupKey(payload);
+    const now = Date.now();
+    const lastSentAt = recentIssueKeys.get(dedupKey);
+    if (lastSentAt && now - lastSentAt < ISSUE_DEDUP_WINDOW_MS) {
+      return { skipped: true };
+    }
+    recentIssueKeys.set(dedupKey, now);
+
+    try {
+      const { error } = await supabase.from("ticket_issues").insert(payload);
+      if (error) throw error;
+      return { skipped: false };
+    } catch (error) {
+      recentIssueKeys.delete(dedupKey);
+      throw error;
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       loadBookingSupport,
       listResortConcerns,
       updateConcernStatus,
       sendTicketMessage,
+      createTicketIssueSafe,
       listArchivedOwnerAdminMessages,
       archiveOwnerAdminMessage,
       isMissingSupportTableError,
     }),
     [
       archiveOwnerAdminMessage,
+      createTicketIssueSafe,
       listArchivedOwnerAdminMessages,
       listResortConcerns,
       loadBookingSupport,
