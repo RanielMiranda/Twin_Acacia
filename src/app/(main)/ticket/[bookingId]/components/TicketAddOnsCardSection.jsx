@@ -88,7 +88,7 @@ export function TicketAddOnsCardSection({
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
           type="button"
-          className="rounded-2xl bg-slate-900 hover:bg-black"
+          className="rounded-2xl bg-blue-600 hover:bg-black"
           onClick={() => onSubmit(services)}
           disabled={!canEdit || isSubmitting || availableServices.length === 0}
         >

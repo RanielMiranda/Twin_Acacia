@@ -8,6 +8,7 @@ import { useBookings } from "@/components/useclient/BookingsClient";
 import { useSupport } from "@/components/useclient/SupportClient";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
+import PersistentToast from "@/components/ui/toast/PersistentToast";
 import BookingModernEditor from "./components/BookingModernEditor";
 import { overlapsByDateTime } from "./components/bookingEditorUtils";
 import { supabase } from "@/lib/supabase";
@@ -192,6 +193,7 @@ export default function BookingDetailsPage() {
       resortPaymentImageUrl={currentResort?.payment_image_url}
     />
     <Toast />
+    <PersistentToast />
   </div>    
   );
 }

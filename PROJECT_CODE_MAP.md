@@ -50,7 +50,9 @@ Quick reference for where key logic lives.
   - Ticket link token generation and expiry checks (`isTicketTokenValid`, etc.).
 
 - `caretakerNotifications.js`
-  - Notification write helper after payment approval (in-app; placeholder for future email/SMS).
+  - Caretaker phone notification helpers (placeholder for Semaphore SMS).
+  - `notifyCaretakerOnBookingConfirmed` builds the SMS body (Entry Code + stay details).
+  - Triggered when a booking is set to **Confirmed** (see booking status handlers).
 
 - `idempotency.js`
   - Idempotency key generator for write actions/messages.
@@ -127,6 +129,7 @@ Quick reference for where key logic lives.
   - Main booking details editor UI.
   - Handles inline edits, status transitions, payment proof flow.
   - Adds action lock (`actionBusy`) and writes status audit entries.
+  - Shows a persistent toast containing the caretaker SMS message when a stay is confirmed.
 
 - `/[id]/booking-details/[bookingId]/components/bookingEditorUtils.js`
   - Booking editor draft builders + helper re-exports from `src/lib/bookingDateTime.js`.

@@ -184,7 +184,7 @@ export function TicketPaymentCardSection({
                   <span className="font-bold text-amber-300">₱{Number(pendingPaid || 0).toLocaleString()}</span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-black text-blue-400 pt-2">
+              <div className="flex justify-between text-lg font-black text-emerald-500 pt-2">
                 <span>Balance</span>
                 <span>₱{Number(balance || 0).toLocaleString()}</span>
               </div>

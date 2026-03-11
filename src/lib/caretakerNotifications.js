@@ -11,3 +11,22 @@ export async function notifyCaretakerOnPaymentApproval({
   // Hook point for future SMS/email integration.
   console.info("[CaretakerHook]", message);
 }
+
+export function buildCaretakerConfirmationMessage({
+  bookingId,
+  resortName,
+  guestName,
+  entryCode,
+  checkInDate,
+  checkOutDate,
+}) {
+  const stayRange = [checkInDate, checkOutDate].filter(Boolean).join(" to ") || "Dates pending";
+  return `Confirmed stay for booking ${bookingId} at ${resortName || "resort"}. Guest: ${guestName || "Guest"}. Entry Code: ${entryCode || "Pending"}. Stay: ${stayRange}.`;
+}
+
+export async function notifyCaretakerOnBookingConfirmed(payload) {
+  const message = buildCaretakerConfirmationMessage(payload);
+  // Hook point for future SMS/email integration.
+  console.info("[CaretakerHook]", message);
+  return message;
+}

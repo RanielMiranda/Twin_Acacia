@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Plus, X, DollarSign, MapPin, Phone, Mail, Facebook, Camera, Image as ImageIcon, GripVertical, Check, ExternalLink } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
-
+import { useToast } from "@/components/ui/toast/ToastProvider";
 // --- DND Kit Imports ---
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -61,6 +61,7 @@ function SortableTag({ tagValue, tagId, index, onRemove, onRename }) {
 
 export default function ProfileEditor() {
   const { resort, updateResort, safeSrc } = useResort();
+  const { toast } = useToast();
   const fileInputRef = useRef(null);
   
   const [isAdding, setIsAdding] = useState(false);
@@ -73,7 +74,6 @@ export default function ProfileEditor() {
 
   if (!resort) return null;
   const pricingMeta = resort.description?.meta?.pricing || {};
-  const themeMeta = resort.description?.theme || {};
 
   const setDescriptionMeta = (nextPartial) => {
     updateResort("description", {
@@ -90,15 +90,6 @@ export default function ProfileEditor() {
           ...(pricingMeta || {}),
           [field]: value,
         },
-      },
-    });
-  };
-
-  const setThemeMeta = (field, value) => {
-    setDescriptionMeta({
-      theme: {
-        ...(themeMeta || {}),
-        [field]: value,
       },
     });
   };
@@ -137,6 +128,7 @@ export default function ProfileEditor() {
       updateResort("tags", newTagsArray);
     }
   };
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -287,29 +279,6 @@ export default function ProfileEditor() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-          <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-2">Edit Theme (Preparation)</p>
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-500 block">
-              Theme Name
-              <input
-                className="mt-1 w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"
-                value={themeMeta.name || ""}
-                onChange={(e) => setThemeMeta("name", e.target.value)}
-                placeholder="Coastal Blue"
-              />
-            </label>
-            <label className="text-xs font-semibold text-slate-500 block">
-              Primary Hex Color
-              <input
-                type="color"
-                className="mt-1 w-full h-10 bg-white border border-slate-200 rounded-xl px-1 py-1"
-                value={themeMeta.primaryColor || "#2563eb"}
-                onChange={(e) => setThemeMeta("primaryColor", e.target.value)}
-              />
-            </label>
-          </div>
-        </div>
       </div>
       
       {/* Description */}

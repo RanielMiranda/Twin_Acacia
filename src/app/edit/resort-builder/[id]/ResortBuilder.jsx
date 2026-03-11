@@ -12,6 +12,7 @@ import PaymentImageEditor from "./components/PaymentImageEditor";
 import RoomsEditor from "./components/RoomsEditor";
 import ServicesEditor from "./components/ServicesEditor";
 import ShortcutBar from "./components/ShortcutBar";
+import CaretakerEditor from "./components/CaretakerEditor";
 
 import resortInitialData from "./data/ResortInitialData";
 
@@ -58,6 +59,7 @@ export default function ResortBuilder({ resortId }) {
       <ProfileEditor />
       <PaymentImageEditor />
       <FacilityEditor />
+      <CaretakerEditor />
       <ServicesEditor />
       <RoomsEditor />
       

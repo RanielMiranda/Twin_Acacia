@@ -2,6 +2,7 @@ import { generateConfirmationStub } from "@/lib/bookingFlow";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { PREVIOUS_STATUS } from "../bookingEditorConfig";
+import { notifyCaretakerOnBookingConfirmed } from "@/lib/caretakerNotifications";
 
 export async function handleSetStatusAction({
   actionBusy,
@@ -12,8 +13,10 @@ export async function handleSetStatusAction({
   booking,
   resortName,
   persist,
+  onStayConfirmed,
 }) {
   if (actionBusy) return;
+  const wasConfirmed = String(draft.status || "").toLowerCase().includes("confirm");
   if (nextStatus === "Checked Out") {
     const isSettled = isCheckoutAmountSettled({
       totalAmount: draft.totalAmount,
@@ -48,6 +51,17 @@ export async function handleSetStatusAction({
     }
     setDraft(next);
     await persist(next);
+    if (nextStatus === "Confirmed" && !wasConfirmed) {
+      const message = await notifyCaretakerOnBookingConfirmed({
+        bookingId: booking.id,
+        resortName,
+        guestName: next.guestName,
+        entryCode: next.confirmationStub?.code,
+        checkInDate: next.checkInDate,
+        checkOutDate: next.checkOutDate,
+      });
+      onStayConfirmed?.(message);
+    }
   } finally {
     setActionBusy(false);
   }
