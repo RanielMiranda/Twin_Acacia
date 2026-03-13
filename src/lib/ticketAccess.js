@@ -7,12 +7,24 @@ export function getTicketAccessExpiry(days = 30) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
-export function isTicketTokenValid(bookingForm, token) {
-  const savedToken = bookingForm?.ticketAccessToken;
+function isTokenActive(savedToken, expiry, token) {
   if (!savedToken || !token || savedToken !== token) return false;
-  const expiry = bookingForm?.ticketAccessExpiresAt;
   if (!expiry) return true;
   const expiryMs = new Date(expiry).getTime();
   if (Number.isNaN(expiryMs)) return false;
   return expiryMs > Date.now();
+}
+
+export function getTicketTokenRole(bookingForm, token) {
+  if (isTokenActive(bookingForm?.ticketAccessToken, bookingForm?.ticketAccessExpiresAt, token)) {
+    return "client";
+  }
+  if (isTokenActive(bookingForm?.agentTicketAccessToken, bookingForm?.agentTicketAccessExpiresAt, token)) {
+    return "agent";
+  }
+  return "";
+}
+
+export function isTicketTokenValid(bookingForm, token) {
+  return !!getTicketTokenRole(bookingForm, token);
 }

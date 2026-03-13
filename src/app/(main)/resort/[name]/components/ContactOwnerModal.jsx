@@ -61,6 +61,7 @@ export default function ContactOwnerModal({
     agentName: "",
     guestName: "",
     stayingGuestName: "",
+    stayingGuestEmail: "",
     email: "",
     contactNumber: "",
     area: destination || "",
@@ -104,6 +105,7 @@ export default function ContactOwnerModal({
         agentName: saved.agentName || "",
         guestName: saved.guestName || "",
         stayingGuestName: saved.stayingGuestName || "",
+        stayingGuestEmail: saved.stayingGuestEmail || "",
         email: saved.email || "",
         contactNumber: saved.contactNumber || "",
         area: saved.area || base.area,
@@ -127,6 +129,7 @@ export default function ContactOwnerModal({
           agentName: formData.agentName || "",
           guestName: formData.guestName || "",
           stayingGuestName: formData.stayingGuestName || "",
+          stayingGuestEmail: formData.stayingGuestEmail || "",
           email: formData.email || "",
           contactNumber: formData.contactNumber || "",
           area: formData.area || "",
@@ -137,7 +140,7 @@ export default function ContactOwnerModal({
       );
     }, 150);
     return () => clearTimeout(timer);
-  }, [formData.guestName, formData.stayingGuestName, formData.email, formData.contactNumber, formData.area, formData.address, formData.message, formData.sleepingGuests, isOpen, resort?.id]);
+  }, [formData.guestName, formData.stayingGuestName, formData.stayingGuestEmail, formData.email, formData.contactNumber, formData.area, formData.address, formData.message, formData.sleepingGuests, isOpen, resort?.id]);
 
   // Steps Configuration
   const steps = [
@@ -380,9 +383,15 @@ export default function ContactOwnerModal({
 
           {step === 2 && (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
-              <div className="space-y-1">
-                <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Name</label>
-                <input name="stayingGuestName" value={formData.stayingGuestName ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Guest full name" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Name</label>
+                  <input name="stayingGuestName" value={formData.stayingGuestName ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Guest full name" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Email</label>
+                  <input name="stayingGuestEmail" value={formData.stayingGuestEmail ?? ""} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="guest@example.com" />
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">

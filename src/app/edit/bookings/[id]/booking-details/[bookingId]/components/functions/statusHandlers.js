@@ -130,6 +130,14 @@ export async function handleApproveInquiryAction({
       status: "Approved Inquiry",
       ticketAccessToken: draft.ticketAccessToken || generateTicketAccessToken(),
       ticketAccessExpiresAt: draft.ticketAccessExpiresAt || getTicketAccessExpiry(30),
+      agentTicketAccessToken:
+        String(draft.inquirerType || "").toLowerCase() === "agent"
+          ? (draft.agentTicketAccessToken || generateTicketAccessToken())
+          : (draft.agentTicketAccessToken || ""),
+      agentTicketAccessExpiresAt:
+        String(draft.inquirerType || "").toLowerCase() === "agent"
+          ? (draft.agentTicketAccessExpiresAt || getTicketAccessExpiry(30))
+          : (draft.agentTicketAccessExpiresAt || ""),
     };
     setDraft(next);
     await persist(next);

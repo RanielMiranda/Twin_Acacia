@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Mail, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildSupportConversationItems, getSupportConversationLabel, isResolvedConversationItem } from "@/lib/supportConversation";
@@ -13,14 +13,35 @@ export default function MessagesInboxCardSection({
   ownerReply,
   setOwnerReply,
   onSendReply,
+  inquirerType,
 }) {
+  const [activeFilter, setActiveFilter] = useState("all");
+  const hasAgent = String(inquirerType || "").toLowerCase() === "agent"
+    || (messages || []).some((msg) => msg?.visibility === true);
+
+  const filteredMessages = useMemo(() => {
+    const role = activeFilter;
+    return (messages || []).filter((msg) => {
+      if (role === "all") return true;
+      if (msg.sender_role === "owner" || msg.sender_role === "admin") return true;
+      if (role === "agent") return msg.visibility === true;
+      if (role === "client") return msg.visibility !== true;
+      return true;
+    });
+  }, [activeFilter, messages]);
+
+  const filteredIssues = useMemo(() => {
+    if (activeFilter === "agent") return [];
+    return issues || [];
+  }, [activeFilter, issues]);
+
   const earliestClientMessageId = (messages || [])
     .filter((msg) => msg?.sender_role === "client" && msg?.id)
     .sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
     .map((msg) => `msg:${msg.id}`)[0];
   const conversationItems = buildSupportConversationItems({
-    messages,
-    issues: (issues || []).map((issue) => ({
+    messages: filteredMessages,
+    issues: filteredIssues.map((issue) => ({
       ...issue,
       issueId: issue.id,
     })),
@@ -41,6 +62,26 @@ export default function MessagesInboxCardSection({
           <RefreshCw size={12} className={`mr-2 ${refreshingMessages ? "animate-spin" : ""}`} />
           Refresh
         </Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          { id: "all", label: "All" },
+          ...(hasAgent ? [{ id: "agent", label: "Agent" }] : []),
+          { id: "client", label: "Client" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveFilter(tab.id)}
+            className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest border ${
+              activeFilter === tab.id
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
       <div className="max-h-52 overflow-auto space-y-2">
         {conversationItems.length === 0 ? (

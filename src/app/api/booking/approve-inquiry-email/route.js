@@ -89,7 +89,10 @@ export async function POST(request) {
     .eq("id", Number(booking.resort_id))
     .maybeSingle();
 
-  const ticketToken = booking.booking_form?.ticketAccessToken;
+  const isAgent = String(booking.booking_form?.inquirerType || "").toLowerCase() === "agent";
+  const ticketToken = isAgent
+    ? booking.booking_form?.agentTicketAccessToken
+    : booking.booking_form?.ticketAccessToken;
   const ticketUrl = `${buildBaseUrl(request)}/ticket/${booking.id}${ticketToken ? `?token=${encodeURIComponent(ticketToken)}` : ""}`;
   const payload = {
     from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
@@ -99,7 +102,7 @@ export async function POST(request) {
       guestName: booking.booking_form?.guestName,
       resortName: resort?.name,
       ticketUrl,
-      expiresAt: booking.booking_form?.ticketAccessExpiresAt,
+      expiresAt: isAgent ? booking.booking_form?.agentTicketAccessExpiresAt : booking.booking_form?.ticketAccessExpiresAt,
     }),
   };
 

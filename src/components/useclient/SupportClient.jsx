@@ -6,7 +6,7 @@ import { generateIdempotencyKey } from "@/lib/idempotency";
 
 const SupportContext = createContext(null);
 
-const MESSAGE_COLUMNS = ["id", "booking_id", "sender_role", "sender_name", "message", "created_at"].join(", ");
+const MESSAGE_COLUMNS = ["id", "booking_id", "sender_role", "sender_name", "visibility", "message", "created_at"].join(", ");
 const ISSUE_COLUMNS = ["id", "booking_id", "guest_name", "guest_email", "subject", "message", "status", "created_at"].join(", ");
 const ISSUE_ARCHIVE_COLUMNS = [
   "id",
@@ -241,6 +241,7 @@ export function SupportProvider({ children }) {
       p_sender_role: payload.sender_role,
       p_sender_name: payload.sender_name ?? null,
       p_message: payload.message,
+      p_visibility: typeof payload.visibility === "boolean" ? payload.visibility : null,
       p_idempotency_key: idempotencyKey,
     };
 

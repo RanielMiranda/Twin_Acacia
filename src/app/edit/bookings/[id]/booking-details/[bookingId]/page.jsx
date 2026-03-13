@@ -241,6 +241,7 @@ export default function BookingDetailsPage() {
         resort_id: booking.resortId || booking.resort_id || Number(id),
         sender_role: "owner",
         sender_name: "Owner",
+        visibility: null,
         message: ownerReply.trim(),
         idempotency_key: buildOwnerIdempotencyKey(ownerReply),
       };

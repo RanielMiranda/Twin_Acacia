@@ -155,11 +155,14 @@ const handleSubmitInquiry = async (submittedData) => {
       const pax = Number(submittedData.guestCount || submittedData.pax || adultCount + childrenCount || 0);
       const ticketAccessToken = generateTicketAccessToken();
       const ticketAccessExpiresAt = getTicketAccessExpiry(30);
+      const agentTicketAccessToken = submittedData.inquirerType === "agent" ? generateTicketAccessToken() : "";
+      const agentTicketAccessExpiresAt = submittedData.inquirerType === "agent" ? getTicketAccessExpiry(30) : "";
       const bookingForm = {
         inquirerType: submittedData.inquirerType || "client",
         agentName: submittedData.agentName || "",
         guestName: submittedData.guestName || "",
         stayingGuestName: submittedData.stayingGuestName || "",
+        stayingGuestEmail: submittedData.stayingGuestEmail || "",
         email: submittedData.email || "",
         phoneNumber: submittedData.contactNumber || "",
         address: submittedData.address || submittedData.area || "",
@@ -185,6 +188,8 @@ const handleSubmitInquiry = async (submittedData) => {
         notes: submittedData.message || "",
         ticketAccessToken,
         ticketAccessExpiresAt,
+        agentTicketAccessToken,
+        agentTicketAccessExpiresAt,
       };
 
       const { error } = await supabase.from("bookings").upsert({
@@ -213,6 +218,7 @@ const handleSubmitInquiry = async (submittedData) => {
             resort_id: Number(resort.id),
             sender_role: "client",
             sender_name: submittedData.guestName || "Client",
+            visibility: submittedData.inquirerType === "agent",
             message: submittedData.message,
           });
         } catch (messageError) {

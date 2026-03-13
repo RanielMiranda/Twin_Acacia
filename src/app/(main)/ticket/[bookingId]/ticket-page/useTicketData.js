@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BOOKING_TICKET_COLUMNS, TICKET_MESSAGE_COLUMNS } from "./constants";
 import { isMissingSupportTableError } from "./helpers";
-import { isTicketTokenValid } from "@/lib/ticketAccess";
+import { getTicketTokenRole, isTicketTokenValid } from "@/lib/ticketAccess";
 
 const TICKET_ISSUE_COLUMNS = ["id", "booking_id", "guest_name", "guest_email", "subject", "message", "status", "created_at"].join(", ");
 const TICKET_ISSUE_ARCHIVE_COLUMNS = [
@@ -30,6 +30,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
   const [issues, setIssues] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [staffRole, setStaffRole] = useState("");
+  const [viewerRole, setViewerRole] = useState("");
 
   const refreshSessionRole = useCallback(async () => {
     try {
@@ -45,7 +46,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
   }, []);
 
   const fetchMessages = useCallback(
-    async (activeBookingId) => {
+    async (activeBookingId, roleHint = "") => {
       if (!activeBookingId) return;
       setLoadingMessages(true);
       try {
@@ -89,7 +90,16 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
           source_issue_id: issue.source_issue_id,
         }));
 
-        setMessages(messageRows || []);
+        const normalizedRole = String(roleHint || viewerRole || "").toLowerCase();
+        const filteredMessages = (messageRows || []).filter((msg) => {
+          if (!normalizedRole || normalizedRole === "staff") return true;
+          if (msg.sender_role === "owner" || msg.sender_role === "admin") return true;
+          if (normalizedRole === "agent") return msg.visibility === true || msg.visibility === null;
+          if (normalizedRole === "client") return msg.visibility === false || msg.visibility === null;
+          return true;
+        });
+
+        setMessages(filteredMessages);
         setIssues(
           [...(issueRows || []), ...archivedIssues].sort(
             (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
@@ -133,9 +143,11 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
 
       const bookingData = bookingRows[0];
       const isStaff = sessionRole === "admin" || sessionRole === "owner";
+      const tokenRole = isStaff ? "staff" : getTicketTokenRole(bookingData?.booking_form || {}, accessToken);
       if (!isStaff && !isTicketTokenValid(bookingData?.booking_form || {}, accessToken)) {
         throw new Error("Ticket access token is missing, invalid, or expired.");
       }
+      setViewerRole(tokenRole || "");
 
       setBooking(bookingData);
 
@@ -151,7 +163,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
         setResort(null);
       }
 
-      await fetchMessages(bookingData.id);
+      await fetchMessages(bookingData.id, tokenRole);
     } catch (err) {
       toast({ message: `Unable to load ticket: ${err.message}`, color: "red" });
     } finally {
@@ -213,5 +225,6 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     loadingMessages,
     fetchTicket,
     fetchMessages,
+    viewerRole,
   };
 }

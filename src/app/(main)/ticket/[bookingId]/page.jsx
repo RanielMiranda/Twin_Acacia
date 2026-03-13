@@ -32,7 +32,7 @@ export default function ClientTicketPage() {
   const [paymentDraft, setPaymentDraft] = useState({ method: null, downpayment: null });
   const [proofFiles, setProofFiles] = useState([]);
 
-  const { loading, booking, setBooking, resort, messages, issues, loadingMessages, fetchTicket, fetchMessages } = useTicketData({
+  const { loading, booking, setBooking, resort, messages, issues, loadingMessages, fetchTicket, fetchMessages, viewerRole } = useTicketData({
     normalizedBookingId,
     accessToken,
     toast,
@@ -58,6 +58,7 @@ export default function ClientTicketPage() {
     resort,
     form,
     normalizedBookingId,
+    viewerRole,
     paymentMethod,
     downpayment,
     proofFiles,

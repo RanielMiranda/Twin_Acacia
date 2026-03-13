@@ -422,7 +422,6 @@ export default function BookingModernEditor({
               availableServices={resortExtraServices}
             />
 
-            <StatusAuditCardSection dbAudits={dbAudits} bookingFormAudits={bookingFormAudits} transactions={transactions} />
           </div>
 
           <div className="space-y-6">
@@ -445,7 +444,7 @@ export default function BookingModernEditor({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <AssignRoomsCardSection
             resortRooms={resortRooms}
             assignedRoomIds={assignedRoomIds}
@@ -453,17 +452,20 @@ export default function BookingModernEditor({
             isRoomConflicting={isRoomConflicting}
             isEditing={isEditing}
           />
-
-          <MessagesInboxCardSection
-            issues={issues}
-            onResolveIssue={onResolveIssue}
-            messages={messages}
-            onRefreshMessages={onRefreshMessages}
-            refreshingMessages={refreshingMessages}
-            ownerReply={ownerReply}
-            setOwnerReply={setOwnerReply}
-            onSendReply={onSendReply}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <MessagesInboxCardSection
+              issues={issues}
+              onResolveIssue={onResolveIssue}
+              messages={messages}
+              onRefreshMessages={onRefreshMessages}
+              refreshingMessages={refreshingMessages}
+              ownerReply={ownerReply}
+              setOwnerReply={setOwnerReply}
+              onSendReply={onSendReply}
+              inquirerType={draft.inquirerType}
+            />
+            <StatusAuditCardSection dbAudits={dbAudits} bookingFormAudits={bookingFormAudits} transactions={transactions} />
+          </div>
         </div>
       </div>
 

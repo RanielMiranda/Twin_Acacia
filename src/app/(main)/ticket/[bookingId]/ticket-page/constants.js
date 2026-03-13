@@ -10,6 +10,6 @@ export const BOOKING_TICKET_COLUMNS = [
   "booking_form",
 ].join(", ");
 
-export const TICKET_MESSAGE_COLUMNS = ["id", "booking_id", "sender_role", "sender_name", "message", "created_at"].join(", ");
+export const TICKET_MESSAGE_COLUMNS = ["id", "booking_id", "sender_role", "sender_name", "visibility", "message", "created_at"].join(", ");
 
 export const DEFAULT_PAYMENT_METHOD = "GCash";

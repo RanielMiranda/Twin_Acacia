@@ -11,6 +11,7 @@ export function useTicketActions({
   resort,
   form,
   normalizedBookingId,
+  viewerRole,
   paymentMethod,
   downpayment,
   proofFiles,
@@ -216,6 +217,7 @@ export function useTicketActions({
         sender_role: "client",
         sender_name: form.guestName || "Client",
         message: chatMessage.trim(),
+        visibility: viewerRole === "agent" ? true : false,
         idempotency_key: buildMessageIdempotencyKey(chatMessage, "client"),
       };
       await sendTicketMessage(payload);
@@ -269,6 +271,7 @@ export function useTicketActions({
           resort_id: booking.resort_id,
           sender_role: "client",
           sender_name: form.guestName || "Client",
+          visibility: viewerRole === "agent" ? true : false,
           message:
             normalizedServices.length > 0
               ? `Requested add-on update: ${normalizedServices
