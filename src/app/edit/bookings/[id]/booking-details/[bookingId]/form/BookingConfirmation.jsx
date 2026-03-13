@@ -67,9 +67,11 @@ export default function BookingConfirmation({
     
       <div className="space-y-8">
           <section className="space-y-3">
-            <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Guest Details</h2>
+            <h2 className=" mt-5 text-xs font-black uppercase tracking-wider text-slate-500">Contact Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Guest Name"><div className="text-sm font-bold text-slate-700">{formData.guestName || "-"}</div></Field>
+              <Field label="Contact Name">
+                <div className="text-sm font-bold text-slate-700">{formData.guestName || formData.agentName || "-"}</div>
+              </Field>
               <Field label="Email"><div className="text-sm font-bold text-slate-700">{formData.email || "-"}</div></Field>
               <Field label="Phone Number"><div className="text-sm font-bold text-slate-700">{formData.phoneNumber || "-"}</div></Field>
               <Field label="Address"><div className="text-sm font-bold text-slate-700">{formData.address || "-"}</div></Field>
@@ -77,7 +79,30 @@ export default function BookingConfirmation({
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Stay & Booking Details</h2>
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Stay Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Field label="Guest Name">
+                <div className="text-sm font-bold text-slate-700">{formData.stayingGuestName || formData.guestName || "-"}</div>
+              </Field>
+              {String(formData.inquirerType || "").toLowerCase() === "agent" || formData.agentName ? (
+                <Field label="Agent">
+                  <div className="text-sm font-bold text-slate-700">{formData.agentName || "-"}</div>
+                </Field>
+              ) : null}
+              <Field label="Adults"><div className="text-sm font-bold text-slate-700">{Number(formData.adultCount || 0)}</div></Field>
+              <Field label="Children"><div className="text-sm font-bold text-slate-700">{Number(formData.childrenCount || 0)}</div></Field>
+              <Field label="Guests"><div className="text-sm font-bold text-slate-700">{Number(formData.guestCount || 0)}</div></Field>
+              <Field label="Sleeping Guests"><div className="text-sm font-bold text-slate-700">{Number(formData.sleepingGuests || 0)}</div></Field>
+              <Field label="Total Pax">
+                <div className="text-sm font-bold text-slate-700">
+                  {Number(totalPax || 0)}
+                </div>
+              </Field>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Booking Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Field label="Check-In Date">
                 <div className="text-sm font-bold text-slate-700">{formatLongDate(formData.checkInDate)}</div>
@@ -91,18 +116,9 @@ export default function BookingConfirmation({
               <Field label="Check-Out Time">
                 <div className="text-sm font-bold text-slate-700">{formData.checkOutTime || "--:--"}</div>
               </Field>
-              <Field label="Adults"><div className="text-sm font-bold text-slate-700">{Number(formData.adultCount || 0)}</div></Field>
-              <Field label="Children"><div className="text-sm font-bold text-slate-700">{Number(formData.childrenCount || 0)}</div></Field>
-              <Field label="Guests"><div className="text-sm font-bold text-slate-700">{Number(formData.guestCount || 0)}</div></Field>
-              <Field label="Sleeping Guests"><div className="text-sm font-bold text-slate-700">{Number(formData.sleepingGuests || 0)}</div></Field>
               <Field label="Assigned Rooms">
                 <div className="text-sm font-bold text-slate-700">
                   {formData.roomName || "-"}
-                </div>
-              </Field>
-              <Field label="Total Pax">
-                <div className="text-sm font-bold text-slate-700">
-                  {Number(totalPax || 0)}
                 </div>
               </Field>
               <Field label="No. of Rooms">
