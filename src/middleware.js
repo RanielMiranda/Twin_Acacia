@@ -3,9 +3,6 @@ import { getSessionFromRequest } from "@/lib/server/session";
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
-  const hostHeader = request.headers.get("host") || "";
-  const host = hostHeader.split(":")[0].toLowerCase();
-  const isPortalHost = host.startsWith("portal.");
   const session = await getSessionFromRequest(request);
   const appAuth = !!session;
   const appRole = String(session?.role || "").toLowerCase();
@@ -13,30 +10,12 @@ export async function middleware(request) {
   const isOwnerRoute = pathname.startsWith("/owner");
   const isEditRoute = pathname.startsWith("/edit");
   const isLoginPage = pathname === "/auth/login";
-{/*
-  const isAssetRoute =
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.startsWith("/api");
-
-  if (!isPortalHost && isLoginPage) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  if (!isPortalHost && (isAdminRoute || isOwnerRoute || isEditRoute)) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  if (isPortalHost && !isAssetRoute && !isLoginPage && !(isAdminRoute || isOwnerRoute || isEditRoute)) {
-    return NextResponse.redirect(new URL("/auth/login", request.url));
-  }
 
   if (isLoginPage && appAuth && ["admin", "owner"].includes(appRole)) {
     const target = appRole === "admin" ? "/admin/dashboard" : "/owner/dashboard";
     return NextResponse.redirect(new URL(target, request.url));
   }
-  
-*/}
+
   if (isAdminRoute || isOwnerRoute || isEditRoute) {
     if (!appAuth) {
       return NextResponse.redirect(new URL("/", request.url));

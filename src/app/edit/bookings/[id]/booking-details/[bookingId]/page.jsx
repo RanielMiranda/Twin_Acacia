@@ -285,20 +285,16 @@ export default function BookingDetailsPage() {
       onDelete={cancelBookingWithConfirmation}
       onOpenForm={() => {
         if (typeof window === "undefined") return;
-        const host = window.location.host;
-        const portalHost = host.startsWith("portal.") ? host : `portal.${host}`;
-        const url = `${window.location.protocol}//${portalHost}/edit/bookings/${id}/booking-details/${booking.id}/form`;
+        const url = `${window.location.origin}/edit/bookings/${id}/booking-details/${booking.id}/form`;
         window.open(url, "_blank", "noopener,noreferrer");
       }}
       onOpenTicket={() => {
         if (typeof window === "undefined") return;
-        const host = window.location.host;
-        const baseHost = host.replace(/^portal\./, "");
         const token = booking?.bookingForm?.ticketAccessToken
           || booking?.booking_form?.ticketAccessToken
           || booking?.booking_form?.ticket_access_token
           || "";
-        const url = `${window.location.protocol}//${baseHost}/ticket/${booking.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+        const url = `${window.location.origin}/ticket/${booking.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
         window.open(url, "_blank", "noopener,noreferrer");
       }}
       onOpenBooking={(targetId) => router.push(`/edit/bookings/${id}/booking-details/${targetId}`)}
