@@ -8,6 +8,12 @@ export function buildSupportConversationItems({
   newestFirst = true,
   issueFallbackSubject = "Concern",
 }) {
+  const normalizeVisibility = (value) => {
+    if (value === true || value === false) return value;
+    if (value === 1 || value === "1" || value === "true") return true;
+    if (value === 0 || value === "0" || value === "false") return false;
+    return null;
+  };
   const mapped = [
     ...(messages || []).map((msg) => ({
       id: `msg:${msg.id}`,
@@ -15,7 +21,7 @@ export function buildSupportConversationItems({
       createdAt: msg.created_at,
       senderRole: msg.sender_role,
       senderName: msg.sender_name,
-      visibility: msg.visibility,
+      visibility: normalizeVisibility(msg.visibility),
       body: msg.message,
     })),
     ...(issues || []).map((issue) => ({

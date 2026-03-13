@@ -91,11 +91,18 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
         }));
 
         const normalizedRole = String(roleHint || viewerRole || "").toLowerCase();
+        const normalizeVisibility = (value) => {
+          if (value === true || value === false) return value;
+          if (value === 1 || value === "1" || value === "true") return true;
+          if (value === 0 || value === "0" || value === "false") return false;
+          return null;
+        };
+
         const filteredMessages = (messageRows || []).filter((msg) => {
           if (!normalizedRole || normalizedRole === "staff") return true;
-          if (msg.sender_role === "owner" || msg.sender_role === "admin") return true;
-          if (normalizedRole === "agent") return msg.visibility === true || msg.visibility === null;
-          if (normalizedRole === "client") return msg.visibility === false || msg.visibility === null;
+          const visibility = normalizeVisibility(msg.visibility);
+          if (normalizedRole === "agent") return visibility === true || visibility === null;
+          if (normalizedRole === "client") return visibility === false || visibility === null;
           return true;
         });
 
@@ -211,7 +218,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     const interval = setInterval(() => {
       fetchTicket();
       fetchMessages(normalizedBookingId);
-    }, 15000);
+    }, 20000);
     return () => clearInterval(interval);
   }, [fetchMessages, fetchTicket, normalizedBookingId]);
 

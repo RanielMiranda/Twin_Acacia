@@ -21,13 +21,20 @@ export default function MessagesInboxCardSection({
   const hasAgent = String(inquirerType || "").toLowerCase() === "agent"
     || (messages || []).some((msg) => msg?.visibility === true);
 
+  const normalizeVisibility = (value) => {
+    if (value === true || value === false) return value;
+    if (value === 1 || value === "1" || value === "true") return true;
+    if (value === 0 || value === "0" || value === "false") return false;
+    return null;
+  };
+
   const filteredMessages = useMemo(() => {
     const role = activeFilter;
     return (messages || []).filter((msg) => {
+      const visibility = normalizeVisibility(msg.visibility);
       if (role === "all") return true;
-      if (msg.sender_role === "owner" || msg.sender_role === "admin") return true;
-      if (role === "agent") return msg.visibility === true;
-      if (role === "client") return msg.visibility !== true;
+      if (role === "agent") return visibility === true;
+      if (role === "client") return visibility === false || visibility === null;
       return true;
     });
   }, [activeFilter, messages]);
@@ -97,11 +104,12 @@ export default function MessagesInboxCardSection({
               item.kind === "message" &&
               item.senderRole === "client" &&
               item.id === earliestClientMessageId;
+            const visibility = normalizeVisibility(item.visibility);
             const ownerTargetLabel =
               isOwner && item.kind === "message"
-                ? item.visibility === true
+                ? visibility === true
                   ? "To Agent"
-                  : item.visibility === false
+                  : visibility === false
                     ? "To Client"
                     : "To All"
                 : "";
