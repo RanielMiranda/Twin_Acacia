@@ -58,13 +58,6 @@ export default function BookingEditorActionBar({
       {showPaymentReviewActions ? (
         <>
           <Button
-            className="rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            onClick={() => runWithConfirmation("Are you sure you want to accept this payment?", onAcceptPayment)}
-            disabled={actionBusy}
-          >
-            Accept Payment
-          </Button>
-          <Button
             variant="outline"
             className="rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-rose-300 text-rose-600 hover:bg-rose-50"
             onClick={() => runWithConfirmation("Are you sure you want to decline this payment?", onDeclinePayment)}
@@ -72,6 +65,13 @@ export default function BookingEditorActionBar({
           >
             Decline Payment
           </Button>
+          <Button
+            className="rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => runWithConfirmation("Are you sure you want to accept this payment?", onAcceptPayment)}
+            disabled={actionBusy}
+          >
+            Accept Payment
+          </Button>          
         </>
       ) : null}
       {!isEditing && !showPaymentReviewActions && !isPendingCheckout && PREVIOUS_STATUS[draftStatus] ? (

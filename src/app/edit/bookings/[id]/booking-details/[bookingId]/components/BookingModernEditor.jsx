@@ -301,7 +301,7 @@ export default function BookingModernEditor({
         const guestLabel = draft.stayingGuestName || draft.guestName || "Guest";
         const detail = message ? ` ${message}` : "";
         toast?.({
-          message: `Booking for "${guestLabel}" has been confirmed.${detail}`,
+          message: `Booking for "${guestLabel}" has been confirmed`,
           color: "emerald",
           duration: 4000,
         });
