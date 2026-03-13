@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useSupport } from "@/components/useclient/SupportClient";
+import {Button} from "@/components/ui/button";
 import {
   Calendar as CalendarIcon, 
   ClipboardList, 
@@ -22,16 +23,21 @@ import LiveConcernsPanel from "./components/LiveConcernsPanel";
 import AuditArchivePanel from "./components/AuditArchivePanel";
 import BookingSummaryCards from "./components/BookingSummaryCards";
 import Toast from "@/components/ui/toast/Toast"
+import { useToast } from "@/components/ui/toast/ToastProvider";
+import ManualBookingModal from "./components/ManualBookingModal";
 export default function BookingManagementPage() {
   const { id } = useParams();
   const router = useRouter();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, refreshBookings, updateBookingById, deleteBookingById } = useBookings();
+  const { bookings, refreshBookings, updateBookingById, deleteBookingById, createBooking } = useBookings();
   const { listResortConcerns, updateConcernStatus } = useSupport();
+  const { toast } = useToast();
   const [concerns, setConcerns] = useState([]);
   const [loadingConcerns, setLoadingConcerns] = useState(false);
   const [audits, setAudits] = useState([]);
   const [loadingAudits, setLoadingAudits] = useState(false);
+  const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
+  const [addingBooking, setAddingBooking] = useState(false);
   
   const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
 
@@ -279,6 +285,64 @@ export default function BookingManagementPage() {
     router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}`);
   };
 
+  const handleCreateBooking = async (payload) => {
+    if (!payload?.guestName?.trim()) {
+      toast?.({ message: "Guest name is required.", color: "red" });
+      return;
+    }
+    if (!payload.checkInDate) {
+      toast?.({ message: "Check-in date is required.", color: "red" });
+      return;
+    }
+    setAddingBooking(true);
+    try {
+      const isAgent = payload.inquirerType === "agent";
+      const stayingGuestName = payload.guestName.trim();
+      const stayingGuestEmail = payload.email.trim();
+      const bookingForm = {
+        inquirerType: payload.inquirerType,
+        guestName: payload.guestName.trim(),
+        stayingGuestName,
+        stayingGuestEmail,
+        email: payload.email.trim(),
+        phoneNumber: payload.phoneNumber.trim(),
+        agentName: isAgent ? payload.agentName.trim() : "",
+        status: payload.status,
+        checkInDate: payload.checkInDate,
+        checkOutDate: payload.checkOutDate || payload.checkInDate,
+        checkInTime: payload.checkInTime || "14:00",
+        checkOutTime: payload.checkOutTime || "11:00",
+        roomCount: Number(payload.roomCount || 1),
+        adultCount: 0,
+        childrenCount: 0,
+        guestCount: 0,
+        pax: 0,
+      };
+
+      const created = await createBooking({
+        status: payload.status,
+        startDate: payload.checkInDate,
+        endDate: payload.checkOutDate || payload.checkInDate,
+        checkInTime: payload.checkInTime || "14:00",
+        checkOutTime: payload.checkOutTime || "11:00",
+        roomIds: [],
+        roomCount: Number(payload.roomCount || 1),
+        inquirerType: payload.inquirerType,
+        bookingForm,
+      });
+
+      setIsAddBookingOpen(false);
+      toast?.({ message: "Manual booking added.", color: "green" });
+      if (created?.id) {
+        openDetails(created.id);
+      }
+    } catch (error) {
+      toast?.({ message: `Unable to add booking: ${error.message}`, color: "red" });
+    } finally {
+      setAddingBooking(false);
+    }
+  };
+
   if (!currentResort && loading) return <div className="p-20 text-center">Loading Management Console...</div>;
   if (!currentResort) return <div className="p-20 text-center">Unable to load resort profile. Showing booking data by resort ID.</div>;
 
@@ -299,6 +363,15 @@ export default function BookingManagementPage() {
                 Booking Console
               </h1>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              onClick={() => setIsAddBookingOpen(true)}
+              className="rounded-full px-2 text-xs font-black uppercase"
+            >
+              Add Booking
+            </Button>
           </div>
         </header>
 
@@ -398,6 +471,13 @@ export default function BookingManagementPage() {
         </main>
       </div>
       <Toast/>
+      <ManualBookingModal
+        isOpen={isAddBookingOpen}
+        onClose={() => setIsAddBookingOpen(false)}
+        onSubmit={handleCreateBooking}
+        resort={currentResort}
+        isSubmitting={addingBooking}
+      />
     </div>
   );
 }
