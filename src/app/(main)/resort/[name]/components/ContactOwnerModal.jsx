@@ -185,6 +185,22 @@ export default function ContactOwnerModal({
     setFormData((prev) => ({ ...prev, stayingGuestName: nextName }));
   }, [formData.guestName, formData.inquirerType, formData.stayingGuestName]);
 
+  const autoAgentContactRef = useRef("");
+  useEffect(() => {
+    if (formData.inquirerType !== "agent") return;
+    const shouldSync =
+      !formData.guestName ||
+      formData.guestName === autoAgentContactRef.current;
+    if (!shouldSync) return;
+    const nextName = formData.agentName || "";
+    if (formData.guestName === nextName) {
+      autoAgentContactRef.current = nextName;
+      return;
+    }
+    autoAgentContactRef.current = nextName;
+    setFormData((prev) => ({ ...prev, guestName: nextName }));
+  }, [formData.agentName, formData.guestName, formData.inquirerType]);
+
   // Toggle service selection
   const toggleService = (serviceName) => {
     setFormData(prev => ({
@@ -332,19 +348,19 @@ export default function ContactOwnerModal({
                   />
                 </div>
               )}
-              <div className="space-y-1">
-                <label className="text-xs font-black uppercase text-slate-400 ml-1">
-                  {formData.inquirerType === "agent" ? "Agent Contact Name" : "Contact Name"}
-                </label>
-                <input
-                  name="guestName"
-                  value={formData.guestName ?? ""}
-                  onChange={handleChange}
-                  type="text"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder={formData.inquirerType === "agent" ? "Agent contact person" : "Full name"}
-                />
-              </div>
+              {formData.inquirerType === "client" && (
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Contact Name</label>
+                  <input
+                    name="guestName"
+                    value={formData.guestName ?? ""}
+                    onChange={handleChange}
+                    type="text"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Full name"
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Email</label>
@@ -517,7 +533,11 @@ export default function ContactOwnerModal({
                   {formData.inquirerType === "agent" ? (
                     <SummaryItem icon={User} label="Agent Name" value={formData.agentName || "Not set"} />
                   ) : null}
-                  <SummaryItem icon={User} label="Contact Name" value={formData.guestName || "Not set"} />
+                  <SummaryItem
+                    icon={User}
+                    label={formData.inquirerType === "agent" ? "Agent Name" : "Contact Name"}
+                    value={formData.inquirerType === "agent" ? (formData.agentName || "Not set") : (formData.guestName || "Not set")}
+                  />
                   <SummaryItem icon={User} label="Guest" value={formData.stayingGuestName || "Not set"} />
                   <SummaryItem icon={MapPin} label="Pax" value={`${formData.pax} People`} />
                   <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
