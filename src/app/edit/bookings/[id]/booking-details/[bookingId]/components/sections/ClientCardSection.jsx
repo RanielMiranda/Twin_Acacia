@@ -4,10 +4,10 @@ import { StatusBadge } from "../BookingEditorAtoms";
 
 export default function ClientCardSection({ resortName, isEditing, draft, setField, status }) {
   const inquirerType = (draft.inquirerType || "client").toString().toLowerCase();
-  const contactDisplayName =
-    inquirerType === "agent"
-      ? (draft.agentName || draft.guestName || "Agent")
-      : (draft.guestName || "Client");
+  const agentName = draft.agentName || draft.guestName || "Agent";
+  const contactDisplayName = inquirerType === "agent" ? agentName : (draft.guestName || "Client");
+  const agentEmail = draft.email || "";
+  const agentPhone = draft.phoneNumber || "";
 
   return (
     <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
@@ -29,51 +29,86 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
           {isEditing ? (
             <input
               className="text-3xl font-black text-slate-900 tracking-tight border-b border-slate-200 outline-none"
-              value={draft.guestName || ""}
-              onChange={(e) => setField("guestName", e.target.value)}
+              value={inquirerType === "agent" ? (draft.agentName || "") : (draft.guestName || "")}
+              onChange={(e) => setField(inquirerType === "agent" ? "agentName" : "guestName", e.target.value)}
+              placeholder={inquirerType === "agent" ? "Agent name" : "Client name"}
             />
           ) : (
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">{contactDisplayName}</h1>
           )}
           <div className="mt-3 space-y-1">
             {isEditing ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <input
-                  type="email"
-                  className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
-                  value={draft.email || ""}
-                  onChange={(e) => setField("email", e.target.value)}
-                  placeholder="Email"
-                />
-                <input
-                  type="text"
-                  className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
-                  value={draft.phoneNumber || ""}
-                  onChange={(e) => setField("phoneNumber", e.target.value)}
-                  placeholder="Phone"
-                />
-                <input
-                  type="text"
-                  className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100 md:col-span-2"
-                  value={draft.address || ""}
-                  onChange={(e) => setField("address", e.target.value)}
-                  placeholder="Address"
-                />
-              </div>
+              inquirerType === "agent" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <input
+                    type="email"
+                    className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
+                    value={draft.email || ""}
+                    onChange={(e) => setField("email", e.target.value)}
+                    placeholder="Agent email"
+                  />
+                  <input
+                    type="text"
+                    className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
+                    value={draft.phoneNumber || ""}
+                    onChange={(e) => setField("phoneNumber", e.target.value)}
+                    placeholder="Agent phone"
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <input
+                    type="email"
+                    className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
+                    value={draft.email || ""}
+                    onChange={(e) => setField("email", e.target.value)}
+                    placeholder="Email"
+                  />
+                  <input
+                    type="text"
+                    className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
+                    value={draft.phoneNumber || ""}
+                    onChange={(e) => setField("phoneNumber", e.target.value)}
+                    placeholder="Phone"
+                  />
+                  <input
+                    type="text"
+                    className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100 md:col-span-2"
+                    value={draft.address || ""}
+                    onChange={(e) => setField("address", e.target.value)}
+                    placeholder="Address"
+                  />
+                </div>
+              )
             ) : (
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                <span className="inline-flex items-center gap-1">
-                  <Mail size={12} />
-                  {draft.email || "No email"}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Phone size={12} />
-                  {draft.phoneNumber || "No phone"}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <MapPin size={12} />
-                  {draft.address || "No address"}
-                </span>
+                {inquirerType === "agent" ? (
+                  <>
+                    <span className="inline-flex items-center gap-1">
+                      <Mail size={12} />
+                      {agentEmail || "No email"}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Phone size={12} />
+                      {agentPhone || "No phone"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="inline-flex items-center gap-1">
+                      <Mail size={12} />
+                      {draft.email || "No email"}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Phone size={12} />
+                      {draft.phoneNumber || "No phone"}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin size={12} />
+                      {draft.address || "No address"}
+                    </span>
+                  </>
+                )}
               </div>
             )}
           </div>

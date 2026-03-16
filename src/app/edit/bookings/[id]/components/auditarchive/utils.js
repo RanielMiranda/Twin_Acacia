@@ -33,3 +33,28 @@ export const getDateTimeParts = (item) => {
   const checkOutTime = item.checkOutTime || form.checkOutTime || "--:--";
   return { checkInDate, checkOutDate, checkInTime, checkOutTime };
 };
+
+export const formatDateMeta = (value) => {
+  if (!value || value === "-") {
+    return { dateLabel: "-", weekdayLabel: "" };
+  }
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return { dateLabel: value, weekdayLabel: "" };
+  }
+  return {
+    dateLabel: date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+    weekdayLabel: date.toLocaleDateString("en-US", { weekday: "short" }),
+  };
+};
+
+export const formatTime12h = (timeValue) => {
+  if (!timeValue || timeValue === "--:--") return "--:--";
+  const [rawHours, rawMinutes] = String(timeValue).split(":");
+  const hours = Number(rawHours);
+  if (!Number.isFinite(hours)) return timeValue;
+  const minutes = rawMinutes ?? "00";
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${minutes} ${suffix}`;
+};

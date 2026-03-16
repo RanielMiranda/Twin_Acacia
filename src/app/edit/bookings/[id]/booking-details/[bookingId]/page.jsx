@@ -341,6 +341,29 @@ export default function BookingDetailsPage() {
           ...(entry.bookingForm || {}),
           status: "Cancelled",
           cancelledAt: new Date().toISOString(),
+          statusAudit: (() => {
+            const currentAudit = Array.isArray(entry.bookingForm?.statusAudit)
+              ? entry.bookingForm.statusAudit
+              : [];
+            const previousStatus = entry.bookingForm?.status || entry.status || null;
+            if (!previousStatus || previousStatus === "Cancelled") return currentAudit;
+            const lastAudit = currentAudit[currentAudit.length - 1];
+            if (lastAudit?.from === previousStatus && lastAudit?.to === "Cancelled") {
+              return currentAudit;
+            }
+            return [
+              ...currentAudit,
+              {
+                from: previousStatus,
+                to: "Cancelled",
+                at: new Date().toISOString(),
+                actor: "owner-ui",
+                actorRole: "owner",
+                actorId: "",
+                actorName: "Owner",
+              },
+            ];
+          })(),
         },
       }));
       toast({ message: "Booking cancelled.", color: "green" });

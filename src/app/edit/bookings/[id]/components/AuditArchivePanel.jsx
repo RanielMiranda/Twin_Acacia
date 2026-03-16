@@ -4,9 +4,9 @@
 import React, { useMemo, useState } from "react";
 import { Archive, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CheckedOutTabs from "./auditarchive/CheckedOutTabs";
-import DeclinedTabs from "./auditarchive/DeclinedTabs";
-import CancelledTabs from "./auditarchive/CancelledTabs";
+import CheckedOutTabs from "./auditarchive/CheckedOutTabs.jsx";
+import DeclinedTabs from "./auditarchive/DeclinedTabs.jsx";
+import CancelledTabs from "./auditarchive/CancelledTabs.jsx";
 
 export default function AuditArchivePanel({
   declinedBookings = [],
@@ -17,8 +17,9 @@ export default function AuditArchivePanel({
   onOpenBooking,
   onReopenDeclined,
   onReopenCancelled,
+  onResolveDeclined,
+  onResolveCancelled,
   onReopenCheckedOut,
-  onDeleteDeclined,
   onResolveCheckedOut,
   onDeleteArchived,
   unresolvedIssueBookingIds = new Set(),
@@ -158,7 +159,7 @@ export default function AuditArchivePanel({
       </div>
       {filteredCheckedOut.length > 0 ? (
         <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">
-          Bookings stored here for up to 7 days can be archived forever. Use Resolve to archive and strip extra data.
+          Bookings in this list stay here for up to 7 days before auto-archiving. Use Resolve to archive now and strip extra data.
         </div>
       ) : null}
 
@@ -181,6 +182,7 @@ export default function AuditArchivePanel({
                 onOpenBooking={onOpenBooking}
                 onReopenCheckedOut={onReopenCheckedOut}
                 onResolveCheckedOut={onResolveCheckedOut}
+                onDeleteArchived={onDeleteArchived}
                 unresolvedIssueBookingIds={unresolvedIssueBookingIds}
               />
               <DeclinedTabs
@@ -188,14 +190,14 @@ export default function AuditArchivePanel({
                 showHeading
                 onOpenBooking={onOpenBooking}
                 onReopenDeclined={onReopenDeclined}
-                onDeleteDeclined={onDeleteDeclined}
+                onResolveDeclined={onResolveDeclined}
               />
               <CancelledTabs
                 filteredCancelled={filteredCancelled}
                 showHeading
                 onOpenBooking={onOpenBooking}
                 onReopenCancelled={onReopenCancelled}
-                onResolveCheckedOut={onResolveCheckedOut}
+                onResolveCancelled={onResolveCancelled}
                 unresolvedIssueBookingIds={unresolvedIssueBookingIds}
               />
             </div>
@@ -209,6 +211,7 @@ export default function AuditArchivePanel({
               onOpenBooking={onOpenBooking}
               onReopenCheckedOut={onReopenCheckedOut}
               onResolveCheckedOut={onResolveCheckedOut}
+              onDeleteArchived={onDeleteArchived}
               unresolvedIssueBookingIds={unresolvedIssueBookingIds}
             />
           ) : null}
@@ -218,7 +221,7 @@ export default function AuditArchivePanel({
               filteredDeclined={filteredDeclined}
               onOpenBooking={onOpenBooking}
               onReopenDeclined={onReopenDeclined}
-              onDeleteDeclined={onDeleteDeclined}
+              onResolveDeclined={onResolveDeclined}
             />
           ) : null}
 
@@ -227,7 +230,7 @@ export default function AuditArchivePanel({
               filteredCancelled={filteredCancelled}
               onOpenBooking={onOpenBooking}
               onReopenCancelled={onReopenCancelled}
-              onResolveCheckedOut={onResolveCheckedOut}
+              onResolveCancelled={onResolveCancelled}
               unresolvedIssueBookingIds={unresolvedIssueBookingIds}
             />
           ) : null}

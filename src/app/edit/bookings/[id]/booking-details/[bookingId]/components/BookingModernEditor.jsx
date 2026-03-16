@@ -435,13 +435,6 @@ export default function BookingModernEditor({
             />
             </div>
 
-            <AddOnsCardSection
-              draft={draft}
-              isEditing={isEditing}
-              setField={setField}
-              availableServices={resortExtraServices}
-            />
-
           </div>
 
           <div className="space-y-6">
@@ -461,17 +454,30 @@ export default function BookingModernEditor({
               statusPhases={STATUS_PHASES}
               paymentChannels={PAYMENT_CHANNELS}
             />
+            </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0">
+          <div className="flex-1">
+            <AddOnsCardSection
+              draft={draft}
+              isEditing={isEditing}
+              setField={setField}
+              availableServices={resortExtraServices}
+            />
+          </div>
+          <div className="flex-1">
+            <AssignRoomsCardSection
+              resortRooms={resortRooms}
+              assignedRoomIds={assignedRoomIds}
+              toggleAssignedRoom={toggleAssignedRoom}
+              isRoomConflicting={isRoomConflicting}
+              isEditing={isEditing}
+            />
           </div>
         </div>
 
         <div className="space-y-4">
-          <AssignRoomsCardSection
-            resortRooms={resortRooms}
-            assignedRoomIds={assignedRoomIds}
-            toggleAssignedRoom={toggleAssignedRoom}
-            isRoomConflicting={isRoomConflicting}
-            isEditing={isEditing}
-          />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <MessagesInboxCardSection
               issues={issues}

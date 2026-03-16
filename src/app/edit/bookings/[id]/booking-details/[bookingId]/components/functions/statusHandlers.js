@@ -17,6 +17,13 @@ export async function handleSetStatusAction({
 }) {
   if (actionBusy) return;
   const wasConfirmed = String(draft.status || "").toLowerCase().includes("confirm");
+  if (nextStatus === "Confirmed") {
+    const totalPaid = Number(draft.downpayment || 0) + Number(draft.pendingDownpayment || 0);
+    if (totalPaid <= 0) {
+      window.alert("Cannot confirm: please request and receive a downpayment first.");
+      return;
+    }
+  }
   if (nextStatus === "Checked Out") {
     const isSettled = isCheckoutAmountSettled({
       totalAmount: draft.totalAmount,

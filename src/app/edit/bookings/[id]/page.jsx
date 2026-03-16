@@ -325,14 +325,29 @@ export default function BookingManagementPage() {
     }
   };
 
-  const handleDeleteDeclined = async (bookingId) => {
-    const confirmed = window.confirm("Delete this declined inquiry?");
+  const handleResolveDeclined = async (bookingId) => {
+    const confirmed = window.confirm("Resolve and delete this declined inquiry?");
     if (!confirmed) return;
     try {
       await deleteBookingById(bookingId);
       await loadAudits();
+      toast?.({ message: "Declined booking resolved.", color: "green" });
     } catch (error) {
-      console.error("Delete declined inquiry error:", error.message);
+      console.error("Resolve declined inquiry error:", error.message);
+      toast?.({ message: `Unable to resolve: ${error.message}`, color: "red" });
+    }
+  };
+
+  const handleResolveCancelled = async (bookingId) => {
+    const confirmed = window.confirm("Resolve and delete this cancelled booking?");
+    if (!confirmed) return;
+    try {
+      await deleteBookingById(bookingId);
+      await loadAudits();
+      toast?.({ message: "Cancelled booking resolved.", color: "green" });
+    } catch (error) {
+      console.error("Resolve cancelled booking error:", error.message);
+      toast?.({ message: `Unable to resolve: ${error.message}`, color: "red" });
     }
   };
 
@@ -608,7 +623,8 @@ export default function BookingManagementPage() {
                 onReopenDeclined={handleReopenDeclined}
                 onReopenCancelled={handleReopenCancelled}
                 onReopenCheckedOut={handleReopenCheckedOut}
-                onDeleteDeclined={handleDeleteDeclined}
+                onResolveDeclined={handleResolveDeclined}
+                onResolveCancelled={handleResolveCancelled}
                 onResolveCheckedOut={handleResolveCheckedOut}
                 onDeleteArchived={handleDeleteArchivedBooking}
                 unresolvedIssueBookingIds={unresolvedIssueBookingIds}

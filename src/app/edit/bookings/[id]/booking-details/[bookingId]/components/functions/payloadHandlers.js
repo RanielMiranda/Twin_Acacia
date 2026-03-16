@@ -3,19 +3,21 @@ export function buildStatusAudit({
   nextDraft,
   actorMeta,
 }) {
-  const previousStatus = booking.bookingForm?.status || booking.status || null;
-  const nextStatus = nextDraft.status || previousStatus || "Inquiry";
-  const currentAudit = Array.isArray(booking.bookingForm?.statusAudit)
+  const bookingAudit = Array.isArray(booking.bookingForm?.statusAudit)
     ? booking.bookingForm.statusAudit
-    : Array.isArray(nextDraft.statusAudit)
-      ? nextDraft.statusAudit
-      : [];
+    : [];
+  const draftAudit = Array.isArray(nextDraft.statusAudit)
+    ? nextDraft.statusAudit
+    : [];
+  const currentAudit = draftAudit.length > 0 ? draftAudit : bookingAudit;
+  const lastAudit = currentAudit[currentAudit.length - 1];
+  const previousStatus = lastAudit?.to || booking.bookingForm?.status || booking.status || null;
+  const nextStatus = nextDraft.status || previousStatus || "Inquiry";
 
   if (!previousStatus || !nextStatus || previousStatus === nextStatus) {
     return currentAudit;
   }
 
-  const lastAudit = currentAudit[currentAudit.length - 1];
   if (
     lastAudit?.from === previousStatus &&
     lastAudit?.to === nextStatus &&

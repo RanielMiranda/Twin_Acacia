@@ -116,17 +116,46 @@ export default function StayCardSection({
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
                 Guest Name
               </p>
-              <p className="text-lg font-black text-slate-900 truncate">{guestDisplayName}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                <span className="inline-flex items-center gap-1">
-                  <Mail size={12} />
-                  {guestEmail}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Phone size={12} />
-                  {guestPhone}
-                </span>
-              </div>
+              {isEditing ? (
+                <>
+                  <input
+                    className="text-lg font-black text-slate-900 tracking-tight border-b border-slate-200 outline-none bg-transparent"
+                    value={draft.stayingGuestName || ""}
+                    onChange={(e) => setField("stayingGuestName", e.target.value)}
+                    placeholder="Guest name"
+                  />
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="email"
+                      className="text-xs font-medium rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
+                      value={draft.stayingGuestEmail || ""}
+                      onChange={(e) => setField("stayingGuestEmail", e.target.value)}
+                      placeholder="Guest email"
+                    />
+                    <input
+                      type="text"
+                      className="text-xs font-medium rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
+                      value={draft.stayingGuestPhone || ""}
+                      onChange={(e) => setField("stayingGuestPhone", e.target.value)}
+                      placeholder="Guest phone"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-black text-slate-900 truncate">{guestDisplayName}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1">
+                      <Mail size={12} />
+                      {guestEmail}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Phone size={12} />
+                      {guestPhone}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
