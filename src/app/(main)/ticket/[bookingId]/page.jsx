@@ -10,6 +10,7 @@ import {
   TicketStayInfoCardSection,
   TicketPaymentCardSection,
   TicketSupportDeskCardSection,
+  TicketIssueCardSection,
 } from "./components";
 import { DEFAULT_PAYMENT_METHOD } from "./ticket-page/constants";
 import { buildStayInfoPayload } from "./ticket-page/helpers";
@@ -166,6 +167,9 @@ export default function ClientTicketPage() {
         setChatMessage={setChatMessage}
         onSendMessage={handleSendMessage}
         isSendingMessage={isSendingMessage}
+      />
+
+      <TicketIssueCardSection
         issueSubject={issueSubject}
         setIssueSubject={setIssueSubject}
         issueMessage={issueMessage}
