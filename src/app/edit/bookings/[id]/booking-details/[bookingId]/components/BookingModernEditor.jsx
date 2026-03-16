@@ -309,6 +309,32 @@ export default function BookingModernEditor({
     });
   };
 
+  useEffect(() => {
+    if (isEditing || actionBusy) return;
+    const toDate = (value) => {
+      if (!value) return null;
+      const date = new Date(`${value}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? null : date;
+    };
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const checkInDate = toDate(draft.checkInDate);
+    const checkOutDate = toDate(draft.checkOutDate);
+
+    if (status === "Confirmed" && checkInDate && todayStart >= checkInDate) {
+      handleSetStatus("Ongoing");
+      return;
+    }
+
+    if (status === "Ongoing" && checkOutDate) {
+      const dayAfterCheckout = new Date(checkOutDate);
+      dayAfterCheckout.setDate(dayAfterCheckout.getDate() + 1);
+      if (todayStart >= dayAfterCheckout) {
+        handleSetStatus("Pending Checkout");
+      }
+    }
+  }, [actionBusy, draft.checkInDate, draft.checkOutDate, handleSetStatus, isEditing, status]);
+
   const handleDecline = async () => {
     await handleDeclineAction({ handleSetStatus });
   };
@@ -507,6 +533,7 @@ export default function BookingModernEditor({
               !draft.paymentPendingApproval
             : false
         }
+        balanceDue={balance}
         status={status}
         draftStatus={draft.status}
         isEditing={isEditing}

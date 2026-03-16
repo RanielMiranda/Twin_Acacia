@@ -9,6 +9,19 @@ function getAuditActorLabel(entry) {
 }
 
 export default function StatusAuditCardSection({ dbAudits, bookingFormAudits, transactions = [] }) {
+  const STATUS_ORDER = [
+    "inquiry",
+    "approved inquiry",
+    "pending payment",
+    "confirmed",
+    "ongoing",
+    "pending checkout",
+    "checked out",
+    "cancelled",
+    "declined",
+  ];
+  const getStatusRank = (value) => STATUS_ORDER.indexOf(String(value || "").toLowerCase());
+
   const mergedAudits = [
     ...(dbAudits || []).map((entry) => ({
       id: `db-${entry.id}`,
@@ -16,6 +29,8 @@ export default function StatusAuditCardSection({ dbAudits, bookingFormAudits, tr
       title: `${entry.old_status || "Unknown"} -> ${entry.new_status || "Unknown"}`,
       actor: getAuditActorLabel(entry),
       at: entry.changed_at,
+      fromStatus: entry.old_status,
+      toStatus: entry.new_status,
     })),
     ...(bookingFormAudits || []).map((entry, index) => ({
       id: `form-${index}`,
@@ -23,6 +38,8 @@ export default function StatusAuditCardSection({ dbAudits, bookingFormAudits, tr
       title: `${entry.from || "Unknown"} -> ${entry.to || "Unknown"}`,
       actor: getAuditActorLabel(entry),
       at: entry.at,
+      fromStatus: entry.from,
+      toStatus: entry.to,
     })),
     ...(transactions || []).map((entry) => ({
       id: `txn-${entry.id}`,
@@ -43,56 +60,68 @@ export default function StatusAuditCardSection({ dbAudits, bookingFormAudits, tr
       ) : (
         <div className="space-y-2 max-h-72 overflow-auto pr-1">
           {mergedAudits.map((entry) => (
-            <div
-              key={entry.id}
-              className={`rounded-xl border px-3 py-2 ${
+            (() => {
+              const fromRank = getStatusRank(entry.fromStatus);
+              const toRank = getStatusRank(entry.toStatus);
+              const isReverse = fromRank !== -1 && toRank !== -1 && toRank < fromRank;
+              const cardTone =
                 entry.type === "transaction"
                   ? "border-emerald-200 bg-emerald-50/60"
                   : entry.type === "form"
                     ? "border-blue-100 bg-blue-50"
-                    : "border-slate-200 bg-slate-50"
-              }`}
-            >
-              <p
-                className={`text-[10px] font-black uppercase ${
-                  entry.type === "transaction"
-                    ? "text-emerald-700"
-                    : entry.type === "form"
-                      ? "text-blue-600"
-                      : "text-slate-500"
-                }`}
-              >
-                {entry.title}
-              </p>
-              <p
-                className={`text-xs font-semibold mt-1 ${
-                  entry.type === "transaction"
-                    ? "text-emerald-700"
-                    : entry.type === "form"
-                      ? "text-blue-700"
-                      : "text-slate-700"
-                }`}
-              >
-                {entry.actor || "System"}
-                {entry.type === "transaction" ? (
-                  <span className="ml-2 text-[11px] font-bold text-emerald-700">
-                    +PHP {Number(entry.amount || 0).toLocaleString()}
-                    <span className="text-emerald-600"> - Balance: PHP {Number(entry.balance || 0).toLocaleString()}</span>
-                  </span>
-                ) : null}
-              </p>
-              <p
-                className={`text-[11px] ${
-                  entry.type === "transaction"
-                    ? "text-emerald-600"
-                    : entry.type === "form"
-                      ? "text-blue-500"
-                      : "text-slate-500"
-                }`}
-              >
-                {entry.at ? new Date(entry.at).toLocaleString() : "-"}
-              </p>
-            </div>
+                    : isReverse
+                      ? "border-rose-300 bg-rose-50/70"
+                      : "border-slate-200 bg-slate-50";
+              return (
+                <div key={entry.id} className={`rounded-xl border px-3 py-2 ${cardTone}`}>
+                  <p
+                    className={`text-[10px] font-black uppercase ${
+                      entry.type === "transaction"
+                        ? "text-emerald-700"
+                        : entry.type === "form"
+                          ? "text-blue-600"
+                          : isReverse
+                            ? "text-rose-600"
+                            : "text-slate-500"
+                    }`}
+                  >
+                    {entry.title}
+                  </p>
+                  <p
+                    className={`text-xs font-semibold mt-1 ${
+                      entry.type === "transaction"
+                        ? "text-emerald-700"
+                        : entry.type === "form"
+                          ? "text-blue-700"
+                          : isReverse
+                            ? "text-rose-700"
+                            : "text-slate-700"
+                    }`}
+                  >
+                    {entry.actor || "System"}
+                    {entry.type === "transaction" ? (
+                      <span className="ml-2 text-[11px] font-bold text-emerald-700">
+                        +PHP {Number(entry.amount || 0).toLocaleString()}
+                        <span className="text-emerald-600"> - Balance: PHP {Number(entry.balance || 0).toLocaleString()}</span>
+                      </span>
+                    ) : null}
+                  </p>
+                  <p
+                    className={`text-[11px] ${
+                      entry.type === "transaction"
+                        ? "text-emerald-600"
+                        : entry.type === "form"
+                          ? "text-blue-500"
+                          : isReverse
+                            ? "text-rose-600"
+                            : "text-slate-500"
+                    }`}
+                  >
+                    {entry.at ? new Date(entry.at).toLocaleString() : "-"}
+                  </p>
+                </div>
+              );
+            })()
           ))}
         </div>
       )}

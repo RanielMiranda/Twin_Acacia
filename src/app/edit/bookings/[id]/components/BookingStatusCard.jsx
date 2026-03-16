@@ -75,9 +75,6 @@ export default function BookingStatusCard({
               {isAgent ? "Agent" : "Client"}
             </span>
             <span className="text-sm font-black text-slate-900">{guestName}</span>
-            {isAgent && agentName ? (
-              <span className="text-[11px] text-slate-600">Agent: {agentName}</span>
-            ) : null}
           </div>
 
           <div className="text-[11px] text-slate-500 space-y-1">

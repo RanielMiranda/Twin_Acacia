@@ -30,7 +30,15 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
             <input
               className="text-3xl font-black text-slate-900 tracking-tight border-b border-slate-200 outline-none"
               value={inquirerType === "agent" ? (draft.agentName || "") : (draft.guestName || "")}
-              onChange={(e) => setField(inquirerType === "agent" ? "agentName" : "guestName", e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (inquirerType === "agent") {
+                  setField("agentName", value);
+                } else {
+                  setField("guestName", value);
+                  setField("stayingGuestName", value);
+                }
+              }}
               placeholder={inquirerType === "agent" ? "Agent name" : "Client name"}
             />
           ) : (

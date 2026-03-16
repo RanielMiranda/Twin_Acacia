@@ -44,6 +44,12 @@ function isConfirmedStatus(booking) {
   return normalized.includes("confirm") || normalized.includes("ongoing");
 }
 
+function isPastStatus(booking) {
+  if (booking?.isArchived) return true;
+  const normalized = getNormalizedStatus(booking);
+  return normalized.includes("checked out");
+}
+
 function isInquiryStatus(booking) {
   const normalized = getNormalizedStatus(booking);
   if (normalized.includes("approved inquiry")) return false;
@@ -124,13 +130,16 @@ export default function BookingCalendar({ archivedBookings = [] }) {
   const getDateBookings = (dateString) => {
     const sourceList =
       calendarMode === "past"
-        ? filteredArchivedList
+        ? [
+            ...filteredArchivedList,
+            ...filteredBookingList.filter((booking) => isPastStatus(booking)),
+          ]
         : filteredBookingList;
     return sourceList.filter((booking) => {
       if (!shouldShowOnCalendar(booking)) return false;
       if (calendarMode === "confirmed" && !isConfirmedStatus(booking)) return false;
       if (calendarMode === "inquiry" && !isInquiryStatus(booking)) return false;
-      if (calendarMode === "past" && !booking?.isArchived) return false;
+      if (calendarMode === "past" && !isPastStatus(booking)) return false;
       const startDate = getBookingStartDate(booking);
       const endDate = getBookingEndDate(booking);
       if (!startDate) return false;
@@ -336,12 +345,12 @@ export default function BookingCalendar({ archivedBookings = [] }) {
         <div className="space-y-2">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Resort Booking Ranges</p>
           <div className="flex flex-wrap gap-3">
-            {(calendarMode === "past" ? filteredArchivedList : filteredBookingList)
+            {(calendarMode === "past" ? [...filteredArchivedList, ...filteredBookingList] : filteredBookingList)
               .filter((booking) => shouldShowOnCalendar(booking))
               .filter((booking) => {
                 if (calendarMode === "confirmed") return isConfirmedStatus(booking);
                 if (calendarMode === "inquiry") return isInquiryStatus(booking);
-                if (calendarMode === "past") return booking?.isArchived;
+                if (calendarMode === "past") return isPastStatus(booking);
                 return true;
               })
               .map((booking) => {

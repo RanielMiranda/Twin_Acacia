@@ -190,12 +190,13 @@ export default function BookingManagementPage() {
     try {
       const { data, error } = await supabase
         .from("booking_archive")
-        .select("id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at")
+        .select("id, booking_id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at")
         .eq("resort_id", resortId)
         .order("archived_at", { ascending: false });
       if (error) throw error;
       const mapped = (data || []).map((row) => ({
         id: row.id,
+        bookingId: row.booking_id || null,
         resortId: row.resort_id,
         startDate: row.start_date || row.booking_form?.checkInDate || null,
         endDate: row.end_date || row.booking_form?.checkOutDate || null,
@@ -397,6 +398,7 @@ export default function BookingManagementPage() {
       };
 
       const { error: archiveError } = await supabase.from("booking_archive").insert({
+        booking_id: source.id?.toString(),
         resort_id: resortId,
         booking_form: archiveForm,
         start_date: archiveForm.checkInDate,

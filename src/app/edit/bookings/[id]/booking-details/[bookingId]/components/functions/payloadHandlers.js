@@ -60,6 +60,16 @@ export function buildPersistPayload({
   const normalizedCheckOutDate =
     nextDraft.checkOutDate || booking.endDate || normalizedCheckInDate || "";
 
+  const normalizedInquirerType = String(nextDraft.inquirerType || booking.bookingForm?.inquirerType || booking.inquirerType || "client").toLowerCase();
+  const sanitizedDraft = {
+    ...nextDraft,
+    agentName: normalizedInquirerType === "agent" ? nextDraft.agentName || "" : "",
+    agentEmail: normalizedInquirerType === "agent" ? nextDraft.agentEmail || "" : "",
+    agentPhone: normalizedInquirerType === "agent" ? nextDraft.agentPhone || "" : "",
+    agentContactEmail: normalizedInquirerType === "agent" ? nextDraft.agentContactEmail || "" : "",
+    agentContactPhone: normalizedInquirerType === "agent" ? nextDraft.agentContactPhone || "" : "",
+  };
+
   return {
     ...booking,
     roomIds: assignedRoomIds,
@@ -71,7 +81,7 @@ export function buildPersistPayload({
     paymentDeadline: nextDraft.paymentDeadline || null,
     bookingForm: {
       ...(booking.bookingForm || {}),
-      ...nextDraft,
+      ...sanitizedDraft,
       checkInDate: normalizedCheckInDate,
       checkOutDate: normalizedCheckOutDate,
       roomCount: assignedRoomIds.length || nextDraft.roomCount || booking.roomIds?.length || 1,

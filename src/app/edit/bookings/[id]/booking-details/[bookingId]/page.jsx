@@ -375,7 +375,6 @@ export default function BookingDetailsPage() {
   return (
     <div className = "mt-10">
     <BookingModernEditor
-      key={booking.id}
       booking={booking}
       resortName={currentResort?.name}
       onBack={() => router.push(`/edit/bookings/${id}`)}

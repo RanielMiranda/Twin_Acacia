@@ -228,7 +228,8 @@ alter table public.owner_admin_messages_archive
 
 create table if not exists public.booking_archive (
   id uuid primary key default gen_random_uuid(),
-  resort_id bigint not null references public.resorts(id) on delete cascade,
+  booking_id text references public.bookings(id) on delete set null,
+  resort_id bigint not null,
   booking_form jsonb not null default '{}'::jsonb,
   start_date date,
   end_date date,
@@ -242,6 +243,7 @@ create table if not exists public.booking_archive (
 create index if not exists owner_admin_messages_archive_resort_idx on public.owner_admin_messages_archive(resort_id);
 create index if not exists owner_admin_messages_archive_resolved_idx on public.owner_admin_messages_archive(resolved_at desc);
 create index if not exists booking_archive_resort_idx on public.booking_archive(resort_id);
+create index if not exists booking_archive_booking_id_idx on public.booking_archive(booking_id);
 create index if not exists booking_archive_archived_idx on public.booking_archive(archived_at desc);
 
 alter table public.owner_admin_messages_archive enable row level security;
@@ -255,10 +257,10 @@ with check (true);
 
 drop policy if exists booking_archive_all_access on public.booking_archive;
 drop policy if exists booking_archive_service_only on public.booking_archive;
-create policy booking_archive_service_only on public.booking_archive
+create policy booking_archive_all_access on public.booking_archive
   for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
+  using (true)
+  with check (true);
 
 -- ==========================================
 -- Phase 8: Security Hardening
@@ -272,6 +274,10 @@ declare
   t text := lower(coalesce(to_status, 'inquiry'));
 begin
   if f = t then
+    return true;
+  end if;
+
+  if t = 'cancelled' then
     return true;
   end if;
 
@@ -545,7 +551,7 @@ begin
   perform cron.schedule(
     'booking_status_automation',
     '*/10 * * * *',
-    $$select public.run_booking_status_automation();$$
+    $cron$select public.run_booking_status_automation();$cron$
   );
 end;
 $$;

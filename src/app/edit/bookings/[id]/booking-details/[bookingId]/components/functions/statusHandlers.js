@@ -238,7 +238,7 @@ export async function handleVerifyProofAction({
       pendingPaymentMethod: null,
       paymentPendingApproval: false,
       status:
-        draft.status === "Pending Payment" && isFullyPaid
+        draft.status === "Pending Payment"
           ? "Confirmed"
           : draft.status,
     };
