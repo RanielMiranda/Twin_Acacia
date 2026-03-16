@@ -73,12 +73,19 @@ export default function BookingCalendar({ archivedBookings = [] }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarMode, setCalendarMode] = useState("all"); // all | confirmed | inquiry | past
   const [search, setSearch] = useState("");
-  const calendarModes = [
+  const calendarToggleModes = [
     { id: "all", label: "All Bookings" },
     { id: "confirmed", label: "Confirmed / Ongoing" },
     { id: "inquiry", label: "Inquiry Status" },
-    { id: "past", label: "Past Bookings" },
   ];
+  const toggleModeIndex = Math.max(
+    0,
+    calendarToggleModes.findIndex((mode) => mode.id === calendarMode)
+  );
+  const toggleCalendarMode = () => {
+    const nextIndex = (toggleModeIndex + 1) % calendarToggleModes.length;
+    setCalendarMode(calendarToggleModes[nextIndex].id);
+  };
 
   const bookingList = useMemo(() => bookings || resort?.bookings || [], [bookings, resort?.bookings]);
   const archivedList = useMemo(() => archivedBookings || [], [archivedBookings]);
@@ -299,17 +306,22 @@ export default function BookingCalendar({ archivedBookings = [] }) {
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Current and archived booking activity</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {calendarModes.map((mode) => (
-              <Button
-                key={mode.id}
-                type="button"
-                variant={calendarMode === mode.id ? "default" : "outline"}
-                className="h-9 px-3 text-[11px] font-bold"
-                onClick={() => setCalendarMode(mode.id)}
-              >
-                {mode.label}
-              </Button>
-            ))}
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 px-3 text-[11px] font-bold"
+              onClick={toggleCalendarMode}
+            >
+              {calendarToggleModes[toggleModeIndex]?.label || "All Bookings"}
+            </Button>
+            <Button
+              type="button"
+              variant={calendarMode === "past" ? "default" : "outline"}
+              className="h-9 px-3 text-[11px] font-bold"
+              onClick={() => setCalendarMode((prev) => (prev === "past" ? "all" : "past"))}
+            >
+              Past Bookings
+            </Button>
           </div>
         
         </div>
