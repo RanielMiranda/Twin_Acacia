@@ -27,11 +27,18 @@
           inquirerType === "agent"
             ? (form.agentName || form.guestName || "Agent")
             : (form.guestName || "Client");
+        const guestEmail = form.stayingGuestEmail || form.guestEmail || form.email || "";
+        const guestPhone = form.stayingGuestPhone || form.guestPhone || form.phoneNumber || "";
+        const contactEmail = inquirerType === "agent" ? (form.email || "") : guestEmail;
+        const contactPhone = inquirerType === "agent" ? (form.phoneNumber || "") : guestPhone;
         return {
           bookingId: booking.id,
           guestName: displayName,
           room: roomName,
-          email: form.email || "No email",
+          contactEmail,
+          contactPhone,
+          clientEmail: guestEmail,
+          clientPhone: guestPhone,
           status: form.status || booking.status || "Inquiry",
           normalizedStatus: (form.status || booking.status || "Inquiry").toLowerCase(),
           checkInDate: booking.startDate || form.checkInDate || "",
@@ -112,21 +119,22 @@
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-black uppercase tracking-wider px-3 rounded-full ${
+                          item.inquirerType === "agent"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-emerald-100 text-emerald-700"
+                        }`}>
+                          {item.inquirerType === "agent" ? "Agent" : "Client"}
+                        </span>
+                      </div>                      
                       <h3 className="text-sm font-black text-slate-900 truncate">{item.guestName}</h3>
-                      <span className="text-[11px] text-slate-500 truncate">{item.email}</span>
                     </div>
+                      <span className="text-[11px] text-slate-500 truncate">
+                        Contact: {item.contactEmail || "No email"}{item.contactPhone ? ` | Phone: ${item.contactPhone}` : ""}
+                      </span>                    
                   </div>
                 </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Type</span>
-                    <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                      item.inquirerType === "agent"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-emerald-100 text-emerald-700"
-                    }`}>
-                      {item.inquirerType === "agent" ? "Agent" : "Client"}
-                    </span>
-                  </div>
                 <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-slate-100 lg:pl-4">
                   <Button
                     variant="ghost"

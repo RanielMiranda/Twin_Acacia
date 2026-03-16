@@ -2,15 +2,17 @@
   const form = item.bookingForm || {};
   const inquirerType = (item.inquirerType || form.inquirerType || "client").toString().toLowerCase();
   const guestEmail = form.stayingGuestEmail || form.guestEmail || form.email || "";
-  const guestPhone = form.guestPhone || form.phoneNumber || "";
-  const agentEmail = form.agentEmail || form.agentContactEmail || "";
-  const agentPhone = form.agentPhone || form.agentContactPhone || "";
+  const guestPhone = form.stayingGuestPhone || form.guestPhone || form.phoneNumber || "";
+  const agentEmail = form.agentEmail || form.agentContactEmail || form.email || "";
+  const agentPhone = form.agentPhone || form.agentContactPhone || form.phoneNumber || "";
+  const contactEmail = inquirerType === "agent" ? agentEmail : guestEmail;
+  const contactPhone = inquirerType === "agent" ? agentPhone : guestPhone;
   return {
     inquirerType,
-    guestEmail,
-    guestPhone,
-    agentEmail: inquirerType === "agent" ? agentEmail : "",
-    agentPhone: inquirerType === "agent" ? agentPhone : "",
+    contactEmail,
+    contactPhone,
+    clientEmail: guestEmail,
+    clientPhone: guestPhone,
   };
 };
 

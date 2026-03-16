@@ -20,6 +20,8 @@ const RESORT_DB_COLUMNS = [
   "contactPhone",
   "contactEmail",
   "contactMedia",
+  "rulesAndRegulations",
+  "termsAndConditions",
   "profileImage",
   "payment_image_url",
   "bank_payment_image_url",

@@ -19,6 +19,11 @@ export function TicketStayInfoCardSection({
   viewerRole,
 }) {
   const displayGuestName = form?.stayingGuestName || form?.guestName || "—";
+  const inquirerType = (form?.inquirerType || "client").toString().toLowerCase();
+  const contactEmail = form?.email || "—";
+  const contactPhone = form?.phoneNumber || "—";
+  const clientEmail = form?.stayingGuestEmail || form?.guestEmail || form?.email || "—";
+  const clientPhone = form?.stayingGuestPhone || form?.guestPhone || form?.phoneNumber || "—";
   return (
     <Card
       id={id}
@@ -30,6 +35,19 @@ export function TicketStayInfoCardSection({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <TicketRow label="Guest Name" value={displayGuestName} />
         <TicketRow label="Status" value={booking?.status || "Inquiry"} isStatus />
+        {inquirerType === "agent" ? (
+          <>
+            <TicketRow label="Agent Email" value={contactEmail} />
+            <TicketRow label="Agent Phone" value={contactPhone} />
+            <TicketRow label="Client Email" value={clientEmail} />
+            <TicketRow label="Client Phone" value={clientPhone} />
+          </>
+        ) : (
+          <>
+            <TicketRow label="Contact Email" value={clientEmail} />
+            <TicketRow label="Contact Phone" value={clientPhone} />
+          </>
+        )}
         <TicketRow label="Pax" value={form?.guestCount ?? 0} />
         <TicketRow label="Adults" value={form?.adultCount ?? 0} />
         <TicketRow label="Children" value={form?.childrenCount ?? 0} />
@@ -61,11 +79,27 @@ export function TicketStayInfoCardSection({
  */
 export function buildStayInfoRows({ form, booking, resort, approvedByName, assignedRoomNames, entryCode, viewerRole }) {
   const displayGuestName = form?.stayingGuestName || form?.guestName || "—";
-  return [
+  const inquirerType = (form?.inquirerType || "client").toString().toLowerCase();
+  const contactEmail = form?.email || "—";
+  const contactPhone = form?.phoneNumber || "—";
+  const clientEmail = form?.stayingGuestEmail || form?.guestEmail || form?.email || "—";
+  const clientPhone = form?.stayingGuestPhone || form?.guestPhone || form?.phoneNumber || "—";
+  const rows = [
     ["Resort", resort?.name || "—"],
     ["Guest Name", displayGuestName],
     ["Status", booking?.status || "Inquiry"],
     ["Approved By", approvedByName || "—"],
+    ...(inquirerType === "agent"
+      ? [
+          ["Agent Email", contactEmail],
+          ["Agent Phone", contactPhone],
+          ["Client Email", clientEmail],
+          ["Client Phone", clientPhone],
+        ]
+      : [
+          ["Contact Email", clientEmail],
+          ["Contact Phone", clientPhone],
+        ]),
     ["Pax", String(form?.guestCount ?? 0)],
     ["Adults", String(form?.adultCount ?? 0)],
     ["Children", String(form?.childrenCount ?? 0)],
@@ -82,4 +116,5 @@ export function buildStayInfoRows({ form, booking, resort, approvedByName, assig
     ["Location", resort?.location || "—"],
     ["Entry Code", entryCode || "—"],
   ];
+  return rows;
 }

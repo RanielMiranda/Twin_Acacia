@@ -19,6 +19,7 @@ const buildInitialFormData = ({
   guestName: "",
   stayingGuestName: "",
   stayingGuestEmail: "",
+  stayingGuestPhone: "",
   email: "",
   contactNumber: "",
   area: destination || "",
@@ -67,6 +68,7 @@ export default function BookingCreationTemplate({
   onSubmit,
 }) {
   const [agreed, setAgreed] = useState(false);
+  const [legalView, setLegalView] = useState(null);
   const [step, setStep] = useState(1);
   const blockedIds = useMemo(
     () => new Set((unavailableRoomIds || []).map((id) => id?.toString()).filter(Boolean)),
@@ -132,6 +134,7 @@ export default function BookingCreationTemplate({
     });
     setStep(1);
     setAgreed(false);
+    setLegalView(null);
     if (!enableDraftPersistence || typeof window === "undefined" || !draftKey) {
       setFormData(base);
       return;
@@ -143,15 +146,16 @@ export default function BookingCreationTemplate({
         return;
       }
       const saved = JSON.parse(raw);
-      setFormData({
-        ...base,
-        inquirerType: saved.inquirerType || base.inquirerType,
-        agentName: saved.agentName || "",
-        guestName: saved.guestName || "",
-        stayingGuestName: saved.stayingGuestName || "",
-        stayingGuestEmail: saved.stayingGuestEmail || "",
-        email: saved.email || "",
-        contactNumber: saved.contactNumber || "",
+        setFormData({
+          ...base,
+          inquirerType: saved.inquirerType || base.inquirerType,
+          agentName: saved.agentName || "",
+          guestName: saved.guestName || "",
+          stayingGuestName: saved.stayingGuestName || "",
+          stayingGuestEmail: saved.stayingGuestEmail || "",
+          stayingGuestPhone: saved.stayingGuestPhone || "",
+          email: saved.email || "",
+          contactNumber: saved.contactNumber || "",
         area: saved.area || base.area,
         address: saved.address || "",
         message: saved.message || "",
@@ -174,6 +178,7 @@ export default function BookingCreationTemplate({
           guestName: formData.guestName || "",
           stayingGuestName: formData.stayingGuestName || "",
           stayingGuestEmail: formData.stayingGuestEmail || "",
+          stayingGuestPhone: formData.stayingGuestPhone || "",
           email: formData.email || "",
           contactNumber: formData.contactNumber || "",
           area: formData.area || "",
@@ -247,6 +252,22 @@ export default function BookingCreationTemplate({
     setFormData((prev) => ({ ...prev, stayingGuestEmail: nextEmail }));
   }, [formData.email, formData.inquirerType, formData.stayingGuestEmail]);
 
+  const autoGuestPhoneRef = useRef("");
+  useEffect(() => {
+    if (formData.inquirerType !== "client") return;
+    const shouldSync =
+      !formData.stayingGuestPhone ||
+      formData.stayingGuestPhone === autoGuestPhoneRef.current;
+    if (!shouldSync) return;
+    const nextPhone = formData.contactNumber || "";
+    if (formData.stayingGuestPhone === nextPhone) {
+      autoGuestPhoneRef.current = nextPhone;
+      return;
+    }
+    autoGuestPhoneRef.current = nextPhone;
+    setFormData((prev) => ({ ...prev, stayingGuestPhone: nextPhone }));
+  }, [formData.contactNumber, formData.inquirerType, formData.stayingGuestPhone]);
+
   const autoAgentContactRef = useRef("");
   useEffect(() => {
     if (formData.inquirerType !== "agent") return;
@@ -298,6 +319,7 @@ export default function BookingCreationTemplate({
   const handleClose = () => {
     setStep(1);
     setAgreed(false);
+    setLegalView(null);
     onClose?.();
   };
 
@@ -314,8 +336,15 @@ export default function BookingCreationTemplate({
             ...formData,
             stayingGuestName: formData.guestName || "",
             stayingGuestEmail: formData.email || "",
+            stayingGuestPhone: formData.contactNumber || "",
+            guestEmail: formData.email || "",
+            guestPhone: formData.contactNumber || "",
           }
-        : formData;
+        : {
+            ...formData,
+            guestEmail: formData.stayingGuestEmail || "",
+            guestPhone: formData.stayingGuestPhone || "",
+          };
     const normalized =
       selectedRoomIds.length > 0
         ? {
@@ -335,6 +364,10 @@ export default function BookingCreationTemplate({
 
   const headerTitle = title || resort?.name || "Booking";
   const headerSubtitle = subtitle || `STEP ${step} OF 5: ${steps[step - 1]?.title}`;
+  const rulesText = resort?.rulesAndRegulations || resort?.rules_and_regulations || "";
+  const termsText = resort?.termsAndConditions || resort?.terms_and_conditions || "";
+  const legalTitle = legalView === "rules" ? "Rules and Regulations" : "Terms and Conditions";
+  const legalBody = legalView === "rules" ? rulesText : termsText;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -461,6 +494,10 @@ export default function BookingCreationTemplate({
                   <div className="space-y-1">
                     <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Email</label>
                     <input name="stayingGuestEmail" value={formData.stayingGuestEmail ?? ""} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="guest@example.com" />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Contact Number</label>
+                    <input name="stayingGuestPhone" value={formData.stayingGuestPhone ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
                   </div>
                 </div>
               ) : null}
@@ -625,52 +662,85 @@ export default function BookingCreationTemplate({
 
           {step === 5 && (
             <div className="animate-in zoom-in-95 space-y-6">
-              <div className="bg-blue-50 rounded-3xl p-6 border border-blue-100">
-                <h4 className="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-4 text-center">Inquiry Summary</h4>
-                <div className="grid grid-cols-2 gap-y-6">
-                  <SummaryItem icon={User} label="Inquirer" value={formData.inquirerType === "agent" ? "Agent" : "Client"} />
-                  {formData.inquirerType === "agent" ? (
-                    <SummaryItem icon={User} label="Agent Name" value={formData.agentName || "Not set"} />
-                  ) : null}
-                  <SummaryItem
-                    icon={User}
-                    label={formData.inquirerType === "agent" ? "Agent Name" : "Contact Name"}
-                    value={formData.inquirerType === "agent" ? (formData.agentName || "Not set") : (formData.guestName || "Not set")}
-                  />
-                  <SummaryItem icon={User} label="Guest" value={formData.stayingGuestName || "Not set"} />
-                  <SummaryItem icon={MapPin} label="Pax" value={`${formData.pax} People`} />
-                  <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
-                  <SummaryItem icon={Clock} label="Schedule" value={`${formatTime(formData.checkInTime)} - ${formatTime(formData.checkOutTime)}`} />
-                  <SummaryItem icon={PlusCircle} label="Rooms" value={selectedRoomNamesDerived.length > 0 ? selectedRoomNamesDerived.join(", ") : "Not set"} />
-                  <SummaryItem icon={Phone} label="Contact" value={formData.contactNumber || "Not set"} />
-                  <SummaryItem icon={MapPin} label="Address" value={formData.address || "Not set"} />
-                  {showAddOns ? (
-                    <SummaryItem icon={PlusCircle} label="Add-ons" value={formData.selectedServices.length > 0 ? formData.selectedServices.join(", ") : "None"} />
-                  ) : null}
-                </div>
-              </div>
-
-              {showTerms ? (
-                <div className="px-2 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="relative flex items-center pt-1">
-                      <input
-                        type="checkbox"
-                        id="terms"
-                        checked={agreed}
-                        onChange={(e) => setAgreed(e.target.checked)}
-                        className="w-5 h-5 rounded-md border-2 border-slate-200 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
-                    </div>
-                    <label htmlFor="terms" className="text-xs text-slate-500 leading-relaxed cursor-pointer">
-                      I have read and agree to the resort&apos;s{" "}
-                      <button type="button" className="text-blue-600 font-bold underline hover:text-blue-700">Rules and Regulations</button>
-                      {" "}and{" "}
-                      <button type="button" className="text-blue-600 font-bold underline hover:text-blue-700">Terms and Conditions</button>.
-                    </label>
+              {legalView ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-blue-600 font-black uppercase text-[10px] tracking-widest">{legalTitle}</h4>
+                    <button
+                      type="button"
+                      onClick={() => setLegalView(null)}
+                      className="text-xs font-bold text-slate-500 hover:text-slate-700"
+                    >
+                      Back to summary
+                    </button>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 whitespace-pre-wrap">
+                    {legalBody ? legalBody : "No rules or terms provided by this resort yet."}
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <>
+                  <div className="bg-blue-50 rounded-3xl p-6 border border-blue-100">
+                    <h4 className="text-blue-600 font-black uppercase text-[10px] tracking-widest mb-4 text-center">Inquiry Summary</h4>
+                    <div className="grid grid-cols-2 gap-y-6">
+                      <SummaryItem icon={User} label="Inquirer" value={formData.inquirerType === "agent" ? "Agent" : "Client"} />
+                      {formData.inquirerType === "agent" ? (
+                        <SummaryItem icon={User} label="Agent Name" value={formData.agentName || "Not set"} />
+                      ) : null}
+                      <SummaryItem
+                        icon={User}
+                        label={formData.inquirerType === "agent" ? "Agent Name" : "Contact Name"}
+                        value={formData.inquirerType === "agent" ? (formData.agentName || "Not set") : (formData.guestName || "Not set")}
+                      />
+                      <SummaryItem icon={User} label="Guest" value={formData.stayingGuestName || "Not set"} />
+                      <SummaryItem icon={Phone} label="Guest Contact" value={formData.stayingGuestPhone || "Not set"} />
+                      <SummaryItem icon={MapPin} label="Pax" value={`${formData.pax} People`} />
+                      <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
+                      <SummaryItem icon={Clock} label="Schedule" value={`${formatTime(formData.checkInTime)} - ${formatTime(formData.checkOutTime)}`} />
+                      <SummaryItem icon={PlusCircle} label="Rooms" value={selectedRoomNamesDerived.length > 0 ? selectedRoomNamesDerived.join(", ") : "Not set"} />
+                      <SummaryItem icon={Phone} label="Contact" value={formData.contactNumber || "Not set"} />
+                      <SummaryItem icon={MapPin} label="Address" value={formData.address || "Not set"} />
+                      {showAddOns ? (
+                        <SummaryItem icon={PlusCircle} label="Add-ons" value={formData.selectedServices.length > 0 ? formData.selectedServices.join(", ") : "None"} />
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {showTerms ? (
+                    <div className="px-2 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="relative flex items-center pt-1">
+                          <input
+                            type="checkbox"
+                            id="terms"
+                            checked={agreed}
+                            onChange={(e) => setAgreed(e.target.checked)}
+                            className="w-5 h-5 rounded-md border-2 border-slate-200 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </div>
+                        <label htmlFor="terms" className="text-xs text-slate-500 leading-relaxed cursor-pointer">
+                          I have read and agree to the resort&apos;s{" "}
+                          <button
+                            type="button"
+                            onClick={() => setLegalView("rules")}
+                            className="text-blue-600 font-bold underline hover:text-blue-700"
+                          >
+                            Rules and Regulations
+                          </button>
+                          {" "}and{" "}
+                          <button
+                            type="button"
+                            onClick={() => setLegalView("terms")}
+                            className="text-blue-600 font-bold underline hover:text-blue-700"
+                          >
+                            Terms and Conditions
+                          </button>.
+                        </label>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
           )}
         </div>

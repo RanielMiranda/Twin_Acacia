@@ -24,7 +24,8 @@ export default function StayCardSection({
   const guestDisplayName = draft.stayingGuestName || draft.guestName || "Guest";
   const contactEmail = draft.email || "No email";
   const contactPhone = draft.phoneNumber || "No phone";
-  const contactAddress = draft.address || "No address";
+  const guestEmail = draft.stayingGuestEmail || draft.guestEmail || draft.email || "No email";
+  const guestPhone = draft.stayingGuestPhone || draft.guestPhone || draft.phoneNumber || "No phone";
   const parseUtcDate = (value) => (value ? new Date(`${value}T00:00:00Z`) : null);
   const rangeStart = parseUtcDate(draft.checkInDate);
   const rangeEnd = parseUtcDate(draft.checkOutDate);
@@ -105,35 +106,31 @@ export default function StayCardSection({
   return (
     <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
       <SectionLabel icon={<Calendar size={14} />} label="Stay" />
-      <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-xl bg-white border border-slate-200 text-slate-500 flex items-center justify-center">
-            <User size={16} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
-              {inquirerType === "client" ? "Guest & Contact" : "Guest Name"}
-            </p>
-            <p className="text-lg font-black text-slate-900 truncate">{guestDisplayName}</p>
-            {inquirerType === "client" ? (
+      {inquirerType === "agent" ? (
+        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-xl bg-white border border-slate-200 text-slate-500 flex items-center justify-center">
+              <User size={16} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                Guest Name
+              </p>
+              <p className="text-lg font-black text-slate-900 truncate">{guestDisplayName}</p>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                 <span className="inline-flex items-center gap-1">
                   <Mail size={12} />
-                  {contactEmail}
+                  {guestEmail}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Phone size={12} />
-                  {contactPhone}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <MapPin size={12} />
-                  {contactAddress}
+                  {guestPhone}
                 </span>
               </div>
-            ) : null}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
       <div className={`rounded-xl px-3 py-2 border ${conflicts.length > 0 ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`}>
         <p className="text-[10px] uppercase tracking-wider font-black text-slate-500">Availability Check</p>
         <p className={`text-xs font-bold ${conflicts.length > 0 ? "text-rose-700" : "text-emerald-700"}`}>

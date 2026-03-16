@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Save, CheckCircle, Loader2, ClipboardList, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useResort } from "@/components/useclient/ContextEditor"; // Import only the hook
+import { useToast } from "@/components/ui/toast/ToastProvider";
+import Toast from "@/components/ui/toast/Toast";
 
 import FacilityEditor from "./components/facility/FacilityEditor";
 import HeroGalleryEditor from "./components/HeroGalleryEditor";
@@ -20,6 +22,7 @@ export default function ResortBuilder({ resortId }) {
   // saveResort must be destructured from useResort()
   const { resort, setResort, loadResort, saveResort, loading, setDraftScope } = useResort();
   const [isSaved, setIsSaved] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (resortId) {
@@ -49,6 +52,7 @@ export default function ResortBuilder({ resortId }) {
     if (success) {
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
+      toast?.({ message: "Changes has been saved", color: "green", icon: CheckCircle });
     }
   };
 
@@ -103,6 +107,7 @@ export default function ResortBuilder({ resortId }) {
           )}
         </Button>
       </div>
+      <Toast />
     </div>
   );
 }

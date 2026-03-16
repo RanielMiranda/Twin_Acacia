@@ -291,6 +291,27 @@ export default function ProfileEditor() {
           placeholder="Resort description..."
         />
       </div>
+
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Rules and Regulations</p>
+          <textarea
+            className="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 text-sm text-slate-600 outline-none focus:border-blue-400 focus:bg-white transition min-h-[180px]"
+            value={resort.rulesAndRegulations || ""}
+            onChange={(e) => updateResort("rulesAndRegulations", e.target.value)}
+            placeholder="List the resort rules and regulations..."
+          />
+        </div>
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Terms and Conditions</p>
+          <textarea
+            className="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 text-sm text-slate-600 outline-none focus:border-blue-400 focus:bg-white transition min-h-[180px]"
+            value={resort.termsAndConditions || ""}
+            onChange={(e) => updateResort("termsAndConditions", e.target.value)}
+            placeholder="Add terms and conditions here..."
+          />
+        </div>
+      </div>
     </div>
   );
 }

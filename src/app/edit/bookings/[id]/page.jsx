@@ -438,11 +438,15 @@ export default function BookingManagementPage() {
       const isAgent = payload.inquirerType === "agent";
       const stayingGuestName = payload.guestName.trim();
       const stayingGuestEmail = payload.email.trim();
+      const stayingGuestPhone = payload.phoneNumber.trim();
       const bookingForm = {
         inquirerType: payload.inquirerType,
         guestName: payload.guestName.trim(),
         stayingGuestName,
         stayingGuestEmail,
+        stayingGuestPhone,
+        guestEmail: stayingGuestEmail,
+        guestPhone: stayingGuestPhone,
         email: payload.email.trim(),
         phoneNumber: payload.phoneNumber.trim(),
         agentName: isAgent ? payload.agentName.trim() : "",

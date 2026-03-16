@@ -577,3 +577,7 @@ create policy resort_caretakers_all_access on public.resort_caretakers
 alter table public.resorts
   add column if not exists payment_image_url text,
   add column if not exists bank_payment_image_url text;
+
+alter table public.resorts
+  add column if not exists "rulesAndRegulations" text,
+  add column if not exists "termsAndConditions" text;

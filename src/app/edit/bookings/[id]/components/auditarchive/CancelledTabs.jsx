@@ -24,7 +24,7 @@ export default function CancelledTabs({
         const roomLabel = item.bookingForm?.roomName || "Room";
         const guestName = item.bookingForm?.guestName || "Guest";
         const agentName = item.bookingForm?.agentName || "";
-        const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+        const { contactEmail, contactPhone, clientEmail, clientPhone } = getContactMeta(item);
         const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
         const { checkInDate, checkOutDate, checkInTime, checkOutTime } = getDateTimeParts(item);
         const hasUnresolvedIssue = unresolvedIssueBookingIds.has(item.id?.toString());
@@ -65,9 +65,9 @@ export default function CancelledTabs({
                   </span>
                 </div>
                 <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
-                  <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
-                  {agentEmail || agentPhone ? (
-                    <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                  <span>Contact: {contactEmail || "No email"}{contactPhone ? ` - ${contactPhone}` : ""}</span>
+                  {inquirerType === "agent" ? (
+                    <span>Client: {clientEmail || "No email"}{clientPhone ? ` - ${clientPhone}` : ""}</span>
                   ) : null}
                 </div>
               </div>
