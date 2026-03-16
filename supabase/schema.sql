@@ -288,11 +288,11 @@ begin
   elsif f = 'pending checkout' then
     return t in ('checked out', 'ongoing');
   elsif f = 'checked out' then
-    return false;
+    return t in ('ongoing', 'confirmed', 'pending checkout', 'inquiry');
   elsif f = 'declined' then
     return t in ('inquiry');
   elsif f = 'cancelled' then
-    return false;
+    return t in ('inquiry');
   end if;
 
   return false;

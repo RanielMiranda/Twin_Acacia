@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo, useState } from "react";
-import { Archive, RefreshCw, Clock3, ArrowRightLeft, Search, Trash2 } from "lucide-react";
+import { Archive, RefreshCw, Clock3, ArrowRightLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AuditArchivePanel({
@@ -12,6 +12,8 @@ export default function AuditArchivePanel({
   onRefresh,
   onOpenBooking,
   onReopenDeclined,
+  onReopenCancelled,
+  onReopenCheckedOut,
   onDeleteDeclined,
   onResolveCheckedOut,
   onDeleteArchived,
@@ -26,6 +28,29 @@ export default function AuditArchivePanel({
     return fields.some((value) =>
       String(value || "").toLowerCase().includes(normalizedSearch)
     );
+  };
+  const getContactMeta = (item) => {
+    const form = item.bookingForm || {};
+    const inquirerType = (item.inquirerType || form.inquirerType || "client").toString().toLowerCase();
+    const guestEmail = form.stayingGuestEmail || form.guestEmail || form.email || "";
+    const guestPhone = form.guestPhone || form.phoneNumber || "";
+    const agentEmail = form.agentEmail || form.agentContactEmail || "";
+    const agentPhone = form.agentPhone || form.agentContactPhone || "";
+    return {
+      inquirerType,
+      guestEmail,
+      guestPhone,
+      agentEmail: inquirerType === "agent" ? agentEmail : "",
+      agentPhone: inquirerType === "agent" ? agentPhone : "",
+    };
+  };
+  const getPaxSummary = (item) => {
+    const form = item.bookingForm || {};
+    const adultCount = Number(item.adultCount ?? form.adultCount ?? 0);
+    const childrenCount = Number(item.childrenCount ?? form.childrenCount ?? 0);
+    const sleepingGuests = Number(item.sleepingGuests ?? form.sleepingGuests ?? 0);
+    const paxTotal = adultCount + childrenCount;
+    return { adultCount, childrenCount, sleepingGuests, paxTotal };
   };
 
   const cancelledBookings = useMemo(
@@ -178,6 +203,8 @@ export default function AuditArchivePanel({
                     const checkOut = item.endDate || item.bookingForm?.checkOutDate || "-";
                     const guestName = item.bookingForm?.stayingGuestName || item.bookingForm?.guestName || "Guest";
                     const agentName = item.bookingForm?.agentName || "";
+                    const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+                    const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
 
                     return (
                       <div key={`archive-all-${item.id}`} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70">
@@ -201,12 +228,21 @@ export default function AuditArchivePanel({
                                 <span className="text-[11px] text-slate-600">Agent: {agentName}</span>
                               ) : null}
                             </div>
+                            <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                              <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
+                              {agentEmail || agentPhone ? (
+                                <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                              ) : null}
+                            </div>
+                            <div className="text-[10px] text-slate-500 text-center">
+                              Pax: {paxTotal} - Adults {adultCount} - Children {childrenCount} - Sleeping {sleepingGuests}
+                            </div>
                             <div className="text-[10px] text-slate-500 flex items-center gap-1">
                               <Clock3 size={10} /> {item.archivedAt ? new Date(item.archivedAt).toLocaleString() : "-"}
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
+                          <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-56 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
                               <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
@@ -219,16 +255,7 @@ export default function AuditArchivePanel({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 flex-wrap lg:justify-end">
-                            <Button
-                              variant="outline"
-                              className="h-8 w-8 p-0 flex items-center justify-center text-rose-600 border-rose-200 hover:bg-rose-50"
-                              onClick={() => onDeleteArchived?.(item.id)}
-                              aria-label="Delete archived booking"
-                            >
-                              <Trash2 size={14} />
-                            </Button>
-                          </div>
+                          <div className="flex items-center gap-2 flex-wrap lg:justify-end" />
                         </div>
                       </div>
                     );
@@ -246,6 +273,8 @@ export default function AuditArchivePanel({
                     const checkOut = item.endDate || item.bookingForm?.checkOutDate || "-";
                     const guestName = item.bookingForm?.stayingGuestName || item.bookingForm?.guestName || "Guest";
                     const agentName = item.bookingForm?.agentName || "";
+                    const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+                    const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
                     const hasUnresolvedIssue = unresolvedIssueBookingIds.has(item.id?.toString());
 
                     return (
@@ -270,12 +299,21 @@ export default function AuditArchivePanel({
                                 <span className="text-[11px] text-slate-600">Agent: {agentName}</span>
                               ) : null}
                             </div>
+                            <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                              <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
+                              {agentEmail || agentPhone ? (
+                                <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                              ) : null}
+                            </div>
+                            <div className="text-[10px] text-slate-500 text-center">
+                              Pax: {paxTotal} - Adults {adultCount} - Children {childrenCount} - Sleeping {sleepingGuests}
+                            </div>
                             <div className="text-[10px] text-slate-500 flex items-center gap-1">
                               <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
+                          <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-56 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
                               <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
@@ -300,6 +338,13 @@ export default function AuditArchivePanel({
                               onClick={() => onOpenBooking?.(item.id)}
                             >
                               Open Booking
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="h-8 px-3 text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                              onClick={() => onReopenCancelled?.(item.id)}
+                            >
+                              Reopen
                             </Button>
                             <Button
                               variant="outline"
@@ -329,6 +374,11 @@ export default function AuditArchivePanel({
                     >
                       <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
                         <div className="min-w-0 lg:flex-1 space-y-2">
+                          {(() => {
+                            const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+                            const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
+                            return (
+                              <>
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight bg-rose-600 text-white inline-flex items-center gap-1">
                               <ArrowRightLeft size={10} />
@@ -347,12 +397,24 @@ export default function AuditArchivePanel({
                               <span className="text-[11px] text-slate-600">Agent: {item.bookingForm.agentName}</span>
                             ) : null}
                           </div>
+                          <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                            <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
+                            {agentEmail || agentPhone ? (
+                              <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                            ) : null}
+                          </div>
+                          <div className="text-[10px] text-slate-500 text-center">
+                            Pax: {paxTotal} - Adults {adultCount} - Children {childrenCount} - Sleeping {sleepingGuests}
+                          </div>
                           <div className="text-[10px] text-slate-500 flex items-center gap-1">
                             <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
                           </div>
+                              </>
+                            );
+                          })()}
                         </div>
 
-                        <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
+                        <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-56 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
                             <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
@@ -404,6 +466,8 @@ export default function AuditArchivePanel({
                     const checkOut = item.endDate || item.bookingForm?.checkOutDate || "-";
                     const guestName = item.bookingForm?.guestName || "Guest";
                     const agentName = item.bookingForm?.agentName || "";
+                    const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+                    const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
                     const hasUnresolvedIssue = unresolvedIssueBookingIds.has(item.id?.toString());
 
                     return (
@@ -428,12 +492,21 @@ export default function AuditArchivePanel({
                                 <span className="text-[11px] text-slate-600">Agent: {agentName}</span>
                               ) : null}
                             </div>
+                            <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                              <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
+                              {agentEmail || agentPhone ? (
+                                <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                              ) : null}
+                            </div>
+                            <div className="text-[10px] text-slate-500 text-center">
+                              Pax: {paxTotal} - Adults {adultCount} - Children {childrenCount} - Sleeping {sleepingGuests}
+                            </div>
                             <div className="text-[10px] text-slate-500 flex items-center gap-1">
                               <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
+                          <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-56 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
                               <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
@@ -461,6 +534,14 @@ export default function AuditArchivePanel({
                             </Button>
                             <Button
                               variant="outline"
+                              className="h-8 px-3 text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                              onClick={() => onReopenCheckedOut?.(item.id)}
+                              disabled={hasUnresolvedIssue}
+                            >
+                              Reopen
+                            </Button>
+                            <Button
+                              variant="outline"
                               className={`h-8 px-3 text-xs font-bold border-rose-200 text-rose-700 hover:bg-rose-50 ${
                                 hasUnresolvedIssue ? "opacity-60 cursor-not-allowed" : ""
                               }`}
@@ -479,68 +560,181 @@ export default function AuditArchivePanel({
             </div>
           ) : null}
 
-          {activeTab === "history" && filteredArchived.map((item) => {
-            const inquirerType = (item.inquirerType || item.bookingForm?.inquirerType || "client").toString().toLowerCase();
-            const roomLabel = item.bookingForm?.roomName || "Room";
-            const checkIn = item.startDate || item.bookingForm?.checkInDate || "-";
-            const checkOut = item.endDate || item.bookingForm?.checkOutDate || "-";
-            const guestName = item.bookingForm?.stayingGuestName || item.bookingForm?.guestName || "Guest";
-            const agentName = item.bookingForm?.agentName || "";
+          {activeTab === "history" ? (
+            <div className="space-y-4">
+              {filteredCheckedOut.length > 0 ? (
+                <div className="space-y-2.5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending Checked Out (7-day window)</p>
+                  {filteredCheckedOut.map((item) => {
+                    const inquirerType = (item.inquirerType || item.bookingForm?.inquirerType || "client").toString().toLowerCase();
+                    const roomLabel = item.bookingForm?.roomName || "Room";
+                    const checkIn = item.startDate || item.bookingForm?.checkInDate || "-";
+                    const checkOut = item.endDate || item.bookingForm?.checkOutDate || "-";
+                    const guestName = item.bookingForm?.stayingGuestName || item.bookingForm?.guestName || "Guest";
+                    const agentName = item.bookingForm?.agentName || "";
+                    const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+                    const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
+                    const hasUnresolvedIssue = unresolvedIssueBookingIds.has(item.id?.toString());
 
-            return (
-              <div key={`archive-${item.id}`} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70">
-                <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
-                  <div className="min-w-0 lg:flex-1 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight text-white inline-flex items-center gap-1 bg-slate-700">
-                        <ArrowRightLeft size={10} />
-                        Checked Out
-                      </span>
-                      <span className="text-[10px] font-black px-2 py-0.5 bg-white/80 rounded-md text-slate-600 uppercase tracking-tight">
-                        {roomLabel}
-                      </span>
-                      <span className="text-[11px] font-black text-slate-600 uppercase inline-flex items-center gap-1">
-                        {checkIn} <ArrowRightLeft size={10} /> {checkOut}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-sm font-black text-slate-900">{guestName}</span>
-                      {agentName ? (
-                        <span className="text-[11px] text-slate-600">Agent: {agentName}</span>
-                      ) : null}
-                    </div>
-                    <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                      <Clock3 size={10} /> {item.archivedAt ? new Date(item.archivedAt).toLocaleString() : "-"}
-                    </div>
-                  </div>
+                    return (
+                      <div key={`checkedout-history-${item.id}`} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70">
+                        <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
+                          <div className="min-w-0 lg:flex-1 space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight text-white inline-flex items-center gap-1 bg-slate-700">
+                                <ArrowRightLeft size={10} />
+                                Checked Out
+                              </span>
+                              <span className="text-[10px] font-black px-2 py-0.5 bg-white/80 rounded-md text-slate-600 uppercase tracking-tight">
+                                {roomLabel}
+                              </span>
+                              <span className="text-[11px] font-black text-slate-600 uppercase inline-flex items-center gap-1">
+                                {checkIn} <ArrowRightLeft size={10} /> {checkOut}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="text-sm font-black text-slate-900">{guestName}</span>
+                              {agentName ? (
+                                <span className="text-[11px] text-slate-600">Agent: {agentName}</span>
+                              ) : null}
+                            </div>
+                            <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                              <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
+                              {agentEmail || agentPhone ? (
+                                <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                              ) : null}
+                            </div>
+                            <div className="text-[10px] text-slate-500 text-center">
+                              Pax: {paxTotal} - Adults {adultCount} - Children {childrenCount} - Sleeping {sleepingGuests}
+                            </div>
+                            <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                              <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
+                            </div>
+                          </div>
 
-                  <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
-                      <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                        inquirerType === "agent"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}>
-                        {inquirerType === "agent" ? "Agent" : "Client"}
-                      </span>
-                    </div>
-                  </div>
+                          <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-56 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
+                              <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
+                                inquirerType === "agent"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-emerald-100 text-emerald-700"
+                              }`}>
+                                {inquirerType === "agent" ? "Agent" : "Client"}
+                              </span>
+                            </div>
+                            {hasUnresolvedIssue ? (
+                              <div className="text-[10px] font-black uppercase tracking-widest text-rose-600">
+                                Unresolved issue
+                              </div>
+                            ) : null}
+                          </div>
 
-                  <div className="flex items-center gap-2 flex-wrap lg:justify-end">
-                    <Button
-                      variant="outline"
-                      className="h-8 w-8 p-0 flex items-center justify-center text-rose-600 border-rose-200 hover:bg-rose-50"
-                      onClick={() => onDeleteArchived?.(item.id)}
-                      aria-label="Delete archived booking"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
+                          <div className="flex items-center gap-2 flex-wrap lg:justify-end">
+                            <Button
+                              variant="outline"
+                              className="h-8 px-3 text-xs font-bold"
+                              onClick={() => onOpenBooking?.(item.id)}
+                            >
+                              Open Booking
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="h-8 px-3 text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                              onClick={() => onReopenCheckedOut?.(item.id)}
+                              disabled={hasUnresolvedIssue}
+                            >
+                              Reopen
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className={`h-8 px-3 text-xs font-bold border-rose-200 text-rose-700 hover:bg-rose-50 ${
+                                hasUnresolvedIssue ? "opacity-60 cursor-not-allowed" : ""
+                              }`}
+                              onClick={() => onResolveCheckedOut?.(item.id)}
+                              disabled={hasUnresolvedIssue}
+                            >
+                              Resolve
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            );
-          })}
+              ) : null}
+
+              {filteredArchived.length > 0 ? (
+                <div className="space-y-2.5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Archived Checked Out</p>
+                  {filteredArchived.map((item) => {
+                    const inquirerType = (item.inquirerType || item.bookingForm?.inquirerType || "client").toString().toLowerCase();
+                    const roomLabel = item.bookingForm?.roomName || "Room";
+                    const checkIn = item.startDate || item.bookingForm?.checkInDate || "-";
+                    const checkOut = item.endDate || item.bookingForm?.checkOutDate || "-";
+                    const guestName = item.bookingForm?.stayingGuestName || item.bookingForm?.guestName || "Guest";
+                    const agentName = item.bookingForm?.agentName || "";
+                    const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+                    const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
+
+                    return (
+                      <div key={`archive-${item.id}`} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70">
+                        <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
+                          <div className="min-w-0 lg:flex-1 space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight text-white inline-flex items-center gap-1 bg-slate-700">
+                                <ArrowRightLeft size={10} />
+                                Checked Out
+                              </span>
+                              <span className="text-[10px] font-black px-2 py-0.5 bg-white/80 rounded-md text-slate-600 uppercase tracking-tight">
+                                {roomLabel}
+                              </span>
+                              <span className="text-[11px] font-black text-slate-600 uppercase inline-flex items-center gap-1">
+                                {checkIn} <ArrowRightLeft size={10} /> {checkOut}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="text-sm font-black text-slate-900">{guestName}</span>
+                              {agentName ? (
+                                <span className="text-[11px] text-slate-600">Agent: {agentName}</span>
+                              ) : null}
+                            </div>
+                            <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                              <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
+                              {agentEmail || agentPhone ? (
+                                <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                              ) : null}
+                            </div>
+                            <div className="text-[10px] text-slate-500 text-center">
+                              Pax: {paxTotal} - Adults {adultCount} - Children {childrenCount} - Sleeping {sleepingGuests}
+                            </div>
+                            <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                              <Clock3 size={10} /> {item.archivedAt ? new Date(item.archivedAt).toLocaleString() : "-"}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-56 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
+                              <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
+                                inquirerType === "agent"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-emerald-100 text-emerald-700"
+                              }`}>
+                                {inquirerType === "agent" ? "Agent" : "Client"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-wrap lg:justify-end" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           {activeTab === "declined" && filteredDeclined.map((item) => (
             <div
@@ -549,6 +743,11 @@ export default function AuditArchivePanel({
             >
               <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
                 <div className="min-w-0 lg:flex-1 space-y-2">
+                  {(() => {
+                    const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+                    const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
+                    return (
+                      <>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight bg-rose-600 text-white inline-flex items-center gap-1">
                       <ArrowRightLeft size={10} />
@@ -567,12 +766,24 @@ export default function AuditArchivePanel({
                       <span className="text-[11px] text-slate-600">Agent: {item.bookingForm.agentName}</span>
                     ) : null}
                   </div>
+                  <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                    <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
+                    {agentEmail || agentPhone ? (
+                      <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                    ) : null}
+                  </div>
+                  <div className="text-[10px] text-slate-500 text-center">
+                    Pax: {paxTotal} - Adults {adultCount} - Children {childrenCount} - Sleeping {sleepingGuests}
+                  </div>
                   <div className="text-[10px] text-slate-500 flex items-center gap-1">
                     <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
                   </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
-                <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
+                <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-56 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
                     <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
@@ -618,6 +829,8 @@ export default function AuditArchivePanel({
             const checkOut = item.endDate || item.bookingForm?.checkOutDate || "-";
             const guestName = item.bookingForm?.guestName || "Guest";
             const agentName = item.bookingForm?.agentName || "";
+            const { guestEmail, guestPhone, agentEmail, agentPhone } = getContactMeta(item);
+            const { adultCount, childrenCount, sleepingGuests, paxTotal } = getPaxSummary(item);
             const hasUnresolvedIssue = unresolvedIssueBookingIds.has(item.id?.toString());
 
             return (
@@ -642,12 +855,21 @@ export default function AuditArchivePanel({
                         <span className="text-[11px] text-slate-600">Agent: {agentName}</span>
                       ) : null}
                     </div>
+                    <div className="text-[10px] text-slate-500 flex flex-wrap items-center gap-3">
+                      <span>Guest: {guestEmail || "No email"}{guestPhone ? ` - ${guestPhone}` : ""}</span>
+                      {agentEmail || agentPhone ? (
+                        <span>Agent: {agentEmail || "No email"}{agentPhone ? ` - ${agentPhone}` : ""}</span>
+                      ) : null}
+                    </div>
+                    <div className="text-[10px] text-slate-500 text-center">
+                      Pax: {paxTotal} - Adults {adultCount} - Children {childrenCount} - Sleeping {sleepingGuests}
+                    </div>
                     <div className="text-[10px] text-slate-500 flex items-center gap-1">
                       <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
+                  <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-56 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
                       <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
@@ -672,6 +894,13 @@ export default function AuditArchivePanel({
                       onClick={() => onOpenBooking?.(item.id)}
                     >
                       Open Booking
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-8 px-3 text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                      onClick={() => onReopenCancelled?.(item.id)}
+                    >
+                      Reopen
                     </Button>
                     <Button
                       variant="outline"

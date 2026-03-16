@@ -291,6 +291,40 @@ export default function BookingManagementPage() {
     }
   };
 
+  const handleReopenCancelled = async (bookingId) => {
+    try {
+      await updateBookingById(bookingId, (entry) => ({
+        ...entry,
+        status: "Inquiry",
+        bookingForm: {
+          ...(entry.bookingForm || {}),
+          status: "Inquiry",
+          reopenedAt: new Date().toISOString(),
+        },
+      }));
+      await loadAudits();
+    } catch (error) {
+      console.error("Reopen cancelled booking error:", error.message);
+    }
+  };
+
+  const handleReopenCheckedOut = async (bookingId) => {
+    try {
+      await updateBookingById(bookingId, (entry) => ({
+        ...entry,
+        status: "Ongoing",
+        bookingForm: {
+          ...(entry.bookingForm || {}),
+          status: "Ongoing",
+          reopenedAt: new Date().toISOString(),
+        },
+      }));
+      await loadAudits();
+    } catch (error) {
+      console.error("Reopen checked-out booking error:", error.message);
+    }
+  };
+
   const handleDeleteDeclined = async (bookingId) => {
     const confirmed = window.confirm("Delete this declined inquiry?");
     if (!confirmed) return;
@@ -304,7 +338,7 @@ export default function BookingManagementPage() {
 
   const handleResolveCheckedOut = async (bookingId) => {
     if (unresolvedIssueBookingIds.has(bookingId?.toString())) {
-      window.alert("Resolve blocked: this booking has unresolved issues.");
+      toast?.({ message: "Resolve blocked: this booking has unresolved issues.", color: "amber" });
       return;
     }
     const confirmed = window.confirm("Resolve and archive this booking permanently?");
@@ -312,25 +346,38 @@ export default function BookingManagementPage() {
     try {
       const source = (bookings || []).find((entry) => entry.id?.toString() === bookingId?.toString());
       if (!source) {
+        toast?.({ message: "Booking not found. Attempting cleanup.", color: "amber" });
         await deleteBookingById(bookingId);
         return;
       }
 
       const form = source.bookingForm || {};
+      const inquirerType = (source.inquirerType || form.inquirerType || "client").toString().toLowerCase();
+      const guestEmail = form.stayingGuestEmail || form.email || "";
+      const guestPhone = form.phoneNumber || "";
+      const agentEmail = form.agentEmail || form.agentContactEmail || "";
+      const agentPhone = form.agentPhone || form.agentContactPhone || "";
       const archiveForm = {
         stayingGuestName: form.stayingGuestName || form.guestName || "",
         guestName: form.guestName || "",
         agentName: form.agentName || "",
+        guestEmail,
+        guestPhone,
+        agentEmail: inquirerType === "agent" ? agentEmail : "",
+        agentPhone: inquirerType === "agent" ? agentPhone : "",
         roomName: form.roomName || "",
         checkInDate: source.startDate || form.checkInDate || null,
         checkOutDate: source.endDate || form.checkOutDate || null,
         checkInTime: source.checkInTime || form.checkInTime || "14:00",
         checkOutTime: source.checkOutTime || form.checkOutTime || "11:00",
         roomCount: Number(source.roomCount || form.roomCount || 1),
-        inquirerType: source.inquirerType || form.inquirerType || "client",
-        email: form.email || "",
-        phoneNumber: form.phoneNumber || "",
+        inquirerType,
+        email: guestEmail,
+        phoneNumber: guestPhone,
         address: form.address || "",
+        adultCount: Number(source.adultCount ?? form.adultCount ?? 0),
+        childrenCount: Number(source.childrenCount ?? form.childrenCount ?? 0),
+        sleepingGuests: Number(source.sleepingGuests ?? form.sleepingGuests ?? 0),
         status: "Checked Out",
       };
 
@@ -350,8 +397,10 @@ export default function BookingManagementPage() {
       await deleteBookingById(bookingId);
       await loadArchivedBookings();
       await loadAudits();
+      toast?.({ message: "Checked-out booking archived.", color: "green" });
     } catch (error) {
       console.error("Delete checked-out booking error:", error.message);
+      toast?.({ message: `Archive failed: ${error.message}`, color: "red" });
     }
   };
 
@@ -553,6 +602,8 @@ export default function BookingManagementPage() {
                 onRefresh={refreshAuditArchive}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
                 onReopenDeclined={handleReopenDeclined}
+                onReopenCancelled={handleReopenCancelled}
+                onReopenCheckedOut={handleReopenCheckedOut}
                 onDeleteDeclined={handleDeleteDeclined}
                 onResolveCheckedOut={handleResolveCheckedOut}
                 onDeleteArchived={handleDeleteArchivedBooking}

@@ -36,7 +36,7 @@ function getStatusLabel(booking) {
 function shouldShowOnCalendar(booking) {
   if (booking?.isArchived) return true;
   const normalizedStatus = getNormalizedStatus(booking);
-  return !["pending checkout", "checked out", "checked-out", "cancelled", "declined"].includes(normalizedStatus);
+  return !["pending checkout", "cancelled", "declined"].includes(normalizedStatus);
 }
 
 function isConfirmedStatus(booking) {
@@ -70,7 +70,7 @@ export default function BookingCalendar({ archivedBookings = [] }) {
   const calendarModes = [
     { id: "all", label: "All Bookings" },
     { id: "confirmed", label: "Confirmed / Ongoing" },
-    { id: "inquiry", label: "Inquiry / Pending Payment" },
+    { id: "inquiry", label: "Inquiry Status" },
     { id: "past", label: "Past Bookings" },
   ];
 
