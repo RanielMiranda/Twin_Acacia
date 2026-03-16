@@ -11,6 +11,17 @@ export default function BookingConfirmation({
 }) {
   const formData = data || {};
 
+  const inquirerType = String(formData.inquirerType || "client").toLowerCase();
+  const isAgent = inquirerType === "agent";
+
+  const guestName = formData.stayingGuestName || formData.guestName || "-";
+  const guestEmail = formData.stayingGuestEmail || formData.guestEmail || formData.email || "";
+  const guestPhone = formData.stayingGuestPhone || formData.guestPhone || formData.contactNumber || "";
+  const agentName = formData.agentName || "";
+  const agentEmail = formData.email || "";
+  const agentPhone = formData.contactNumber || "";
+  const clientAddress = formData.address || "";
+
   const selectedServices = Array.isArray(formData.resortServices)
     ? formData.resortServices
     : [];
@@ -69,29 +80,49 @@ export default function BookingConfirmation({
           <section className="space-y-3">
             <h2 className=" mt-5 text-xs font-black uppercase tracking-wider text-slate-500">Contact Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Contact Name">
-                <div className="text-sm font-bold text-slate-700">{formData.guestName || formData.agentName || "-"}</div>
+              <Field label="Guest Name">
+                <div className="text-sm font-bold text-slate-700">{guestName}</div>
               </Field>
-              <Field label="Email"><div className="text-sm font-bold text-slate-700">{formData.email || "-"}</div></Field>
-              <Field label="Phone Number"><div className="text-sm font-bold text-slate-700">{formData.phoneNumber || "-"}</div></Field>
-              <Field label="Address"><div className="text-sm font-bold text-slate-700">{formData.address || "-"}</div></Field>
+
+              {guestEmail ? (
+                <Field label="Guest Email">
+                  <div className="text-sm font-bold text-slate-700">{guestEmail}</div>
+                </Field>
+              ) : null}
+
+              {guestPhone ? (
+                <Field label="Guest Phone">
+                  <div className="text-sm font-bold text-slate-700">{guestPhone}</div>
+                </Field>
+              ) : null}
+
+                  <Field label="Guest Address">
+                    <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
+                  </Field>
+
+              <Field label="Agent Name">
+                <div className="text-sm font-bold text-slate-700">{agentName || "-"}</div>
+              </Field>
+              <Field label="Agent Email">
+                <div className="text-sm font-bold text-slate-700">{agentEmail || "-"}</div>
+              </Field>
+              <Field label="Agent Phone">
+                <div className="text-sm font-bold text-slate-700">{agentPhone || "-"}</div>
+              </Field>
+
+              {!isAgent ? (
+                <Field label="Address">
+                  <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
+                </Field>
+              ) : null}
             </div>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Stay Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Field label="Guest Name">
-                <div className="text-sm font-bold text-slate-700">{formData.stayingGuestName || formData.guestName || "-"}</div>
-              </Field>
-              {String(formData.inquirerType || "").toLowerCase() === "agent" || formData.agentName ? (
-                <Field label="Agent">
-                  <div className="text-sm font-bold text-slate-700">{formData.agentName || "-"}</div>
-                </Field>
-              ) : null}
               <Field label="Adults"><div className="text-sm font-bold text-slate-700">{Number(formData.adultCount || 0)}</div></Field>
               <Field label="Children"><div className="text-sm font-bold text-slate-700">{Number(formData.childrenCount || 0)}</div></Field>
-              <Field label="Guests"><div className="text-sm font-bold text-slate-700">{Number(formData.guestCount || 0)}</div></Field>
               <Field label="Sleeping Guests"><div className="text-sm font-bold text-slate-700">{Number(formData.sleepingGuests || 0)}</div></Field>
               <Field label="Total Pax">
                 <div className="text-sm font-bold text-slate-700">

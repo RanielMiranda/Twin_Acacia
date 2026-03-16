@@ -316,7 +316,7 @@ const handleSubmitInquiry = async (submittedData) => {
                 ) : null}
                 <button
                   className={`w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white transition ${
-                    hasAvailabilityConflict ? "bg-slate-300 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
+                    hasAvailabilityConflict ? "bg-slate-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                   }`}
                   onClick={() => {
                     if (hasAvailabilityConflict) return;
@@ -409,7 +409,7 @@ const handleSubmitInquiry = async (submittedData) => {
                 />
                 <button
                   className={`mt-4 w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white ${
-                    hasAvailabilityConflict ? "bg-slate-300 cursor-not-allowed" : "bg-slate-900"
+                    hasAvailabilityConflict ? "bg-slate-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                   }`}
                   onClick={() => {
                     if (hasAvailabilityConflict) return;

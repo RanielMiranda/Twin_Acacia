@@ -268,19 +268,10 @@ export default function BookingCreationTemplate({
     setFormData((prev) => ({ ...prev, stayingGuestPhone: nextPhone }));
   }, [formData.contactNumber, formData.inquirerType, formData.stayingGuestPhone]);
 
-  const autoAgentContactRef = useRef("");
   useEffect(() => {
     if (formData.inquirerType !== "agent") return;
-    const shouldSync =
-      !formData.guestName ||
-      formData.guestName === autoAgentContactRef.current;
-    if (!shouldSync) return;
     const nextName = formData.agentName || "";
-    if (formData.guestName === nextName) {
-      autoAgentContactRef.current = nextName;
-      return;
-    }
-    autoAgentContactRef.current = nextName;
+    if (formData.guestName === nextName) return;
     setFormData((prev) => ({ ...prev, guestName: nextName }));
   }, [formData.agentName, formData.guestName, formData.inquirerType]);
 
