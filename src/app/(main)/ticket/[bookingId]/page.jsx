@@ -39,7 +39,43 @@ export default function ClientTicketPage() {
     toast,
   });
 
-  const form = useMemo(() => booking?.booking_form || {}, [booking]);
+  const form = useMemo(() => {
+    if (!booking) return {};
+    const rawForm = booking?.booking_form || {};
+    const adults = Number(booking.adult_count ?? rawForm.adultCount ?? 0);
+    const children = Number(booking.children_count ?? rawForm.childrenCount ?? 0);
+    const guestCount = Number(booking.pax ?? rawForm.guestCount ?? rawForm.pax ?? adults + children);
+    const inquirerType =
+      booking.inquirer_type === true || rawForm.inquirerType === "agent" ? "agent" : "client";
+    const contactEmail = rawForm.email || rawForm.stayingGuestEmail || "";
+    const contactPhone = rawForm.phoneNumber || rawForm.stayingGuestPhone || "";
+    return {
+      ...rawForm,
+      inquirerType,
+      adultCount: adults,
+      childrenCount: children,
+      guestCount,
+      pax: guestCount,
+      sleepingGuests: Number(booking.sleeping_guests ?? rawForm.sleepingGuests ?? 0),
+      roomCount: Number(booking.room_count ?? rawForm.roomCount ?? booking.room_ids?.length ?? 1),
+      stayingGuestName:
+        rawForm.stayingGuestName || (inquirerType === "client" ? rawForm.guestName || "" : ""),
+      stayingGuestEmail:
+        rawForm.stayingGuestEmail || (inquirerType === "client" ? contactEmail : ""),
+      stayingGuestPhone:
+        rawForm.stayingGuestPhone || (inquirerType === "client" ? contactPhone : ""),
+      resortServices: Array.isArray(booking.resort_service_ids)
+        ? booking.resort_service_ids.filter(Boolean)
+        : Array.isArray(rawForm.resortServices)
+          ? rawForm.resortServices
+              .map((entry) => {
+                if (entry && typeof entry === "object") return entry.id || entry.name || "";
+                return entry || "";
+              })
+              .filter(Boolean)
+          : [],
+    };
+  }, [booking]);
   const paymentMethod = paymentDraft.method ?? (form.paymentMethod === "Bank" ? "Bank" : DEFAULT_PAYMENT_METHOD);
   const downpayment = paymentDraft.downpayment ?? Number(form.downpayment || 0);
   const setPaymentMethod = (method) => setPaymentDraft((prev) => ({ ...prev, method }));

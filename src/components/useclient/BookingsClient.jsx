@@ -21,6 +21,7 @@ const BOOKING_COLUMNS = [
   "sleeping_guests",
   "room_count",
   "inquirer_type",
+  "resort_service_ids",
   "payment_deadline",
   "booking_form",
   "created_at",
@@ -44,6 +45,16 @@ function toModel(row) {
     pax: Number(row.pax ?? row.booking_form?.guestCount ?? row.booking_form?.pax ?? 0),
     sleepingGuests: Number(row.sleeping_guests ?? row.booking_form?.sleepingGuests ?? 0),
     roomCount: Number(row.room_count ?? row.booking_form?.roomCount ?? row.room_ids?.length ?? 0),
+    resortServiceIds: Array.isArray(row.resort_service_ids)
+      ? row.resort_service_ids.filter(Boolean)
+      : Array.isArray(row.booking_form?.resortServices)
+        ? row.booking_form.resortServices
+            .map((entry) => {
+              if (entry && typeof entry === "object") return entry.id || entry.name || "";
+              return entry || "";
+            })
+            .filter(Boolean)
+        : [],
     paymentDeadline: row.payment_deadline || row.booking_form?.paymentDeadline || null,
     updatedAt: row.updated_at || null,
   };
@@ -64,6 +75,7 @@ function toRow(booking, resortId) {
     pax: _discardPax,
     sleepingGuests: _discardSleepingGuests,
     roomCount: _discardRoomCount,
+    resortServices: _discardResortServices,
     inquirerType: _discardInquirerType,
     status: _discardStatus,
     checkInDate: _discardCheckInDate,
@@ -89,6 +101,17 @@ function toRow(booking, resortId) {
     sleeping_guests: Number(form.sleepingGuests ?? booking.sleepingGuests ?? 0),
     room_count: Number(form.roomCount ?? booking.roomCount ?? booking.roomIds?.length ?? 1),
     inquirer_type: (form.inquirerType || booking.inquirerType) === "agent",
+    resort_service_ids: Array.isArray(booking.resortServiceIds)
+      ? booking.resortServiceIds.filter(Boolean).map(String)
+      : Array.isArray(form.resortServices)
+        ? form.resortServices
+            .map((entry) => {
+              if (entry && typeof entry === "object") return entry.id || entry.name || "";
+              return entry || "";
+            })
+            .filter(Boolean)
+            .map(String)
+        : [],
     payment_deadline: booking.paymentDeadline || booking.bookingForm?.paymentDeadline || null,
     booking_form: {
       ...formWithoutDuplicates,

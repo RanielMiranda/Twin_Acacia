@@ -271,12 +271,14 @@ export default function BookingCreationTemplate({
     setFormData((prev) => ({ ...prev, guestName: nextName }));
   }, [formData.agentName, formData.guestName, formData.inquirerType]);
 
-  const toggleService = (serviceName) => {
+  const toggleService = (service) => {
+    const serviceKey = getServiceKey(service);
+    if (!serviceKey) return;
     setFormData((prev) => ({
       ...prev,
-      selectedServices: prev.selectedServices.includes(serviceName)
-        ? prev.selectedServices.filter((s) => s !== serviceName)
-        : [...prev.selectedServices, serviceName],
+      selectedServices: prev.selectedServices.includes(serviceKey)
+        ? prev.selectedServices.filter((s) => s !== serviceKey)
+        : [...prev.selectedServices, serviceKey],
     }));
   };
 
@@ -644,21 +646,21 @@ export default function BookingCreationTemplate({
                   resort.extraServices.map((service, idx) => (
                     <button
                       key={idx}
-                      onClick={() => toggleService(service.name)}
+                      onClick={() => toggleService(service)}
                       className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
-                        formData.selectedServices.includes(service.name)
+                        formData.selectedServices.includes(getServiceKey(service))
                           ? "border-blue-600 bg-blue-50"
                           : "border-slate-100 bg-white hover:border-slate-200"
                       }`}
                     >
                       <div className="flex flex-col items-start">
-                        <span className={`font-bold text-sm ${formData.selectedServices.includes(service.name) ? "text-blue-700" : "text-slate-700"}`}>
+                        <span className={`font-bold text-sm ${formData.selectedServices.includes(getServiceKey(service)) ? "text-blue-700" : "text-slate-700"}`}>
                           {service.name}
                         </span>
-                        {service.price && <span className="text-xs text-slate-400">PHP {service.price}</span>}
+                        {(service.cost || service.price) ? <span className="text-xs text-slate-400">PHP {service.cost || service.price}</span> : null}
                       </div>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                        formData.selectedServices.includes(service.name) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-300"
+                        formData.selectedServices.includes(getServiceKey(service)) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-300"
                       }`}>
                         <Check size={14} strokeWidth={4} />
                       </div>
@@ -725,7 +727,11 @@ export default function BookingCreationTemplate({
                       <SummaryItem icon={PlusCircle} label="Rooms" value={selectedRoomNamesDerived.length > 0 ? selectedRoomNamesDerived.join(", ") : "Not set"} />
                       <SummaryItem icon={MapPin} label="Address" value={formData.address || "Not set"} />
                       {showAddOns ? (
-                        <SummaryItem icon={PlusCircle} label="Add-ons" value={formData.selectedServices.length > 0 ? formData.selectedServices.join(", ") : "None"} />
+                        <SummaryItem
+                          icon={PlusCircle}
+                          label="Add-ons"
+                          value={formData.selectedServices.length > 0 ? formData.selectedServices.map(resolveServiceName).join(", ") : "None"}
+                        />
                       ) : null}
                     </div>
                   </div>

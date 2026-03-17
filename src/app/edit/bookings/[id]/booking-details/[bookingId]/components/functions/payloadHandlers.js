@@ -93,6 +93,21 @@ export function buildPersistPayload({
     checkInTime: nextDraft.checkInTime || booking.checkInTime,
     checkOutTime: nextDraft.checkOutTime || booking.checkOutTime,
     paymentDeadline: nextDraft.paymentDeadline || null,
+    adultCount: Number(nextDraft.adultCount || 0),
+    childrenCount: Number(nextDraft.childrenCount || 0),
+    pax: Number(nextDraft.guestCount || 0),
+    sleepingGuests: Number(nextDraft.sleepingGuests || 0),
+    roomCount: assignedRoomIds.length || Number(nextDraft.roomCount || 1),
+    inquirerType: normalizedInquirerType,
+    resortServiceIds: Array.isArray(nextDraft.resortServices)
+      ? nextDraft.resortServices
+          .map((entry) => {
+            if (entry && typeof entry === "object") return entry.id || entry.name || "";
+            return entry || "";
+          })
+          .filter(Boolean)
+          .map(String)
+      : [],
     bookingForm: {
       ...(booking.bookingForm || {}),
       ...sanitizedDraft,
@@ -106,6 +121,21 @@ export function buildPersistPayload({
       lastActionBy: actorMeta.name || "Owner",
       lastActionRole: actorMeta.role || "owner",
       lastActionById: actorMeta.id || "",
+      stayingGuestName:
+        normalizedInquirerType === "client" &&
+        (sanitizedDraft.stayingGuestName || "") === (sanitizedDraft.guestName || "")
+          ? ""
+          : sanitizedDraft.stayingGuestName || "",
+      stayingGuestEmail:
+        normalizedInquirerType === "client" &&
+        (sanitizedDraft.stayingGuestEmail || "") === (sanitizedDraft.email || "")
+          ? ""
+          : sanitizedDraft.stayingGuestEmail || "",
+      stayingGuestPhone:
+        normalizedInquirerType === "client" &&
+        (sanitizedDraft.stayingGuestPhone || "") === (sanitizedDraft.phoneNumber || "")
+          ? ""
+          : sanitizedDraft.stayingGuestPhone || "",
     },
   };
 }

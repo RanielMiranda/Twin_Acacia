@@ -61,7 +61,8 @@ alter table public.bookings
   add column if not exists pax integer not null default 0,
   add column if not exists sleeping_guests integer not null default 0,
   add column if not exists room_count integer not null default 1,
-  add column if not exists inquirer_type boolean not null default false;
+  add column if not exists inquirer_type boolean not null default false,
+  add column if not exists resort_service_ids text[] not null default '{}';
 
 create table if not exists public.booking_transactions (
   id bigint generated always as identity primary key,
@@ -89,6 +90,7 @@ create index if not exists booking_transactions_booking_id_idx on public.booking
 create index if not exists ticket_issues_booking_id_idx on public.ticket_issues(booking_id);
 create index if not exists bookings_resort_status_idx on public.bookings(resort_id, status);
 create index if not exists bookings_guest_breakdown_idx on public.bookings(pax, adult_count, children_count);
+create index if not exists bookings_resort_service_ids_idx on public.bookings using gin(resort_service_ids);
 
 alter table public.booking_transactions enable row level security;
 alter table public.ticket_issues enable row level security;
@@ -117,7 +119,22 @@ set
   ),
   sleeping_guests = coalesce((booking_form->>'sleepingGuests')::int, sleeping_guests),
   room_count = coalesce((booking_form->>'roomCount')::int, room_count),
-  inquirer_type = coalesce((booking_form->>'inquirerType') = 'agent', inquirer_type)
+  inquirer_type = coalesce((booking_form->>'inquirerType') = 'agent', inquirer_type),
+  resort_service_ids = coalesce(
+    (
+      select array_agg(service_key) filter (where service_key is not null and service_key <> '')
+      from (
+        select
+          case
+            when jsonb_typeof(service_item) = 'object' then coalesce(service_item->>'id', service_item->>'name')
+            when jsonb_typeof(service_item) = 'string' then trim(both '"' from service_item::text)
+            else null
+          end as service_key
+        from jsonb_array_elements(coalesce(booking_form->'resortServices', '[]'::jsonb)) as service_item
+      ) extracted_services
+    ),
+    resort_service_ids
+  )
 where booking_form <> '{}'::jsonb;
 
 -- ==========================================

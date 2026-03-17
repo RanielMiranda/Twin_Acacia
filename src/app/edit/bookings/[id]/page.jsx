@@ -182,13 +182,14 @@ export default function BookingManagementPage() {
       const bookingForm = {
         inquirerType: payload.inquirerType,
         guestName,
-        stayingGuestName: payload.stayingGuestName?.trim() || guestName,
-        stayingGuestEmail: payload.stayingGuestEmail?.trim() || guestEmail,
-        stayingGuestPhone: payload.stayingGuestPhone?.trim() || guestPhone,
-        guestEmail,
-        guestPhone,
+        ...(isAgent
+          ? {
+              stayingGuestName: payload.stayingGuestName?.trim() || guestName,
+              stayingGuestEmail: payload.stayingGuestEmail?.trim() || guestEmail,
+              stayingGuestPhone: payload.stayingGuestPhone?.trim() || guestPhone,
+            }
+          : {}),
         address: payload.address?.trim() || "",
-        guestAddress: payload.address?.trim() || "",
         email: payload.email.trim(),
         phoneNumber: payload.phoneNumber.trim(),
         agentName: isAgent ? payload.agentName.trim() : "",
@@ -197,11 +198,6 @@ export default function BookingManagementPage() {
         checkOutDate: payload.checkOutDate || payload.checkInDate,
         checkInTime: payload.checkInTime || "14:00",
         checkOutTime: payload.checkOutTime || "11:00",
-        roomCount: Number(payload.roomCount || 1),
-        adultCount,
-        childrenCount,
-        guestCount,
-        pax,
         totalAmount,
       };
 
@@ -217,11 +213,13 @@ export default function BookingManagementPage() {
         childrenCount,
         pax,
         sleepingGuests: Number(payload.sleepingGuests || 0),
+        resortServiceIds: Array.isArray(payload.selectedServices)
+          ? payload.selectedServices.map(String).filter(Boolean)
+          : [],
         totalAmount,
         inquirerType: payload.inquirerType,
         bookingForm: {
           ...bookingForm,
-          resortServices: payload.selectedServices || [],
           selectedRoomIds: payload.selectedRoomIds || [],
         },
       });

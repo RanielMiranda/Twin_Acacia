@@ -63,8 +63,12 @@ export function buildDraftFromBooking(booking) {
     guestName: form.guestName || "Guest",
     email: contactEmail,
     phoneNumber: contactPhone,
-    stayingGuestEmail: form.stayingGuestEmail || "",
-    stayingGuestPhone: form.stayingGuestPhone || "",
+    stayingGuestName:
+      form.stayingGuestName || (inquirerType === "client" ? form.guestName || "Guest" : ""),
+    stayingGuestEmail:
+      form.stayingGuestEmail || (inquirerType === "client" ? contactEmail : ""),
+    stayingGuestPhone:
+      form.stayingGuestPhone || (inquirerType === "client" ? contactPhone : ""),
     address: form.address || "",
     adultCount: adults,
     childrenCount: children,
@@ -89,7 +93,16 @@ export function buildDraftFromBooking(booking) {
     paymentVerified,
     paymentVerifiedAt: form.paymentVerifiedAt || null,
     confirmationStub: form.confirmationStub || null,
-    resortServices: Array.isArray(form.resortServices) ? form.resortServices : [],
+    resortServices: Array.isArray(booking.resortServiceIds)
+      ? booking.resortServiceIds.filter(Boolean)
+      : Array.isArray(form.resortServices)
+        ? form.resortServices
+            .map((entry) => {
+              if (entry && typeof entry === "object") return entry.id || entry.name || "";
+              return entry || "";
+            })
+            .filter(Boolean)
+        : [],
   };
 }
 

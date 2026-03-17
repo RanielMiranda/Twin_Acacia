@@ -75,6 +75,11 @@ export default function BookingDetailsFormPage() {
         .filter(Boolean)
         .join(", ") ||
       "",
+    resortServices: Array.isArray(existingBooking?.resortServiceIds)
+      ? existingBooking.resortServiceIds
+      : Array.isArray(bookingForm.resortServices)
+        ? bookingForm.resortServices
+        : [],
     resortName: currentResort?.name,
   };
 

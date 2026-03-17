@@ -268,25 +268,28 @@ export function useTicketActions({
       toast({ message: "Please wait a few seconds before sending another add-on request.", color: "amber" });
       return;
     }
-    const normalizedServices = (services || [])
-      .map((service) => ({
-        name: String(service?.name || "").trim(),
-        cost: Number(service?.cost || 0),
-      }))
-      .filter((service) => service.name);
+    const normalizedServiceIds = (services || [])
+      .map((service) => {
+        if (service && typeof service === "object") return service.id || service.name || "";
+        return service || "";
+      })
+      .map((serviceId) => String(serviceId || "").trim())
+      .filter(Boolean);
 
     setIsSavingAddOns(true);
     try {
       lastAddOnsSentAtRef.current = now;
       const bookingForm = {
         ...(booking.booking_form || {}),
-        resortServices: normalizedServices,
         addOnsUpdatedAt: new Date().toISOString(),
       };
 
       const { error } = await supabase
         .from("bookings")
-        .update({ booking_form: bookingForm })
+        .update({
+          booking_form: bookingForm,
+          resort_service_ids: normalizedServiceIds,
+        })
         .eq("id", booking.id);
 
       if (error) throw error;
@@ -299,14 +302,21 @@ export function useTicketActions({
           sender_name: form.guestName || "Client",
           visibility: viewerRole === "agent" ? true : false,
           message:
-            normalizedServices.length > 0
-              ? `Requested add-on update: ${normalizedServices
-                  .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
+            normalizedServiceIds.length > 0
+              ? `Requested add-on update: ${normalizedServiceIds
+                  .map((serviceId) => {
+                    const matchedService = (resort?.extraServices || []).find(
+                      (service) => String(service?.id) === serviceId || String(service?.name) === serviceId
+                    );
+                    const serviceName = matchedService?.name || serviceId;
+                    const serviceCost = Number(matchedService?.cost || matchedService?.price || 0);
+                    return `${serviceName} (PHP ${serviceCost.toLocaleString()})`;
+                  })
                   .join(", ")}`
               : "Requested add-on update: cleared requested add-ons.",
           idempotency_key: buildMessageIdempotencyKey(
-            normalizedServices.length > 0
-              ? normalizedServices.map((service) => `${service.name}:${Number(service.cost || 0)}`).join("|")
+            normalizedServiceIds.length > 0
+              ? normalizedServiceIds.join("|")
               : "cleared",
             "client-addons"
           ),
@@ -317,7 +327,7 @@ export function useTicketActions({
         }
       }
 
-      setBooking((prev) => ({ ...prev, booking_form: bookingForm }));
+      setBooking((prev) => ({ ...prev, booking_form: bookingForm, resort_service_ids: normalizedServiceIds }));
       await fetchTicket();
       await fetchMessages(booking.id);
       toast({ message: "Add-on request sent to owner.", color: "green" });
