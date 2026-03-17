@@ -21,8 +21,8 @@ export function TicketStayInfoCardSection({
   const displayGuestName = form?.stayingGuestName || form?.guestName || "â€”";
   const inquirerType = (form?.inquirerType || "client").toString().toLowerCase();
   const agentName = form?.agentName || "â€”";
-  const clientEmail = form?.stayingGuestEmail || form?.guestEmail || form?.email || "â€”";
-  const clientPhone = form?.stayingGuestPhone || form?.guestPhone || form?.phoneNumber || "â€”";
+  const contactEmail = form?.email || form?.stayingGuestEmail || "â€”";
+  const contactPhone = form?.phoneNumber || form?.stayingGuestPhone || "â€”";
   return (
     <Card
       id={id}
@@ -38,8 +38,8 @@ export function TicketStayInfoCardSection({
           <TicketRow label="Agent Name" value={agentName} />
         ) : (
           <>
-            <TicketRow label="Contact Email" value={clientEmail} />
-            <TicketRow label="Contact Phone" value={clientPhone} />
+            <TicketRow label="Contact Email" value={contactEmail} />
+            <TicketRow label="Contact Phone" value={contactPhone} />
           </>
         )}
         <TicketRow label="Pax" value={form?.guestCount ?? 0} />
@@ -75,8 +75,8 @@ export function buildStayInfoRows({ form, booking, resort, approvedByName, assig
   const displayGuestName = form?.stayingGuestName || form?.guestName || "â€”";
   const inquirerType = (form?.inquirerType || "client").toString().toLowerCase();
   const agentName = form?.agentName || "â€”";
-  const clientEmail = form?.stayingGuestEmail || form?.guestEmail || form?.email || "â€”";
-  const clientPhone = form?.stayingGuestPhone || form?.guestPhone || form?.phoneNumber || "â€”";
+  const contactEmail = form?.email || form?.stayingGuestEmail || "â€”";
+  const contactPhone = form?.phoneNumber || form?.stayingGuestPhone || "â€”";
   const rows = [
     ["Resort", resort?.name || "â€”"],
     ["Guest Name", displayGuestName],
@@ -85,8 +85,8 @@ export function buildStayInfoRows({ form, booking, resort, approvedByName, assig
     ...(inquirerType === "agent"
       ? [["Agent Name", agentName]]
       : [
-          ["Contact Email", clientEmail],
-          ["Contact Phone", clientPhone],
+          ["Contact Email", contactEmail],
+          ["Contact Phone", contactPhone],
         ]),
     ["Pax", String(form?.guestCount ?? 0)],
     ["Adults", String(form?.adultCount ?? 0)],

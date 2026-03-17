@@ -163,7 +163,7 @@ export function BookingsProvider({ children }) {
     } finally {
       setHasHydratedCache(true);
     }
-  }, [resort?.id, updateResort]);
+  }, [resort, updateResort]);
 
   useEffect(() => {
     if (!resort?.id || !hasHydratedCache) return;

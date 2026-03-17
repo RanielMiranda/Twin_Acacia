@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
+import { useBookingConsoleData } from "./useBookingConsoleData";
 import { useSupport } from "@/components/useclient/SupportClient";
 import {Button} from "@/components/ui/button";
 import {
@@ -14,7 +15,6 @@ import {
   MessageCircleWarning,
   Archive,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 // Components
 import BookingCalendar from "./components/BookingsCalendar";
@@ -32,15 +32,8 @@ export default function BookingManagementPage() {
   const { bookings, refreshBookings, updateBookingById, deleteBookingById, createBooking } = useBookings();
   const { listResortConcerns, updateConcernStatus } = useSupport();
   const { toast } = useToast();
-  const [concerns, setConcerns] = useState([]);
-  const [loadingConcerns, setLoadingConcerns] = useState(false);
-  const [audits, setAudits] = useState([]);
-  const [loadingAudits, setLoadingAudits] = useState(false);
-  const [archivedBookings, setArchivedBookings] = useState([]);
-  const [loadingArchivedBookings, setLoadingArchivedBookings] = useState(false);
   const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
   const [addingBooking, setAddingBooking] = useState(false);
-  
   const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
 
   useEffect(() => {
@@ -66,46 +59,40 @@ export default function BookingManagementPage() {
   const currentResort = resort?.id?.toString() === id?.toString() ? resort : null;
   const resortId = Number(currentResort?.id || 0);
 
-  const workflowCounts = useMemo(() => {
-    const source = bookings || [];
-    const inquiry = source.filter((entry) => {
-      const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-      return (status.includes("inquiry") || status.includes("pending payment") || status.includes("pending checkout")) && !status.includes("declined");
-    }).length;
-    const checkout = source.filter((entry) => {
-      const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-      return status.includes("pending checkout");
-    }).length;
-    return { inquiry, checkout };
-  }, [bookings]);
-
-  const declinedBookings = useMemo(
-    () =>
-      (bookings || []).filter((entry) => {
-        const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-        return status.includes("declined");
-      }),
-    [bookings]
-  );
-  const checkedOutBookings = useMemo(
-    () =>
-      (bookings || []).filter((entry) => {
-        const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-        return status.includes("checked out") || status.includes("checked-out") || status.includes("cancelled");
-      }),
-    [bookings]
-  );
-  const auditArchiveCount = audits.length + declinedBookings.length + checkedOutBookings.length;
-  const openConcernCount = concerns.filter((item) => item.status !== "resolved").length;
-  const unresolvedIssueBookingIds = useMemo(() => {
-    const ids = new Set();
-    (concerns || []).forEach((issue) => {
-      if (issue.status !== "resolved" && issue.booking_id) {
-        ids.add(issue.booking_id.toString());
-      }
-    });
-    return ids;
-  }, [concerns]);
+  const {
+    concerns,
+    loadingConcerns,
+    audits,
+    loadingAudits,
+    archivedBookings,
+    loadingArchivedBookings,
+    workflowCounts,
+    declinedBookings,
+    checkedOutBookings,
+    auditArchiveCount,
+    openConcernCount,
+    unresolvedIssueBookingIds,
+    loadConcerns,
+    handleResolveConcern,
+    handleReopenConcern,
+    handleReopenDeclined,
+    handleReopenCancelled,
+    handleReopenCheckedOut,
+    handleResolveDeclined,
+    handleResolveCancelled,
+    handleResolveCheckedOut,
+    handleDeleteArchivedBooking,
+    refreshAuditArchive,
+  } = useBookingConsoleData({
+    resortId,
+    bookings,
+    refreshBookings,
+    updateBookingById,
+    deleteBookingById,
+    listResortConcerns,
+    updateConcernStatus,
+    toast,
+  });
 
   const TabBadge = ({ count, tone = "blue" }) =>
     count > 0 ? (
@@ -122,112 +109,6 @@ export default function BookingManagementPage() {
       </span>
     ) : null;
 
-  const loadConcerns = async () => {
-    if (!resortId) return;
-    setLoadingConcerns(true);
-    try {
-      const rows = await listResortConcerns(resortId);
-      setConcerns(rows);
-    } catch (error) {
-      console.error("Concerns load error:", error.message);
-    } finally {
-      setLoadingConcerns(false);
-    }
-  };
-
-  const loadAudits = async () => {
-    const bookingIds = (bookings || []).map((entry) => entry.id?.toString()).filter(Boolean);
-    if (bookingIds.length === 0) {
-      setAudits([]);
-      return;
-    }
-    setLoadingAudits(true);
-    try {
-      const baseQuery = supabase
-        .from("booking_status_audit")
-        .eq("booking_id", bookingIds[0]);
-      const { error: tableCheckError } = await baseQuery.select("id").limit(1);
-      if (tableCheckError) {
-        setAudits([]);
-        return;
-      }
-
-      const withActorName = await supabase
-        .from("booking_status_audit")
-        .select("id, booking_id, changed_at, actor_role, actor_name, old_status, new_status")
-        .in("booking_id", bookingIds)
-        .order("changed_at", { ascending: false })
-        .limit(300);
-      if (!withActorName.error) {
-        setAudits(withActorName.data || []);
-        return;
-      }
-
-      const missingActorName =
-        withActorName.error.message?.includes("actor_name") &&
-        (withActorName.error.message?.includes("does not exist") ||
-          withActorName.error.message?.includes("schema cache"));
-      if (!missingActorName) {
-        setAudits([]);
-        return;
-      }
-
-      const fallback = await supabase
-        .from("booking_status_audit")
-        .select("id, booking_id, changed_at, actor_role, old_status, new_status")
-        .in("booking_id", bookingIds)
-        .order("changed_at", { ascending: false })
-        .limit(300);
-      setAudits(fallback.data || []);
-    } finally {
-      setLoadingAudits(false);
-    }
-  };
-
-  const loadArchivedBookings = async () => {
-    if (!resortId) return;
-    setLoadingArchivedBookings(true);
-    try {
-      const { data, error } = await supabase
-        .from("booking_archive")
-        .select("id, booking_id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at")
-        .eq("resort_id", resortId)
-        .order("archived_at", { ascending: false });
-      if (error) throw error;
-      const mapped = (data || []).map((row) => ({
-        id: row.id,
-        bookingId: row.booking_id || null,
-        resortId: row.resort_id,
-        startDate: row.start_date || row.booking_form?.checkInDate || null,
-        endDate: row.end_date || row.booking_form?.checkOutDate || null,
-        checkInTime: row.check_in_time || row.booking_form?.checkInTime || "14:00",
-        checkOutTime: row.check_out_time || row.booking_form?.checkOutTime || "11:00",
-        roomCount: row.room_count || row.booking_form?.roomCount || 1,
-        bookingForm: row.booking_form || {},
-        archivedAt: row.archived_at,
-        isArchived: true,
-      }));
-      setArchivedBookings(mapped);
-    } catch (error) {
-      const missingTable =
-        error.message?.includes("booking_archive") &&
-        (error.message?.includes("does not exist") || error.message?.includes("schema cache"));
-      if (!missingTable) {
-        console.error("Archive load error:", error.message);
-      }
-      setArchivedBookings([]);
-    } finally {
-      setLoadingArchivedBookings(false);
-    }
-  };
-
-
-  useEffect(() => {
-    if (!resortId) return;
-    loadConcerns();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resortId]);
-
   useEffect(() => {
     if (!resortId) return;
     refreshBookings();
@@ -242,203 +123,8 @@ export default function BookingManagementPage() {
     };
   }, [refreshBookings, resortId]);
 
-  useEffect(() => {
-    loadAudits();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings]);
-
-  useEffect(() => {
-    if (!resortId) return;
-    loadArchivedBookings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resortId]);
-
-  const handleResolveConcern = async (issueId) => {
-    const confirmed = window.confirm("Resolve and permanently delete this concern?");
-    if (!confirmed) return;
-    try {
-      const { error } = await supabase.from("ticket_issues").delete().eq("id", issueId);
-      if (error) throw error;
-
-      setConcerns((prev) => prev.filter((entry) => entry.id !== issueId));
-    } catch (error) {
-      console.error("Resolve concern error:", error.message);
-    }
-  };
-
-  const handleReopenConcern = async (issueId) => {
-    try {
-      await updateConcernStatus(issueId, "open");
-      setConcerns((prev) => prev.map((entry) => (entry.id === issueId ? { ...entry, status: "open" } : entry)));
-    } catch (error) {
-      console.error("Reopen concern error:", error.message);
-    }
-  };
-
-  const handleReopenDeclined = async (bookingId) => {
-    try {
-      await updateBookingById(bookingId, (entry) => ({
-        ...entry,
-        status: "Inquiry",
-        bookingForm: {
-          ...(entry.bookingForm || {}),
-          status: "Inquiry",
-          reopenedAt: new Date().toISOString(),
-        },
-      }));
-      await loadAudits();
-    } catch (error) {
-      console.error("Reopen declined inquiry error:", error.message);
-    }
-  };
-
-  const handleReopenCancelled = async (bookingId) => {
-    try {
-      await updateBookingById(bookingId, (entry) => ({
-        ...entry,
-        status: "Inquiry",
-        bookingForm: {
-          ...(entry.bookingForm || {}),
-          status: "Inquiry",
-          reopenedAt: new Date().toISOString(),
-        },
-      }));
-      await loadAudits();
-    } catch (error) {
-      console.error("Reopen cancelled booking error:", error.message);
-    }
-  };
-
-  const handleReopenCheckedOut = async (bookingId) => {
-    try {
-      await updateBookingById(bookingId, (entry) => ({
-        ...entry,
-        status: "Ongoing",
-        bookingForm: {
-          ...(entry.bookingForm || {}),
-          status: "Ongoing",
-          reopenedAt: new Date().toISOString(),
-        },
-      }));
-      await loadAudits();
-    } catch (error) {
-      console.error("Reopen checked-out booking error:", error.message);
-    }
-  };
-
-  const handleResolveDeclined = async (bookingId) => {
-    const confirmed = window.confirm("Resolve and delete this declined inquiry?");
-    if (!confirmed) return;
-    try {
-      await deleteBookingById(bookingId);
-      await loadAudits();
-      toast?.({ message: "Declined booking resolved.", color: "green" });
-    } catch (error) {
-      console.error("Resolve declined inquiry error:", error.message);
-      toast?.({ message: `Unable to resolve: ${error.message}`, color: "red" });
-    }
-  };
-
-  const handleResolveCancelled = async (bookingId) => {
-    const confirmed = window.confirm("Resolve and delete this cancelled booking?");
-    if (!confirmed) return;
-    try {
-      await deleteBookingById(bookingId);
-      await loadAudits();
-      toast?.({ message: "Cancelled booking resolved.", color: "green" });
-    } catch (error) {
-      console.error("Resolve cancelled booking error:", error.message);
-      toast?.({ message: `Unable to resolve: ${error.message}`, color: "red" });
-    }
-  };
-
-  const handleResolveCheckedOut = async (bookingId) => {
-    if (unresolvedIssueBookingIds.has(bookingId?.toString())) {
-      toast?.({ message: "Resolve blocked: this booking has unresolved issues.", color: "amber" });
-      return;
-    }
-    const confirmed = window.confirm("Resolve and archive this booking permanently?");
-    if (!confirmed) return;
-    try {
-      const source = (bookings || []).find((entry) => entry.id?.toString() === bookingId?.toString());
-      if (!source) {
-        toast?.({ message: "Booking not found. Attempting cleanup.", color: "amber" });
-        await deleteBookingById(bookingId);
-        return;
-      }
-
-      const form = source.bookingForm || {};
-      const inquirerType = (source.inquirerType || form.inquirerType || "client").toString().toLowerCase();
-      const guestEmail = form.stayingGuestEmail || form.email || "";
-      const guestPhone = form.phoneNumber || "";
-      const agentEmail = form.agentEmail || form.agentContactEmail || "";
-      const agentPhone = form.agentPhone || form.agentContactPhone || "";
-      const archiveForm = {
-        stayingGuestName: form.stayingGuestName || form.guestName || "",
-        guestName: form.guestName || "",
-        agentName: form.agentName || "",
-        guestEmail,
-        guestPhone,
-        agentEmail: inquirerType === "agent" ? agentEmail : "",
-        agentPhone: inquirerType === "agent" ? agentPhone : "",
-        roomName: form.roomName || "",
-        checkInDate: source.startDate || form.checkInDate || null,
-        checkOutDate: source.endDate || form.checkOutDate || null,
-        checkInTime: source.checkInTime || form.checkInTime || "14:00",
-        checkOutTime: source.checkOutTime || form.checkOutTime || "11:00",
-        roomCount: Number(source.roomCount || form.roomCount || 1),
-        inquirerType,
-        email: guestEmail,
-        phoneNumber: guestPhone,
-        address: form.address || "",
-        adultCount: Number(source.adultCount ?? form.adultCount ?? 0),
-        childrenCount: Number(source.childrenCount ?? form.childrenCount ?? 0),
-        sleepingGuests: Number(source.sleepingGuests ?? form.sleepingGuests ?? 0),
-        status: "Checked Out",
-      };
-
-      const { error: archiveError } = await supabase.from("booking_archive").insert({
-        booking_id: source.id?.toString(),
-        resort_id: resortId,
-        booking_form: archiveForm,
-        start_date: archiveForm.checkInDate,
-        end_date: archiveForm.checkOutDate,
-        check_in_time: archiveForm.checkInTime,
-        check_out_time: archiveForm.checkOutTime,
-        room_count: archiveForm.roomCount,
-        archived_at: new Date().toISOString(),
-        reopen_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      });
-      if (archiveError) throw archiveError;
-
-      await deleteBookingById(bookingId);
-      await loadArchivedBookings();
-      await loadAudits();
-      toast?.({ message: "Checked-out booking archived.", color: "green" });
-    } catch (error) {
-      console.error("Delete checked-out booking error:", error.message);
-      toast?.({ message: `Archive failed: ${error.message}`, color: "red" });
-    }
-  };
-
-  const handleDeleteArchivedBooking = async (archiveId) => {
-    const confirmed = window.confirm("Remove this archived booking permanently?");
-    if (!confirmed) return;
-    try {
-      const { error } = await supabase.from("booking_archive").delete().eq("id", archiveId);
-      if (error) throw error;
-      setArchivedBookings((prev) => prev.filter((entry) => entry.id?.toString() !== archiveId?.toString()));
-    } catch (error) {
-      console.error("Delete archived booking error:", error.message);
-    }
-  };
-
   const openDetails = (targetBookingId) => {
     router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}`);
-  };
-
-  const refreshAuditArchive = async () => {
-    await Promise.all([loadAudits(), loadArchivedBookings()]);
   };
 
   const handleCreateBooking = async (payload) => {
@@ -462,8 +148,6 @@ export default function BookingManagementPage() {
         stayingGuestName,
         stayingGuestEmail,
         stayingGuestPhone,
-        guestEmail: stayingGuestEmail,
-        guestPhone: stayingGuestPhone,
         email: payload.email.trim(),
         phoneNumber: payload.phoneNumber.trim(),
         agentName: isAgent ? payload.agentName.trim() : "",

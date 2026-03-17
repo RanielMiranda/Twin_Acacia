@@ -87,7 +87,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
         setLoadingMessages(false);
       }
     },
-    [toast],
+    [toast, viewerRole],
   );
 
   const fetchTicket = useCallback(async () => {
@@ -153,12 +153,12 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "ticket_messages", filter: `booking_id=eq.${normalizedBookingId}` },
-        () => fetchMessages(normalizedBookingId)
+        () => fetchMessages(normalizedBookingId, viewerRole)
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "ticket_issues", filter: `booking_id=eq.${normalizedBookingId}` },
-        () => fetchMessages(normalizedBookingId)
+        () => fetchMessages(normalizedBookingId, viewerRole)
       )
       .on(
         "postgres_changes",
@@ -176,7 +176,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     if (!normalizedBookingId) return undefined;
     const interval = setInterval(() => {
       fetchTicket();
-      fetchMessages(normalizedBookingId);
+      fetchMessages(normalizedBookingId, viewerRole);
     }, 20000);
     return () => clearInterval(interval);
   }, [fetchMessages, fetchTicket, normalizedBookingId]);

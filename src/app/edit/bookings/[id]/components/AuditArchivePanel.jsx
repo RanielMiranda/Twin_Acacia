@@ -27,13 +27,16 @@ export default function AuditArchivePanel({
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
 
-  const normalizedSearch = search.trim().toLowerCase();
-  const matchesSearch = (fields) => {
-    if (!normalizedSearch) return true;
-    return fields.some((value) =>
-      String(value || "").toLowerCase().includes(normalizedSearch)
-    );
-  };
+  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
+  const matchesSearch = React.useCallback(
+    (fields) => {
+      if (!normalizedSearch) return true;
+      return fields.some((value) =>
+        String(value || "").toLowerCase().includes(normalizedSearch)
+      );
+    },
+    [normalizedSearch]
+  );
 
   const cancelledBookings = useMemo(
     () =>
@@ -62,7 +65,7 @@ export default function AuditArchivePanel({
           item.endDate,
         ])
       ),
-    [archivedBookings, normalizedSearch]
+    [archivedBookings, matchesSearch]
   );
 
   const filteredDeclined = useMemo(
@@ -76,7 +79,7 @@ export default function AuditArchivePanel({
           item.endDate,
         ])
       ),
-    [declinedBookings, normalizedSearch]
+    [declinedBookings, matchesSearch]
   );
 
   const filteredCancelled = useMemo(
@@ -90,7 +93,7 @@ export default function AuditArchivePanel({
           item.endDate,
         ])
       ),
-    [cancelledBookings, normalizedSearch]
+    [cancelledBookings, matchesSearch]
   );
   const filteredCheckedOut = useMemo(
     () =>
@@ -103,7 +106,7 @@ export default function AuditArchivePanel({
           item.endDate,
         ])
       ),
-    [checkedOutOnlyBookings, normalizedSearch]
+    [checkedOutOnlyBookings, matchesSearch]
   );
 
   return (

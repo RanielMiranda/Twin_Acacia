@@ -12,14 +12,13 @@ export default function BookingConfirmation({
   const formData = data || {};
 
   const inquirerType = String(formData.inquirerType || "client").toLowerCase();
-  const isAgent = inquirerType === "agent";
+  const inquirerName = inquirerType === "agent" ? (formData.agentName || formData.guestName || "") : (formData.guestName || "");
+  const inquirerEmail = formData.email || "";
+  const inquirerPhone = formData.phoneNumber || "";
 
   const guestName = formData.stayingGuestName || formData.guestName || "-";
-  const guestEmail = formData.stayingGuestEmail || formData.guestEmail || formData.email || "";
-  const guestPhone = formData.stayingGuestPhone || formData.guestPhone || formData.contactNumber || "";
-  const agentName = formData.agentName || "";
-  const agentEmail = formData.email || "";
-  const agentPhone = formData.contactNumber || "";
+  const guestEmail = formData.stayingGuestEmail || "";
+  const guestPhone = formData.stayingGuestPhone || "";
   const clientAddress = formData.address || "";
 
   const selectedServices = Array.isArray(formData.resortServices)
@@ -100,21 +99,19 @@ export default function BookingConfirmation({
                     <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
                   </Field>
 
-              <Field label="Agent Name">
-                <div className="text-sm font-bold text-slate-700">{agentName || "-"}</div>
+              <Field label="Inquirer Name">
+                <div className="text-sm font-bold text-slate-700">{inquirerName || "-"}</div>
               </Field>
-              <Field label="Agent Email">
-                <div className="text-sm font-bold text-slate-700">{agentEmail || "-"}</div>
+              <Field label="Inquirer Email">
+                <div className="text-sm font-bold text-slate-700">{inquirerEmail || "-"}</div>
               </Field>
-              <Field label="Agent Phone">
-                <div className="text-sm font-bold text-slate-700">{agentPhone || "-"}</div>
+              <Field label="Inquirer Phone">
+                <div className="text-sm font-bold text-slate-700">{inquirerPhone || "-"}</div>
               </Field>
 
-              {!isAgent ? (
-                <Field label="Address">
-                  <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
-                </Field>
-              ) : null}
+              <Field label="Address">
+                <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
+              </Field>
             </div>
           </section>
 

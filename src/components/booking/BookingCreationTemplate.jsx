@@ -21,7 +21,7 @@ const buildInitialFormData = ({
   stayingGuestEmail: "",
   stayingGuestPhone: "",
   email: "",
-  contactNumber: "",
+  phoneNumber: "",
   area: destination || "",
   address: "",
   adultCount: Number(guests?.adults || 0),
@@ -155,7 +155,7 @@ export default function BookingCreationTemplate({
           stayingGuestEmail: saved.stayingGuestEmail || "",
           stayingGuestPhone: saved.stayingGuestPhone || "",
           email: saved.email || "",
-          contactNumber: saved.contactNumber || "",
+          phoneNumber: saved.phoneNumber || "",
         area: saved.area || base.area,
         address: saved.address || "",
         message: saved.message || "",
@@ -180,7 +180,7 @@ export default function BookingCreationTemplate({
           stayingGuestEmail: formData.stayingGuestEmail || "",
           stayingGuestPhone: formData.stayingGuestPhone || "",
           email: formData.email || "",
-          contactNumber: formData.contactNumber || "",
+          phoneNumber: formData.phoneNumber || "",
           area: formData.area || "",
           address: formData.address || "",
           message: formData.message || "",
@@ -259,14 +259,14 @@ export default function BookingCreationTemplate({
       !formData.stayingGuestPhone ||
       formData.stayingGuestPhone === autoGuestPhoneRef.current;
     if (!shouldSync) return;
-    const nextPhone = formData.contactNumber || "";
+    const nextPhone = formData.phoneNumber || "";
     if (formData.stayingGuestPhone === nextPhone) {
       autoGuestPhoneRef.current = nextPhone;
       return;
     }
     autoGuestPhoneRef.current = nextPhone;
     setFormData((prev) => ({ ...prev, stayingGuestPhone: nextPhone }));
-  }, [formData.contactNumber, formData.inquirerType, formData.stayingGuestPhone]);
+  }, [formData.phoneNumber, formData.inquirerType, formData.stayingGuestPhone]);
 
   useEffect(() => {
     if (formData.inquirerType !== "agent") return;
@@ -327,14 +327,10 @@ export default function BookingCreationTemplate({
             ...formData,
             stayingGuestName: formData.guestName || "",
             stayingGuestEmail: formData.email || "",
-            stayingGuestPhone: formData.contactNumber || "",
-            guestEmail: formData.email || "",
-            guestPhone: formData.contactNumber || "",
+            stayingGuestPhone: formData.phoneNumber || "",
           }
         : {
             ...formData,
-            guestEmail: formData.stayingGuestEmail || "",
-            guestPhone: formData.stayingGuestPhone || "",
           };
     const normalized =
       selectedRoomIds.length > 0
@@ -464,13 +460,15 @@ export default function BookingCreationTemplate({
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Phone</label>
-                  <input name="contactNumber" value={formData.contactNumber ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
+                  <input name="phoneNumber" value={formData.phoneNumber ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-black uppercase text-slate-400 ml-1">Address (optional)</label>
-                <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
-              </div>
+              {formData.inquirerType === "client" ? (
+                <div className="space-y-1">
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Address (optional)</label>
+                  <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
+                </div>
+              ) : null}
             </div>
           )}
 
@@ -486,9 +484,13 @@ export default function BookingCreationTemplate({
                     <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Email</label>
                     <input name="stayingGuestEmail" value={formData.stayingGuestEmail ?? ""} onChange={handleChange} type="email" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="guest@example.com" />
                   </div>
-                  <div className="space-y-1 md:col-span-2">
+                  <div className="space-y-1">
                     <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Contact Number</label>
                     <input name="stayingGuestPhone" value={formData.stayingGuestPhone ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Address (optional)</label>
+                    <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
                   </div>
                 </div>
               ) : null}
@@ -689,7 +691,7 @@ export default function BookingCreationTemplate({
                       <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
                       <SummaryItem icon={Clock} label="Schedule" value={`${formatTime(formData.checkInTime)} - ${formatTime(formData.checkOutTime)}`} />
                       <SummaryItem icon={PlusCircle} label="Rooms" value={selectedRoomNamesDerived.length > 0 ? selectedRoomNamesDerived.join(", ") : "Not set"} />
-                      <SummaryItem icon={Phone} label="Contact" value={formData.contactNumber || "Not set"} />
+                      <SummaryItem icon={Phone} label="Contact" value={formData.phoneNumber || "Not set"} />
                       <SummaryItem icon={MapPin} label="Address" value={formData.address || "Not set"} />
                       {showAddOns ? (
                         <SummaryItem icon={PlusCircle} label="Add-ons" value={formData.selectedServices.length > 0 ? formData.selectedServices.join(", ") : "None"} />

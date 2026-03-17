@@ -23,6 +23,25 @@ export function buildDraftFromBooking(booking) {
       ? form.assignedRoomNames.join(", ")
       : (form.roomName || "");
 
+  const inquirerType = (form.inquirerType || booking.inquirerType || "client").toString().toLowerCase();
+
+  // `email` / `phoneNumber` should always reflect the inquirer (agent vs client).
+  // Prioritize the canonical `email`/`phoneNumber` fields first, but fall back to legacy fields
+  // for backwards compatibility with older bookings.
+  const agentContactEmail = form.agentEmail || form.agentContactEmail || "";
+  const agentContactPhone = form.agentPhone || form.agentContactPhone || "";
+  const guestContactEmail = form.stayingGuestEmail || form.guestEmail || "";
+  const guestContactPhone = form.stayingGuestPhone || form.guestPhone || "";
+
+  const contactEmail =
+    inquirerType === "agent"
+      ? form.email || agentContactEmail
+      : form.email || guestContactEmail;
+  const contactPhone =
+    inquirerType === "agent"
+      ? form.phoneNumber || agentContactPhone
+      : form.phoneNumber || guestContactPhone;
+
   const baseStatus = form.status || booking.status || "Inquiry";
   const paymentDeadline =
     form.paymentDeadline ||
@@ -33,13 +52,12 @@ export function buildDraftFromBooking(booking) {
   return {
     ...form,
     status: baseStatus,
+    inquirerType,
     guestName: form.guestName || "Guest",
-    email: form.email || "",
-    phoneNumber: form.phoneNumber || "",
+    email: contactEmail,
+    phoneNumber: contactPhone,
     stayingGuestEmail: form.stayingGuestEmail || "",
     stayingGuestPhone: form.stayingGuestPhone || "",
-    guestEmail: form.guestEmail || form.stayingGuestEmail || "",
-    guestPhone: form.guestPhone || form.stayingGuestPhone || "",
     address: form.address || "",
     adultCount: adults,
     childrenCount: children,

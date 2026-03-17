@@ -60,14 +60,28 @@ export function buildPersistPayload({
   const normalizedCheckOutDate =
     nextDraft.checkOutDate || booking.endDate || normalizedCheckInDate || "";
 
-  const normalizedInquirerType = String(nextDraft.inquirerType || booking.bookingForm?.inquirerType || booking.inquirerType || "client").toLowerCase();
+  const normalizedInquirerType = String(
+    nextDraft.inquirerType || booking.bookingForm?.inquirerType || booking.inquirerType || "client"
+  ).toLowerCase();
+
+  const { agentEmail, agentPhone, agentContactEmail, agentContactPhone, ...restDraft } = nextDraft;
+
+  const inquirerEmail =
+    normalizedInquirerType === "agent"
+      ? nextDraft.email || agentEmail || agentContactEmail || ""
+      : nextDraft.email || nextDraft.stayingGuestEmail || "";
+
+  const inquirerPhone =
+    normalizedInquirerType === "agent"
+      ? nextDraft.phoneNumber || agentPhone || agentContactPhone || ""
+      : nextDraft.phoneNumber || nextDraft.stayingGuestPhone || "";
+
   const sanitizedDraft = {
-    ...nextDraft,
-    agentName: normalizedInquirerType === "agent" ? nextDraft.agentName || "" : "",
-    agentEmail: normalizedInquirerType === "agent" ? nextDraft.agentEmail || "" : "",
-    agentPhone: normalizedInquirerType === "agent" ? nextDraft.agentPhone || "" : "",
-    agentContactEmail: normalizedInquirerType === "agent" ? nextDraft.agentContactEmail || "" : "",
-    agentContactPhone: normalizedInquirerType === "agent" ? nextDraft.agentContactPhone || "" : "",
+    ...restDraft,
+    agentName: normalizedInquirerType === "agent" ? restDraft.agentName || "" : "",
+    inquirerType: normalizedInquirerType,
+    email: inquirerEmail,
+    phoneNumber: inquirerPhone,
   };
 
   return {

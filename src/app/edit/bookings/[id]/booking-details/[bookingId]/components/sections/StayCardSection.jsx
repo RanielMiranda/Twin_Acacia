@@ -24,8 +24,8 @@ export default function StayCardSection({
   const guestDisplayName = draft.stayingGuestName || draft.guestName || "Guest";
   const contactEmail = draft.email || "No email";
   const contactPhone = draft.phoneNumber || "No phone";
-  const guestEmail = draft.stayingGuestEmail || draft.guestEmail || draft.email || "No email";
-  const guestPhone = draft.stayingGuestPhone || draft.guestPhone || draft.phoneNumber || "No phone";
+  const guestEmail = draft.stayingGuestEmail || "No email";
+  const guestPhone = draft.stayingGuestPhone || "No phone";
   const guestAddress = draft.address || "No address";
   const parseUtcDate = (value) => (value ? new Date(`${value}T00:00:00Z`) : null);
   const rangeStart = parseUtcDate(draft.checkInDate);

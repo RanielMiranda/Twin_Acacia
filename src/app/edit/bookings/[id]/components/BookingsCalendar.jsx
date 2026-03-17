@@ -89,28 +89,31 @@ export default function BookingCalendar({ archivedBookings = [] }) {
 
   const bookingList = useMemo(() => bookings || resort?.bookings || [], [bookings, resort?.bookings]);
   const archivedList = useMemo(() => archivedBookings || [], [archivedBookings]);
-  const normalizedSearch = search.trim().toLowerCase();
-  const matchesSearch = (booking) => {
-    if (!normalizedSearch) return true;
-    const form = booking?.bookingForm || {};
-    const fields = [
-      form.stayingGuestName,
-      form.guestName,
-      form.agentName,
-      form.roomName,
-      booking?.startDate,
-      booking?.endDate,
-      booking?.status || form.status,
-    ];
-    return fields.some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
-  };
+  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
+  const matchesSearch = React.useCallback(
+    (booking) => {
+      if (!normalizedSearch) return true;
+      const form = booking?.bookingForm || {};
+      const fields = [
+        form.stayingGuestName,
+        form.guestName,
+        form.agentName,
+        form.roomName,
+        booking?.startDate,
+        booking?.endDate,
+        booking?.status || form.status,
+      ];
+      return fields.some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
+    },
+    [normalizedSearch]
+  );
   const filteredBookingList = useMemo(
-    () => bookingList.filter((entry) => matchesSearch(entry)),
-    [bookingList, normalizedSearch]
+    () => bookingList.filter(matchesSearch),
+    [bookingList, matchesSearch]
   );
   const filteredArchivedList = useMemo(
-    () => archivedList.filter((entry) => matchesSearch(entry)),
-    [archivedList, normalizedSearch]
+    () => archivedList.filter(matchesSearch),
+    [archivedList, matchesSearch]
   );
 
   const getBookingColor = (booking) => {

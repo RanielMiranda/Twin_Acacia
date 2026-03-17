@@ -6,8 +6,6 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
   const inquirerType = (draft.inquirerType || "client").toString().toLowerCase();
   const agentName = draft.agentName || draft.guestName || "Agent";
   const contactDisplayName = inquirerType === "agent" ? agentName : (draft.guestName || "Client");
-  const agentEmail = draft.email || "";
-  const agentPhone = draft.phoneNumber || "";
 
   return (
     <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
@@ -94,11 +92,11 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
                   <>
                     <span className="inline-flex items-center gap-1">
                       <Mail size={12} />
-                      {agentEmail || "No email"}
+                      {draft.email || "No email"}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <Phone size={12} />
-                      {agentPhone || "No phone"}
+                      {draft.phoneNumber || "No phone"}
                     </span>
                   </>
                 ) : (

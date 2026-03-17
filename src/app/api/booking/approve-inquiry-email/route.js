@@ -78,12 +78,20 @@ export async function POST(request) {
     return NextResponse.json({ ok: true, skipped: true, reason: "Already sent" }, { status: 200 });
   }
 
-  const isAgent = String(booking.booking_form?.inquirerType || "").toLowerCase() === "agent";
-  const recipientEmail = isAgent
-    ? (booking.booking_form?.email || "")
-    : (booking.booking_form?.stayingGuestEmail || booking.booking_form?.email || "");
-  if (!recipientEmail) {
-    return NextResponse.json({ ok: false, error: "Booking has no client email" }, { status: 400 });
+  const clientEmail = booking.booking_form?.stayingGuestEmail || booking.booking_form?.email || "";
+  const agentEmail = booking.booking_form?.email || "";
+
+  const clientToken = booking.booking_form?.ticketAccessToken;
+  const agentToken = booking.booking_form?.agentTicketAccessToken;
+
+  const clientEmailSent = !!booking.booking_form?.approvedInquiryEmailSentAtClient;
+  const agentEmailSent = !!booking.booking_form?.approvedInquiryEmailSentAtAgent;
+
+  const shouldSendClientEmail = !!clientEmail && !!clientToken && !clientEmailSent;
+  const shouldSendAgentEmail = !!agentEmail && !!agentToken && !agentEmailSent;
+
+  if (!shouldSendClientEmail && !shouldSendAgentEmail) {
+    return NextResponse.json({ ok: true, skipped: true, reason: "Already sent" }, { status: 200 });
   }
 
   const { data: resort } = await supabase
@@ -92,63 +100,77 @@ export async function POST(request) {
     .eq("id", Number(booking.resort_id))
     .maybeSingle();
 
-  const clientToken = booking.booking_form?.ticketAccessToken;
-  const agentToken = booking.booking_form?.agentTicketAccessToken;
-  const ticketToken = isAgent ? agentToken : clientToken;
   const baseUrl = buildBaseUrl(request);
-  const ticketUrl = `${baseUrl}/ticket/${booking.id}${ticketToken ? `?token=${encodeURIComponent(ticketToken)}` : ""}`;
-  const payload = {
-    from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
-    to: [recipientEmail],
-    subject: `Inquiry approved${resort?.name ? ` - ${resort.name}` : ""}`,
-    html: buildHtml({
-      guestName: booking.booking_form?.guestName,
-      resortName: resort?.name,
-      ticketUrl,
-      expiresAt: isAgent ? booking.booking_form?.agentTicketAccessExpiresAt : booking.booking_form?.ticketAccessExpiresAt,
-    }),
+
+  const sendEmail = async (email, token, role) => {
+    const ticketUrl = `${baseUrl}/ticket/${booking.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+    const expiresAt = role === "agent" ? booking.booking_form?.agentTicketAccessExpiresAt : booking.booking_form?.ticketAccessExpiresAt;
+
+    const payload = {
+      from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+      to: [email],
+      subject: `Inquiry approved${resort?.name ? ` - ${resort.name}` : ""}`,
+      html: buildHtml({
+        guestName: booking.booking_form?.guestName,
+        resortName: resort?.name,
+        ticketUrl,
+        expiresAt,
+      }),
+    };
+
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(body?.message || body?.error || "Failed to send email");
+    }
+    return body?.id || null;
   };
 
-  const resendResponse = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  });
+  const nowIso = new Date().toISOString();
+  const updates = {
+    ...(booking.booking_form || {}),
+  };
+  if (shouldSendClientEmail) updates.approvedInquiryEmailSentAtClient = nowIso;
+  if (shouldSendAgentEmail) updates.approvedInquiryEmailSentAtAgent = nowIso;
 
-  const resendBody = await resendResponse.json().catch(() => ({}));
+  let providerMessageId = null;
 
-  if (!resendResponse.ok) {
+  try {
+    if (shouldSendClientEmail) {
+      providerMessageId = await sendEmail(clientEmail, clientToken, "client");
+    }
+    if (shouldSendAgentEmail) {
+      // Send separately even if it’s the same email address.
+      providerMessageId = await sendEmail(agentEmail, agentToken, "agent");
+    }
+
+    await supabase
+      .from("bookings")
+      .update({ booking_form: updates })
+      .eq("id", booking.id);
+
+    try {
+      await logEmailDelivery(supabase);
+    } catch {
+      // Do not fail successful email delivery because analytics logging is missing.
+    }
+
+    return NextResponse.json({ ok: true, providerMessageId }, { status: 200 });
+  } catch (error) {
     try {
       await logEmailDelivery(supabase);
     } catch {
       // Keep email failure as primary error.
     }
-    return NextResponse.json(
-      { ok: false, error: resendBody?.message || resendBody?.error || "Failed to send email" },
-      { status: 502 }
-    );
+    return NextResponse.json({ ok: false, error: error.message || String(error) }, { status: 502 });
   }
-
-  const nowIso = new Date().toISOString();
-  await supabase
-    .from("bookings")
-    .update({
-      booking_form: {
-        ...(booking.booking_form || {}),
-        approvedInquiryEmailSentAt: nowIso,
-      },
-    })
-    .eq("id", booking.id);
-
-  try {
-    await logEmailDelivery(supabase);
-  } catch {
-    // Do not fail successful email delivery because analytics logging is missing.
-  }
-
-  return NextResponse.json({ ok: true, providerMessageId: resendBody?.id || null }, { status: 200 });
 }
