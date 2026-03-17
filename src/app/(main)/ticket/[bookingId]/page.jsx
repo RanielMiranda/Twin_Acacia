@@ -92,9 +92,8 @@ export default function ClientTicketPage() {
   const balance = Math.max(0, totalAmount - effectivePaid);
   const status = String(booking.status || "").toLowerCase();
   const isConcernOnlyMode =
-    status.includes("confirm") ||
-    status.includes("ongoing") ||
-    status.includes("pending checkout") ||
+    status.includes("declined") ||
+    status.includes("cancel") ||
     status.includes("checked out");
   const canAccessEntryPass =
     status.includes("confirm") ||

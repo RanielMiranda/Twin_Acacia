@@ -136,6 +136,12 @@ export default function BookingManagementPage() {
       toast?.({ message: "Check-in date is required.", color: "red" });
       return;
     }
+
+    const adultCount = Number(payload.adultCount ?? 0);
+    const childrenCount = Number(payload.childrenCount ?? 0);
+    const guestCount = Number(payload.guestCount ?? adultCount + childrenCount);
+    const pax = Number(payload.pax ?? guestCount);
+
     setAddingBooking(true);
     try {
       const isAgent = payload.inquirerType === "agent";
@@ -157,10 +163,10 @@ export default function BookingManagementPage() {
         checkInTime: payload.checkInTime || "14:00",
         checkOutTime: payload.checkOutTime || "11:00",
         roomCount: Number(payload.roomCount || 1),
-        adultCount: 0,
-        childrenCount: 0,
-        guestCount: 0,
-        pax: 0,
+        adultCount,
+        childrenCount,
+        guestCount,
+        pax,
       };
 
       const created = await createBooking({

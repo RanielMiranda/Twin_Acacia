@@ -54,6 +54,24 @@ function toRow(booking, resortId) {
   const adults = Number(form.adultCount ?? booking.adultCount ?? 0);
   const children = Number(form.childrenCount ?? booking.childrenCount ?? 0);
   const pax = Number(form.guestCount ?? form.pax ?? booking.pax ?? adults + children);
+
+  const {
+    adultCount: _discardAdultCount,
+    childrenCount: _discardChildrenCount,
+    guestCount: _discardGuestCount,
+    pax: _discardPax,
+    sleepingGuests: _discardSleepingGuests,
+    roomCount: _discardRoomCount,
+    inquirerType: _discardInquirerType,
+    status: _discardStatus,
+    checkInDate: _discardCheckInDate,
+    checkOutDate: _discardCheckOutDate,
+    checkInTime: _discardCheckInTime,
+    checkOutTime: _discardCheckOutTime,
+    paymentDeadline: _discardPaymentDeadline,
+    ...formWithoutDuplicates
+  } = form;
+
   return {
     id: booking.id?.toString(),
     resort_id: Number(resortId),
@@ -71,12 +89,8 @@ function toRow(booking, resortId) {
     inquirer_type: (form.inquirerType || booking.inquirerType) === "agent",
     payment_deadline: booking.paymentDeadline || booking.bookingForm?.paymentDeadline || null,
     booking_form: {
-      ...form,
+      ...formWithoutDuplicates,
       inquirerType: form.inquirerType || booking.inquirerType || "client",
-      adultCount: adults,
-      childrenCount: children,
-      guestCount: pax,
-      pax,
     },
   };
 }
