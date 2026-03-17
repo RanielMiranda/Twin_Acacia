@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME, convertImageFileToWebp } from "@/lib/utils";
-import { isMissingSupportTableError, toSafeSegment } from "./helpers";
+import { BUCKET_NAME, convertImageFileToWebp, toSafeSegment } from "@/lib/utils";
+import { isMissingSupportTableError } from "./helpers";
 import { useSupport } from "@/components/useclient/SupportClient";
 
 export function useTicketActions({
@@ -52,11 +52,13 @@ export function useTicketActions({
   };
 
   const uploadProofs = async () => {
-    if (!Array.isArray(proofFiles) || proofFiles.length === 0) return [];
+    if (!Array.isArray(proofFiles) || proofFiles.length === 0) return { urls: [], folder: null };
     const resortName = resort?.name || form?.resortName || `resort-${booking?.resort_id || "unknown"}`;
     const safeResort = toSafeSegment(resortName);
     const safeTicket = toSafeSegment(normalizedBookingId);
+    const proofFolder = `resort-bookings/${safeResort}/${safeTicket}`;
     const uploadedUrls = [];
+
     for (const [index, proofFile] of proofFiles.entries()) {
       const normalizedFile = await convertImageFileToWebp(proofFile);
       const baseName = normalizedFile?.name ? normalizedFile.name.replace(/\.[^.]+$/, "") : `proof-${index + 1}`;
@@ -64,7 +66,7 @@ export function useTicketActions({
         .trim()
         .replace(/[^a-z0-9-_]/gi, "-")
         .toLowerCase();
-      const path = `resort-bookings/${safeResort}/${safeTicket}/${safeBase || `proof-${index + 1}`}.webp`;
+      const path = `${proofFolder}/${safeBase || `proof-${index + 1}`}.webp`;
       const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, normalizedFile, {
         upsert: true,
         contentType: normalizedFile?.type || "image/webp",
@@ -73,7 +75,7 @@ export function useTicketActions({
       const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(path);
       if (urlData?.publicUrl) uploadedUrls.push(urlData.publicUrl);
     }
-    return uploadedUrls;
+    return { urls: uploadedUrls, folder: proofFolder };
   };
 
   const handleSubmitDownpayment = async () => {
@@ -96,8 +98,9 @@ export function useTicketActions({
         : booking.booking_form?.paymentProofUrl
           ? [booking.booking_form.paymentProofUrl]
           : [];
-      const uploadedProofUrls = await uploadProofs();
+      const { urls: uploadedProofUrls, folder: proofFolder } = await uploadProofs();
       const nextProofUrls = uploadedProofUrls.length > 0 ? uploadedProofUrls : existingProofUrls;
+      const nextProofFolder = proofFolder || booking.booking_form?.paymentProofFolder || null;
       const existingProofLog = Array.isArray(booking.booking_form?.paymentProofLog)
         ? booking.booking_form.paymentProofLog
         : [];
@@ -107,8 +110,7 @@ export function useTicketActions({
         action: "submit_payment_proof",
         paymentMethod,
         amount: Number(downpayment || 0),
-        urls: nextProofUrls,
-        previousUrls: existingProofUrls,
+        folder: nextProofFolder,
       };
 
       const bookingForm = {
@@ -118,6 +120,7 @@ export function useTicketActions({
         paymentPendingApproval: true,
         paymentVerified: false,
         paymentVerifiedAt: null,
+        paymentProofFolder: nextProofFolder,
         paymentProofUrl: nextProofUrls[0] || null,
         paymentProofUrls: nextProofUrls,
         paymentProofLog: [...existingProofLog, proofLogEntry],

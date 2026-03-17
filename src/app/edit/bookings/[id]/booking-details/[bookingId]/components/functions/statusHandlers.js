@@ -3,8 +3,14 @@ import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAc
 import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { PREVIOUS_STATUS } from "../bookingEditorConfig";
 import { notifyCaretakerOnBookingConfirmed } from "@/lib/caretakerNotifications";
-import { deleteSupabasePublicUrls } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
+import { getStorageFolderFromPublicUrl } from "@/lib/utils";
+
+function getProofFolder(draft) {
+  const explicit = draft?.paymentProofFolder;
+  if (explicit) return explicit;
+  const urlCandidate = Array.isArray(draft?.paymentProofUrls) ? draft.paymentProofUrls[0] : draft?.paymentProofUrl;
+  return getStorageFolderFromPublicUrl(urlCandidate);
+}
 
 export async function handleSetStatusAction({
   actionBusy,
@@ -219,14 +225,12 @@ export async function handleVerifyProofAction({
   if (draft.paymentVerified || actionBusy) return;
   setActionBusy(true);
   try {
-    const proofUrls = Array.isArray(draft.paymentProofUrls) ? draft.paymentProofUrls.filter(Boolean) : [];
-    if (proofUrls.length > 0) {
-      try {
-        await deleteSupabasePublicUrls(supabase, proofUrls);
-      } catch (deleteError) {
-        console.warn("Failed to delete payment proof images", deleteError?.message || deleteError);
-      }
-    }
+    const proofFolder = getProofFolder(draft);
+    const nextLogEntry = {
+      at: new Date().toISOString(),
+      action: "payment_verified",
+      folder: proofFolder,
+    };
 
     const approvedAmount = Number(draft.pendingDownpayment || 0);
     const nextDownpayment = Number(draft.downpayment || 0) + approvedAmount;
@@ -248,8 +252,8 @@ export async function handleVerifyProofAction({
       pendingDownpayment: 0,
       pendingPaymentMethod: null,
       paymentPendingApproval: false,
-      paymentProofUrl: null,
-      paymentProofUrls: [],
+      paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
+      // Keep proof urls for audit/log viewing (do not delete the image immediately)
       status:
         draft.status === "Pending Payment"
           ? "Confirmed"
@@ -289,14 +293,12 @@ export async function handleDeclineProofAction({
 
   setActionBusy(true);
   try {
-    const proofUrls = Array.isArray(draft.paymentProofUrls) ? draft.paymentProofUrls.filter(Boolean) : [];
-    if (proofUrls.length > 0) {
-      try {
-        await deleteSupabasePublicUrls(supabase, proofUrls);
-      } catch (deleteError) {
-        console.warn("Failed to delete payment proof images", deleteError?.message || deleteError);
-      }
-    }
+    const proofFolder = getProofFolder(draft);
+    const nextLogEntry = {
+      at: new Date().toISOString(),
+      action: "payment_declined",
+      folder: proofFolder,
+    };
 
     const next = {
       ...draft,
@@ -306,6 +308,8 @@ export async function handleDeclineProofAction({
       paymentSubmittedAt: null,
       paymentVerified: false,
       paymentVerifiedAt: null,
+      paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
+      // Keep proof URLs in logs, but clear the current proof to allow re-upload.
       paymentProofUrl: null,
       paymentProofUrls: [],
     };

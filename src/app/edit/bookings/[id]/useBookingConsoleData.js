@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { deleteSupabasePublicUrls } from "@/lib/utils";
+import { deleteSupabasePublicUrls, deleteSupabaseFolder, getStorageFolderFromPublicUrl } from "@/lib/utils";
 
 const normalizeStatus = (entry) =>
   (entry.status || entry.bookingForm?.status || "").toString().toLowerCase();
@@ -360,12 +360,16 @@ export function useBookingConsoleData({
       };
 
       try {
-        const proofUrls = (source.bookingForm?.paymentProofUrls || []).filter(Boolean);
-        if (proofUrls.length > 0) {
+        const proofFolder =
+          source.bookingForm?.paymentProofFolder ||
+          getStorageFolderFromPublicUrl((source.bookingForm?.paymentProofUrls || [])[0]) ||
+          getStorageFolderFromPublicUrl(source.bookingForm?.paymentProofUrl);
+
+        if (proofFolder) {
           try {
-            await deleteSupabasePublicUrls(supabase, proofUrls);
+            await deleteSupabaseFolder(supabase, proofFolder);
           } catch (deleteError) {
-            console.warn("Failed to delete payment proof images", deleteError?.message || deleteError);
+            console.warn("Failed to delete payment proof folder", deleteError?.message || deleteError);
           }
         }
 
