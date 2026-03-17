@@ -26,7 +26,6 @@ const buildInitialFormData = ({
   address: "",
   adultCount: Number(guests?.adults || 0),
   childrenCount: Number(guests?.children || 0),
-  pax: Number((guests?.adults || 0) + (guests?.children || 0)),
   guestCount: Number((guests?.adults || 0) + (guests?.children || 0)),
   sleepingGuests: 0,
   roomCount: initialSelectedRoomIds.length,

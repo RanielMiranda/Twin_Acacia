@@ -75,17 +75,17 @@ export default function CheckedOutTabs({
             Unresolved issue
           </div>
         ) : null}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="grid grid-cols-3 gap-2 w-full">
           <Button
             variant="outline"
-            className="h-8 px-3 text-xs font-bold"
+            className="flex items-center justify-center h-8 px-3 text-xs font-bold w-full"
             onClick={() => onOpenBooking?.(item.id)}
           >
             Open Booking
           </Button>
           <Button
             variant="outline"
-            className="h-8 px-3 text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+            className="flex items-center justify-center h-8 px-3 text-xs font-bold w-full border-blue-200 text-blue-700 hover:bg-blue-50"
             onClick={() => onReopenCheckedOut?.(item.id)}
             disabled={hasUnresolvedIssue}
           >
@@ -93,7 +93,7 @@ export default function CheckedOutTabs({
           </Button>
           <Button
             variant="outline"
-            className={`h-8 px-3 text-xs font-bold border-rose-200 text-rose-700 hover:bg-rose-50 ${
+            className={`flex items-center justify-center h-8 px-3 text-xs font-bold w-full border-rose-200 text-rose-700 hover:bg-rose-50 ${
               hasUnresolvedIssue ? "opacity-60 cursor-not-allowed" : ""
             }`}
             onClick={() => onResolveCheckedOut?.(item.id)}
@@ -107,7 +107,7 @@ export default function CheckedOutTabs({
       <div className="flex items-center gap-2 flex-wrap justify-end w-full">
         <Button
           variant="outline"
-          className="h-8 px-3 text-xs font-bold border-rose-200 text-rose-700 hover:bg-rose-50"
+          className="h-8 px-3 text-xs font-bold flex items-center justify-center border-rose-200 text-rose-700 hover:bg-rose-50"
           onClick={() => onDeleteArchived?.(item.id)}
         >
           <Trash2 size={12} className="mr-1" />

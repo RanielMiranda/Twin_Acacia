@@ -394,7 +394,8 @@ export function useBookingConsoleData({
     workflowCounts,
     declinedBookings,
     checkedOutBookings,
-    auditArchiveCount: audits.length + declinedBookings.length + checkedOutBookings.length,
+    // Count only final-status bookings (cancelled/declined/checked-out). Archived records are shown separately.
+    auditArchiveCount: declinedBookings.length + checkedOutBookings.length,
     openConcernCount: concerns.filter((item) => item.status !== "resolved").length,
     unresolvedIssueBookingIds,
     loadConcerns,
