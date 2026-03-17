@@ -51,9 +51,11 @@ function toModel(row) {
 
 function toRow(booking, resortId) {
   const form = booking.bookingForm || {};
-  const adults = Number(form.adultCount ?? booking.adultCount ?? 0);
-  const children = Number(form.childrenCount ?? booking.childrenCount ?? 0);
-  const pax = Number(form.guestCount ?? form.pax ?? booking.pax ?? adults + children);
+  // Prefer the explicit booking columns (table schema) as the source of truth.
+  // Fall back to bookingForm values for legacy or partial data.
+  const adults = Number(booking.adultCount ?? form.adultCount ?? 0);
+  const children = Number(booking.childrenCount ?? form.childrenCount ?? 0);
+  const pax = Number(booking.pax ?? form.guestCount ?? form.pax ?? adults + children);
 
   const {
     adultCount: _discardAdultCount,

@@ -8,27 +8,45 @@ export default function AddOnsCardSection({
   setField,
   availableServices = [],
 }) {
-  const services = Array.isArray(draft.resortServices) ? draft.resortServices : [];
+  const normalizeKey = (item) => {
+    if (item === null || item === undefined || item === "") return "";
+    if (typeof item === "object") {
+      const id = item.id ?? item.name;
+      return id !== undefined && id !== null ? String(id) : "";
+    }
+    return String(item);
+  };
+
+  const selectedServiceKeys = Array.isArray(draft.resortServices)
+    ? draft.resortServices.map(normalizeKey).filter(Boolean)
+    : [];
+
+  const resolveService = (key) => {
+    if (!key) return null;
+    const found = (availableServices || []).find(
+      (svc) => String(svc.id) === String(key) || String(svc.name) === String(key)
+    );
+    if (found) return found;
+    return { name: key, cost: 0, id: key };
+  };
+
+  const services = selectedServiceKeys
+    .filter(Boolean)
+    .map((key) => resolveService(key));
 
   const toggleService = (service) => {
     if (!setField) return;
-    const exists = services.some((entry) => entry?.name === service?.name);
+    const key = normalizeKey(service);
+    const exists = selectedServiceKeys.includes(key);
+    const nextKeys = exists
+      ? selectedServiceKeys.filter((k) => k !== key)
+      : [...selectedServiceKeys, key];
     const serviceCost = Number(service?.cost || 0);
-    const nextServices = exists
-      ? services.filter((entry) => entry?.name !== service?.name)
-      : [
-          ...services,
-          {
-            name: service?.name || "",
-            description: service?.description || "",
-            cost: Number(service?.cost || 0),
-          },
-        ];
     const currentTotal = Number(draft.totalAmount || 0);
     const nextTotal = exists
       ? Math.max(0, currentTotal - serviceCost)
       : currentTotal + serviceCost;
-    setField("resortServices", nextServices);
+    setField("resortServices", nextKeys);
     if (serviceCost > 0) {
       setField("totalAmount", nextTotal);
     }
@@ -41,7 +59,7 @@ export default function AddOnsCardSection({
         <div className="space-y-3">
           {availableServices.length > 0 ? (
             availableServices.map((service, index) => {
-              const selected = services.some((entry) => entry?.name === service?.name);
+              const selected = selectedServiceKeys.includes(normalizeKey(service));
               return (
                 <button
                   key={`${service?.name || "service"}-${index}`}

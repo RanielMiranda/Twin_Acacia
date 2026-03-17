@@ -34,6 +34,7 @@ export default function BookingManagementPage() {
   const { toast } = useToast();
   const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
   const [addingBooking, setAddingBooking] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
 
   useEffect(() => {
@@ -94,6 +95,33 @@ export default function BookingManagementPage() {
     toast,
   });
 
+  const handleSyncData = async () => {
+    setIsSyncing(true);
+    try {
+      await refreshBookings();
+      await refreshAuditArchive();
+
+      const secret = process.env.NEXT_PUBLIC_BOOKING_AUTOMATION_SECRET;
+      if (secret) {
+        const res = await fetch("/api/internal/booking-status", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${secret}`,
+          },
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body?.error || "sync failed");
+        toast({ message: "Sync complete (automation ran).", color: "green" });
+      } else {
+        toast({ message: "Sync complete.", color: "green" });
+      }
+    } catch (err) {
+      toast({ message: `Sync failed: ${err.message}`, color: "red" });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const TabBadge = ({ count, tone = "blue" }) =>
     count > 0 ? (
       <span
@@ -145,15 +173,22 @@ export default function BookingManagementPage() {
     setAddingBooking(true);
     try {
       const isAgent = payload.inquirerType === "agent";
-      const stayingGuestName = payload.guestName.trim();
-      const stayingGuestEmail = payload.email.trim();
-      const stayingGuestPhone = payload.phoneNumber.trim();
+      const guestName = (payload.stayingGuestName || payload.guestName || "").trim();
+      const guestEmail = (payload.stayingGuestEmail || payload.email || "").trim();
+      const guestPhone = (payload.stayingGuestPhone || payload.phoneNumber || "").trim();
+      const resortPrice = Number(currentResort?.price || 0);
+      const totalAmount = resortPrice;
+
       const bookingForm = {
         inquirerType: payload.inquirerType,
-        guestName: payload.guestName.trim(),
-        stayingGuestName,
-        stayingGuestEmail,
-        stayingGuestPhone,
+        guestName,
+        stayingGuestName: payload.stayingGuestName?.trim() || guestName,
+        stayingGuestEmail: payload.stayingGuestEmail?.trim() || guestEmail,
+        stayingGuestPhone: payload.stayingGuestPhone?.trim() || guestPhone,
+        guestEmail,
+        guestPhone,
+        address: payload.address?.trim() || "",
+        guestAddress: payload.address?.trim() || "",
         email: payload.email.trim(),
         phoneNumber: payload.phoneNumber.trim(),
         agentName: isAgent ? payload.agentName.trim() : "",
@@ -167,6 +202,7 @@ export default function BookingManagementPage() {
         childrenCount,
         guestCount,
         pax,
+        totalAmount,
       };
 
       const created = await createBooking({
@@ -175,10 +211,19 @@ export default function BookingManagementPage() {
         endDate: payload.checkOutDate || payload.checkInDate,
         checkInTime: payload.checkInTime || "14:00",
         checkOutTime: payload.checkOutTime || "11:00",
-        roomIds: [],
-        roomCount: Number(payload.roomCount || 1),
+        roomIds: payload.selectedRoomIds || [],
+        roomCount: Number(payload.roomCount || (payload.selectedRoomIds?.length || 0) || 1),
+        adultCount,
+        childrenCount,
+        pax,
+        sleepingGuests: Number(payload.sleepingGuests || 0),
+        totalAmount,
         inquirerType: payload.inquirerType,
-        bookingForm,
+        bookingForm: {
+          ...bookingForm,
+          resortServices: payload.selectedServices || [],
+          selectedRoomIds: payload.selectedRoomIds || [],
+        },
       });
 
       setIsAddBookingOpen(false);
@@ -215,6 +260,14 @@ export default function BookingManagementPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              onClick={handleSyncData}
+              className="rounded-full px-2 text-xs font-black uppercase"
+              disabled={isSyncing}
+            >
+              {isSyncing ? "Syncing..." : "Sync Data"}
+            </Button>
             <Button
               type="button"
               onClick={() => setIsAddBookingOpen(true)}

@@ -10,9 +10,16 @@ function normalizeProofUrls(form) {
 
 export function buildDraftFromBooking(booking) {
   const form = booking.bookingForm || {};
-  const adults = Number(form.adultCount || 0);
-  const children = Number(form.childrenCount || 0);
-  const derivedPax = Number(form.guestCount || form.pax || adults + children || 0);
+  const adults = Number(booking.adultCount ?? form.adultCount ?? 0);
+  const children = Number(booking.childrenCount ?? form.childrenCount ?? 0);
+  const derivedPax = Number(
+    (booking.pax ?? form.guestCount ?? form.pax ?? (adults + children)) || 0
+  );
+  const sleepingGuests = Number(booking.sleepingGuests ?? form.sleepingGuests ?? 0);
+  const roomCount = Number(
+    booking.roomCount ?? form.roomCount ?? booking.roomIds?.length ?? 1
+  );
+  const totalAmount = Number(booking.totalAmount ?? form.totalAmount ?? 0);
   const paymentVerified = !!form.paymentVerified;
   const paymentPendingApproval = !!form.paymentPendingApproval && !paymentVerified;
   const pendingDownpayment = paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
@@ -62,9 +69,9 @@ export function buildDraftFromBooking(booking) {
     adultCount: adults,
     childrenCount: children,
     guestCount: derivedPax,
-    roomCount: Number(form.roomCount || booking.roomIds?.length || 1),
+    roomCount,
     roomName: roomNameFromAssigned,
-    sleepingGuests: Number(form.sleepingGuests || 0),
+    sleepingGuests,
     checkInDate: form.checkInDate || booking.startDate || "",
     checkOutDate: form.checkOutDate || booking.endDate || "",
     checkInTime: form.checkInTime || booking.checkInTime || "14:00",
@@ -74,7 +81,7 @@ export function buildDraftFromBooking(booking) {
     pendingDownpayment,
     pendingPaymentMethod,
     paymentPendingApproval,
-    totalAmount: Number(form.totalAmount || 0),
+    totalAmount,
     paymentDeadline,
     paymentProofUrl: paymentProofUrls[0] || null,
     paymentProofUrls,

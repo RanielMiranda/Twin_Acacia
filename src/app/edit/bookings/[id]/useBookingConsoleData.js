@@ -234,21 +234,41 @@ export function useBookingConsoleData({
   const reopenBooking = useCallback(
     async (bookingId, newStatus) => {
       try {
-        await updateBookingById(bookingId, (entry) => ({
-          ...entry,
+        // Refresh to ensure the local cache matches the DB before making updates.
+        await refreshBookings();
+
+        // Fetch the latest booking form from the DB to avoid overwriting fields (dates, counts) with stale values.
+        const { data: latestRow, error: fetchError } = await supabase
+          .from("bookings")
+          .select("booking_form")
+          .eq("id", bookingId)
+          .maybeSingle();
+        if (fetchError) throw fetchError;
+
+        const existingForm = (latestRow?.booking_form || {}) ?? {};
+        const nextForm = {
+          ...existingForm,
           status: newStatus,
-          bookingForm: {
-            ...(entry.bookingForm || {}),
+          reopenedAt: new Date().toISOString(),
+        };
+
+        const { error } = await supabase
+          .from("bookings")
+          .update({
             status: newStatus,
-            reopenedAt: new Date().toISOString(),
-          },
-        }));
+            booking_form: nextForm,
+          })
+          .eq("id", bookingId);
+
+        if (error) throw error;
+
+        await refreshBookings();
         await loadAudits();
       } catch (error) {
         console.error("Reopen booking error:", error?.message || error);
       }
     },
-    [loadAudits, updateBookingById]
+    [loadAudits, refreshBookings]
   );
 
   const handleReopenDeclined = useCallback(

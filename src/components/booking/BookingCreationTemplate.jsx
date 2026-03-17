@@ -221,7 +221,6 @@ export default function BookingCreationTemplate({
 
   const autoGuestNameRef = useRef("");
   useEffect(() => {
-    if (formData.inquirerType !== "client") return;
     const shouldSync =
       !formData.stayingGuestName ||
       formData.stayingGuestName === autoGuestNameRef.current;
@@ -233,11 +232,10 @@ export default function BookingCreationTemplate({
     }
     autoGuestNameRef.current = nextName;
     setFormData((prev) => ({ ...prev, stayingGuestName: nextName }));
-  }, [formData.guestName, formData.inquirerType, formData.stayingGuestName]);
+  }, [formData.guestName, formData.stayingGuestName]);
 
   const autoGuestEmailRef = useRef("");
   useEffect(() => {
-    if (formData.inquirerType !== "client") return;
     const shouldSync =
       !formData.stayingGuestEmail ||
       formData.stayingGuestEmail === autoGuestEmailRef.current;
@@ -249,11 +247,10 @@ export default function BookingCreationTemplate({
     }
     autoGuestEmailRef.current = nextEmail;
     setFormData((prev) => ({ ...prev, stayingGuestEmail: nextEmail }));
-  }, [formData.email, formData.inquirerType, formData.stayingGuestEmail]);
+  }, [formData.email, formData.stayingGuestEmail]);
 
   const autoGuestPhoneRef = useRef("");
   useEffect(() => {
-    if (formData.inquirerType !== "client") return;
     const shouldSync =
       !formData.stayingGuestPhone ||
       formData.stayingGuestPhone === autoGuestPhoneRef.current;
@@ -265,7 +262,7 @@ export default function BookingCreationTemplate({
     }
     autoGuestPhoneRef.current = nextPhone;
     setFormData((prev) => ({ ...prev, stayingGuestPhone: nextPhone }));
-  }, [formData.phoneNumber, formData.inquirerType, formData.stayingGuestPhone]);
+  }, [formData.phoneNumber, formData.stayingGuestPhone]);
 
   useEffect(() => {
     if (formData.inquirerType !== "agent") return;
@@ -313,6 +310,20 @@ export default function BookingCreationTemplate({
     onClose?.();
   };
 
+  const getServiceKey = (service) => {
+    if (!service) return "";
+    if (typeof service === "string") return service;
+    return service.id || service.name || "";
+  };
+
+  const resolveServiceName = (key) => {
+    if (!key) return "";
+    const found = (resort?.extraServices || []).find(
+      (svc) => svc.id === key || svc.name === key
+    );
+    return found ? found.name : key;
+  };
+
   const handleSubmit = () => {
     const selectedRoomIds = (formData.selectedRoomIds || []).filter(
       (id) => !blockedIds.has(id?.toString())
@@ -320,6 +331,7 @@ export default function BookingCreationTemplate({
     const selectedRoomNames = (availableRooms || [])
       .filter((room) => selectedRoomIds.includes(room.id))
       .map((room) => room.name);
+
     const clientNormalized =
       formData.inquirerType === "client"
         ? {
@@ -331,6 +343,11 @@ export default function BookingCreationTemplate({
         : {
             ...formData,
           };
+
+    const normalizedServices = (formData.selectedServices || [])
+      .map((item) => getServiceKey(item))
+      .filter(Boolean);
+
     const normalized =
       selectedRoomIds.length > 0
         ? {
@@ -340,8 +357,12 @@ export default function BookingCreationTemplate({
             roomCount: selectedRoomIds.length,
             roomId: selectedRoomIds[0] || "",
             roomName: selectedRoomNames.join(", "),
+            selectedServices: normalizedServices,
           }
-        : clientNormalized;
+        : {
+            ...clientNormalized,
+            selectedServices: normalizedServices,
+          };
 
     onSubmit?.(normalized);
 
@@ -683,20 +704,25 @@ export default function BookingCreationTemplate({
                     <div className="grid grid-cols-2 gap-y-6">
                       <SummaryItem icon={User} label="Inquirer" value={formData.inquirerType === "agent" ? "Agent" : "Client"} />
                       {formData.inquirerType === "agent" ? (
-                        <SummaryItem icon={User} label="Agent Name" value={formData.agentName || "Not set"} />
-                      ) : null}
-                      <SummaryItem
-                        icon={User}
-                        label={formData.inquirerType === "agent" ? "Agent Name" : "Contact Name"}
-                        value={formData.inquirerType === "agent" ? (formData.agentName || "Not set") : (formData.guestName || "Not set")}
-                      />
-                      <SummaryItem icon={User} label="Guest" value={formData.stayingGuestName || "Not set"} />
-                      <SummaryItem icon={Phone} label="Guest Contact" value={formData.stayingGuestPhone || "Not set"} />
+                        <>
+                          <SummaryItem icon={User} label="Agent Name" value={formData.agentName || "Not set"} />
+                          <SummaryItem icon={User} label="Guest" value={formData.stayingGuestName || "Not set"} />
+                          <SummaryItem icon={Phone} label="Guest Contact" value={formData.stayingGuestPhone || "Not set"} />
+                        </>
+                      ) : (
+                        <>
+                          <SummaryItem
+                            icon={User}
+                            label="Guest"
+                            value={formData.stayingGuestName || formData.guestName || "Not set"}
+                          />
+                          <SummaryItem icon={Phone} label="Contact" value={formData.phoneNumber || "Not set"} />
+                        </>
+                      )}
                       <SummaryItem icon={MapPin} label="Pax" value={`${formData.pax} People`} />
                       <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
                       <SummaryItem icon={Clock} label="Schedule" value={`${formatTime(formData.checkInTime)} - ${formatTime(formData.checkOutTime)}`} />
                       <SummaryItem icon={PlusCircle} label="Rooms" value={selectedRoomNamesDerived.length > 0 ? selectedRoomNamesDerived.join(", ") : "Not set"} />
-                      <SummaryItem icon={Phone} label="Contact" value={formData.phoneNumber || "Not set"} />
                       <SummaryItem icon={MapPin} label="Address" value={formData.address || "Not set"} />
                       {showAddOns ? (
                         <SummaryItem icon={PlusCircle} label="Add-ons" value={formData.selectedServices.length > 0 ? formData.selectedServices.join(", ") : "None"} />

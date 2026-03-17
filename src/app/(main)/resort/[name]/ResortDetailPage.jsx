@@ -129,8 +129,13 @@ export default function ResortDetailPage({ name }) {
 
 const handleSubmitInquiry = async (submittedData) => {
     try {
-      const selectedServices = (resort.extraServices || []).filter((service) =>
-        submittedData.selectedServices?.includes(service.name)
+      const selectedServiceKeys = Array.isArray(submittedData.selectedServices)
+        ? submittedData.selectedServices
+            .map((item) => (item && typeof item === "object" ? item.id || item.name : item))
+            .filter(Boolean)
+        : [];
+      const selectedServices = (resort.extraServices || []).filter(
+        (service) => selectedServiceKeys.includes(service.id) || selectedServiceKeys.includes(service.name)
       );
       const selectedRoomIds = Array.isArray(submittedData.selectedRoomIds)
         ? submittedData.selectedRoomIds.map((id) => id?.toString()).filter(Boolean)
@@ -187,9 +192,7 @@ const handleSubmitInquiry = async (submittedData) => {
         paymentMethod: "Pending",
         downpayment: 0,
         totalAmount: Number(resort.price || 0),
-        resortServices: selectedServices,
-        notes: submittedData.message || "",
-        ticketAccessToken,
+        resortServices: selectedServiceKeys,
         ticketAccessExpiresAt,
         agentTicketAccessToken,
         agentTicketAccessExpiresAt,

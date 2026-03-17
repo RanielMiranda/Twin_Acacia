@@ -8,6 +8,7 @@ export default function BookingConfirmation({
   resortName,
   resortProfileImage,
   resortPrice = 0,
+  resortExtraServices = [],
 }) {
   const formData = data || {};
 
@@ -21,9 +22,39 @@ export default function BookingConfirmation({
   const guestPhone = formData.stayingGuestPhone || "";
   const clientAddress = formData.address || "";
 
+  const normalizeService = (entry) => {
+    if (!entry) return null;
+    if (typeof entry === "string") {
+      return { key: entry, name: entry, cost: 0 };
+    }
+    const key = entry.id || entry.name || "";
+    const name = entry.name || entry.id || key;
+    const cost = Number(entry.cost || 0);
+    return { key, name, cost };
+  };
+
+  const resolveService = (service) => {
+    if (!service) return null;
+    const found = (resortExtraServices || []).find(
+      (svc) => svc.id === service.key || svc.name === service.key
+    );
+    if (found) {
+      return {
+        key: service.key,
+        name: found.name || service.name,
+        cost: Number(found.cost || service.cost || 0),
+      };
+    }
+    return service;
+  };
+
   const selectedServices = Array.isArray(formData.resortServices)
     ? formData.resortServices
+        .map(normalizeService)
+        .filter(Boolean)
+        .map(resolveService)
     : [];
+
   const serviceTotal = useMemo(
     () =>
       (selectedServices || []).reduce(
@@ -99,19 +130,19 @@ export default function BookingConfirmation({
                     <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
                   </Field>
 
-              <Field label="Inquirer Name">
-                <div className="text-sm font-bold text-slate-700">{inquirerName || "-"}</div>
-              </Field>
-              <Field label="Inquirer Email">
-                <div className="text-sm font-bold text-slate-700">{inquirerEmail || "-"}</div>
-              </Field>
-              <Field label="Inquirer Phone">
-                <div className="text-sm font-bold text-slate-700">{inquirerPhone || "-"}</div>
-              </Field>
-
-              <Field label="Address">
-                <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
-              </Field>
+              {inquirerType === "agent" ? (
+                <>
+                  <Field label="Inquirer Name">
+                    <div className="text-sm font-bold text-slate-700">{inquirerName || "-"}</div>
+                  </Field>
+                  <Field label="Inquirer Email">
+                    <div className="text-sm font-bold text-slate-700">{inquirerEmail || "-"}</div>
+                  </Field>
+                  <Field label="Inquirer Phone">
+                    <div className="text-sm font-bold text-slate-700">{inquirerPhone || "-"}</div>
+                  </Field>
+                </>
+              ) : null}
             </div>
           </section>
 
