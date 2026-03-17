@@ -20,7 +20,7 @@ import resortInitialData from "./data/ResortInitialData";
 
 export default function ResortBuilder({ resortId }) {
   // saveResort must be destructured from useResort()
-  const { resort, setResort, loadResort, saveResort, loading, setDraftScope } = useResort();
+  const { resort, setResort, loadResort, saveResort, loading, setDraftScope, resetResort } = useResort();
   const [isSaved, setIsSaved] = useState(false);
   const { toast } = useToast();
 
@@ -56,6 +56,20 @@ export default function ResortBuilder({ resortId }) {
     }
   };
 
+  const handleRemoveDraft = async () => {
+    if (!resort) return;
+
+    // Clear stored draft and reload the saved record (or reset to new template)
+    resetResort(null, resort?.id ? `id:${resort.id}` : "new");
+    if (resort?.id) {
+      await loadResort(resort.id, true);
+    } else {
+      setResort(resortInitialData);
+    }
+
+    toast?.({ message: "Draft removed.", color: "amber" });
+  };
+
   return (
     <div className="min-h-screen bg-white pb-20 pt-10">
       <HeroGalleryEditor />
@@ -84,28 +98,37 @@ export default function ResortBuilder({ resortId }) {
             </button>
           ))}
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={loading}
-          className="w-full flex items-center justify-center hover:scale-[1.01] gap-2 px-6 py-2 shadow-lg rounded-xl transition-all active:scale-[0.99]"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="animate-spin" size={20} />
-              <span>Saving...</span>
-            </>
-          ) : isSaved ? (
-            <>
-              <CheckCircle size={20} className="text-white" />
-              <span>Changes Saved</span>
-            </>
-          ) : (
-            <>
-              <Save size={20} />
-              <span>Save Changes</span>
-            </>
-          )}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button
+            onClick={handleSave}
+            disabled={loading}
+            className="w-full flex items-center justify-center hover:scale-[1.01] gap-2 px-6 py-2 shadow-lg rounded-xl transition-all active:scale-[0.99]"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                <span>Saving...</span>
+              </>
+            ) : isSaved ? (
+              <>
+                <CheckCircle size={20} className="text-white" />
+                <span>Changes Saved</span>
+              </>
+            ) : (
+              <>
+                <Save size={20} />
+                <span>Save Changes</span>
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleRemoveDraft}
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2 px-6 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"
+          >
+            Remove Draft
+          </Button>
+        </div>
       </div>
       <Toast />
     </div>

@@ -343,7 +343,13 @@ export default function BookingCreationTemplate({
             roomName: selectedRoomNames.join(", "),
           }
         : clientNormalized;
+
     onSubmit?.(normalized);
+
+    if (enableDraftPersistence && typeof window !== "undefined" && draftKey) {
+      sessionStorage.removeItem(draftKey);
+    }
+
     handleClose();
   };
 

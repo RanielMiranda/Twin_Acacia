@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useSupport } from "@/components/useclient/SupportClient";
@@ -182,10 +183,11 @@ export default function BookingDetailsPage() {
         toast({
           message: "Support tables are not installed yet. Run supabase/schema.sql.",
           color: "amber",
+          icon: AlertTriangle,
         });
       }
     } catch (err) {
-      toast({ message: `Unable to load support data: ${err.message}`, color: "red" });
+      toast({ message: `Unable to load support data: ${err.message}`, color: "red", icon: XCircle });
     } finally {
       setRefreshingMessages(false);
     }
@@ -264,7 +266,7 @@ export default function BookingDetailsPage() {
     if (isSendingReply) return;
     const now = Date.now();
     if (now - lastOwnerReplySentAtRef.current < 5000) {
-      toast({ message: "Please wait a few seconds before sending another message.", color: "amber" });
+      toast({ message: "Please wait a few seconds before sending another message.", color: "amber", icon: AlertTriangle });
       return;
     }
     try {
@@ -287,10 +289,10 @@ export default function BookingDetailsPage() {
       await sendTicketMessage(payload);
       setOwnerReply("");
       await loadSupportData(booking.id);
-      toast({ message: "Reply sent to client.", color: "green" });
+      toast({ message: "Reply sent to client.", color: "green", icon: CheckCircle2 });
     } catch (err) {
       if (isMissingSupportTableError(err)) {
-        toast({ message: "Messaging table missing. Run supabase/schema.sql first.", color: "amber" });
+        toast({ message: "Messaging table missing. Run supabase/schema.sql first.", color: "amber", icon: AlertTriangle });
         return;
       }
       toast({ message: `Reply failed: ${err.message}`, color: "red" });
