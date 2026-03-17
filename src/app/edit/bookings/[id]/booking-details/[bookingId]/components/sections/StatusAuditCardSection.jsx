@@ -22,25 +22,33 @@ export default function StatusAuditCardSection({ dbAudits, bookingFormAudits, tr
   ];
   const getStatusRank = (value) => STATUS_ORDER.indexOf(String(value || "").toLowerCase());
 
+  // Prefer audit entries from the booking_status_audit table.
+  // Fallback to bookingFormAudits only if the table data is unavailable.
+  const sourceAudits = Array.isArray(dbAudits) && dbAudits.length > 0 ? dbAudits : bookingFormAudits || [];
+
   const mergedAudits = [
-    ...(dbAudits || []).map((entry) => ({
-      id: `db-${entry.id}`,
-      type: "status",
-      title: `${entry.old_status || "Unknown"} -> ${entry.new_status || "Unknown"}`,
-      actor: getAuditActorLabel(entry),
-      at: entry.changed_at,
-      fromStatus: entry.old_status,
-      toStatus: entry.new_status,
-    })),
-    ...(bookingFormAudits || []).map((entry, index) => ({
-      id: `form-${index}`,
-      type: "form",
-      title: `${entry.from || "Unknown"} -> ${entry.to || "Unknown"}`,
-      actor: getAuditActorLabel(entry),
-      at: entry.at,
-      fromStatus: entry.from,
-      toStatus: entry.to,
-    })),
+    ...sourceAudits.map((entry, index) => {
+      if (entry?.id) {
+        return {
+          id: `db-${entry.id}`,
+          type: "status",
+          title: `${entry.old_status || "Unknown"} -> ${entry.new_status || "Unknown"}`,
+          actor: getAuditActorLabel(entry),
+          at: entry.changed_at,
+          fromStatus: entry.old_status,
+          toStatus: entry.new_status,
+        };
+      }
+      return {
+        id: `form-${index}`,
+        type: "form",
+        title: `${entry.from || "Unknown"} -> ${entry.to || "Unknown"}`,
+        actor: getAuditActorLabel(entry),
+        at: entry.at,
+        fromStatus: entry.from,
+        toStatus: entry.to,
+      };
+    }),
     ...(transactions || []).map((entry) => ({
       id: `txn-${entry.id}`,
       type: "transaction",

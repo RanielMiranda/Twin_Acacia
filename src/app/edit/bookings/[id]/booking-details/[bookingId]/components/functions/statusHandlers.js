@@ -3,6 +3,8 @@ import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAc
 import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { PREVIOUS_STATUS } from "../bookingEditorConfig";
 import { notifyCaretakerOnBookingConfirmed } from "@/lib/caretakerNotifications";
+import { deleteSupabasePublicUrls } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 export async function handleSetStatusAction({
   actionBusy,
@@ -217,6 +219,15 @@ export async function handleVerifyProofAction({
   if (draft.paymentVerified || actionBusy) return;
   setActionBusy(true);
   try {
+    const proofUrls = Array.isArray(draft.paymentProofUrls) ? draft.paymentProofUrls.filter(Boolean) : [];
+    if (proofUrls.length > 0) {
+      try {
+        await deleteSupabasePublicUrls(supabase, proofUrls);
+      } catch (deleteError) {
+        console.warn("Failed to delete payment proof images", deleteError?.message || deleteError);
+      }
+    }
+
     const approvedAmount = Number(draft.pendingDownpayment || 0);
     const nextDownpayment = Number(draft.downpayment || 0) + approvedAmount;
     const nextMethod = draft.pendingPaymentMethod || draft.paymentMethod;
@@ -237,6 +248,8 @@ export async function handleVerifyProofAction({
       pendingDownpayment: 0,
       pendingPaymentMethod: null,
       paymentPendingApproval: false,
+      paymentProofUrl: null,
+      paymentProofUrls: [],
       status:
         draft.status === "Pending Payment"
           ? "Confirmed"
@@ -276,6 +289,15 @@ export async function handleDeclineProofAction({
 
   setActionBusy(true);
   try {
+    const proofUrls = Array.isArray(draft.paymentProofUrls) ? draft.paymentProofUrls.filter(Boolean) : [];
+    if (proofUrls.length > 0) {
+      try {
+        await deleteSupabasePublicUrls(supabase, proofUrls);
+      } catch (deleteError) {
+        console.warn("Failed to delete payment proof images", deleteError?.message || deleteError);
+      }
+    }
+
     const next = {
       ...draft,
       paymentPendingApproval: false,

@@ -80,3 +80,13 @@ export function getSupabaseSrcSet(url, widths = DEFAULT_SUPABASE_IMAGE_WIDTHS, q
     .map((width) => `${getTransformedSupabaseImageUrl(url, { width, quality, format: "webp" })} ${width}w`)
     .join(", ");
 }
+
+export async function deleteSupabasePublicUrls(supabase, urls, bucketName = BUCKET_NAME) {
+  if (!supabase || !Array.isArray(urls) || urls.length === 0) return;
+  const paths = urls
+    .map((url) => getStoragePathFromPublicUrl(url, bucketName))
+    .filter(Boolean);
+  if (paths.length === 0) return;
+  const { error } = await supabase.storage.from(bucketName).remove(paths);
+  if (error) throw error;
+}

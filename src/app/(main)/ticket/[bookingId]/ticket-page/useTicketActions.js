@@ -98,6 +98,19 @@ export function useTicketActions({
           : [];
       const uploadedProofUrls = await uploadProofs();
       const nextProofUrls = uploadedProofUrls.length > 0 ? uploadedProofUrls : existingProofUrls;
+      const existingProofLog = Array.isArray(booking.booking_form?.paymentProofLog)
+        ? booking.booking_form.paymentProofLog
+        : [];
+
+      const proofLogEntry = {
+        at: new Date().toISOString(),
+        action: "submit_payment_proof",
+        paymentMethod,
+        amount: Number(downpayment || 0),
+        urls: nextProofUrls,
+        previousUrls: existingProofUrls,
+      };
+
       const bookingForm = {
         ...(booking.booking_form || {}),
         pendingPaymentMethod: paymentMethod,
@@ -107,6 +120,7 @@ export function useTicketActions({
         paymentVerifiedAt: null,
         paymentProofUrl: nextProofUrls[0] || null,
         paymentProofUrls: nextProofUrls,
+        paymentProofLog: [...existingProofLog, proofLogEntry],
         paymentSubmittedAt: new Date().toISOString(),
       };
 

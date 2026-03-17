@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { deleteSupabasePublicUrls } from "@/lib/utils";
 
 const normalizeStatus = (entry) =>
   (entry.status || entry.bookingForm?.status || "").toString().toLowerCase();
@@ -359,6 +360,15 @@ export function useBookingConsoleData({
       };
 
       try {
+        const proofUrls = (source.bookingForm?.paymentProofUrls || []).filter(Boolean);
+        if (proofUrls.length > 0) {
+          try {
+            await deleteSupabasePublicUrls(supabase, proofUrls);
+          } catch (deleteError) {
+            console.warn("Failed to delete payment proof images", deleteError?.message || deleteError);
+          }
+        }
+
         const { error: archiveError } = await supabase.from("booking_archive").insert({
           booking_id: source.id?.toString(),
           resort_id: resortId,
