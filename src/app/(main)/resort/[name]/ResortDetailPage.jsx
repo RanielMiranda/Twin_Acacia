@@ -24,7 +24,7 @@ import PersistentToast from "@/components/ui/toast/PersistentToast";
 import { supabase } from "@/lib/supabase";
 import { useSupport } from "@/components/useclient/SupportClient";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
-import { buildServiceSnapshots, computeBookingTotalAmount } from "@/lib/utils";
+import { normalizeBookingSubmission } from "@/components/booking/payloadData/buildBookingPayload";
 
 export default function ResortDetailPage({ name }) {
   const { resort, loadResort, loading } = useResort();
@@ -136,84 +136,29 @@ const handleSubmitInquiry = async (submittedData) => {
             .filter(Boolean)
         : [];
       const selectedServiceSnapshots = buildServiceSnapshots(selectedServiceKeys, resort.extraServices);
-      const selectedServices = selectedServiceSnapshots; // kept for naming parity
-      const selectedRoomIds = Array.isArray(submittedData.selectedRoomIds)
-        ? submittedData.selectedRoomIds.map((id) => id?.toString()).filter(Boolean)
-        : [];
-      const selectedRooms = (resort.rooms || []).filter((room) =>
-        selectedRoomIds.includes(room.id?.toString())
-      );
-      const resolvedRooms =
-        selectedRooms.length > 0
-          ? selectedRooms
-          : [
-              (resort.rooms || []).find((room) => room.id?.toString() === submittedData.roomId?.toString()) ||
-                (resort.rooms || []).find((room) => room.name === submittedData.roomName) ||
-                resort.rooms?.[0],
-            ].filter(Boolean);
-      const resolvedRoomIds = resolvedRooms.map((room) => room.id);
-      const resolvedRoomNames = resolvedRooms.map((room) => room.name);
-
       const bookingId = Date.now().toString();
-      const adultCount = Number(submittedData.adultCount || 0);
-      const childrenCount = Number(submittedData.childrenCount || 0);
-      const pax = Number(submittedData.guestCount || submittedData.pax || adultCount + childrenCount || 0);
       const ticketAccessToken = generateTicketAccessToken();
       const ticketAccessExpiresAt = getTicketAccessExpiry(30);
       const agentTicketAccessToken = submittedData.inquirerType === "agent" ? generateTicketAccessToken() : "";
       const agentTicketAccessExpiresAt = submittedData.inquirerType === "agent" ? getTicketAccessExpiry(30) : "";
-      const bookingForm = {
-        inquirerType: submittedData.inquirerType || "client",
-        agentName: submittedData.agentName || "",
-        guestName: submittedData.guestName || "",
-        ...((submittedData.inquirerType || "client") === "agent"
-          ? {
-              stayingGuestName: submittedData.stayingGuestName || "",
-              stayingGuestEmail: submittedData.stayingGuestEmail || "",
-              stayingGuestPhone: submittedData.stayingGuestPhone || "",
-            }
-          : {}),
-        email: submittedData.email || "",
-        phoneNumber: submittedData.phoneNumber || "",
-        address: submittedData.address || submittedData.area || "",
-        roomName: resolvedRoomNames.length > 0 ? resolvedRoomNames.join(", ") : submittedData.roomName || "",
-        roomId: resolvedRoomIds[0] || submittedData.roomId || "",
-        assignedRoomNames: resolvedRoomNames,
-        assignedRoomIds: resolvedRoomIds,
-        checkInDate: submittedData.checkInDate || "",
-        checkOutDate: submittedData.checkOutDate || "",
-        checkInTime: submittedData.checkInTime || "14:00",
-        checkOutTime: submittedData.checkOutTime || "11:00",
-        status: "Inquiry",
-        paymentMethod: "Pending",
-        downpayment: 0,
-        totalAmount: computeBookingTotalAmount({
-          basePrice: resort.price,
-          serviceSnapshots: selectedServiceSnapshots,
-        }),
-        resortServices: selectedServiceSnapshots,
+
+      const { bookingRow, bookingForm } = normalizeBookingSubmission({
+        resort,
+        submittedData,
+      });
+
+      const bookingFormWithTokens = {
+        ...bookingForm,
+        ticketAccessToken,
         ticketAccessExpiresAt,
         agentTicketAccessToken,
         agentTicketAccessExpiresAt,
       };
 
       const { error } = await supabase.from("bookings").upsert({
+        ...bookingRow,
         id: bookingId,
-        resort_id: Number(resort.id),
-        room_ids: resolvedRoomIds,
-        start_date: submittedData.checkInDate || null,
-        end_date: submittedData.checkOutDate || null,
-        check_in_time: submittedData.checkInTime || "14:00",
-        check_out_time: submittedData.checkOutTime || "11:00",
-        status: "Inquiry",
-        inquirer_type: submittedData.inquirerType === "agent",
-        adult_count: adultCount,
-        children_count: childrenCount,
-        pax,
-        sleeping_guests: Number(submittedData.sleepingGuests || 0),
-        room_count: resolvedRoomIds.length || Number(submittedData.roomCount || 0),
-        resort_service_ids: selectedServiceKeys.map(String),
-        booking_form: bookingForm,
+        booking_form: bookingFormWithTokens,
       });
 
       if (error) throw error;

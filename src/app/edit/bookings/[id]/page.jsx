@@ -6,7 +6,7 @@ import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useBookingConsoleData } from "./useBookingConsoleData";
 import { useSupport } from "@/components/useclient/SupportClient";
-import { buildServiceSnapshots, computeBookingTotalAmount } from "@/lib/utils";
+import { normalizeBookingSubmission } from "@/components/booking/payloadData/buildBookingPayload";
 import {Button} from "@/components/ui/button";
 import {
   Calendar as CalendarIcon, 
@@ -166,64 +166,15 @@ export default function BookingManagementPage() {
       return;
     }
 
-    const adultCount = Number(payload.adultCount ?? 0);
-    const childrenCount = Number(payload.childrenCount ?? 0);
-    const guestCount = Number(payload.guestCount ?? adultCount + childrenCount);
-    const pax = Number(payload.pax ?? guestCount);
-
     setAddingBooking(true);
     try {
-      const isAgent = payload.inquirerType === "agent";
-      const guestName = (payload.stayingGuestName || payload.guestName || "").trim();
-      const guestEmail = (payload.stayingGuestEmail || payload.email || "").trim();
-      const guestPhone = (payload.stayingGuestPhone || payload.phoneNumber || "").trim();
-      const selectedServiceKeys = Array.isArray(payload.selectedServices) ? payload.selectedServices : [];
-      const selectedServiceSnapshots = buildServiceSnapshots(selectedServiceKeys, currentResort?.extraServices || []);
-      const totalAmount = computeBookingTotalAmount({
-        basePrice: currentResort?.price,
-        serviceSnapshots: selectedServiceSnapshots,
+      const { bookingModel, bookingForm } = normalizeBookingSubmission({
+        resort: currentResort,
+        submittedData: payload,
       });
 
-      const bookingForm = {
-        inquirerType: payload.inquirerType,
-        guestName,
-        ...(isAgent
-          ? {
-              stayingGuestName: payload.stayingGuestName?.trim() || guestName,
-              stayingGuestEmail: payload.stayingGuestEmail?.trim() || guestEmail,
-              stayingGuestPhone: payload.stayingGuestPhone?.trim() || guestPhone,
-            }
-          : {}),
-        address: payload.address?.trim() || "",
-        email: payload.email.trim(),
-        phoneNumber: payload.phoneNumber.trim(),
-        agentName: isAgent ? payload.agentName.trim() : "",
-        status: payload.status,
-        checkInDate: payload.checkInDate,
-        checkOutDate: payload.checkOutDate || payload.checkInDate,
-        checkInTime: payload.checkInTime || "14:00",
-        checkOutTime: payload.checkOutTime || "11:00",
-        totalAmount,
-      };
-
       const created = await createBooking({
-        status: payload.status,
-        startDate: payload.checkInDate,
-        endDate: payload.checkOutDate || payload.checkInDate,
-        checkInTime: payload.checkInTime || "14:00",
-        checkOutTime: payload.checkOutTime || "11:00",
-        roomIds: payload.selectedRoomIds || [],
-        roomCount: Number(payload.roomCount || (payload.selectedRoomIds?.length || 0) || 1),
-        adultCount,
-        childrenCount,
-        pax,
-        sleepingGuests: Number(payload.sleepingGuests || 0),
-        resortServiceIds: Array.isArray(payload.selectedServices)
-          ? payload.selectedServices.map(String).filter(Boolean)
-          : [],
-        resortServices: selectedServiceSnapshots,
-        totalAmount,
-        inquirerType: payload.inquirerType,
+        ...bookingModel,
         bookingForm: {
           ...bookingForm,
           selectedRoomIds: payload.selectedRoomIds || [],
