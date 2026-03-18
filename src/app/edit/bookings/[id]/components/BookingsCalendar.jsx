@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Calendar as CalendarIcon,
@@ -64,7 +64,11 @@ function getBookingEndDate(booking) {
   return booking?.endDate || booking?.bookingForm?.checkOutDate || getBookingStartDate(booking);
 }
 
-export default function BookingCalendar({ archivedBookings = [] }) {
+export default function BookingCalendar({
+  archivedBookings = [],
+  archivedLoading = false,
+  onLoadArchived,
+}) {
   const { resort } = useResort();
   const { bookings } = useBookings();
   const router = useRouter();
@@ -95,10 +99,10 @@ export default function BookingCalendar({ archivedBookings = [] }) {
       if (!normalizedSearch) return true;
       const form = booking?.bookingForm || {};
       const fields = [
-        form.stayingGuestName,
-        form.guestName,
-        form.agentName,
-        form.roomName,
+        booking?.stayingGuestName || form.stayingGuestName,
+        booking?.guestName || form.guestName,
+        booking?.agentName || form.agentName,
+        booking?.roomName || form.roomName,
         booking?.startDate,
         booking?.endDate,
         booking?.status || form.status,
@@ -115,6 +119,21 @@ export default function BookingCalendar({ archivedBookings = [] }) {
     () => archivedList.filter(matchesSearch),
     [archivedList, matchesSearch]
   );
+
+  const getRangeForView = (baseDate) => {
+    const start = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+    const end = new Date(baseDate.getFullYear(), baseDate.getMonth() + 2, 0);
+    const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+    const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+    return { startStr, endStr };
+  };
+
+  useEffect(() => {
+    if (!onLoadArchived) return;
+    if (calendarMode !== "past") return;
+    const { startStr, endStr } = getRangeForView(currentDate);
+    onLoadArchived({ append: false, search, rangeStart: startStr, rangeEnd: endStr });
+  }, [calendarMode, currentDate, onLoadArchived, search]);
 
   const getBookingColor = (booking) => {
     if (booking?.isArchived) {
@@ -166,9 +185,9 @@ export default function BookingCalendar({ archivedBookings = [] }) {
     const form = booking?.bookingForm || {};
     const checkIn = booking?.checkInTime || form.checkInTime || "--:--";
     const checkOut = booking?.checkOutTime || form.checkOutTime || "--:--";
-    const guestName = form.stayingGuestName || form.guestName || "Guest";
-    const agentName = form.agentName || "";
-    const roomName = form.roomName || "";
+    const guestName = booking?.stayingGuestName || form.stayingGuestName || booking?.guestName || form.guestName || "Guest";
+    const agentName = booking?.agentName || form.agentName || "";
+    const roomName = booking?.roomName || form.roomName || "";
     const roomCount = Number(form.roomCount || booking?.roomCount || 0);
     const inquirerType = String(booking?.inquirerType || form.inquirerType || "client").toLowerCase();
     const typeLabel = inquirerType === "agent" ? "Agent" : "Client";
@@ -342,7 +361,12 @@ export default function BookingCalendar({ archivedBookings = [] }) {
 
         {/* THE CALENDAR GRID - Now much larger */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 xl:gap-12 bg-slate-50/50 p-4 sm:p-8 rounded-[2rem] border border-slate-100 relative">
-          <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))} className="absolute left-2 top-2 md:-left-4 md:top-1/2 md:-translate-y-1/2 h-10 w-10 md:h-12 md:w-12 flex items-center justify-center bg-white shadow-xl rounded-full hover:scale-110 transition-all z-20 border border-slate-100"><ChevronLeft size={20} /></button>
+          <button
+            onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
+            className="absolute left-2 top-2 md:-left-4 md:top-1/2 md:-translate-y-1/2 h-10 w-10 md:h-12 md:w-12 flex items-center justify-center bg-white shadow-xl rounded-full hover:scale-110 transition-all z-20 border border-slate-100"
+          >
+            <ChevronLeft size={20} />
+          </button>
           
           <div className="scale-100 md:scale-105 origin-top mt-12 md:mt-0">
             {renderMonth(0)}
@@ -351,7 +375,12 @@ export default function BookingCalendar({ archivedBookings = [] }) {
             {renderMonth(1)}
           </div>
           
-          <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))} className="absolute right-2 top-2 md:-right-4 md:top-1/2 md:-translate-y-1/2 h-10 w-10 md:h-12 md:w-12 flex items-center justify-center bg-white shadow-xl rounded-full hover:scale-110 transition-all z-20 border border-slate-100"><ChevronRight size={20} /></button>
+          <button
+            onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
+            className="absolute right-2 top-2 md:-right-4 md:top-1/2 md:-translate-y-1/2 h-10 w-10 md:h-12 md:w-12 flex items-center justify-center bg-white shadow-xl rounded-full hover:scale-110 transition-all z-20 border border-slate-100"
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
         
         {/* Active Ranges Summary at bottom of calendar */}
@@ -371,7 +400,12 @@ export default function BookingCalendar({ archivedBookings = [] }) {
               .map((booking) => {
                 const checkIn = booking?.checkInTime || booking?.bookingForm?.checkInTime || "--:--";
                 const checkOut = booking?.checkOutTime || booking?.bookingForm?.checkOutTime || "--:--";
-                const guestName = booking?.bookingForm?.stayingGuestName || booking?.bookingForm?.guestName || "Guest";
+                const guestName =
+                  booking?.stayingGuestName ||
+                  booking?.bookingForm?.stayingGuestName ||
+                  booking?.guestName ||
+                  booking?.bookingForm?.guestName ||
+                  "Guest";
                 const roomLabel = getStatusLabel(booking);
 
                 return (
@@ -392,6 +426,9 @@ export default function BookingCalendar({ archivedBookings = [] }) {
                 );
               })}
           </div>
+          {calendarMode === "past" && archivedLoading ? (
+            <div className="mt-4 text-xs text-slate-500">Loading archived bookings...</div>
+          ) : null}
         </div>
 
     </Card>

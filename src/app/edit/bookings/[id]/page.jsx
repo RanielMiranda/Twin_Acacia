@@ -37,6 +37,7 @@ export default function BookingManagementPage() {
   const [addingBooking, setAddingBooking] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
+  const [archiveSearch, setArchiveSearch] = useState("");
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -68,6 +69,7 @@ export default function BookingManagementPage() {
     loadingAudits,
     archivedBookings,
     loadingArchivedBookings,
+    archivedHasMore,
     workflowCounts,
     declinedBookings,
     checkedOutBookings,
@@ -85,6 +87,7 @@ export default function BookingManagementPage() {
     handleResolveCheckedOut,
     handleDeleteArchivedBooking,
     refreshAuditArchive,
+    loadArchivedBookings,
   } = useBookingConsoleData({
     resortId,
     bookings,
@@ -285,7 +288,12 @@ export default function BookingManagementPage() {
             </div>
           ) : activeTab === "calendar" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <BookingCalendar fullWidth archivedBookings={archivedBookings} />
+              <BookingCalendar
+                fullWidth
+                archivedBookings={archivedBookings}
+                archivedLoading={loadingArchivedBookings}
+                onLoadArchived={(payload) => loadArchivedBookings(payload)}
+              />
             </div>
           ) : activeTab === "concerns" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -316,6 +324,13 @@ export default function BookingManagementPage() {
                 onResolveCheckedOut={handleResolveCheckedOut}
                 onDeleteArchived={handleDeleteArchivedBooking}
                 unresolvedIssueBookingIds={unresolvedIssueBookingIds}
+                searchValue={archiveSearch}
+                onSearchChange={(value) => {
+                  setArchiveSearch(value);
+                  loadArchivedBookings({ append: false, search: value });
+                }}
+                hasMoreArchived={archivedHasMore}
+                onLoadMoreArchived={() => loadArchivedBookings({ append: true, search: archiveSearch })}
               />
             </div>
           )}

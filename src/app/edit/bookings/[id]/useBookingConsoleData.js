@@ -109,46 +109,121 @@ export function useBookingConsoleData({
     }
   }, [bookings]);
 
-  const loadArchivedBookings = useCallback(async () => {
-    if (!resortId) return;
-    setLoadingArchivedBookings(true);
-    try {
-      const { data, error } = await supabase
-        .from("booking_archive")
-        .select(
-          "id, booking_id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at"
-        )
-        .eq("resort_id", resortId)
-        .order("archived_at", { ascending: false });
-      if (error) throw error;
+  const archiveCursorRef = useRef(0);
+  const archiveQueryRef = useRef({ search: "", rangeStart: null, rangeEnd: null });
+  const [archivedHasMore, setArchivedHasMore] = useState(false);
+  const getSessionStorage = () => (typeof window === "undefined" ? null : window.sessionStorage);
+  const getArchiveCacheKey = (keyParts) => `booking_archive:${keyParts.join(":")}`;
 
-      const mapped = (data || []).map((row) => ({
-        id: row.id,
-        bookingId: row.booking_id || null,
-        resortId: row.resort_id,
-        startDate: row.start_date || row.booking_form?.checkInDate || null,
-        endDate: row.end_date || row.booking_form?.checkOutDate || null,
-        checkInTime: row.check_in_time || row.booking_form?.checkInTime || "14:00",
-        checkOutTime: row.check_out_time || row.booking_form?.checkOutTime || "11:00",
-        roomCount: row.room_count || row.booking_form?.roomCount || 1,
-        bookingForm: row.booking_form || {},
-        archivedAt: row.archived_at,
-        isArchived: true,
-      }));
+  const normalizeArchiveRows = useCallback((data) => {
+    return (data || []).map((row) => ({
+      id: row.id,
+      bookingId: row.booking_id || null,
+      resortId: row.resort_id,
+      startDate: row.start_date || row.booking_form?.checkInDate || null,
+      endDate: row.end_date || row.booking_form?.checkOutDate || null,
+      checkInTime: row.check_in_time || row.booking_form?.checkInTime || "14:00",
+      checkOutTime: row.check_out_time || row.booking_form?.checkOutTime || "11:00",
+      roomCount: row.room_count || row.booking_form?.roomCount || 1,
+      bookingForm: row.booking_form || {},
+      archivedAt: row.archived_at,
+      isArchived: true,
+    }));
+  }, []);
 
-      setArchivedBookings(mapped);
-    } catch (error) {
-      const missingTable =
-        error.message?.includes("booking_archive") &&
-        (error.message?.includes("does not exist") || error.message?.includes("schema cache"));
-      if (!missingTable) {
-        console.error("Archive load error:", error?.message || error);
+  const loadArchivedBookings = useCallback(
+    async ({ append = false, search = "", rangeStart = null, rangeEnd = null, limit = 50 } = {}) => {
+      if (!resortId) return;
+      setLoadingArchivedBookings(true);
+      const trimmedSearch = String(search || "").trim().toLowerCase();
+      const nextQuery = { search: trimmedSearch, rangeStart, rangeEnd };
+      const sameQuery =
+        archiveQueryRef.current.search === nextQuery.search &&
+        archiveQueryRef.current.rangeStart === nextQuery.rangeStart &&
+        archiveQueryRef.current.rangeEnd === nextQuery.rangeEnd;
+      const shouldAppend = append && sameQuery;
+      const offset = shouldAppend ? archiveCursorRef.current : 0;
+
+      try {
+        const storage = getSessionStorage();
+        const cacheScope = rangeStart && rangeEnd ? [rangeStart, rangeEnd] : ["all"];
+        const canUseCache = !!storage && !shouldAppend;
+        if (canUseCache) {
+          const cacheKey = getArchiveCacheKey([resortId, ...cacheScope, trimmedSearch || "_"]);
+          const cachedRaw = storage.getItem(cacheKey);
+          if (cachedRaw) {
+            const cachedRows = JSON.parse(cachedRaw);
+            setArchivedBookings(cachedRows);
+            archiveCursorRef.current = cachedRows.length;
+            archiveQueryRef.current = nextQuery;
+            setArchivedHasMore(cachedRows.length === limit);
+            setLoadingArchivedBookings(false);
+            return;
+          }
+        }
+
+        let query = supabase
+          .from("booking_archive")
+          .select(
+            "id, booking_id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at"
+          )
+          .eq("resort_id", resortId)
+          .order("archived_at", { ascending: false })
+          .range(offset, offset + limit - 1);
+
+        if (rangeStart && rangeEnd) {
+          query = query.lte("start_date", rangeEnd).or(`end_date.gte.${rangeStart},end_date.is.null`);
+        }
+
+        if (trimmedSearch) {
+          const searchDate = /^\d{4}-\d{2}-\d{2}$/.test(trimmedSearch) ? trimmedSearch : null;
+          if (searchDate) {
+            query = query.or(`start_date.eq.${searchDate},end_date.eq.${searchDate}`);
+          } else {
+            const like = `%${trimmedSearch}%`;
+            query = query.or(
+              `booking_form->>stayingGuestName.ilike.${like},booking_form->>guestName.ilike.${like},booking_form->>agentName.ilike.${like},booking_form->>roomName.ilike.${like}`
+            );
+          }
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        const mapped = normalizeArchiveRows(data);
+
+        if (shouldAppend) {
+          setArchivedBookings((prev) => [...prev, ...mapped]);
+        } else {
+          setArchivedBookings(mapped);
+        }
+
+        archiveCursorRef.current = offset + mapped.length;
+        archiveQueryRef.current = nextQuery;
+        setArchivedHasMore(mapped.length === limit);
+
+        const storage = getSessionStorage();
+        const shouldCache = !!storage && !shouldAppend;
+        if (shouldCache) {
+          const cacheKey = getArchiveCacheKey([resortId, ...cacheScope, trimmedSearch || "_"]);
+          storage.setItem(cacheKey, JSON.stringify(mapped));
+        }
+      } catch (error) {
+        const missingTable =
+          error.message?.includes("booking_archive") &&
+          (error.message?.includes("does not exist") || error.message?.includes("schema cache"));
+        if (!missingTable) {
+          console.error("Archive load error:", error?.message || error);
+        }
+        if (!append) {
+          setArchivedBookings([]);
+        }
+        setArchivedHasMore(false);
+      } finally {
+        setLoadingArchivedBookings(false);
       }
-      setArchivedBookings([]);
-    } finally {
-      setLoadingArchivedBookings(false);
-    }
-  }, [resortId]);
+    },
+    [normalizeArchiveRows, resortId]
+  );
 
   useEffect(() => {
     if (!resortId) return;
@@ -162,7 +237,7 @@ export function useBookingConsoleData({
 
   useEffect(() => {
     if (!resortId || !enableArchive) return;
-    loadArchivedBookings();
+    loadArchivedBookings({ append: false });
   }, [enableArchive, loadArchivedBookings, resortId]);
 
   const declinedBookings = useMemo(
@@ -457,7 +532,7 @@ export function useBookingConsoleData({
   const refreshAuditArchive = useCallback(async () => {
     const tasks = [];
     if (enableAudits) tasks.push(loadAudits());
-    if (enableArchive) tasks.push(loadArchivedBookings());
+    if (enableArchive) tasks.push(loadArchivedBookings({ append: false }));
     await Promise.all(tasks);
   }, [enableArchive, enableAudits, loadAudits, loadArchivedBookings]);
 
@@ -468,6 +543,8 @@ export function useBookingConsoleData({
     loadingAudits,
     archivedBookings,
     loadingArchivedBookings,
+    archivedHasMore,
+    loadArchivedBookings,
     workflowCounts,
     declinedBookings,
     checkedOutBookings,

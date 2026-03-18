@@ -23,11 +23,14 @@ export default function AuditArchivePanel({
   onResolveCheckedOut,
   onDeleteArchived,
   unresolvedIssueBookingIds = new Set(),
+  searchValue = "",
+  onSearchChange,
+  hasMoreArchived = false,
+  onLoadMoreArchived,
 }) {
-  const [activeTab, setActiveTab] = useState("all");
-  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("declined");
 
-  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
+  const normalizedSearch = useMemo(() => searchValue.trim().toLowerCase(), [searchValue]);
   const matchesSearch = React.useCallback(
     (fields) => {
       if (!normalizedSearch) return true;
@@ -56,16 +59,8 @@ export default function AuditArchivePanel({
 
   const filteredArchived = useMemo(
     () =>
-      (archivedBookings || []).filter((item) =>
-        matchesSearch([
-          item.bookingForm?.stayingGuestName,
-          item.bookingForm?.guestName,
-          item.bookingForm?.agentName,
-          item.startDate,
-          item.endDate,
-        ])
-      ),
-    [archivedBookings, matchesSearch]
+      (archivedBookings || []),
+    [archivedBookings]
   );
 
   const filteredDeclined = useMemo(
@@ -131,10 +126,9 @@ export default function AuditArchivePanel({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
         <div className="flex flex-wrap gap-2">
           {[
-            { id: "all", label: "All" },
-            { id: "history", label: "Checked Out" },
             { id: "declined", label: "Declined" },
             { id: "cancelled", label: "Cancelled" },
+            { id: "history", label: "Checked Out" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -153,8 +147,8 @@ export default function AuditArchivePanel({
         <div className="relative w-full md:max-w-xs">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchValue}
+            onChange={(e) => onSearchChange?.(e.target.value)}
             placeholder="Search guest, agent, or date"
             className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-slate-600"
           />
@@ -176,36 +170,6 @@ export default function AuditArchivePanel({
         </div>
       ) : (
         <div className="space-y-2.5 max-h-[65vh] overflow-auto pr-1">
-          {activeTab === "all" ? (
-            <div className="space-y-4">
-              <CheckedOutTabs
-                mode="all"
-                filteredArchived={filteredArchived}
-                filteredCheckedOut={filteredCheckedOut}
-                onOpenBooking={onOpenBooking}
-                onReopenCheckedOut={onReopenCheckedOut}
-                onResolveCheckedOut={onResolveCheckedOut}
-                onDeleteArchived={onDeleteArchived}
-                unresolvedIssueBookingIds={unresolvedIssueBookingIds}
-              />
-              <DeclinedTabs
-                filteredDeclined={filteredDeclined}
-                showHeading
-                onOpenBooking={onOpenBooking}
-                onReopenDeclined={onReopenDeclined}
-                onResolveDeclined={onResolveDeclined}
-              />
-              <CancelledTabs
-                filteredCancelled={filteredCancelled}
-                showHeading
-                onOpenBooking={onOpenBooking}
-                onReopenCancelled={onReopenCancelled}
-                onResolveCancelled={onResolveCancelled}
-                unresolvedIssueBookingIds={unresolvedIssueBookingIds}
-              />
-            </div>
-          ) : null}
-
           {activeTab === "history" ? (
             <CheckedOutTabs
               mode="history"
@@ -222,6 +186,7 @@ export default function AuditArchivePanel({
           {activeTab === "declined" ? (
             <DeclinedTabs
               filteredDeclined={filteredDeclined}
+              showHeading
               onOpenBooking={onOpenBooking}
               onReopenDeclined={onReopenDeclined}
               onResolveDeclined={onResolveDeclined}
@@ -231,6 +196,7 @@ export default function AuditArchivePanel({
           {activeTab === "cancelled" ? (
             <CancelledTabs
               filteredCancelled={filteredCancelled}
+              showHeading
               onOpenBooking={onOpenBooking}
               onReopenCancelled={onReopenCancelled}
               onResolveCancelled={onResolveCancelled}
@@ -239,6 +205,19 @@ export default function AuditArchivePanel({
           ) : null}
         </div>
       )}
+      {activeTab === "history" && hasMoreArchived ? (
+        <div className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full rounded-xl h-10 text-xs font-bold"
+            onClick={onLoadMoreArchived}
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "Load more"}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
