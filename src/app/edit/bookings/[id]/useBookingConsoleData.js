@@ -201,7 +201,6 @@ export function useBookingConsoleData({
         archiveQueryRef.current = nextQuery;
         setArchivedHasMore(mapped.length === limit);
 
-        const storage = getSessionStorage();
         const shouldCache = !!storage && !shouldAppend;
         if (shouldCache) {
           const cacheKey = getArchiveCacheKey([resortId, ...cacheScope, trimmedSearch || "_"]);
