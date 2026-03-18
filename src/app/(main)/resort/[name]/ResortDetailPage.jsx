@@ -24,7 +24,7 @@ import PersistentToast from "@/components/ui/toast/PersistentToast";
 import { supabase } from "@/lib/supabase";
 import { useSupport } from "@/components/useclient/SupportClient";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
-import { computeBookingTotalAmount } from "@/lib/utils";
+import { buildServiceSnapshots, computeBookingTotalAmount } from "@/lib/utils";
 
 export default function ResortDetailPage({ name }) {
   const { resort, loadResort, loading } = useResort();
@@ -135,9 +135,8 @@ const handleSubmitInquiry = async (submittedData) => {
             .map((item) => (item && typeof item === "object" ? item.id || item.name : item))
             .filter(Boolean)
         : [];
-      const selectedServices = (resort.extraServices || []).filter(
-        (service) => selectedServiceKeys.includes(service.id) || selectedServiceKeys.includes(service.name)
-      );
+      const selectedServiceSnapshots = buildServiceSnapshots(selectedServiceKeys, resort.extraServices);
+      const selectedServices = selectedServiceSnapshots; // kept for naming parity
       const selectedRoomIds = Array.isArray(submittedData.selectedRoomIds)
         ? submittedData.selectedRoomIds.map((id) => id?.toString()).filter(Boolean)
         : [];
@@ -190,9 +189,9 @@ const handleSubmitInquiry = async (submittedData) => {
         downpayment: 0,
         totalAmount: computeBookingTotalAmount({
           basePrice: resort.price,
-          selectedServiceKeys,
-          extraServices: resort.extraServices,
+          serviceSnapshots: selectedServiceSnapshots,
         }),
+        resortServices: selectedServiceSnapshots,
         ticketAccessExpiresAt,
         agentTicketAccessToken,
         agentTicketAccessExpiresAt,

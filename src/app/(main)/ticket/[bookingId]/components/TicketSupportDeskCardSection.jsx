@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { buildSupportConversationItems, getSupportConversationLabel, isResolvedConversationItem } from "@/lib/supportConversation";
 
-export function TicketSupportDeskCardSection({
+const TicketSupportDeskCardSection = React.memo(function TicketSupportDeskCardSection({
   resort,
   loadingMessages,
   messages,
@@ -106,4 +106,6 @@ export function TicketSupportDeskCardSection({
       </div>
     </Card>
   );
-}
+});
+
+export { TicketSupportDeskCardSection };

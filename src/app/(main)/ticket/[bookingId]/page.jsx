@@ -64,15 +64,12 @@ export default function ClientTicketPage() {
         rawForm.stayingGuestEmail || (inquirerType === "client" ? contactEmail : ""),
       stayingGuestPhone:
         rawForm.stayingGuestPhone || (inquirerType === "client" ? contactPhone : ""),
-      resortServices: Array.isArray(booking.resort_service_ids)
-        ? booking.resort_service_ids.filter(Boolean)
-        : Array.isArray(rawForm.resortServices)
-          ? rawForm.resortServices
-              .map((entry) => {
-                if (entry && typeof entry === "object") return entry.id || entry.name || "";
-                return entry || "";
-              })
+      resortServices: Array.isArray(rawForm.resortServices)
+        ? rawForm.resortServices
+        : Array.isArray(booking.resort_service_ids)
+          ? booking.resort_service_ids
               .filter(Boolean)
+              .map((id) => ({ id, name: id, cost: 0 }))
           : [],
     };
   }, [booking]);

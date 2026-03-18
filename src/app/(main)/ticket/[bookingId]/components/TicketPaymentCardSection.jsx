@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getTransformedSupabaseImageUrl } from "@/lib/utils";
 
-export function TicketPaymentCardSection({
+const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
   totalAmount,
   paid,
   pendingPaid = 0,
@@ -207,4 +207,6 @@ export function TicketPaymentCardSection({
       </div>
     </Card>
   );
-}
+});
+
+export { TicketPaymentCardSection };

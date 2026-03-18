@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { buildServiceSnapshot, getServiceKey } from "@/lib/utils";
 
 export default function BookingConfirmation({
   data,
@@ -22,45 +23,28 @@ export default function BookingConfirmation({
   const guestPhone = formData.stayingGuestPhone || "";
   const clientAddress = formData.address || "";
 
-  const normalizeService = (entry) => {
-    if (!entry) return null;
-    if (typeof entry === "string") {
-      return { key: entry, name: entry, cost: 0 };
-    }
-    const key = entry.id || entry.name || "";
-    const name = entry.name || entry.id || key;
-    const cost = Number(entry.cost || 0);
-    return { key, name, cost };
-  };
-
-  const resolveService = (service) => {
-    if (!service) return null;
-    const found = (resortExtraServices || []).find(
-      (svc) => svc.id === service.key || svc.name === service.key
-    );
-    if (found) {
-      return {
-        key: service.key,
-        name: found.name || service.name,
-        cost: Number(found.cost || service.cost || 0),
-      };
-    }
-    return service;
-  };
-
   const selectedServices = Array.isArray(formData.resortServices)
     ? formData.resortServices
-        .map(normalizeService)
+        .map((entry) => {
+          if (!entry) return null;
+          if (typeof entry === "object") {
+            const key = getServiceKey(entry);
+            if (!key) return null;
+            const snapshot = buildServiceSnapshot(key, resortExtraServices);
+            return {
+              id: key,
+              name: entry.name || snapshot.name,
+              cost: Number(entry.cost ?? entry.price ?? snapshot.cost ?? 0),
+            };
+          }
+          return buildServiceSnapshot(entry, resortExtraServices);
+        })
         .filter(Boolean)
-        .map(resolveService)
     : [];
 
   const resortRental = Number(resortPrice || 0);
   const totalDue = Number(formData.totalAmount || 0);
-  const balanceDue = useMemo(
-    () => Math.max(0, totalDue - Number(formData.downpayment || 0)),
-    [totalDue, formData.downpayment]
-  );
+  const balanceDue = Math.max(0, totalDue - Number(formData.downpayment || 0));
 
   const resortInitials = (resortName || "Resort")
     .split(" ")

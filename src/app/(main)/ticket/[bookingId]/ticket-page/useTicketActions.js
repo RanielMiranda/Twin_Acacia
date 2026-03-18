@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME, convertImageFileToWebp, toSafeSegment, computeBookingTotalAmount } from "@/lib/utils";
+import { BUCKET_NAME, convertImageFileToWebp, toSafeSegment, buildServiceSnapshots, computeBookingTotalAmount } from "@/lib/utils";
 import { isMissingSupportTableError } from "./helpers";
 import { useSupport } from "@/components/useclient/SupportClient";
 
@@ -268,13 +268,17 @@ export function useTicketActions({
       toast({ message: "Please wait a few seconds before sending another add-on request.", color: "amber" });
       return;
     }
-    const normalizedServiceIds = (services || [])
+    const normalizedServiceKeys = (services || [])
       .map((service) => {
         if (service && typeof service === "object") return service.id || service.name || "";
         return service || "";
       })
       .map((serviceId) => String(serviceId || "").trim())
       .filter(Boolean);
+    const serviceSnapshots = buildServiceSnapshots(
+      normalizedServiceKeys,
+      Array.isArray(resort?.extraServices) ? resort.extraServices : []
+    );
 
     setIsSavingAddOns(true);
     try {
@@ -282,13 +286,13 @@ export function useTicketActions({
       const baseRate = Number(booking.booking_form?.totalAmount || 0) || Number(resort?.price || 0);
       const computedTotal = computeBookingTotalAmount({
         basePrice: baseRate,
-        selectedServiceKeys: normalizedServiceIds,
-        extraServices: Array.isArray(resort?.extraServices) ? resort.extraServices : [],
+        serviceSnapshots,
       });
 
       const bookingForm = {
         ...(booking.booking_form || {}),
         totalAmount: computedTotal,
+        resortServices: serviceSnapshots,
         addOnsUpdatedAt: new Date().toISOString(),
       };
 
@@ -296,7 +300,7 @@ export function useTicketActions({
         .from("bookings")
         .update({
           booking_form: bookingForm,
-          resort_service_ids: normalizedServiceIds,
+          resort_service_ids: normalizedServiceKeys,
         })
         .eq("id", booking.id);
 
@@ -310,16 +314,9 @@ export function useTicketActions({
           sender_name: form.guestName || "Client",
           visibility: viewerRole === "agent" ? true : false,
           message:
-            normalizedServiceIds.length > 0
-              ? `Requested add-on update: ${normalizedServiceIds
-                  .map((serviceId) => {
-                    const matchedService = (resort?.extraServices || []).find(
-                      (service) => String(service?.id) === serviceId || String(service?.name) === serviceId
-                    );
-                    const serviceName = matchedService?.name || serviceId;
-                    const serviceCost = Number(matchedService?.cost || matchedService?.price || 0);
-                    return `${serviceName} (PHP ${serviceCost.toLocaleString()})`;
-                  })
+            serviceSnapshots.length > 0
+              ? `Requested add-on update: ${serviceSnapshots
+                  .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
                   .join(", ")}`
               : "Requested add-on update: cleared requested add-ons.",
           idempotency_key: buildMessageIdempotencyKey(
@@ -335,7 +332,11 @@ export function useTicketActions({
         }
       }
 
-      setBooking((prev) => ({ ...prev, booking_form: bookingForm, resort_service_ids: normalizedServiceIds }));
+      setBooking((prev) => ({
+        ...prev,
+        booking_form: bookingForm,
+        resort_service_ids: normalizedServiceIds,
+      }));
       await fetchTicket();
       await fetchMessages(booking.id);
       toast({ message: "Add-on request sent to owner.", color: "green" });

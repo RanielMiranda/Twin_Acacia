@@ -4,7 +4,7 @@ import React from "react";
 import { Printer, Download, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function TicketHeaderSection({ bookingId, canAccessEntryPass, onPrintEntryPass, onDownloadTicket, viewerRole }) {
+const TicketHeaderSection = React.memo(function TicketHeaderSection({ bookingId, canAccessEntryPass, onPrintEntryPass, onDownloadTicket, viewerRole }) {
   const portalLabel = viewerRole === "agent" ? "Agent Portal" : "Client Portal";
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 no-print">
@@ -39,4 +39,6 @@ export function TicketHeaderSection({ bookingId, canAccessEntryPass, onPrintEntr
       </div>
     </div>
   );
-}
+});
+
+export { TicketHeaderSection };

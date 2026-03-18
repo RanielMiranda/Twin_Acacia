@@ -139,15 +139,34 @@ export function parseMoney(value) {
   return Number.isFinite(num) ? num : 0;
 }
 
-export function computeBookingTotalAmount({ basePrice = 0, selectedServiceKeys = [], extraServices = [] }) {
+export function getServiceKey(service) {
+  if (!service) return "";
+  if (typeof service === "string") return service;
+  return service.id || service.name || "";
+}
+
+export function buildServiceSnapshot(key, extraServices = []) {
+  const normalizedKey = String(key || "");
+  const found = (extraServices || []).find(
+    (s) => s && (String(s.id) === normalizedKey || String(s.name) === normalizedKey)
+  );
+  const name = found?.name || normalizedKey;
+  const cost = parseMoney(found?.cost ?? found?.price ?? 0);
+  return { id: normalizedKey, name, cost };
+}
+
+export function buildServiceSnapshots(serviceKeys = [], extraServices = []) {
+  const keys = Array.isArray(serviceKeys) ? serviceKeys : [];
+  return keys
+    .map((key) => buildServiceSnapshot(key, extraServices))
+    .filter((s) => s && s.id);
+}
+
+export function computeBookingTotalAmount({ basePrice = 0, selectedServiceKeys = [], extraServices = [], serviceSnapshots = [] }) {
   const base = parseMoney(basePrice);
-  const serviceTotal = (selectedServiceKeys || [])
-    .map((key) => {
-      const service = (extraServices || []).find(
-        (s) => s && (s.id === key || s.name === key || String(s.id) === String(key))
-      );
-      return service ? parseMoney(service.cost ?? service.price ?? 0) : 0;
-    })
-    .reduce((sum, amount) => sum + amount, 0);
+  const serviceTotal = (serviceSnapshots && serviceSnapshots.length > 0
+    ? serviceSnapshots
+    : (selectedServiceKeys || []).map((key) => buildServiceSnapshot(key, extraServices)))
+    .reduce((sum, snapshot) => sum + parseMoney(snapshot?.cost || 0), 0);
   return base + serviceTotal;
 }

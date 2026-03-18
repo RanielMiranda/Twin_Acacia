@@ -8,7 +8,7 @@ import { TicketRow } from "./TicketRow";
  * Stay information card. Also used as the only content for Print Entry Pass and Download Ticket.
  * Pass stayRows (from buildStayInfoRows) for consistency with print/download.
  */
-export function TicketStayInfoCardSection({
+const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection({
   id = "ticket-stay-card",
   form,
   booking,
@@ -66,7 +66,9 @@ export function TicketStayInfoCardSection({
       </div>
     </Card>
   );
-}
+});
+
+export { TicketStayInfoCardSection };
 
 /**
  * Builds the same rows shown in the stay card, for use in print/download HTML (stay info only).
