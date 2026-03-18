@@ -21,6 +21,7 @@ import { buildRequestedRange, getUnavailableRoomIds } from "@/lib/availability";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast"
 import PersistentToast from "@/components/ui/toast/PersistentToast";
+import { Mail, CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useSupport } from "@/components/useclient/SupportClient";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
@@ -187,11 +188,13 @@ const handleSubmitInquiry = async (submittedData) => {
       persistentToast({
         message: inquiryMessage,
         color: "blue",
+        icon: Mail,
       });
     } catch (err) {
       toast({
         message: `Failed to send inquiry: ${err.message}`,
         color: "red",
+        icon: XCircle,
       });
     }
 

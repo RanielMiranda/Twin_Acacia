@@ -112,12 +112,12 @@ export default function BookingManagementPage() {
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body?.error || "sync failed");
-        toast({ message: "Sync complete (automation ran).", color: "green" });
+        toast({ message: "Sync complete (automation ran).", color: "green", icon: CheckCircle2 });
       } else {
-        toast({ message: "Sync complete.", color: "green" });
+        toast({ message: "Sync complete.", color: "green", icon: CheckCircle2 });
       }
     } catch (err) {
-      toast({ message: `Sync failed: ${err.message}`, color: "red" });
+      toast({ message: `Sync failed: ${err.message}`, color: "red", icon: XCircle });
     } finally {
       setIsSyncing(false);
     }
@@ -149,11 +149,11 @@ export default function BookingManagementPage() {
 
   const handleCreateBooking = async (payload) => {
     if (!payload?.guestName?.trim()) {
-      toast?.({ message: "Guest name is required.", color: "red" });
+      toast?.({ message: "Guest name is required.", color: "red", icon: XCircle });
       return;
     }
     if (!payload.checkInDate) {
-      toast?.({ message: "Check-in date is required.", color: "red" });
+      toast?.({ message: "Check-in date is required.", color: "red", icon: XCircle });
       return;
     }
 
@@ -173,12 +173,12 @@ export default function BookingManagementPage() {
       });
 
       setIsAddBookingOpen(false);
-      toast?.({ message: "Manual booking added.", color: "green" });
+      toast?.({ message: "Manual booking added.", color: "green", icon: CheckCircle2 });
       if (created?.id) {
         openDetails(created.id);
       }
     } catch (error) {
-      toast?.({ message: `Unable to add booking: ${error.message}`, color: "red" });
+      toast?.({ message: `Unable to add booking: ${error.message}`, color: "red", icon: XCircle });
     } finally {
       setAddingBooking(false);
     }

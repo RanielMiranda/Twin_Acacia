@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { deleteSupabasePublicUrls, deleteSupabaseFolder, getStorageFolderFromPublicUrl } from "@/lib/utils";
 
@@ -294,10 +295,10 @@ export function useBookingConsoleData({
       try {
         await deleteBookingById(bookingId);
         await loadAudits();
-        toast?.({ message: `Booking resolved.`, color: toastColor });
+        toast?.({ message: `Booking resolved.`, color: toastColor, icon: CheckCircle2 });
       } catch (error) {
         console.error("Resolve booking error:", error?.message || error);
-        toast?.({ message: `Unable to resolve: ${error?.message}`, color: "red" });
+        toast?.({ message: `Unable to resolve: ${error?.message}`, color: "red", icon: XCircle });
       }
     },
     [deleteBookingById, loadAudits, toast]
@@ -316,7 +317,7 @@ export function useBookingConsoleData({
   const handleResolveCheckedOut = useCallback(
     async (bookingId) => {
       if (unresolvedIssueBookingIds.has(bookingId?.toString())) {
-        toast?.({ message: "Resolve blocked: this booking has unresolved issues.", color: "amber" });
+        toast?.({ message: "Resolve blocked: this booking has unresolved issues.", color: "amber", icon: AlertTriangle });
         return;
       }
 
@@ -325,7 +326,7 @@ export function useBookingConsoleData({
 
       const source = (bookings || []).find((entry) => entry.id?.toString() === bookingId?.toString());
       if (!source) {
-        toast?.({ message: "Booking not found. Attempting cleanup.", color: "amber" });
+        toast?.({ message: "Booking not found. Attempting cleanup.", color: "amber", icon: AlertTriangle });
         await deleteBookingById(bookingId);
         return;
       }
@@ -390,10 +391,10 @@ export function useBookingConsoleData({
         await deleteBookingById(bookingId);
         await loadArchivedBookings();
         await loadAudits();
-        toast?.({ message: "Checked-out booking archived.", color: "green" });
+        toast?.({ message: "Checked-out booking archived.", color: "green", icon: CheckCircle2 });
       } catch (error) {
         console.error("Delete checked-out booking error:", error?.message || error);
-        toast?.({ message: `Archive failed: ${error?.message}`, color: "red" });
+        toast?.({ message: `Archive failed: ${error?.message}`, color: "red", icon: XCircle });
       }
     },
     [bookings, deleteBookingById, loadAudits, loadArchivedBookings, resortId, toast, unresolvedIssueBookingIds]

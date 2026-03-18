@@ -1,3 +1,4 @@
+import { CheckCircle2, AlertTriangle, XCircle, Mail } from "lucide-react";
 import { generateConfirmationStub } from "@/lib/bookingFlow";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
@@ -169,23 +170,37 @@ export async function handleApproveInquiryAction({
         toast?.({
           message: result?.error || "Failed to send approval email.",
           color: "red",
+          icon: XCircle,
         });
         console.error("Approved inquiry email failed:", result?.error || response.statusText);
       } else if (result?.skipped) {
         toast?.({
           message: "Approval email was already sent for this booking.",
           color: "amber",
+          icon: AlertTriangle,
         });
       } else {
+        const sentClient = result?.sent?.client;
+        const sentAgent = result?.sent?.agent;
+        let message = "Approval email sent.";
+        if (sentClient && sentAgent) {
+          message = "Approval emails sent to client and agent.";
+        } else if (sentClient) {
+          message = "Approval email sent to client.";
+        } else if (sentAgent) {
+          message = "Approval email sent to agent.";
+        }
         toast?.({
-          message: "Approval email sent to client.",
+          message,
           color: "green",
+          icon: Mail,
         });
       }
     } catch (error) {
       toast?.({
         message: "Failed to send approval email.",
         color: "red",
+        icon: XCircle,
       });
       console.error("Approved inquiry email failed:", error?.message || error);
     }

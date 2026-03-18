@@ -35,6 +35,8 @@ This folder contains shared React context providers and hooks used throughout th
 
 ### `BookingsClient.jsx`
 - Booking CRUD & caching for owner/edit pages.
+- Uses localStorage cache (per resort) to hydrate bookings early and reduce repeated queries.
+- Keeps bookings in sync via Supabase realtime subscriptions (no polling).
 - Exposes:
   - `refreshBookings()` (pulls latest bookings for resort)
   - `updateBookingById()`, `deleteBookingById()`, `createBooking()`
