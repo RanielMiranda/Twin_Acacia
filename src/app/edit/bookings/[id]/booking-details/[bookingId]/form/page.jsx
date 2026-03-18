@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
@@ -9,7 +9,9 @@ import BookingForm from "./BookingConfirmation";
 export default function BookingDetailsFormPage() {
   const params = useParams();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, loadingBookings } = useBookings();
+  const { bookings, loadingBookings, refreshBookingById } = useBookings();
+  const [detailedBooking, setDetailedBooking] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   const resortId = params?.id;
   const bookingId = params?.bookingId;
@@ -40,17 +42,36 @@ export default function BookingDetailsFormPage() {
     ? bookingList.find((booking) => booking.id.toString() === bookingId?.toString())
     : null;
 
-  const bookingForm = existingBooking?.bookingForm || {};
-  const adultCount = Number(existingBooking?.adultCount ?? bookingForm.adultCount ?? 0);
-  const childrenCount = Number(existingBooking?.childrenCount ?? bookingForm.childrenCount ?? 0);
+  useEffect(() => {
+    let isActive = true;
+    if (!bookingId || isNewBooking) return undefined;
+    setLoadingDetail(true);
+    refreshBookingById(bookingId)
+      .then((result) => {
+        if (!isActive) return;
+        if (result) setDetailedBooking(result);
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setLoadingDetail(false);
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [bookingId, isNewBooking, refreshBookingById]);
+
+  const sourceBooking = detailedBooking || existingBooking;
+  const bookingForm = sourceBooking?.bookingForm || {};
+  const adultCount = Number(sourceBooking?.adultCount ?? bookingForm.adultCount ?? 0);
+  const childrenCount = Number(sourceBooking?.childrenCount ?? bookingForm.childrenCount ?? 0);
   const guestCount = Number(
-    existingBooking?.pax ?? bookingForm.guestCount ?? bookingForm.pax ?? adultCount + childrenCount
+    sourceBooking?.pax ?? bookingForm.guestCount ?? bookingForm.pax ?? adultCount + childrenCount
   );
-  const sleepingGuests = Number(existingBooking?.sleepingGuests ?? bookingForm.sleepingGuests ?? 0);
+  const sleepingGuests = Number(sourceBooking?.sleepingGuests ?? bookingForm.sleepingGuests ?? 0);
   const roomCount = Number(
-    existingBooking?.roomCount ?? bookingForm.roomCount ?? existingBooking?.roomIds?.length ?? 1
+    sourceBooking?.roomCount ?? bookingForm.roomCount ?? sourceBooking?.roomIds?.length ?? 1
   );
-  const totalAmount = Number(existingBooking?.totalAmount ?? bookingForm.totalAmount ?? 0);
+  const totalAmount = Number(sourceBooking?.totalAmount ?? bookingForm.totalAmount ?? 0);
   const address = bookingForm.address || bookingForm.guestAddress || "";
 
   const initialData = {
@@ -64,19 +85,19 @@ export default function BookingDetailsFormPage() {
     totalAmount,
     address,
     guestAddress: address,
-    checkInDate: existingBooking?.startDate || bookingForm.checkInDate || "",
-    checkOutDate: existingBooking?.endDate || bookingForm.checkOutDate || "",
-    checkInTime: existingBooking?.checkInTime || bookingForm.checkInTime || "14:00",
-    checkOutTime: existingBooking?.checkOutTime || bookingForm.checkOutTime || "11:00",
+    checkInDate: sourceBooking?.startDate || bookingForm.checkInDate || "",
+    checkOutDate: sourceBooking?.endDate || bookingForm.checkOutDate || "",
+    checkInTime: sourceBooking?.checkInTime || bookingForm.checkInTime || "14:00",
+    checkOutTime: sourceBooking?.checkOutTime || bookingForm.checkOutTime || "11:00",
     roomName:
       bookingForm.roomName ||
-      (existingBooking?.roomIds || [])
+      (sourceBooking?.roomIds || [])
         .map((roomId) => (currentResort?.rooms || []).find((room) => room.id === roomId)?.name)
         .filter(Boolean)
         .join(", ") ||
       "",
-    resortServices: Array.isArray(existingBooking?.resortServiceIds)
-      ? existingBooking.resortServiceIds
+    resortServices: Array.isArray(sourceBooking?.resortServiceIds)
+      ? sourceBooking.resortServiceIds
       : Array.isArray(bookingForm.resortServices)
         ? bookingForm.resortServices
         : [],
@@ -85,7 +106,7 @@ export default function BookingDetailsFormPage() {
 
   return (
     <div className="p-4 md:p-8 bg-slate-50 min-h-screen">
-      {(loading && !currentResort) || loadingBookings ? (
+      {(loading && !currentResort) || loadingBookings || loadingDetail ? (
         <div className="text-center text-slate-500 mt-20">Loading booking form...</div>
       ) : (
       <BookingForm

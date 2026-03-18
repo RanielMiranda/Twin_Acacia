@@ -102,7 +102,7 @@ export default function BookingConfirmation({
                 </Field>
               ) : null}
 
-                  <Field label="Guest Address">
+                  <Field label="Inquirer Address">
                     <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
                   </Field>
 

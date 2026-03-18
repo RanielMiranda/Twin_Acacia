@@ -211,7 +211,25 @@ export default function BookingCalendar({
     return dateBookings
       .slice(0, 2)
       .map((booking) => `${getBookingTooltip(booking)}`)
-      .join(" | ");
+      .join("\n\n");
+  };
+
+  const HoverTooltip = ({ text, children, wrapperClassName = "" }) => {
+    if (!text) return children;
+    const lines = String(text).split("\n");
+    return (
+      <div className={`relative group ${wrapperClassName}`}>
+        {children}
+        <div className="pointer-events-none absolute left-1/2 top-10 z-20 hidden w-72 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] leading-4 text-slate-700 shadow-lg group-hover:block">
+          <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-l border-t border-slate-200 bg-white" />
+          {lines.map((line, idx) => (
+            <div key={`${line}-${idx}`} className="block">
+              {line}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const openBookingDetails = (bookingId) => {
@@ -284,23 +302,21 @@ export default function BookingCalendar({
             );
 
             return booking ? (
-              <button
-                key={day}
-                type="button"
-                onClick={() => openBookingDetails(booking.id)}
-                title={getDateTooltip(dateBookings)}
-                className={className}
-              >
-                {content}
-              </button>
+              <HoverTooltip key={day} text={getDateTooltip(dateBookings)} wrapperClassName="w-full">
+                <button
+                  type="button"
+                  onClick={() => openBookingDetails(booking.id)}
+                  className={className}
+                >
+                  {content}
+                </button>
+              </HoverTooltip>
             ) : (
-              <div
-                key={day}
-                title={getDateTooltip(dateBookings)}
-                className={className}
-              >
-                {content}
-              </div>
+              <HoverTooltip key={day} text={getDateTooltip(dateBookings)} wrapperClassName="w-full">
+                <div className={className}>
+                  {content}
+                </div>
+              </HoverTooltip>
             );
           })}
         </div>
@@ -387,8 +403,8 @@ export default function BookingCalendar({
         {/* ... (keep your existing active ranges list) */}
       </div>
         <div className="space-y-2">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Resort Booking Ranges</p>
-          <div className="flex flex-wrap gap-3">
+          <p className="my-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Resort Booking Ranges</p>
+          <div className="flex gap-3 overflow-x-auto pb-2">
             {(calendarMode === "past" ? [...filteredArchivedList, ...filteredBookingList] : filteredBookingList)
               .filter((booking) => shouldShowOnCalendar(booking))
               .filter((booking) => {
@@ -409,20 +425,18 @@ export default function BookingCalendar({
                 const roomLabel = getStatusLabel(booking);
 
                 return (
-                  <div
-                    key={booking.id}
-                    title={getBookingTooltip(booking)}
-                    onClick={() => openBookingDetails(booking.id)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer border border-transparent bg-slate-50 opacity-70 transition-all hover:bg-white hover:opacity-100 hover:shadow-sm"
-                  >
-                    <div className={`w-3 h-3 rounded-full ${getBookingColor(booking)}`} />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-400 uppercase">{roomLabel}</span>
-                      <span className="text-xs font-black text-slate-800">{guestName}</span>
-                      <span className="text-xs font-bold text-slate-700">{getBookingStartDate(booking) || "..."} - {getBookingEndDate(booking) || "..."}</span>
-                      <span className="text-[10px] text-slate-500 flex items-center gap-1"><Clock3 size={10} /> {checkIn} to {checkOut}</span>
+                    <div
+                      onClick={() => openBookingDetails(booking.id)}
+                      className="min-w-[220px] max-w-[260px] flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer border border-transparent bg-slate-50 opacity-70"
+                    >
+                      <div className={`w-3 h-3 rounded-full ${getBookingColor(booking)}`} />
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">{roomLabel}</span>
+                        <span className="text-xs font-black text-slate-800">{guestName}</span>
+                        <span className="text-xs font-bold text-slate-700">{getBookingStartDate(booking) || "..."} - {getBookingEndDate(booking) || "..."}</span>
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1"><Clock3 size={10} /> {checkIn} to {checkOut}</span>
+                      </div>
                     </div>
-                  </div>
                 );
               })}
           </div>

@@ -326,7 +326,7 @@ export default function BookingCreationTemplate({
     return found ? found.name : key;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const selectedRoomIds = (formData.selectedRoomIds || []).filter(
       (id) => !blockedIds.has(id?.toString())
     );
@@ -366,13 +366,23 @@ export default function BookingCreationTemplate({
             selectedServices: normalizedServices,
           };
 
-    onSubmit?.(normalized);
+    let shouldClearDraft = true;
+    try {
+      const result = await onSubmit?.(normalized);
+      if (result === false) {
+        shouldClearDraft = false;
+      }
+    } catch {
+      shouldClearDraft = false;
+    }
 
-    if (enableDraftPersistence && typeof window !== "undefined" && draftKey) {
+    if (shouldClearDraft && enableDraftPersistence && typeof window !== "undefined" && draftKey) {
       sessionStorage.removeItem(draftKey);
     }
 
-    handleClose();
+    if (shouldClearDraft) {
+      handleClose();
+    }
   };
 
   if (!resort || !isOpen) return null;
@@ -493,7 +503,7 @@ export default function BookingCreationTemplate({
               </div>
               {formData.inquirerType === "client" ? (
                 <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Address (optional)</label>
+                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Inquirer Address (optional)</label>
                   <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
                 </div>
               ) : null}
@@ -517,7 +527,7 @@ export default function BookingCreationTemplate({
                     <input name="stayingGuestPhone" value={formData.stayingGuestPhone ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
                   </div>
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Address (optional)</label>
+                    <label className="text-xs font-black uppercase text-slate-400 ml-1">Inquirer Address (optional)</label>
                     <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
                   </div>
                 </div>
@@ -725,7 +735,7 @@ export default function BookingCreationTemplate({
                       <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
                       <SummaryItem icon={Clock} label="Schedule" value={`${formatTime(formData.checkInTime)} - ${formatTime(formData.checkOutTime)}`} />
                       <SummaryItem icon={PlusCircle} label="Rooms" value={selectedRoomNamesDerived.length > 0 ? selectedRoomNamesDerived.join(", ") : "Not set"} />
-                      <SummaryItem icon={MapPin} label="Address" value={formData.address || "Not set"} />
+                      <SummaryItem icon={MapPin} label="Inquirer Address" value={formData.address || "Not set"} />
                       {showAddOns ? (
                         <SummaryItem
                           icon={PlusCircle}

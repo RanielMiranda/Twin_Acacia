@@ -26,6 +26,7 @@ import { supabase } from "@/lib/supabase";
 import { useSupport } from "@/components/useclient/SupportClient";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 import { normalizeBookingSubmission } from "@/components/booking/payloadData/buildBookingPayload";
+import { buildServiceSnapshots } from "@/lib/utils";
 
 export default function ResortDetailPage({ name }) {
   const { resort, loadResort, loading } = useResort();
@@ -126,6 +127,7 @@ export default function ResortDetailPage({ name }) {
   const roomBlockingIds = unavailableRoomIds;
 
 const handleSubmitInquiry = async (submittedData) => {
+    let succeeded = false;
     try {
       const selectedServiceKeys = Array.isArray(submittedData.selectedServices)
         ? submittedData.selectedServices
@@ -191,6 +193,7 @@ const handleSubmitInquiry = async (submittedData) => {
         color: "blue",
         icon: CheckCircle2,
       });
+      succeeded = true;
     } catch (err) {
       toast({
         message: `Failed to send inquiry: ${err.message}`,
@@ -198,8 +201,10 @@ const handleSubmitInquiry = async (submittedData) => {
         icon: XCircle,
       });
     }
-
-    setContactOpen(false);
+    if (succeeded) {
+      setContactOpen(false);
+    }
+    return succeeded;
   };
 
   return (

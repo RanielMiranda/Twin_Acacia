@@ -69,6 +69,7 @@ alter table public.bookings
   add column if not exists staying_guest_phone text,
   add column if not exists inquirer_email text,
   add column if not exists inquirer_phone text,
+  add column if not exists inquirer_address text,
   add column if not exists room_name text,
   add column if not exists resort_service_ids text[] not null default '{}';
 

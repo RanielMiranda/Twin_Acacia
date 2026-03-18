@@ -28,6 +28,7 @@ const BOOKING_COLUMNS = [
   "staying_guest_phone",
   "inquirer_email",
   "inquirer_phone",
+  "inquirer_address",
   "room_name",
   "resort_service_ids",
   "payment_deadline",
@@ -44,6 +45,7 @@ function toModel(row) {
   const stayingGuestPhone = row.staying_guest_phone || row.booking_form?.stayingGuestPhone || "";
   const inquirerEmail = row.inquirer_email || row.booking_form?.email || "";
   const inquirerPhone = row.inquirer_phone || row.booking_form?.phoneNumber || "";
+  const inquirerAddress = row.inquirer_address || row.booking_form?.address || "";
   const roomName = row.room_name || row.booking_form?.roomName || "";
   const checkInTime = row.check_in_time || "14:00";
   const checkOutTime = row.check_out_time || "11:00";
@@ -66,6 +68,7 @@ function toModel(row) {
       stayingGuestPhone,
       email: inquirerEmail,
       phoneNumber: inquirerPhone,
+      address: inquirerAddress,
       roomName,
       checkInDate: row.start_date || "",
       checkOutDate: row.end_date || "",
@@ -87,6 +90,7 @@ function toModel(row) {
     stayingGuestPhone,
     inquirerEmail,
     inquirerPhone,
+    inquirerAddress,
     roomName,
     resortServiceIds: Array.isArray(row.resort_service_ids)
       ? row.resort_service_ids.filter(Boolean)
@@ -151,6 +155,7 @@ function toRow(booking, resortId) {
     staying_guest_phone: form.stayingGuestPhone || booking.stayingGuestPhone || "",
     inquirer_email: form.email || booking.inquirerEmail || "",
     inquirer_phone: form.phoneNumber || booking.inquirerPhone || "",
+    inquirer_address: form.address || booking.inquirerAddress || "",
     room_name: form.roomName || booking.roomName || "",
     resort_service_ids: Array.isArray(booking.resortServiceIds)
       ? booking.resortServiceIds.filter(Boolean).map(String)

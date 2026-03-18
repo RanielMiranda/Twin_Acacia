@@ -177,8 +177,10 @@ export default function BookingManagementPage() {
       if (created?.id) {
         openDetails(created.id);
       }
+      return true;
     } catch (error) {
       toast?.({ message: `Unable to add booking: ${error.message}`, color: "red", icon: XCircle });
+      return false;
     } finally {
       setAddingBooking(false);
     }

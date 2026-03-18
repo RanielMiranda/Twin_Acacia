@@ -33,6 +33,12 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
   const inquirerType = submittedData.inquirerType || "client";
   const isAgent = inquirerType === "agent";
 
+  const submittedTotal = Number(submittedData.totalAmount);
+  const computedTotal = computeBookingTotalAmount({
+    basePrice: resort?.price,
+    serviceSnapshots,
+  });
+
   const bookingForm = {
     inquirerType,
     agentName: submittedData.agentName || "",
@@ -61,10 +67,7 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
     status: submittedData.status || "Inquiry",
     paymentMethod: submittedData.paymentMethod || "Pending",
     downpayment: Number(submittedData.downpayment || 0),
-    totalAmount: computeBookingTotalAmount({
-      basePrice: resort?.price,
-      serviceSnapshots,
-    }),
+    totalAmount: Number.isFinite(submittedTotal) && submittedTotal > 0 ? submittedTotal : computedTotal,
     resortServices: serviceSnapshots,
   };
 
@@ -85,7 +88,6 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
   };
 
   const bookingRow = {
-    ...bookingModel,
     resort_id: Number(resort.id),
     room_ids: bookingModel.roomIds,
     start_date: bookingModel.startDate,
@@ -106,6 +108,7 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
     staying_guest_phone: bookingForm.stayingGuestPhone || "",
     inquirer_email: bookingForm.email || "",
     inquirer_phone: bookingForm.phoneNumber || "",
+    inquirer_address: bookingForm.address || "",
     room_name: bookingForm.roomName || "",
     resort_service_ids: bookingModel.resortServiceIds,
     booking_form: bookingForm,

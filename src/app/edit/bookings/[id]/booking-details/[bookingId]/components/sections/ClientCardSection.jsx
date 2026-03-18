@@ -82,7 +82,7 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
                     className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100 md:col-span-2"
                     value={draft.address || ""}
                     onChange={(e) => setField("address", e.target.value)}
-                    placeholder="Address"
+                    placeholder="Inquirer address"
                   />
                 </div>
               )
@@ -111,7 +111,7 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <MapPin size={12} />
-                      {draft.address || "No address"}
+                      {draft.address || "No inquirer address"}
                     </span>
                   </>
                 )}
