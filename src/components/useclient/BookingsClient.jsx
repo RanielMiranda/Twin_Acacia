@@ -34,6 +34,7 @@ const BOOKING_COLUMNS = [
   "created_at",
   "updated_at",
 ].join(", ");
+const BOOKING_DETAIL_COLUMNS = `${BOOKING_COLUMNS}, booking_form`;
 
 function toModel(row) {
   const guestName = row.guest_name || row.booking_form?.guestName || "";
@@ -225,6 +226,34 @@ export function BookingsProvider({ children }) {
     }
   }, [resort, syncResortBookings]);
 
+  const refreshBookingById = useCallback(
+    async (bookingId) => {
+      if (!resort?.id || !bookingId) return null;
+      try {
+        const { data, error } = await supabase
+          .from("bookings")
+          .select(BOOKING_DETAIL_COLUMNS)
+          .eq("id", bookingId.toString())
+          .maybeSingle();
+        if (error || !data) throw error || new Error("Booking not found");
+        const mapped = toModel(data);
+        setBookings((prev) => {
+          const current = Array.isArray(prev) ? prev : [];
+          const next = current.map((entry) => (entry.id?.toString() === mapped.id?.toString() ? mapped : entry));
+          const hasMatch = current.some((entry) => entry.id?.toString() === mapped.id?.toString());
+          const finalList = hasMatch ? next : [mapped, ...current];
+          syncResortBookings(finalList);
+          return finalList;
+        });
+        return mapped;
+      } catch (err) {
+        setBookingsError(err?.message || String(err));
+        return null;
+      }
+    },
+    [resort?.id, syncResortBookings]
+  );
+
   useEffect(() => {
     if (!resort?.id) return;
     if (typeof window === "undefined") return;
@@ -386,6 +415,7 @@ export function BookingsProvider({ children }) {
       bookingsError,
       lastFetchedAt,
       refreshBookings,
+      refreshBookingById,
       createBooking,
       updateBookingById,
       deleteBookingById,
@@ -401,6 +431,7 @@ export function BookingsProvider({ children }) {
       lastFetchedAt,
       loadingBookings,
       refreshBookings,
+      refreshBookingById,
       syncResortBookings,
       updateBookingById,
       createBookingTransaction,

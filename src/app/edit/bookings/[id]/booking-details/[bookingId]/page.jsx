@@ -20,7 +20,16 @@ export default function BookingDetailsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, updateBookingById, deleteBookingById, loadingBookings, createSignedProofUrl, createBookingTransaction, refreshBookings } = useBookings();
+  const {
+    bookings,
+    updateBookingById,
+    deleteBookingById,
+    loadingBookings,
+    createSignedProofUrl,
+    createBookingTransaction,
+    refreshBookings,
+    refreshBookingById,
+  } = useBookings();
   const { loadBookingSupport, updateConcernStatus, sendTicketMessage, isMissingSupportTableError } = useSupport();
   const [messages, setMessages] = useState([]);
   const [issues, setIssues] = useState([]);
@@ -32,6 +41,7 @@ export default function BookingDetailsPage() {
   const [refreshingMessages, setRefreshingMessages] = useState(false);
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [realtimeAvailable, setRealtimeAvailable] = useState(false);
   const lastOwnerReplySentAtRef = useRef(0);
 
   const hashString = (value) => {
@@ -143,8 +153,8 @@ export default function BookingDetailsPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "bookings", filter: `id=eq.${booking.id}` },
         () => {
-          refreshBookings();
-          loadProofData(booking.id);
+          refreshBookingById(booking.id);
+          loadProofData(booking.id, { force: true });
         }
       )
       .on(
@@ -157,7 +167,9 @@ export default function BookingDetailsPage() {
         { event: "*", schema: "public", table: "booking_transactions", filter: `booking_id=eq.${booking.id}` },
         () => loadStatusAudits(booking.id)
       )
-      .subscribe();
+      .subscribe((status) => {
+        setRealtimeAvailable(status === "SUBSCRIBED");
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -165,14 +177,14 @@ export default function BookingDetailsPage() {
   }, [booking?.id]);
 
   useEffect(() => {
-    if (!booking?.id || isEditing) return undefined;
+    if (!booking?.id || isEditing || realtimeAvailable) return undefined;
     const interval = setInterval(() => {
       loadSupportData(booking.id);
       loadStatusAudits(booking.id);
       loadProofData(booking.id);
     }, 15000);
     return () => clearInterval(interval);
-  }, [booking?.id, isEditing]);
+  }, [booking?.id, isEditing, realtimeAvailable]);
 
   const loadSupportData = async (activeBookingId) => {
     setRefreshingMessages(true);
@@ -233,7 +245,11 @@ export default function BookingDetailsPage() {
     }
   };
 
-  const loadProofData = async (activeBookingId) => {
+  const lastProofFetchAtRef = useRef(0);
+  const loadProofData = async (activeBookingId, { force = false } = {}) => {
+    const now = Date.now();
+    if (!force && now - lastProofFetchAtRef.current < 30_000) return;
+    lastProofFetchAtRef.current = now;
     try {
       const { data, error } = await supabase
         .from("bookings")

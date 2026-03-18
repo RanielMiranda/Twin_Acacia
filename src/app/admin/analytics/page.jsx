@@ -1,13 +1,19 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Database, HardDrive, AlertTriangle, RefreshCw, ExternalLink, Mail } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { BUCKET_NAME } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
+import DatabaseRecordsCard from "./components/DatabaseRecordsCard";
+import StorageUsageCard from "./components/StorageUsageCard";
+import WebpageGuideCard from "./components/WebpageGuideCard";
+import EmailUsageCard from "./components/EmailUsageCard";
+import DailyEmailUsageCard from "./components/DailyEmailUsageCard";
+import SemaphoreCard from "./components/SemaphoreCard";
+import CapacityWarningCard from "./components/CapacityWarningCard";
 
 const TABLES = [
   { name: "resorts", label: "Resorts" },
@@ -24,7 +30,6 @@ const ESTIMATED_DB_RECORD_LIMIT = 50000;
 const ESTIMATED_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1GB
 const DAILY_EMAIL_LIMIT = 100;
 const MONTHLY_EMAIL_LIMIT = 3000;
-
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -196,6 +201,8 @@ export default function AdminAnalyticsPage() {
   const storageUsagePct = Math.min(100, (bucketBytes / ESTIMATED_STORAGE_LIMIT_BYTES) * 100);
   const isStorageNearFull = storageUsagePct >= 80;
   const isDbNearFull = dbUsagePct >= 80;
+  const storageReadable = formatBytes(bucketBytes);
+  const storageLimitReadable = formatBytes(ESTIMATED_STORAGE_LIMIT_BYTES);
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 mt-10 md:p-8 pt-24">
@@ -206,15 +213,6 @@ export default function AdminAnalyticsPage() {
             <p className="text-slate-500 mt-1">Simple health checks for database and image storage usage.</p>
           </div>
           <div className="flex gap-2">
-            <a
-              href="https://vercel.com/raniels-projects-2ea24826/agoda-style-website/analytics"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 h-11 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
-            >
-              <ExternalLink size={16} />
-              Webpage Traffic Analytics
-            </a>
             <Button onClick={loadAnalytics} disabled={refreshing} className="h-11 rounded-xl flex items-center justify-center">
               <RefreshCw size={16} className={refreshing ? "animate-spin mr-2" : "mr-2"} />
               Refresh
@@ -223,132 +221,44 @@ export default function AdminAnalyticsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-6 rounded-2xl border bg-white border-slate-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-                <Database size={20} />
-              </div>
-              <h2 className="font-bold text-slate-900">Database Load (Estimate)</h2>
-            </div>
-            <p className="text-3xl font-black text-slate-900">{totalRecords.toLocaleString()} records</p>
-            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">{dbUsagePct.toFixed(2)}% of estimated safe threshold</p>
-            <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div className={`h-full ${isDbNearFull ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${dbUsagePct}%` }} />
-            </div>
-            <p className={`mt-4 text-sm font-semibold ${isDbNearFull ? "text-rose-600" : "text-slate-600"}`}>
-              {isDbNearFull
-                ? "Database contains too many records. Paid tier might be needed soon."
-                : "Database load is healthy right now."}
-            </p>
-          </Card>
+          
+        <SemaphoreCard />
+        <WebpageGuideCard />
+        </div>
 
-          <Card className="p-6 rounded-2xl border bg-white border-slate-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-                <HardDrive size={20} />
-              </div>
-              <h2 className="font-bold text-slate-900">Image Storage (Bucket)</h2>
-            </div>
-            <p className="text-3xl font-black text-slate-900">{formatBytes(bucketBytes)}</p>
-            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">{storageUsagePct.toFixed(2)}% of 1GB estimate</p>
-            <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div className={`h-full ${isStorageNearFull ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${storageUsagePct}%` }} />
-            </div>
-            <p className={`mt-4 text-sm font-semibold ${isStorageNearFull ? "text-rose-600" : "text-slate-600"}`}>
-              {isStorageNearFull
-                ? "Image file storage almost full. Paid tier might be needed soon."
-                : "Image storage has enough room."}
-            </p>
-          </Card>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Supabase</h2>
+          <a
+            href="https://supabase.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700"
+          >
+            Open Supabase
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <DatabaseRecordsCard
+            totalRecords={totalRecords}
+            estimatedLimit={ESTIMATED_DB_RECORD_LIMIT}
+            usagePct={dbUsagePct}
+            isNearFull={isDbNearFull}
+          />
+          <StorageUsageCard
+            storageReadable={storageReadable}
+            limitReadable={storageLimitReadable}
+            usagePct={storageUsagePct}
+            isNearFull={isStorageNearFull}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
-          <Card className="p-6 rounded-2xl border bg-white border-slate-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-                <Mail size={20} />
-              </div>
-              <h2 className="font-bold text-slate-900">Email Usage</h2>
-            </div>
-            <p className="text-3xl font-black text-slate-900">{emailStats.todaySent.toLocaleString()}</p>
-            <p className="text-xs uppercase tracking-wider text-slate-500 mt-1">Emails sent today</p>
-            <div className="mt-5 space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">This month</span>
-                <span className="font-bold text-slate-900">{emailStats.monthSent.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Remaining today</span>
-                <span className={`font-bold ${emailStats.remainingToday === 0 ? "text-rose-600" : "text-slate-900"}`}>
-                  {emailStats.remainingToday.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500">Remaining this month</span>
-                <span className={`font-bold ${emailStats.remainingMonth === 0 ? "text-rose-600" : "text-slate-900"}`}>
-                  {emailStats.remainingMonth.toLocaleString()}
-                </span>
-              </div>
-            </div>
-            <p className={`mt-4 text-sm font-semibold ${emailStats.remainingToday === 0 || emailStats.remainingMonth === 0 ? "text-rose-600" : "text-slate-600"}`}>
-              {emailStats.usageInstalled
-                ? emailStats.remainingToday === 0 || emailStats.remainingMonth === 0
-                  ? "Email limit reached. Consider upgrading."
-                  : "Counts are based on email send attempts."
-                : "Email usage table is not installed yet."}
-            </p>
-          </Card>
-
-          <Card className="p-6 rounded-2xl border bg-white border-slate-100">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <div>
-                <h2 className="font-bold text-slate-900">Daily Email Usage</h2>
-                <p className="text-sm text-slate-500">Send attempts over the last 7 days.</p>
-              </div>
-            </div>
-            {!emailStats.usageInstalled ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-                Run `supabase/schema.sql` to enable this panel.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {emailStats.daily.map((entry) => {
-                  const maxCount = Math.max(...emailStats.daily.map((row) => row.sent), 1);
-                  const sentWidth = Math.max(8, Math.round((entry.sent / maxCount) * 100));
-                  return (
-                    <div key={entry.date} className="grid grid-cols-[92px_1fr_auto] items-center gap-3">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                        {new Date(`${entry.date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                      </span>
-                      <div className="h-3 rounded-full bg-slate-100 overflow-hidden flex">
-                        <div
-                          className="h-full bg-emerald-500"
-                          style={{ width: `${sentWidth}%` }}
-                          title={`Sent: ${entry.sent}`}
-                        />
-                      </div>
-                      <span className="text-sm font-bold text-slate-900">
-                        {entry.sent}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
+          <EmailUsageCard emailStats={emailStats} />
+          <DailyEmailUsageCard emailStats={emailStats} />
         </div>
 
-        {(isStorageNearFull || isDbNearFull) && (
-          <Card className="p-4 rounded-2xl border-rose-200 bg-rose-50">
-            <div className="flex items-center gap-2 text-rose-700 font-bold">
-              <AlertTriangle size={16} />
-              Capacity Warning
-            </div>
-            <p className="text-sm text-rose-700 mt-1">
-              One or more resources are nearing limits. Paid tier might be needed soon to avoid upload or data issues.
-            </p>
-          </Card>
-        )}
+        <CapacityWarningCard show={isStorageNearFull || isDbNearFull} />
 
         <p className="text-xs text-slate-500">
           {lastCheckedAt ? `Last checked: ${lastCheckedAt.toLocaleString()}` : "Not checked yet"}
@@ -358,3 +268,4 @@ export default function AdminAnalyticsPage() {
     </div>
   );
 }
+
