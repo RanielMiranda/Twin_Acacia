@@ -50,7 +50,7 @@ export default function HeroBanner() {
   const heroSrcSet = getSupabaseSrcSet(activeImage, [640, 960, 1280], 72);
 
   return (
-    <div className="relative h-[80vh] group">
+    <div className="mt-10 relative h-[560px] md:h-[460px] group">
       <div className="absolute inset-0 overflow-hidden">
         <img
           key={activeImage}
@@ -73,7 +73,7 @@ export default function HeroBanner() {
       <div className="absolute inset-0 bg-black/40" />
 
       {/* Title */}
-      <div className="absolute inset-0 flex flex-col justify-center items-center px-4">
+      <div className="absolute inset-0 flex flex-col justify-start md:justify-center items-center px-4 pt-16 md:pt-0">
         <h1 className="text-5xl font-bold text-white mb-10 text-center">
           Find Your Perfect Resort Getaway
         </h1>

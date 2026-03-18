@@ -6,10 +6,12 @@ import ResortSection from "./components/resort/ResortSection"
 export default function Page() {
   return (
     <>
+    <div className = "bg-slate-50">
       <HeroBanner />
       <div id="resorts">
         <ResortSection />
       </div>
+    </div>
     </>
   );
 }
