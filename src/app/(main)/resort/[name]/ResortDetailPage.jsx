@@ -24,6 +24,7 @@ import PersistentToast from "@/components/ui/toast/PersistentToast";
 import { supabase } from "@/lib/supabase";
 import { useSupport } from "@/components/useclient/SupportClient";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
+import { computeBookingTotalAmount } from "@/lib/utils";
 
 export default function ResortDetailPage({ name }) {
   const { resort, loadResort, loading } = useResort();
@@ -187,7 +188,11 @@ const handleSubmitInquiry = async (submittedData) => {
         status: "Inquiry",
         paymentMethod: "Pending",
         downpayment: 0,
-        totalAmount: Number(resort.price || 0),
+        totalAmount: computeBookingTotalAmount({
+          basePrice: resort.price,
+          selectedServiceKeys,
+          extraServices: resort.extraServices,
+        }),
         ticketAccessExpiresAt,
         agentTicketAccessToken,
         agentTicketAccessExpiresAt,

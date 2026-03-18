@@ -6,6 +6,7 @@ import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useBookingConsoleData } from "./useBookingConsoleData";
 import { useSupport } from "@/components/useclient/SupportClient";
+import { computeBookingTotalAmount } from "@/lib/utils";
 import {Button} from "@/components/ui/button";
 import {
   Calendar as CalendarIcon, 
@@ -176,8 +177,11 @@ export default function BookingManagementPage() {
       const guestName = (payload.stayingGuestName || payload.guestName || "").trim();
       const guestEmail = (payload.stayingGuestEmail || payload.email || "").trim();
       const guestPhone = (payload.stayingGuestPhone || payload.phoneNumber || "").trim();
-      const resortPrice = Number(currentResort?.price || 0);
-      const totalAmount = resortPrice;
+      const totalAmount = computeBookingTotalAmount({
+        basePrice: currentResort?.price,
+        selectedServiceKeys: Array.isArray(payload.selectedServices) ? payload.selectedServices : [],
+        extraServices: currentResort?.extraServices || [],
+      });
 
       const bookingForm = {
         inquirerType: payload.inquirerType,

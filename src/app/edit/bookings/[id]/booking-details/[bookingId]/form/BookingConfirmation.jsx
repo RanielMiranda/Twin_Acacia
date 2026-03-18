@@ -55,19 +55,11 @@ export default function BookingConfirmation({
         .map(resolveService)
     : [];
 
-  const serviceTotal = useMemo(
-    () =>
-      (selectedServices || []).reduce(
-        (sum, entry) => sum + Number(entry?.cost || 0),
-        0
-      ),
-    [selectedServices]
-  );
   const resortRental = Number(resortPrice || 0);
-  const computedTotal = resortRental + serviceTotal;
+  const totalDue = Number(formData.totalAmount || 0);
   const balanceDue = useMemo(
-    () => Math.max(0, computedTotal - Number(formData.downpayment || 0)),
-    [computedTotal, formData.downpayment]
+    () => Math.max(0, totalDue - Number(formData.downpayment || 0)),
+    [totalDue, formData.downpayment]
   );
 
   const resortInitials = (resortName || "Resort")
@@ -212,7 +204,7 @@ export default function BookingConfirmation({
                   )}
                   <div className="flex items-center justify-between border-t border-slate-200 pt-2">
                     <span className="font-bold">Total due</span>
-                    <span className="font-black">PHP {computedTotal.toLocaleString()}</span>
+                    <span className="font-black">PHP {totalDue.toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="space-y-2">

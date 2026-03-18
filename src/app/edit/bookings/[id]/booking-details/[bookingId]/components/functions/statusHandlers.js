@@ -20,6 +20,7 @@ export async function handleSetStatusAction({
   nextStatus,
   booking,
   resortName,
+  resortExtraServices = [],
   persist,
   onStayConfirmed,
 }) {

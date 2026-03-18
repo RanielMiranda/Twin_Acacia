@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME, convertImageFileToWebp, toSafeSegment } from "@/lib/utils";
+import { BUCKET_NAME, convertImageFileToWebp, toSafeSegment, computeBookingTotalAmount } from "@/lib/utils";
 import { isMissingSupportTableError } from "./helpers";
 import { useSupport } from "@/components/useclient/SupportClient";
 
@@ -279,8 +279,16 @@ export function useTicketActions({
     setIsSavingAddOns(true);
     try {
       lastAddOnsSentAtRef.current = now;
+      const baseRate = Number(booking.booking_form?.totalAmount || 0) || Number(resort?.price || 0);
+      const computedTotal = computeBookingTotalAmount({
+        basePrice: baseRate,
+        selectedServiceKeys: normalizedServiceIds,
+        extraServices: Array.isArray(resort?.extraServices) ? resort.extraServices : [],
+      });
+
       const bookingForm = {
         ...(booking.booking_form || {}),
+        totalAmount: computedTotal,
         addOnsUpdatedAt: new Date().toISOString(),
       };
 

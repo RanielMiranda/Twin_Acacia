@@ -130,3 +130,24 @@ export async function deleteSupabaseFolder(supabase, folderPath, bucketName = BU
   const { error: removeError } = await supabase.storage.from(bucketName).remove(paths);
   if (removeError) throw removeError;
 }
+// ------------ Booking / payment helpers ------------
+
+export function parseMoney(value) {
+  if (value == null) return 0;
+  const normalized = String(value).replace(/,/g, "").trim();
+  const num = Number(normalized);
+  return Number.isFinite(num) ? num : 0;
+}
+
+export function computeBookingTotalAmount({ basePrice = 0, selectedServiceKeys = [], extraServices = [] }) {
+  const base = parseMoney(basePrice);
+  const serviceTotal = (selectedServiceKeys || [])
+    .map((key) => {
+      const service = (extraServices || []).find(
+        (s) => s && (s.id === key || s.name === key || String(s.id) === String(key))
+      );
+      return service ? parseMoney(service.cost ?? service.price ?? 0) : 0;
+    })
+    .reduce((sum, amount) => sum + amount, 0);
+  return base + serviceTotal;
+}
