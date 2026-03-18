@@ -1,10 +1,10 @@
 ﻿export const getContactMeta = (item) => {
   const form = item.bookingForm || {};
   const inquirerType = (item.inquirerType || form.inquirerType || "client").toString().toLowerCase();
-  const guestEmail = form.stayingGuestEmail || form.email || "";
-  const guestPhone = form.stayingGuestPhone || form.phoneNumber || "";
-  const inquirerEmail = form.email || "";
-  const inquirerPhone = form.phoneNumber || "";
+  const guestEmail = item.stayingGuestEmail || form.stayingGuestEmail || form.email || "";
+  const guestPhone = item.stayingGuestPhone || form.stayingGuestPhone || form.phoneNumber || "";
+  const inquirerEmail = item.inquirerEmail || form.email || "";
+  const inquirerPhone = item.inquirerPhone || form.phoneNumber || "";
   const contactEmail = inquirerType === "agent" ? inquirerEmail : guestEmail;
   const contactPhone = inquirerType === "agent" ? inquirerPhone : guestPhone;
   return {

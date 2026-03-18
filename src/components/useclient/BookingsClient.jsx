@@ -21,30 +21,72 @@ const BOOKING_COLUMNS = [
   "sleeping_guests",
   "room_count",
   "inquirer_type",
+  "guest_name",
+  "agent_name",
+  "staying_guest_name",
+  "staying_guest_email",
+  "staying_guest_phone",
+  "inquirer_email",
+  "inquirer_phone",
+  "room_name",
   "resort_service_ids",
   "payment_deadline",
-  "booking_form",
   "created_at",
   "updated_at",
 ].join(", ");
 
 function toModel(row) {
+  const guestName = row.guest_name || row.booking_form?.guestName || "";
+  const agentName = row.agent_name || row.booking_form?.agentName || "";
+  const stayingGuestName = row.staying_guest_name || row.booking_form?.stayingGuestName || "";
+  const stayingGuestEmail = row.staying_guest_email || row.booking_form?.stayingGuestEmail || "";
+  const stayingGuestPhone = row.staying_guest_phone || row.booking_form?.stayingGuestPhone || "";
+  const inquirerEmail = row.inquirer_email || row.booking_form?.email || "";
+  const inquirerPhone = row.inquirer_phone || row.booking_form?.phoneNumber || "";
+  const roomName = row.room_name || row.booking_form?.roomName || "";
+  const checkInTime = row.check_in_time || "14:00";
+  const checkOutTime = row.check_out_time || "11:00";
+  const status = row.status || row.booking_form?.status || "Inquiry";
+
   return {
     id: row.id,
     resortId: row.resort_id,
     roomIds: row.room_ids || [],
     startDate: row.start_date,
     endDate: row.end_date,
-    checkInTime: row.check_in_time || "14:00",
-    checkOutTime: row.check_out_time || "11:00",
-    bookingForm: row.booking_form || {},
-    inquirerType: row.inquirer_type === true || row.booking_form?.inquirerType === "agent" ? "agent" : "client",
-    status: row.status || row.booking_form?.status || "Inquiry",
+    checkInTime,
+    checkOutTime,
+    bookingForm: row.booking_form || {
+      inquirerType: row.inquirer_type === true ? "agent" : "client",
+      guestName,
+      agentName,
+      stayingGuestName,
+      stayingGuestEmail,
+      stayingGuestPhone,
+      email: inquirerEmail,
+      phoneNumber: inquirerPhone,
+      roomName,
+      checkInDate: row.start_date || "",
+      checkOutDate: row.end_date || "",
+      checkInTime,
+      checkOutTime,
+      status,
+    },
+    inquirerType: row.inquirer_type === true ? "agent" : "client",
+    status,
     adultCount: Number(row.adult_count ?? row.booking_form?.adultCount ?? 0),
     childrenCount: Number(row.children_count ?? row.booking_form?.childrenCount ?? 0),
     pax: Number(row.pax ?? row.booking_form?.guestCount ?? row.booking_form?.pax ?? 0),
     sleepingGuests: Number(row.sleeping_guests ?? row.booking_form?.sleepingGuests ?? 0),
     roomCount: Number(row.room_count ?? row.booking_form?.roomCount ?? row.room_ids?.length ?? 0),
+    guestName,
+    agentName,
+    stayingGuestName,
+    stayingGuestEmail,
+    stayingGuestPhone,
+    inquirerEmail,
+    inquirerPhone,
+    roomName,
     resortServiceIds: Array.isArray(row.resort_service_ids)
       ? row.resort_service_ids.filter(Boolean)
       : Array.isArray(row.booking_form?.resortServices)
@@ -101,6 +143,14 @@ function toRow(booking, resortId) {
     sleeping_guests: Number(form.sleepingGuests ?? booking.sleepingGuests ?? 0),
     room_count: Number(form.roomCount ?? booking.roomCount ?? booking.roomIds?.length ?? 1),
     inquirer_type: (form.inquirerType || booking.inquirerType) === "agent",
+    guest_name: form.guestName || booking.guestName || "",
+    agent_name: form.agentName || booking.agentName || "",
+    staying_guest_name: form.stayingGuestName || booking.stayingGuestName || "",
+    staying_guest_email: form.stayingGuestEmail || booking.stayingGuestEmail || "",
+    staying_guest_phone: form.stayingGuestPhone || booking.stayingGuestPhone || "",
+    inquirer_email: form.email || booking.inquirerEmail || "",
+    inquirer_phone: form.phoneNumber || booking.inquirerPhone || "",
+    room_name: form.roomName || booking.roomName || "",
     resort_service_ids: Array.isArray(booking.resortServiceIds)
       ? booking.resortServiceIds.filter(Boolean).map(String)
       : Array.isArray(form.resortServices)

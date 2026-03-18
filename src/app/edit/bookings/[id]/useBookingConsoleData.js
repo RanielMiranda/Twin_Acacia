@@ -17,6 +17,8 @@ export function useBookingConsoleData({
   listResortConcerns,
   updateConcernStatus,
   toast,
+  enableAudits = false,
+  enableArchive = false,
 }) {
   const [concerns, setConcerns] = useState([]);
   const [loadingConcerns, setLoadingConcerns] = useState(false);
@@ -154,13 +156,14 @@ export function useBookingConsoleData({
   }, [loadConcerns, resortId]);
 
   useEffect(() => {
+    if (!enableAudits) return;
     loadAudits();
-  }, [loadAudits]);
+  }, [enableAudits, loadAudits]);
 
   useEffect(() => {
-    if (!resortId) return;
+    if (!resortId || !enableArchive) return;
     loadArchivedBookings();
-  }, [loadArchivedBookings, resortId]);
+  }, [enableArchive, loadArchivedBookings, resortId]);
 
   const declinedBookings = useMemo(
     () =>
@@ -265,12 +268,14 @@ export function useBookingConsoleData({
         if (error) throw error;
 
         await refreshBookings();
-        await loadAudits();
+        if (enableAudits) {
+          await loadAudits();
+        }
       } catch (error) {
         console.error("Reopen booking error:", error?.message || error);
       }
     },
-    [loadAudits, refreshBookings]
+    [enableAudits, loadAudits, refreshBookings]
   );
 
   const handleReopenDeclined = useCallback(
@@ -294,14 +299,16 @@ export function useBookingConsoleData({
       if (!confirmed) return;
       try {
         await deleteBookingById(bookingId);
-        await loadAudits();
+        if (enableAudits) {
+          await loadAudits();
+        }
         toast?.({ message: `Booking resolved.`, color: toastColor, icon: CheckCircle2 });
       } catch (error) {
         console.error("Resolve booking error:", error?.message || error);
         toast?.({ message: `Unable to resolve: ${error?.message}`, color: "red", icon: XCircle });
       }
     },
-    [deleteBookingById, loadAudits, toast]
+    [deleteBookingById, enableAudits, loadAudits, toast]
   );
 
   const handleResolveDeclined = useCallback(
@@ -331,7 +338,25 @@ export function useBookingConsoleData({
         return;
       }
 
-      const form = source.bookingForm || {};
+      let form = source.bookingForm || {};
+      const needsProofHydrate =
+        !form?.paymentProofFolder &&
+        !(Array.isArray(form?.paymentProofUrls) && form.paymentProofUrls.length > 0) &&
+        !form?.paymentProofUrl;
+      if (needsProofHydrate) {
+        try {
+          const { data, error } = await supabase
+            .from("bookings")
+            .select("booking_form")
+            .eq("id", bookingId)
+            .maybeSingle();
+          if (!error && data?.booking_form) {
+            form = data.booking_form;
+          }
+        } catch {
+          // If hydrate fails, continue without proof cleanup.
+        }
+      }
       const inquirerType = (source.inquirerType || form.inquirerType || "client").toString().toLowerCase();
       const guestEmail = form.stayingGuestEmail || "";
       const guestPhone = form.stayingGuestPhone || "";
@@ -389,15 +414,29 @@ export function useBookingConsoleData({
         if (archiveError) throw archiveError;
 
         await deleteBookingById(bookingId);
-        await loadArchivedBookings();
-        await loadAudits();
+        if (enableArchive) {
+          await loadArchivedBookings();
+        }
+        if (enableAudits) {
+          await loadAudits();
+        }
         toast?.({ message: "Checked-out booking archived.", color: "green", icon: CheckCircle2 });
       } catch (error) {
         console.error("Delete checked-out booking error:", error?.message || error);
         toast?.({ message: `Archive failed: ${error?.message}`, color: "red", icon: XCircle });
       }
     },
-    [bookings, deleteBookingById, loadAudits, loadArchivedBookings, resortId, toast, unresolvedIssueBookingIds]
+    [
+      bookings,
+      deleteBookingById,
+      enableArchive,
+      enableAudits,
+      loadAudits,
+      loadArchivedBookings,
+      resortId,
+      toast,
+      unresolvedIssueBookingIds,
+    ]
   );
 
   const handleDeleteArchivedBooking = useCallback(
@@ -416,8 +455,11 @@ export function useBookingConsoleData({
   );
 
   const refreshAuditArchive = useCallback(async () => {
-    await Promise.all([loadAudits(), loadArchivedBookings()]);
-  }, [loadAudits, loadArchivedBookings]);
+    const tasks = [];
+    if (enableAudits) tasks.push(loadAudits());
+    if (enableArchive) tasks.push(loadArchivedBookings());
+    await Promise.all(tasks);
+  }, [enableArchive, enableAudits, loadAudits, loadArchivedBookings]);
 
   return {
     concerns,

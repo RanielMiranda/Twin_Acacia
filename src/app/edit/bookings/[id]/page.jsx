@@ -94,6 +94,8 @@ export default function BookingManagementPage() {
     listResortConcerns,
     updateConcernStatus,
     toast,
+    enableAudits: activeTab === "audits",
+    enableArchive: activeTab === "audits" || activeTab === "calendar",
   });
 
   const handleSyncData = async () => {
@@ -137,11 +139,6 @@ export default function BookingManagementPage() {
         {count}
       </span>
     ) : null;
-
-  useEffect(() => {
-    if (!resortId) return;
-    refreshBookings();
-  }, [refreshBookings, resortId]);
 
   const openDetails = (targetBookingId) => {
     router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}`);

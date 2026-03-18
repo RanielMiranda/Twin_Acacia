@@ -109,6 +109,7 @@ export default function BookingDetailsPage() {
   const booking = (bookings || []).find(
     (entry) => entry.id.toString() === bookingId?.toString()
   );
+  const effectiveBookingForm = proofOverrideForm || booking?.bookingForm || {};
   const bookingConflicts = (bookings || []).filter((entry) => {
     if (!booking || entry.id?.toString() === booking.id?.toString()) return false;
     const normalizedStatus = String(entry.status || entry.bookingForm?.status || "").toLowerCase();
@@ -307,7 +308,7 @@ export default function BookingDetailsPage() {
       try {
         const resortName =
           currentResort?.name ||
-          booking?.bookingForm?.resortName ||
+          effectiveBookingForm?.resortName ||
           booking?.booking_form?.resortName ||
           `resort-${booking?.resort_id || booking?.resortId || "unknown"}`;
         const safeResort = toSafeSegment(resortName);
@@ -377,7 +378,7 @@ export default function BookingDetailsPage() {
   return (
     <div className = "mt-10">
     <BookingModernEditor
-      booking={booking}
+      booking={{ ...booking, bookingForm: effectiveBookingForm }}
       resortName={currentResort?.name}
       onBack={() => router.push(`/edit/bookings/${id}`)}
       onSave={(next) => updateBookingById(booking.id, next)}
@@ -389,7 +390,7 @@ export default function BookingDetailsPage() {
       }}
       onOpenTicket={() => {
         if (typeof window === "undefined") return;
-        const token = booking?.bookingForm?.ticketAccessToken
+        const token = effectiveBookingForm?.ticketAccessToken
           || booking?.booking_form?.ticketAccessToken
           || booking?.booking_form?.ticket_access_token
           || "";
