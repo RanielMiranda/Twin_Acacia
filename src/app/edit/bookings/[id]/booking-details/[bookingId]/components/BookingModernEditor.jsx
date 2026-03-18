@@ -309,6 +309,32 @@ export default function BookingModernEditor({
     });
   };
 
+  useEffect(() => {
+    if (isEditing || actionBusy) return;
+    const toDate = (value) => {
+      if (!value) return null;
+      const date = new Date(`${value}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? null : date;
+    };
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const checkInDate = toDate(draft.checkInDate);
+    const checkOutDate = toDate(draft.checkOutDate);
+
+    if (status === "Confirmed" && checkInDate && todayStart >= checkInDate) {
+      handleSetStatus("Ongoing");
+      return;
+    }
+
+    if (status === "Ongoing" && checkOutDate) {
+      const dayAfterCheckout = new Date(checkOutDate);
+      dayAfterCheckout.setDate(dayAfterCheckout.getDate() + 1);
+      if (todayStart >= dayAfterCheckout) {
+        handleSetStatus("Pending Checkout");
+      }
+    }
+  }, [actionBusy, draft.checkInDate, draft.checkOutDate, handleSetStatus, isEditing, status]);
+
   const handleDecline = async () => {
     await handleDeclineAction({ handleSetStatus });
   };
@@ -435,13 +461,6 @@ export default function BookingModernEditor({
             />
             </div>
 
-            <AddOnsCardSection
-              draft={draft}
-              isEditing={isEditing}
-              setField={setField}
-              availableServices={resortExtraServices}
-            />
-
           </div>
 
           <div className="space-y-6">
@@ -461,17 +480,30 @@ export default function BookingModernEditor({
               statusPhases={STATUS_PHASES}
               paymentChannels={PAYMENT_CHANNELS}
             />
+            </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0">
+          <div className="flex-1">
+            <AddOnsCardSection
+              draft={draft}
+              isEditing={isEditing}
+              setField={setField}
+              availableServices={resortExtraServices}
+            />
+          </div>
+          <div className="flex-1">
+            <AssignRoomsCardSection
+              resortRooms={resortRooms}
+              assignedRoomIds={assignedRoomIds}
+              toggleAssignedRoom={toggleAssignedRoom}
+              isRoomConflicting={isRoomConflicting}
+              isEditing={isEditing}
+            />
           </div>
         </div>
 
         <div className="space-y-4">
-          <AssignRoomsCardSection
-            resortRooms={resortRooms}
-            assignedRoomIds={assignedRoomIds}
-            toggleAssignedRoom={toggleAssignedRoom}
-            isRoomConflicting={isRoomConflicting}
-            isEditing={isEditing}
-          />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <MessagesInboxCardSection
               issues={issues}
@@ -501,6 +533,7 @@ export default function BookingModernEditor({
               !draft.paymentPendingApproval
             : false
         }
+        balanceDue={balance}
         status={status}
         draftStatus={draft.status}
         isEditing={isEditing}

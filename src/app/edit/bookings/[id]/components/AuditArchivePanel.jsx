@@ -1,32 +1,113 @@
+﻿"use client";
 "use client";
 
-import React from "react";
-import { Archive, RefreshCw, Clock3, User2, ArrowRightLeft } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Archive, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-function toActionLabel(row) {
-  const from = row?.old_status || "Unknown";
-  const to = row?.new_status || "Unknown";
-  return `${from} -> ${to}`;
-}
-
-function getActorName(row) {
-  return row?.actor_name || "system";
-}
+import CheckedOutTabs from "./auditarchive/CheckedOutTabs.jsx";
+import DeclinedTabs from "./auditarchive/DeclinedTabs.jsx";
+import CancelledTabs from "./auditarchive/CancelledTabs.jsx";
 
 export default function AuditArchivePanel({
-  audits = [],
   declinedBookings = [],
   checkedOutBookings = [],
+  archivedBookings = [],
   loading = false,
   onRefresh,
   onOpenBooking,
   onReopenDeclined,
-  onDeleteDeclined,
+  onReopenCancelled,
+  onResolveDeclined,
+  onResolveCancelled,
+  onReopenCheckedOut,
   onResolveCheckedOut,
+  onDeleteArchived,
   unresolvedIssueBookingIds = new Set(),
 }) {
-  const visibleAudits = audits || [];
+  const [activeTab, setActiveTab] = useState("all");
+  const [search, setSearch] = useState("");
+
+  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
+  const matchesSearch = React.useCallback(
+    (fields) => {
+      if (!normalizedSearch) return true;
+      return fields.some((value) =>
+        String(value || "").toLowerCase().includes(normalizedSearch)
+      );
+    },
+    [normalizedSearch]
+  );
+
+  const cancelledBookings = useMemo(
+    () =>
+      (checkedOutBookings || []).filter((item) =>
+        String(item.status || item.bookingForm?.status || "").toLowerCase().includes("cancel")
+      ),
+    [checkedOutBookings]
+  );
+  const checkedOutOnlyBookings = useMemo(
+    () =>
+      (checkedOutBookings || []).filter((item) => {
+        const status = String(item.status || item.bookingForm?.status || "").toLowerCase();
+        return (status.includes("checked out") || status.includes("checked-out")) && !status.includes("cancel");
+      }),
+    [checkedOutBookings]
+  );
+
+  const filteredArchived = useMemo(
+    () =>
+      (archivedBookings || []).filter((item) =>
+        matchesSearch([
+          item.bookingForm?.stayingGuestName,
+          item.bookingForm?.guestName,
+          item.bookingForm?.agentName,
+          item.startDate,
+          item.endDate,
+        ])
+      ),
+    [archivedBookings, matchesSearch]
+  );
+
+  const filteredDeclined = useMemo(
+    () =>
+      (declinedBookings || []).filter((item) =>
+        matchesSearch([
+          item.bookingForm?.stayingGuestName,
+          item.bookingForm?.guestName,
+          item.bookingForm?.agentName,
+          item.startDate,
+          item.endDate,
+        ])
+      ),
+    [declinedBookings, matchesSearch]
+  );
+
+  const filteredCancelled = useMemo(
+    () =>
+      (cancelledBookings || []).filter((item) =>
+        matchesSearch([
+          item.bookingForm?.stayingGuestName,
+          item.bookingForm?.guestName,
+          item.bookingForm?.agentName,
+          item.startDate,
+          item.endDate,
+        ])
+      ),
+    [cancelledBookings, matchesSearch]
+  );
+  const filteredCheckedOut = useMemo(
+    () =>
+      (checkedOutOnlyBookings || []).filter((item) =>
+        matchesSearch([
+          item.bookingForm?.stayingGuestName,
+          item.bookingForm?.guestName,
+          item.bookingForm?.agentName,
+          item.startDate,
+          item.endDate,
+        ])
+      ),
+    [checkedOutOnlyBookings, matchesSearch]
+  );
 
   return (
     <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-5 md:p-6">
@@ -36,9 +117,7 @@ export default function AuditArchivePanel({
             <Archive size={16} className="text-indigo-600" />
             Audit Archive
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
-            Recent booking status/payment changes for this resort.
-          </p>
+          <p className="text-xs text-slate-500 mt-1">History of completed and declined stays.</p>
         </div>
         <Button
           variant="outline"
@@ -49,206 +128,115 @@ export default function AuditArchivePanel({
           {loading ? "Refreshing..." : "Refresh Archive"}
         </Button>
       </div>
-      {visibleAudits.length === 0 && declinedBookings.length === 0 && checkedOutBookings.length === 0 ? (
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "all", label: "All" },
+            { id: "history", label: "Checked Out" },
+            { id: "declined", label: "Declined" },
+            { id: "cancelled", label: "Cancelled" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest border ${
+                activeTab === tab.id
+                  ? "bg-slate-900 text-white border-slate-900"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative w-full md:max-w-xs">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search guest, agent, or date"
+            className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-slate-600"
+          />
+        </div>
+      </div>
+      {filteredCheckedOut.length > 0 ? (
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">
+          Bookings in this list stay here for up to 7 days before auto-archiving. Use Resolve to archive now and strip extra data.
+        </div>
+      ) : null}
+
+      {filteredArchived.length === 0 &&
+      filteredDeclined.length === 0 &&
+      filteredCancelled.length === 0 &&
+      filteredCheckedOut.length === 0 ? (
         <div className="p-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
           <Archive className="mx-auto text-slate-300 mb-2" size={26} />
           <p className="text-sm font-semibold text-slate-500">No audit entries yet.</p>
         </div>
       ) : (
         <div className="space-y-2.5 max-h-[65vh] overflow-auto pr-1">
-          {checkedOutBookings.map((item) => {
-            const normalizedStatus = String(item.status || item.bookingForm?.status || "").toLowerCase();
-            const isCancelled = normalizedStatus.includes("cancel");
-            const hasUnresolvedIssue = unresolvedIssueBookingIds.has(item.id?.toString());
-            const cardTone = isCancelled
-              ? "border-rose-200 bg-rose-50/60"
-              : "border-emerald-200 bg-emerald-50/60";
-            const badgeTone = isCancelled ? "bg-rose-600" : "bg-emerald-600";
-            const badgeLabel = isCancelled ? "Cancelled" : "Checked Out";
-            const inquirerType = (item.inquirerType || item.bookingForm?.inquirerType || "client").toString().toLowerCase();
-            const roomLabel = item.bookingForm?.roomName || "Room";
-            const checkIn = item.startDate || item.bookingForm?.checkInDate || "-";
-            const checkOut = item.endDate || item.bookingForm?.checkOutDate || "-";
-            const guestName = item.bookingForm?.guestName || "Guest";
-            const guestEmail = item.bookingForm?.email || "No email";
-
-            return (
-              <div
-                key={`checkedout-${item.id}`}
-                className={`p-4 rounded-2xl border ${cardTone}`}
-              >
-                <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
-                  <div className="min-w-0 lg:flex-1 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight text-white inline-flex items-center gap-1 ${badgeTone}`}>
-                        <ArrowRightLeft size={10} />
-                        {badgeLabel}
-                      </span>
-                      <span className="text-[10px] font-black px-2 py-0.5 bg-white/80 rounded-md text-slate-600 uppercase tracking-tight">
-                        {roomLabel}
-                      </span>
-                      <span className="text-[11px] font-black text-slate-600 uppercase inline-flex items-center gap-1">
-                        {checkIn} <ArrowRightLeft size={10} /> {checkOut}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-sm font-black text-slate-900">{guestName}</span>
-                      <span className="text-[11px] text-slate-600">{guestEmail}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                      <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
-                      <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                        inquirerType === "agent"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}>
-                        {inquirerType === "agent" ? "Agent" : "Client"}
-                      </span>
-                    </div>
-                    {hasUnresolvedIssue ? (
-                      <div className="text-[10px] font-black uppercase tracking-widest text-rose-600">
-                        Unresolved issue
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-wrap lg:justify-end">
-                    <Button
-                      variant="outline"
-                      className="h-8 px-3 text-xs font-bold"
-                      onClick={() => onOpenBooking?.(item.id)}
-                    >
-                      Open Booking
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className={`h-8 px-3 text-xs font-bold ${
-                        isCancelled
-                          ? "border-rose-200 text-rose-700 hover:bg-rose-50"
-                          : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                      } ${hasUnresolvedIssue ? "opacity-60 cursor-not-allowed" : ""}`}
-                      onClick={() => onResolveCheckedOut?.(item.id)}
-                      disabled={hasUnresolvedIssue}
-                    >
-                      Resolve
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {declinedBookings.map((item) => (
-            <div
-              key={`declined-${item.id}`}
-              className="p-4 rounded-2xl border border-rose-200 bg-rose-50/60"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-stretch gap-3">
-                <div className="min-w-0 lg:flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight bg-rose-600 text-white inline-flex items-center gap-1">
-                      <ArrowRightLeft size={10} />
-                      Declined Inquiry
-                    </span>
-                    <span className="text-[10px] font-black px-2 py-0.5 bg-white/80 rounded-md text-slate-600 uppercase tracking-tight">
-                      {item.bookingForm?.roomName || "Room"}
-                    </span>
-                    <span className="text-[11px] font-black text-slate-600 uppercase inline-flex items-center gap-1">
-                      {item.startDate || item.bookingForm?.checkInDate || "-"} <ArrowRightLeft size={10} /> {item.endDate || item.bookingForm?.checkOutDate || "-"}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-sm font-black text-slate-900">{item.bookingForm?.guestName || "Guest"}</span>
-                    <span className="text-[11px] text-slate-600">{item.bookingForm?.email || "No email"}</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                    <Clock3 size={10} /> {item.updatedAt ? new Date(item.updatedAt).toLocaleString() : "-"}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between lg:flex-col lg:justify-center lg:items-center lg:w-40 gap-3 lg:border-l lg:border-white/60 lg:pl-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</span>
-                    <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                      (item.inquirerType || item.bookingForm?.inquirerType || "client").toString().toLowerCase() === "agent"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-emerald-100 text-emerald-700"
-                    }`}>
-                      {(item.inquirerType || item.bookingForm?.inquirerType || "client").toString().toLowerCase() === "agent" ? "Agent" : "Client"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap lg:justify-end">
-                  <Button
-                    variant="outline"
-                    className="h-8 px-3 text-xs font-bold"
-                    onClick={() => onOpenBooking?.(item.id)}
-                  >
-                    Open Booking
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 px-3 text-xs font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
-                    onClick={() => onReopenDeclined?.(item.id)}
-                  >
-                    Reopen
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 px-3 text-xs font-bold border-rose-200 text-rose-700 hover:bg-rose-50"
-                    onClick={() => onDeleteDeclined?.(item.id)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
+          {activeTab === "all" ? (
+            <div className="space-y-4">
+              <CheckedOutTabs
+                mode="all"
+                filteredArchived={filteredArchived}
+                filteredCheckedOut={filteredCheckedOut}
+                onOpenBooking={onOpenBooking}
+                onReopenCheckedOut={onReopenCheckedOut}
+                onResolveCheckedOut={onResolveCheckedOut}
+                onDeleteArchived={onDeleteArchived}
+                unresolvedIssueBookingIds={unresolvedIssueBookingIds}
+              />
+              <DeclinedTabs
+                filteredDeclined={filteredDeclined}
+                showHeading
+                onOpenBooking={onOpenBooking}
+                onReopenDeclined={onReopenDeclined}
+                onResolveDeclined={onResolveDeclined}
+              />
+              <CancelledTabs
+                filteredCancelled={filteredCancelled}
+                showHeading
+                onOpenBooking={onOpenBooking}
+                onReopenCancelled={onReopenCancelled}
+                onResolveCancelled={onResolveCancelled}
+                unresolvedIssueBookingIds={unresolvedIssueBookingIds}
+              />
             </div>
-          ))}
-          {visibleAudits.map((item) => (
-            <div
-              key={item.id}
-              className="p-3 rounded-xl border border-indigo-100 bg-indigo-50/40"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tight bg-indigo-600 text-white inline-flex items-center gap-1">
-                      <ArrowRightLeft size={10} />
-                      Action
-                    </span>
-                    <span className="text-[10px] font-bold text-slate-600 uppercase">
-                      {toActionLabel(item)}
-                    </span>
-                    <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                      <Clock3 size={10} /> {new Date(item.changed_at).toLocaleString()}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-700 leading-snug break-words">
-                    Ticket: <span className="font-black text-slate-900">#{item.booking_id}</span>
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-1.5 inline-flex items-center gap-1">
-                    <User2 size={11} />
-                    {getActorName(item)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    className="h-8 px-3 text-xs font-bold"
-                    onClick={() => onOpenBooking?.(item.booking_id)}
-                  >
-                    Open Booking
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
+          ) : null}
+
+          {activeTab === "history" ? (
+            <CheckedOutTabs
+              mode="history"
+              filteredArchived={filteredArchived}
+              filteredCheckedOut={filteredCheckedOut}
+              onOpenBooking={onOpenBooking}
+              onReopenCheckedOut={onReopenCheckedOut}
+              onResolveCheckedOut={onResolveCheckedOut}
+              onDeleteArchived={onDeleteArchived}
+              unresolvedIssueBookingIds={unresolvedIssueBookingIds}
+            />
+          ) : null}
+
+          {activeTab === "declined" ? (
+            <DeclinedTabs
+              filteredDeclined={filteredDeclined}
+              onOpenBooking={onOpenBooking}
+              onReopenDeclined={onReopenDeclined}
+              onResolveDeclined={onResolveDeclined}
+            />
+          ) : null}
+
+          {activeTab === "cancelled" ? (
+            <CancelledTabs
+              filteredCancelled={filteredCancelled}
+              onOpenBooking={onOpenBooking}
+              onReopenCancelled={onReopenCancelled}
+              onResolveCancelled={onResolveCancelled}
+              unresolvedIssueBookingIds={unresolvedIssueBookingIds}
+            />
+          ) : null}
         </div>
       )}
     </div>

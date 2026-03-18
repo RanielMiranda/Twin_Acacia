@@ -7,6 +7,13 @@ export const BOOKING_TICKET_COLUMNS = [
   "check_in_time",
   "check_out_time",
   "status",
+  "adult_count",
+  "children_count",
+  "pax",
+  "sleeping_guests",
+  "room_count",
+  "inquirer_type",
+  "resort_service_ids",
   "booking_form",
 ].join(", ");
 

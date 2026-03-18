@@ -3,6 +3,14 @@ import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAc
 import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { PREVIOUS_STATUS } from "../bookingEditorConfig";
 import { notifyCaretakerOnBookingConfirmed } from "@/lib/caretakerNotifications";
+import { getStorageFolderFromPublicUrl } from "@/lib/utils";
+
+function getProofFolder(draft) {
+  const explicit = draft?.paymentProofFolder;
+  if (explicit) return explicit;
+  const urlCandidate = Array.isArray(draft?.paymentProofUrls) ? draft.paymentProofUrls[0] : draft?.paymentProofUrl;
+  return getStorageFolderFromPublicUrl(urlCandidate);
+}
 
 export async function handleSetStatusAction({
   actionBusy,
@@ -17,6 +25,13 @@ export async function handleSetStatusAction({
 }) {
   if (actionBusy) return;
   const wasConfirmed = String(draft.status || "").toLowerCase().includes("confirm");
+  if (nextStatus === "Confirmed") {
+    const totalPaid = Number(draft.downpayment || 0) + Number(draft.pendingDownpayment || 0);
+    if (totalPaid <= 0) {
+      window.alert("Cannot confirm: please request and receive a downpayment first.");
+      return;
+    }
+  }
   if (nextStatus === "Checked Out") {
     const isSettled = isCheckoutAmountSettled({
       totalAmount: draft.totalAmount,
@@ -210,6 +225,13 @@ export async function handleVerifyProofAction({
   if (draft.paymentVerified || actionBusy) return;
   setActionBusy(true);
   try {
+    const proofFolder = getProofFolder(draft);
+    const nextLogEntry = {
+      at: new Date().toISOString(),
+      action: "payment_verified",
+      folder: proofFolder,
+    };
+
     const approvedAmount = Number(draft.pendingDownpayment || 0);
     const nextDownpayment = Number(draft.downpayment || 0) + approvedAmount;
     const nextMethod = draft.pendingPaymentMethod || draft.paymentMethod;
@@ -230,8 +252,10 @@ export async function handleVerifyProofAction({
       pendingDownpayment: 0,
       pendingPaymentMethod: null,
       paymentPendingApproval: false,
+      paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
+      // Keep proof urls for audit/log viewing (do not delete the image immediately)
       status:
-        draft.status === "Pending Payment" && isFullyPaid
+        draft.status === "Pending Payment"
           ? "Confirmed"
           : draft.status,
     };
@@ -269,6 +293,13 @@ export async function handleDeclineProofAction({
 
   setActionBusy(true);
   try {
+    const proofFolder = getProofFolder(draft);
+    const nextLogEntry = {
+      at: new Date().toISOString(),
+      action: "payment_declined",
+      folder: proofFolder,
+    };
+
     const next = {
       ...draft,
       paymentPendingApproval: false,
@@ -277,6 +308,8 @@ export async function handleDeclineProofAction({
       paymentSubmittedAt: null,
       paymentVerified: false,
       paymentVerifiedAt: null,
+      paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
+      // Keep proof URLs in logs, but clear the current proof to allow re-upload.
       paymentProofUrl: null,
       paymentProofUrls: [],
     };

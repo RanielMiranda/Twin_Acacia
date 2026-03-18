@@ -28,10 +28,10 @@ export default function InquiryForm({ formData, handleChange }) {
             required
           />
           <input
-            name="contactNumber"
+            name="phoneNumber"
             placeholder="Contact Number"
             className="w-full border rounded p-2 text-sm"
-            value={formData.contactNumber}
+            value={formData.phoneNumber}
             onChange={handleChange}
           />
         </div>

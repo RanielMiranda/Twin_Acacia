@@ -4,12 +4,20 @@ const SUPABASE_TRANSFORMS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_SUPABASE_TRAN
 
 export function getStoragePathFromPublicUrl(url, bucketName = BUCKET_NAME) {
   if (!url || typeof url !== "string") return null;
-  const publicMarker = `/storage/v1/object/public/${bucketName}/`;
-  const objectMarker = `/object/public/${bucketName}/`;
-  const marker = url.includes(publicMarker) ? publicMarker : objectMarker;
+  const markers = [
+    `/storage/v1/object/public/${bucketName}/`,
+    `/object/public/${bucketName}/`,
+    `/storage/v1/object/sign/${bucketName}/`,
+    `/object/sign/${bucketName}/`,
+  ];
+  const marker = markers.find((m) => url.includes(m));
+  if (!marker) return null;
   const index = url.indexOf(marker);
   if (index === -1) return null;
-  return decodeURIComponent(url.slice(index + marker.length));
+  const remainder = url.slice(index + marker.length);
+  // Signed URLs include a query string that should not be part of the object path.
+  const [path] = remainder.split("?");
+  return decodeURIComponent(path);
 }
 
 export async function convertImageFileToWebp(file, quality = 0.82) {
@@ -79,4 +87,46 @@ export function getSupabaseSrcSet(url, widths = DEFAULT_SUPABASE_IMAGE_WIDTHS, q
   return widths
     .map((width) => `${getTransformedSupabaseImageUrl(url, { width, quality, format: "webp" })} ${width}w`)
     .join(", ");
+}
+
+export async function deleteSupabasePublicUrls(supabase, urls, bucketName = BUCKET_NAME) {
+  if (!supabase || !Array.isArray(urls) || urls.length === 0) return;
+  const paths = urls
+    .map((url) => getStoragePathFromPublicUrl(url, bucketName))
+    .filter(Boolean);
+  if (paths.length === 0) return;
+  const { error } = await supabase.storage.from(bucketName).remove(paths);
+  if (error) throw error;
+}
+
+export function toSafeSegment(value) {
+  return String(value || "unknown")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-_\s]/g, "")
+    .replace(/\s+/g, "-");
+}
+
+export function getStorageFolderFromPublicUrl(url, bucketName = BUCKET_NAME) {
+  const path = getStoragePathFromPublicUrl(url, bucketName);
+  if (!path) return null;
+  const segments = path.split("/");
+  segments.pop();
+  return segments.join("/");
+}
+
+export async function deleteSupabaseFolder(supabase, folderPath, bucketName = BUCKET_NAME) {
+  if (!supabase || !folderPath) return;
+  const normalizedFolder = String(folderPath).replace(/\\/g, "/").replace(/\/+$/, "");
+
+  // List all objects in the folder
+  const { data: items, error: listError } = await supabase.storage
+    .from(bucketName)
+    .list(normalizedFolder, { limit: 1000, offset: 0, sortBy: { column: "name", order: "asc" } });
+  if (listError) throw listError;
+  if (!items || items.length === 0) return;
+
+  const paths = items.map((item) => `${normalizedFolder}/${item.name}`);
+  const { error: removeError } = await supabase.storage.from(bucketName).remove(paths);
+  if (removeError) throw removeError;
 }

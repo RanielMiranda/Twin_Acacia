@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
+import { useBookingConsoleData } from "./useBookingConsoleData";
 import { useSupport } from "@/components/useclient/SupportClient";
+import {Button} from "@/components/ui/button";
 import {
   Calendar as CalendarIcon, 
   ClipboardList, 
@@ -13,7 +15,6 @@ import {
   MessageCircleWarning,
   Archive,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 // Components
 import BookingCalendar from "./components/BookingsCalendar";
@@ -22,17 +23,18 @@ import LiveConcernsPanel from "./components/LiveConcernsPanel";
 import AuditArchivePanel from "./components/AuditArchivePanel";
 import BookingSummaryCards from "./components/BookingSummaryCards";
 import Toast from "@/components/ui/toast/Toast"
+import { useToast } from "@/components/ui/toast/ToastProvider";
+import ManualBookingModal from "./components/ManualBookingModal";
 export default function BookingManagementPage() {
   const { id } = useParams();
   const router = useRouter();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, refreshBookings, updateBookingById, deleteBookingById } = useBookings();
+  const { bookings, refreshBookings, updateBookingById, deleteBookingById, createBooking } = useBookings();
   const { listResortConcerns, updateConcernStatus } = useSupport();
-  const [concerns, setConcerns] = useState([]);
-  const [loadingConcerns, setLoadingConcerns] = useState(false);
-  const [audits, setAudits] = useState([]);
-  const [loadingAudits, setLoadingAudits] = useState(false);
-  
+  const { toast } = useToast();
+  const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
+  const [addingBooking, setAddingBooking] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
 
   useEffect(() => {
@@ -58,46 +60,67 @@ export default function BookingManagementPage() {
   const currentResort = resort?.id?.toString() === id?.toString() ? resort : null;
   const resortId = Number(currentResort?.id || 0);
 
-  const workflowCounts = useMemo(() => {
-    const source = bookings || [];
-    const inquiry = source.filter((entry) => {
-      const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-      return (status.includes("inquiry") || status.includes("pending payment") || status.includes("pending checkout")) && !status.includes("declined");
-    }).length;
-    const checkout = source.filter((entry) => {
-      const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-      return status.includes("pending checkout");
-    }).length;
-    return { inquiry, checkout };
-  }, [bookings]);
+  const {
+    concerns,
+    loadingConcerns,
+    audits,
+    loadingAudits,
+    archivedBookings,
+    loadingArchivedBookings,
+    workflowCounts,
+    declinedBookings,
+    checkedOutBookings,
+    auditArchiveCount,
+    openConcernCount,
+    unresolvedIssueBookingIds,
+    loadConcerns,
+    handleResolveConcern,
+    handleReopenConcern,
+    handleReopenDeclined,
+    handleReopenCancelled,
+    handleReopenCheckedOut,
+    handleResolveDeclined,
+    handleResolveCancelled,
+    handleResolveCheckedOut,
+    handleDeleteArchivedBooking,
+    refreshAuditArchive,
+  } = useBookingConsoleData({
+    resortId,
+    bookings,
+    refreshBookings,
+    updateBookingById,
+    deleteBookingById,
+    listResortConcerns,
+    updateConcernStatus,
+    toast,
+  });
 
-  const declinedBookings = useMemo(
-    () =>
-      (bookings || []).filter((entry) => {
-        const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-        return status.includes("declined");
-      }),
-    [bookings]
-  );
-  const checkedOutBookings = useMemo(
-    () =>
-      (bookings || []).filter((entry) => {
-        const status = (entry.status || entry.bookingForm?.status || "").toLowerCase();
-        return status.includes("checked out") || status.includes("cancelled");
-      }),
-    [bookings]
-  );
-  const auditArchiveCount = audits.length + declinedBookings.length + checkedOutBookings.length;
-  const openConcernCount = concerns.filter((item) => item.status !== "resolved").length;
-  const unresolvedIssueBookingIds = useMemo(() => {
-    const ids = new Set();
-    (concerns || []).forEach((issue) => {
-      if (issue.status !== "resolved" && issue.booking_id) {
-        ids.add(issue.booking_id.toString());
+  const handleSyncData = async () => {
+    setIsSyncing(true);
+    try {
+      await refreshBookings();
+      await refreshAuditArchive();
+
+      const secret = process.env.NEXT_PUBLIC_BOOKING_AUTOMATION_SECRET;
+      if (secret) {
+        const res = await fetch("/api/internal/booking-status", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${secret}`,
+          },
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body?.error || "sync failed");
+        toast({ message: "Sync complete (automation ran).", color: "green" });
+      } else {
+        toast({ message: "Sync complete.", color: "green" });
       }
-    });
-    return ids;
-  }, [concerns]);
+    } catch (err) {
+      toast({ message: `Sync failed: ${err.message}`, color: "red" });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const TabBadge = ({ count, tone = "blue" }) =>
     count > 0 ? (
@@ -114,75 +137,6 @@ export default function BookingManagementPage() {
       </span>
     ) : null;
 
-  const loadConcerns = async () => {
-    if (!resortId) return;
-    setLoadingConcerns(true);
-    try {
-      const rows = await listResortConcerns(resortId, { pruneResolvedOlderThanDays: 10 });
-      setConcerns(rows);
-    } catch (error) {
-      console.error("Concerns load error:", error.message);
-    } finally {
-      setLoadingConcerns(false);
-    }
-  };
-
-  const loadAudits = async () => {
-    const bookingIds = (bookings || []).map((entry) => entry.id?.toString()).filter(Boolean);
-    if (bookingIds.length === 0) {
-      setAudits([]);
-      return;
-    }
-    setLoadingAudits(true);
-    try {
-      const baseQuery = supabase
-        .from("booking_status_audit")
-        .eq("booking_id", bookingIds[0]);
-      const { error: tableCheckError } = await baseQuery.select("id").limit(1);
-      if (tableCheckError) {
-        setAudits([]);
-        return;
-      }
-
-      const withActorName = await supabase
-        .from("booking_status_audit")
-        .select("id, booking_id, changed_at, actor_role, actor_name, old_status, new_status")
-        .in("booking_id", bookingIds)
-        .order("changed_at", { ascending: false })
-        .limit(300);
-      if (!withActorName.error) {
-        setAudits(withActorName.data || []);
-        return;
-      }
-
-      const missingActorName =
-        withActorName.error.message?.includes("actor_name") &&
-        (withActorName.error.message?.includes("does not exist") ||
-          withActorName.error.message?.includes("schema cache"));
-      if (!missingActorName) {
-        setAudits([]);
-        return;
-      }
-
-      const fallback = await supabase
-        .from("booking_status_audit")
-        .select("id, booking_id, changed_at, actor_role, old_status, new_status")
-        .in("booking_id", bookingIds)
-        .order("changed_at", { ascending: false })
-        .limit(300);
-      setAudits(fallback.data || []);
-    } finally {
-      setLoadingAudits(false);
-    }
-  };
-
-
-  useEffect(() => {
-    if (!resortId) return;
-    loadConcerns();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resortId]);
-
   useEffect(() => {
     if (!resortId) return;
     refreshBookings();
@@ -197,86 +151,89 @@ export default function BookingManagementPage() {
     };
   }, [refreshBookings, resortId]);
 
-  useEffect(() => {
-    loadAudits();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings]);
-
-  const handleResolveConcern = async (issueId) => {
-    const confirmed = window.confirm("Resolve and permanently delete this concern?");
-    if (!confirmed) return;
-    try {
-      const isArchivedId = typeof issueId === "string" && issueId.startsWith("arch:");
-      const archiveId = isArchivedId ? issueId.slice(5) : null;
-
-      if (isArchivedId) {
-        const { error } = await supabase.from("ticket_issues_archive").delete().eq("id", archiveId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("ticket_issues").delete().eq("id", issueId);
-        if (error) throw error;
-      }
-
-      setConcerns((prev) => prev.filter((entry) => entry.id !== issueId));
-    } catch (error) {
-      console.error("Resolve concern error:", error.message);
-    }
-  };
-
-  const handleReopenConcern = async (issueId) => {
-    try {
-      await updateConcernStatus(issueId, "open");
-      setConcerns((prev) => prev.map((entry) => (entry.id === issueId ? { ...entry, status: "open" } : entry)));
-    } catch (error) {
-      console.error("Reopen concern error:", error.message);
-    }
-  };
-
-  const handleReopenDeclined = async (bookingId) => {
-    try {
-      await updateBookingById(bookingId, (entry) => ({
-        ...entry,
-        status: "Inquiry",
-        bookingForm: {
-          ...(entry.bookingForm || {}),
-          status: "Inquiry",
-          reopenedAt: new Date().toISOString(),
-        },
-      }));
-      await loadAudits();
-    } catch (error) {
-      console.error("Reopen declined inquiry error:", error.message);
-    }
-  };
-
-  const handleDeleteDeclined = async (bookingId) => {
-    const confirmed = window.confirm("Delete this declined inquiry?");
-    if (!confirmed) return;
-    try {
-      await deleteBookingById(bookingId);
-      await loadAudits();
-    } catch (error) {
-      console.error("Delete declined inquiry error:", error.message);
-    }
-  };
-
-  const handleResolveCheckedOut = async (bookingId) => {
-    if (unresolvedIssueBookingIds.has(bookingId?.toString())) {
-      window.alert("Resolve blocked: this booking has unresolved issues.");
-      return;
-    }
-    const confirmed = window.confirm("Resolve and permanently delete this booking?");
-    if (!confirmed) return;
-    try {
-      await deleteBookingById(bookingId);
-      await loadAudits();
-    } catch (error) {
-      console.error("Delete checked-out booking error:", error.message);
-    }
-  };
-
   const openDetails = (targetBookingId) => {
     router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}`);
+  };
+
+  const handleCreateBooking = async (payload) => {
+    if (!payload?.guestName?.trim()) {
+      toast?.({ message: "Guest name is required.", color: "red" });
+      return;
+    }
+    if (!payload.checkInDate) {
+      toast?.({ message: "Check-in date is required.", color: "red" });
+      return;
+    }
+
+    const adultCount = Number(payload.adultCount ?? 0);
+    const childrenCount = Number(payload.childrenCount ?? 0);
+    const guestCount = Number(payload.guestCount ?? adultCount + childrenCount);
+    const pax = Number(payload.pax ?? guestCount);
+
+    setAddingBooking(true);
+    try {
+      const isAgent = payload.inquirerType === "agent";
+      const guestName = (payload.stayingGuestName || payload.guestName || "").trim();
+      const guestEmail = (payload.stayingGuestEmail || payload.email || "").trim();
+      const guestPhone = (payload.stayingGuestPhone || payload.phoneNumber || "").trim();
+      const resortPrice = Number(currentResort?.price || 0);
+      const totalAmount = resortPrice;
+
+      const bookingForm = {
+        inquirerType: payload.inquirerType,
+        guestName,
+        ...(isAgent
+          ? {
+              stayingGuestName: payload.stayingGuestName?.trim() || guestName,
+              stayingGuestEmail: payload.stayingGuestEmail?.trim() || guestEmail,
+              stayingGuestPhone: payload.stayingGuestPhone?.trim() || guestPhone,
+            }
+          : {}),
+        address: payload.address?.trim() || "",
+        email: payload.email.trim(),
+        phoneNumber: payload.phoneNumber.trim(),
+        agentName: isAgent ? payload.agentName.trim() : "",
+        status: payload.status,
+        checkInDate: payload.checkInDate,
+        checkOutDate: payload.checkOutDate || payload.checkInDate,
+        checkInTime: payload.checkInTime || "14:00",
+        checkOutTime: payload.checkOutTime || "11:00",
+        totalAmount,
+      };
+
+      const created = await createBooking({
+        status: payload.status,
+        startDate: payload.checkInDate,
+        endDate: payload.checkOutDate || payload.checkInDate,
+        checkInTime: payload.checkInTime || "14:00",
+        checkOutTime: payload.checkOutTime || "11:00",
+        roomIds: payload.selectedRoomIds || [],
+        roomCount: Number(payload.roomCount || (payload.selectedRoomIds?.length || 0) || 1),
+        adultCount,
+        childrenCount,
+        pax,
+        sleepingGuests: Number(payload.sleepingGuests || 0),
+        resortServiceIds: Array.isArray(payload.selectedServices)
+          ? payload.selectedServices.map(String).filter(Boolean)
+          : [],
+        totalAmount,
+        inquirerType: payload.inquirerType,
+        bookingForm: {
+          ...bookingForm,
+          selectedRoomIds: payload.selectedRoomIds || [],
+        },
+      });
+
+      setIsAddBookingOpen(false);
+      toast?.({ message: "Manual booking added.", color: "green" });
+      if (created?.id) {
+        openDetails(created.id);
+      }
+    } catch (error) {
+      toast?.({ message: `Unable to add booking: ${error.message}`, color: "red" });
+    } finally {
+      setAddingBooking(false);
+    }
   };
 
   if (!currentResort && loading) return <div className="p-20 text-center">Loading Management Console...</div>;
@@ -299,6 +256,23 @@ export default function BookingManagementPage() {
                 Booking Console
               </h1>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              onClick={handleSyncData}
+              className="rounded-full px-2 text-xs font-black uppercase"
+              disabled={isSyncing}
+            >
+              {isSyncing ? "Syncing..." : "Sync Data"}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setIsAddBookingOpen(true)}
+              className="rounded-full px-2 text-xs font-black uppercase"
+            >
+              Add Booking
+            </Button>
           </div>
         </header>
 
@@ -330,7 +304,7 @@ export default function BookingManagementPage() {
             }`}
           >
             <CalendarIcon size={18} />
-            Availability Calendar
+            Bookings Calendar
             {activeTab === "calendar" && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-t-full" />}
           </button>
 
@@ -366,7 +340,7 @@ export default function BookingManagementPage() {
             </div>
           ) : activeTab === "calendar" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <BookingCalendar fullWidth />
+              <BookingCalendar fullWidth archivedBookings={archivedBookings} />
             </div>
           ) : activeTab === "concerns" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -385,12 +359,17 @@ export default function BookingManagementPage() {
                 audits={audits}
                 declinedBookings={declinedBookings}
                 checkedOutBookings={checkedOutBookings}
-                loading={loadingAudits}
-                onRefresh={loadAudits}
+                archivedBookings={archivedBookings}
+                loading={loadingAudits || loadingArchivedBookings}
+                onRefresh={refreshAuditArchive}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
                 onReopenDeclined={handleReopenDeclined}
-                onDeleteDeclined={handleDeleteDeclined}
+                onReopenCancelled={handleReopenCancelled}
+                onReopenCheckedOut={handleReopenCheckedOut}
+                onResolveDeclined={handleResolveDeclined}
+                onResolveCancelled={handleResolveCancelled}
                 onResolveCheckedOut={handleResolveCheckedOut}
+                onDeleteArchived={handleDeleteArchivedBooking}
                 unresolvedIssueBookingIds={unresolvedIssueBookingIds}
               />
             </div>
@@ -398,6 +377,13 @@ export default function BookingManagementPage() {
         </main>
       </div>
       <Toast/>
+      <ManualBookingModal
+        isOpen={isAddBookingOpen}
+        onClose={() => setIsAddBookingOpen(false)}
+        onSubmit={handleCreateBooking}
+        resort={currentResort}
+        isSubmitting={addingBooking}
+      />
     </div>
   );
 }

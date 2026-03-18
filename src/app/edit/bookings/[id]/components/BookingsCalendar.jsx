@@ -7,6 +7,7 @@ import {
   Clock3,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
@@ -15,6 +16,8 @@ import { Button } from "@/components/ui/button";
 
 const GROUP_COLORS = ["bg-blue-600", "bg-orange-500", "bg-emerald-600", "bg-amber-500"];
 const GROUP_COLOR_HEX = ["#2563eb", "#f97316", "#059669", "#f59e0b"];
+const ARCHIVE_COLORS = ["bg-blue-800", "bg-orange-700", "bg-emerald-800", "bg-amber-800"];
+const ARCHIVE_COLOR_HEX = ["#1e40af", "#c2410c", "#065f46", "#92400e"];
 
 function getNormalizedStatus(booking) {
   return String(booking?.status || booking?.bookingForm?.status || "").toLowerCase();
@@ -31,8 +34,9 @@ function getStatusLabel(booking) {
 }
 
 function shouldShowOnCalendar(booking) {
+  if (booking?.isArchived) return true;
   const normalizedStatus = getNormalizedStatus(booking);
-  return !["pending checkout", "checked out", "cancelled", "declined"].includes(normalizedStatus);
+  return !["pending checkout", "cancelled", "declined"].includes(normalizedStatus);
 }
 
 function isConfirmedStatus(booking) {
@@ -40,8 +44,15 @@ function isConfirmedStatus(booking) {
   return normalized.includes("confirm") || normalized.includes("ongoing");
 }
 
+function isPastStatus(booking) {
+  if (booking?.isArchived) return true;
+  const normalized = getNormalizedStatus(booking);
+  return normalized.includes("checked out");
+}
+
 function isInquiryStatus(booking) {
   const normalized = getNormalizedStatus(booking);
+  if (normalized.includes("approved inquiry")) return false;
   return normalized.includes("inquiry") || normalized.includes("pending payment");
 }
 
@@ -53,32 +64,92 @@ function getBookingEndDate(booking) {
   return booking?.endDate || booking?.bookingForm?.checkOutDate || getBookingStartDate(booking);
 }
 
-export default function BookingCalendar() {
+export default function BookingCalendar({ archivedBookings = [] }) {
   const { resort } = useResort();
   const { bookings } = useBookings();
   const router = useRouter();
   const params = useParams();
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarMode, setCalendarMode] = useState("all"); // all | confirmed
-  const [showInquiryOverlay, setShowInquiryOverlay] = useState(false);
+  const [calendarMode, setCalendarMode] = useState("all"); // all | confirmed | inquiry | past
+  const [search, setSearch] = useState("");
+  const calendarToggleModes = [
+    { id: "all", label: "All Bookings" },
+    { id: "confirmed", label: "Confirmed / Ongoing" },
+    { id: "inquiry", label: "Inquiry Status" },
+  ];
+  const toggleModeIndex = Math.max(
+    0,
+    calendarToggleModes.findIndex((mode) => mode.id === calendarMode)
+  );
+  const toggleCalendarMode = () => {
+    const nextIndex = (toggleModeIndex + 1) % calendarToggleModes.length;
+    setCalendarMode(calendarToggleModes[nextIndex].id);
+  };
 
   const bookingList = useMemo(() => bookings || resort?.bookings || [], [bookings, resort?.bookings]);
+  const archivedList = useMemo(() => archivedBookings || [], [archivedBookings]);
+  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
+  const matchesSearch = React.useCallback(
+    (booking) => {
+      if (!normalizedSearch) return true;
+      const form = booking?.bookingForm || {};
+      const fields = [
+        form.stayingGuestName,
+        form.guestName,
+        form.agentName,
+        form.roomName,
+        booking?.startDate,
+        booking?.endDate,
+        booking?.status || form.status,
+      ];
+      return fields.some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
+    },
+    [normalizedSearch]
+  );
+  const filteredBookingList = useMemo(
+    () => bookingList.filter(matchesSearch),
+    [bookingList, matchesSearch]
+  );
+  const filteredArchivedList = useMemo(
+    () => archivedList.filter(matchesSearch),
+    [archivedList, matchesSearch]
+  );
+
   const getBookingColor = (booking) => {
+    if (booking?.isArchived) {
+      const index = filteredArchivedList.findIndex((entry) => entry.id?.toString() === booking.id?.toString());
+      if (index < 0) return ARCHIVE_COLORS[0];
+      return ARCHIVE_COLORS[index % ARCHIVE_COLORS.length];
+    }
     const index = bookingList.findIndex((entry) => entry.id?.toString() === booking.id?.toString());
     if (index < 0) return GROUP_COLORS[0];
     return GROUP_COLORS[index % GROUP_COLORS.length];
   };
   const getBookingColorHex = (booking) => {
+    if (booking?.isArchived) {
+      const index = filteredArchivedList.findIndex((entry) => entry.id?.toString() === booking.id?.toString());
+      if (index < 0) return ARCHIVE_COLOR_HEX[0];
+      return ARCHIVE_COLOR_HEX[index % ARCHIVE_COLOR_HEX.length];
+    }
     const index = bookingList.findIndex((entry) => entry.id?.toString() === booking.id?.toString());
     if (index < 0) return GROUP_COLOR_HEX[0];
     return GROUP_COLOR_HEX[index % GROUP_COLOR_HEX.length];
   };
 
-  const getDateBookings = (dateString) =>
-    bookingList.filter((booking) => {
+  const getDateBookings = (dateString) => {
+    const sourceList =
+      calendarMode === "past"
+        ? [
+            ...filteredArchivedList,
+            ...filteredBookingList.filter((booking) => isPastStatus(booking)),
+          ]
+        : filteredBookingList;
+    return sourceList.filter((booking) => {
       if (!shouldShowOnCalendar(booking)) return false;
       if (calendarMode === "confirmed" && !isConfirmedStatus(booking)) return false;
+      if (calendarMode === "inquiry" && !isInquiryStatus(booking)) return false;
+      if (calendarMode === "past" && !isPastStatus(booking)) return false;
       const startDate = getBookingStartDate(booking);
       const endDate = getBookingEndDate(booking);
       if (!startDate) return false;
@@ -89,11 +160,31 @@ export default function BookingCalendar() {
         (dateString > startDate && dateString < endDate)
       );
     });
+  };
 
   const getBookingTooltip = (booking) => {
-    const checkIn = booking?.checkInTime || booking?.bookingForm?.checkInTime || "--:--";
-    const checkOut = booking?.checkOutTime || booking?.bookingForm?.checkOutTime || "--:--";
-    return `Time In: ${checkIn} - Time Out: ${checkOut}`;
+    const form = booking?.bookingForm || {};
+    const checkIn = booking?.checkInTime || form.checkInTime || "--:--";
+    const checkOut = booking?.checkOutTime || form.checkOutTime || "--:--";
+    const guestName = form.stayingGuestName || form.guestName || "Guest";
+    const agentName = form.agentName || "";
+    const roomName = form.roomName || "";
+    const roomCount = Number(form.roomCount || booking?.roomCount || 0);
+    const inquirerType = String(booking?.inquirerType || form.inquirerType || "client").toLowerCase();
+    const typeLabel = inquirerType === "agent" ? "Agent" : "Client";
+    const startDate = getBookingStartDate(booking) || "--";
+    const endDate = getBookingEndDate(booking) || startDate;
+    const statusLabel = getStatusLabel(booking);
+    const lines = [
+      `Guest: ${guestName}`,
+      agentName ? `Agent: ${agentName}` : null,
+      roomName ? `Room: ${roomName}` : null,
+      roomCount ? `Rooms: ${roomCount}` : null,
+      `Dates: ${startDate} \u2192 ${endDate}`,
+      `Times: ${checkIn} \u2192 ${checkOut}`,
+      `Status: ${statusLabel} (${typeLabel})`,
+    ].filter(Boolean);
+    return lines.join("\n");
   };
 
   const getDateTooltip = (dateBookings) => {
@@ -110,20 +201,6 @@ export default function BookingCalendar() {
     if (!resortId) return;
     router.push(`/edit/bookings/${resortId}/booking-details/${bookingId}`);
   };
-
-  const getInquiryOverlayBookings = (dateString) =>
-    bookingList.filter((booking) => {
-      if (!isInquiryStatus(booking)) return false;
-      const startDate = getBookingStartDate(booking);
-      const endDate = getBookingEndDate(booking);
-      if (!startDate) return false;
-      if (!endDate) return startDate === dateString;
-      return (
-        startDate === dateString ||
-        endDate === dateString ||
-        (dateString > startDate && dateString < endDate)
-      );
-    });
 
   const renderMonth = (monthOffset) => {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth() + monthOffset, 1);
@@ -146,7 +223,6 @@ export default function BookingCalendar() {
             const day = index + 1;
             const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const dateBookings = getDateBookings(dateString);
-            const inquiryBookings = showInquiryOverlay ? getInquiryOverlayBookings(dateString) : [];
             const orderedBookings = [...dateBookings].sort((a, b) => {
               const startA = getBookingStartDate(a) || "";
               const startB = getBookingStartDate(b) || "";
@@ -162,7 +238,6 @@ export default function BookingCalendar() {
                   backgroundImage: `linear-gradient(90deg, ${getBookingColorHex(booking)} 0%, ${getBookingColorHex(booking)} 50%, ${getBookingColorHex(secondaryBooking)} 50%, ${getBookingColorHex(secondaryBooking)} 100%)`,
                 }
               : undefined;
-            const hasInquiryOverlay = inquiryBookings.length > 0;
 
             const className = `h-9 w-full rounded-lg text-sm transition-all relative flex items-center justify-center
               ${booking ? "text-white cursor-pointer" : "hover:bg-slate-100 text-slate-600"} 
@@ -184,9 +259,6 @@ export default function BookingCalendar() {
                       className={`absolute inset-0 rounded-[inherit] ${primaryColor} ${getBookingStartDate(booking) !== dateString && getBookingEndDate(booking) !== dateString ? "opacity-90" : ""}`}
                     />
                   )
-                ) : null}
-                {hasInquiryOverlay ? (
-                  <span className="absolute inset-0 rounded-[inherit] bg-amber-400/30 ring-1 ring-amber-400/40" />
                 ) : null}
                 <span className="relative z-10">{day}</span>
               </>
@@ -231,30 +303,41 @@ export default function BookingCalendar() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
           <div>
             <h2 className="text-2xl font-black text-blue-600 flex items-center gap-3 uppercase tracking-tight">
-              <CalendarIcon size={28} className="text-blue-600" /> 
-              Resort Schedule
+              <CalendarIcon size={28} className="text-blue-600" />
+              Bookings Calendar
             </h2>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Read-only whole-resort availability overview</p>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Current and archived booking activity</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
-              variant={calendarMode === "confirmed" ? "default" : "outline"}
+              variant="outline"
               className="h-9 px-3 text-[11px] font-bold"
-              onClick={() => setCalendarMode((prev) => (prev === "confirmed" ? "all" : "confirmed"))}
+              onClick={toggleCalendarMode}
             >
-              {calendarMode === "confirmed" ? "Confirmed Only" : "All Bookings"}
+              {calendarToggleModes[toggleModeIndex]?.label || "All Bookings"}
             </Button>
             <Button
               type="button"
-              variant={showInquiryOverlay ? "default" : "outline"}
+              variant={calendarMode === "past" ? "default" : "outline"}
               className="h-9 px-3 text-[11px] font-bold"
-              onClick={() => setShowInquiryOverlay((prev) => !prev)}
+              onClick={() => setCalendarMode((prev) => (prev === "past" ? "all" : "past"))}
             >
-              {showInquiryOverlay ? "Inquiries Overlay On" : "Show Inquiries Overlay"}
+              Past Bookings
             </Button>
           </div>
         
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="relative w-full max-w-md">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search guest, agent, or date"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-slate-600"
+            />
+          </div>
         </div>
 
         {/* THE CALENDAR GRID - Now much larger */}
@@ -274,16 +357,21 @@ export default function BookingCalendar() {
         {/* Active Ranges Summary at bottom of calendar */}
         {/* ... (keep your existing active ranges list) */}
       </div>
-              <div className="space-y-2">
+        <div className="space-y-2">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Resort Booking Ranges</p>
           <div className="flex flex-wrap gap-3">
-            {bookingList
+            {(calendarMode === "past" ? [...filteredArchivedList, ...filteredBookingList] : filteredBookingList)
               .filter((booking) => shouldShowOnCalendar(booking))
-              .filter((booking) => (calendarMode === "confirmed" ? isConfirmedStatus(booking) : true))
+              .filter((booking) => {
+                if (calendarMode === "confirmed") return isConfirmedStatus(booking);
+                if (calendarMode === "inquiry") return isInquiryStatus(booking);
+                if (calendarMode === "past") return isPastStatus(booking);
+                return true;
+              })
               .map((booking) => {
                 const checkIn = booking?.checkInTime || booking?.bookingForm?.checkInTime || "--:--";
                 const checkOut = booking?.checkOutTime || booking?.bookingForm?.checkOutTime || "--:--";
-                const guestName = booking?.bookingForm?.guestName || "Guest";
+                const guestName = booking?.bookingForm?.stayingGuestName || booking?.bookingForm?.guestName || "Guest";
                 const roomLabel = getStatusLabel(booking);
 
                 return (

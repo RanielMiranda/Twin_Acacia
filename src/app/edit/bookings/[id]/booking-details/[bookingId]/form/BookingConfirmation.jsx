@@ -8,12 +8,53 @@ export default function BookingConfirmation({
   resortName,
   resortProfileImage,
   resortPrice = 0,
+  resortExtraServices = [],
 }) {
   const formData = data || {};
 
+  const inquirerType = String(formData.inquirerType || "client").toLowerCase();
+  const inquirerName = inquirerType === "agent" ? (formData.agentName || formData.guestName || "") : (formData.guestName || "");
+  const inquirerEmail = formData.email || "";
+  const inquirerPhone = formData.phoneNumber || "";
+
+  const guestName = formData.stayingGuestName || formData.guestName || "-";
+  const guestEmail = formData.stayingGuestEmail || "";
+  const guestPhone = formData.stayingGuestPhone || "";
+  const clientAddress = formData.address || "";
+
+  const normalizeService = (entry) => {
+    if (!entry) return null;
+    if (typeof entry === "string") {
+      return { key: entry, name: entry, cost: 0 };
+    }
+    const key = entry.id || entry.name || "";
+    const name = entry.name || entry.id || key;
+    const cost = Number(entry.cost || 0);
+    return { key, name, cost };
+  };
+
+  const resolveService = (service) => {
+    if (!service) return null;
+    const found = (resortExtraServices || []).find(
+      (svc) => svc.id === service.key || svc.name === service.key
+    );
+    if (found) {
+      return {
+        key: service.key,
+        name: found.name || service.name,
+        cost: Number(found.cost || service.cost || 0),
+      };
+    }
+    return service;
+  };
+
   const selectedServices = Array.isArray(formData.resortServices)
     ? formData.resortServices
+        .map(normalizeService)
+        .filter(Boolean)
+        .map(resolveService)
     : [];
+
   const serviceTotal = useMemo(
     () =>
       (selectedServices || []).reduce(
@@ -69,29 +110,47 @@ export default function BookingConfirmation({
           <section className="space-y-3">
             <h2 className=" mt-5 text-xs font-black uppercase tracking-wider text-slate-500">Contact Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Contact Name">
-                <div className="text-sm font-bold text-slate-700">{formData.guestName || formData.agentName || "-"}</div>
+              <Field label="Guest Name">
+                <div className="text-sm font-bold text-slate-700">{guestName}</div>
               </Field>
-              <Field label="Email"><div className="text-sm font-bold text-slate-700">{formData.email || "-"}</div></Field>
-              <Field label="Phone Number"><div className="text-sm font-bold text-slate-700">{formData.phoneNumber || "-"}</div></Field>
-              <Field label="Address"><div className="text-sm font-bold text-slate-700">{formData.address || "-"}</div></Field>
+
+              {guestEmail ? (
+                <Field label="Guest Email">
+                  <div className="text-sm font-bold text-slate-700">{guestEmail}</div>
+                </Field>
+              ) : null}
+
+              {guestPhone ? (
+                <Field label="Guest Phone">
+                  <div className="text-sm font-bold text-slate-700">{guestPhone}</div>
+                </Field>
+              ) : null}
+
+                  <Field label="Guest Address">
+                    <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
+                  </Field>
+
+              {inquirerType === "agent" ? (
+                <>
+                  <Field label="Inquirer Name">
+                    <div className="text-sm font-bold text-slate-700">{inquirerName || "-"}</div>
+                  </Field>
+                  <Field label="Inquirer Email">
+                    <div className="text-sm font-bold text-slate-700">{inquirerEmail || "-"}</div>
+                  </Field>
+                  <Field label="Inquirer Phone">
+                    <div className="text-sm font-bold text-slate-700">{inquirerPhone || "-"}</div>
+                  </Field>
+                </>
+              ) : null}
             </div>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">Stay Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Field label="Guest Name">
-                <div className="text-sm font-bold text-slate-700">{formData.stayingGuestName || formData.guestName || "-"}</div>
-              </Field>
-              {String(formData.inquirerType || "").toLowerCase() === "agent" || formData.agentName ? (
-                <Field label="Agent">
-                  <div className="text-sm font-bold text-slate-700">{formData.agentName || "-"}</div>
-                </Field>
-              ) : null}
               <Field label="Adults"><div className="text-sm font-bold text-slate-700">{Number(formData.adultCount || 0)}</div></Field>
               <Field label="Children"><div className="text-sm font-bold text-slate-700">{Number(formData.childrenCount || 0)}</div></Field>
-              <Field label="Guests"><div className="text-sm font-bold text-slate-700">{Number(formData.guestCount || 0)}</div></Field>
               <Field label="Sleeping Guests"><div className="text-sm font-bold text-slate-700">{Number(formData.sleepingGuests || 0)}</div></Field>
               <Field label="Total Pax">
                 <div className="text-sm font-bold text-slate-700">

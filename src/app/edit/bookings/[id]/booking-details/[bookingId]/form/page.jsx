@@ -40,19 +40,46 @@ export default function BookingDetailsFormPage() {
     ? bookingList.find((booking) => booking.id.toString() === bookingId?.toString())
     : null;
 
+  const bookingForm = existingBooking?.bookingForm || {};
+  const adultCount = Number(existingBooking?.adultCount ?? bookingForm.adultCount ?? 0);
+  const childrenCount = Number(existingBooking?.childrenCount ?? bookingForm.childrenCount ?? 0);
+  const guestCount = Number(
+    existingBooking?.pax ?? bookingForm.guestCount ?? bookingForm.pax ?? adultCount + childrenCount
+  );
+  const sleepingGuests = Number(existingBooking?.sleepingGuests ?? bookingForm.sleepingGuests ?? 0);
+  const roomCount = Number(
+    existingBooking?.roomCount ?? bookingForm.roomCount ?? existingBooking?.roomIds?.length ?? 1
+  );
+  const totalAmount = Number(existingBooking?.totalAmount ?? bookingForm.totalAmount ?? 0);
+  const address = bookingForm.address || bookingForm.guestAddress || "";
+
   const initialData = {
-    ...(existingBooking?.bookingForm || {}),
-    checkInDate: existingBooking?.startDate || "",
-    checkOutDate: existingBooking?.endDate || "",
-    checkInTime: existingBooking?.checkInTime || "14:00",
-    checkOutTime: existingBooking?.checkOutTime || "11:00",
+    ...bookingForm,
+    adultCount,
+    childrenCount,
+    guestCount,
+    pax: guestCount,
+    sleepingGuests,
+    roomCount,
+    totalAmount,
+    address,
+    guestAddress: address,
+    checkInDate: existingBooking?.startDate || bookingForm.checkInDate || "",
+    checkOutDate: existingBooking?.endDate || bookingForm.checkOutDate || "",
+    checkInTime: existingBooking?.checkInTime || bookingForm.checkInTime || "14:00",
+    checkOutTime: existingBooking?.checkOutTime || bookingForm.checkOutTime || "11:00",
     roomName:
-      existingBooking?.bookingForm?.roomName ||
+      bookingForm.roomName ||
       (existingBooking?.roomIds || [])
         .map((roomId) => (currentResort?.rooms || []).find((room) => room.id === roomId)?.name)
         .filter(Boolean)
         .join(", ") ||
       "",
+    resortServices: Array.isArray(existingBooking?.resortServiceIds)
+      ? existingBooking.resortServiceIds
+      : Array.isArray(bookingForm.resortServices)
+        ? bookingForm.resortServices
+        : [],
     resortName: currentResort?.name,
   };
 
@@ -66,6 +93,7 @@ export default function BookingDetailsFormPage() {
         resortName={currentResort?.name}
         resortProfileImage={currentResort?.profileImage}
         resortPrice={Number(currentResort?.price || 0)}
+        resortExtraServices={currentResort?.extraServices || []}
         readOnly
       />
       )}

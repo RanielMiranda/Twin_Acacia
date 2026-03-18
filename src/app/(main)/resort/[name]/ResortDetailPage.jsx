@@ -129,8 +129,13 @@ export default function ResortDetailPage({ name }) {
 
 const handleSubmitInquiry = async (submittedData) => {
     try {
-      const selectedServices = (resort.extraServices || []).filter((service) =>
-        submittedData.selectedServices?.includes(service.name)
+      const selectedServiceKeys = Array.isArray(submittedData.selectedServices)
+        ? submittedData.selectedServices
+            .map((item) => (item && typeof item === "object" ? item.id || item.name : item))
+            .filter(Boolean)
+        : [];
+      const selectedServices = (resort.extraServices || []).filter(
+        (service) => selectedServiceKeys.includes(service.id) || selectedServiceKeys.includes(service.name)
       );
       const selectedRoomIds = Array.isArray(submittedData.selectedRoomIds)
         ? submittedData.selectedRoomIds.map((id) => id?.toString()).filter(Boolean)
@@ -161,21 +166,20 @@ const handleSubmitInquiry = async (submittedData) => {
         inquirerType: submittedData.inquirerType || "client",
         agentName: submittedData.agentName || "",
         guestName: submittedData.guestName || "",
-        stayingGuestName: submittedData.stayingGuestName || "",
-        stayingGuestEmail: submittedData.stayingGuestEmail || "",
+        ...((submittedData.inquirerType || "client") === "agent"
+          ? {
+              stayingGuestName: submittedData.stayingGuestName || "",
+              stayingGuestEmail: submittedData.stayingGuestEmail || "",
+              stayingGuestPhone: submittedData.stayingGuestPhone || "",
+            }
+          : {}),
         email: submittedData.email || "",
-        phoneNumber: submittedData.contactNumber || "",
+        phoneNumber: submittedData.phoneNumber || "",
         address: submittedData.address || submittedData.area || "",
-        adultCount,
-        childrenCount,
-        pax,
-        guestCount: pax,
-        roomCount: resolvedRoomIds.length || Number(submittedData.roomCount || 0),
         roomName: resolvedRoomNames.length > 0 ? resolvedRoomNames.join(", ") : submittedData.roomName || "",
         roomId: resolvedRoomIds[0] || submittedData.roomId || "",
         assignedRoomNames: resolvedRoomNames,
         assignedRoomIds: resolvedRoomIds,
-        sleepingGuests: Number(submittedData.sleepingGuests || 0),
         checkInDate: submittedData.checkInDate || "",
         checkOutDate: submittedData.checkOutDate || "",
         checkInTime: submittedData.checkInTime || "14:00",
@@ -184,9 +188,6 @@ const handleSubmitInquiry = async (submittedData) => {
         paymentMethod: "Pending",
         downpayment: 0,
         totalAmount: Number(resort.price || 0),
-        resortServices: selectedServices,
-        notes: submittedData.message || "",
-        ticketAccessToken,
         ticketAccessExpiresAt,
         agentTicketAccessToken,
         agentTicketAccessExpiresAt,
@@ -207,6 +208,7 @@ const handleSubmitInquiry = async (submittedData) => {
         pax,
         sleeping_guests: Number(submittedData.sleepingGuests || 0),
         room_count: resolvedRoomIds.length || Number(submittedData.roomCount || 0),
+        resort_service_ids: selectedServiceKeys.map(String),
         booking_form: bookingForm,
       });
 
@@ -313,7 +315,7 @@ const handleSubmitInquiry = async (submittedData) => {
                 ) : null}
                 <button
                   className={`w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white transition ${
-                    hasAvailabilityConflict ? "bg-slate-300 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
+                    hasAvailabilityConflict ? "bg-slate-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                   }`}
                   onClick={() => {
                     if (hasAvailabilityConflict) return;
@@ -406,7 +408,7 @@ const handleSubmitInquiry = async (submittedData) => {
                 />
                 <button
                   className={`mt-4 w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white ${
-                    hasAvailabilityConflict ? "bg-slate-300 cursor-not-allowed" : "bg-slate-900"
+                    hasAvailabilityConflict ? "bg-slate-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                   }`}
                   onClick={() => {
                     if (hasAvailabilityConflict) return;

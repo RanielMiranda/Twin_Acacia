@@ -5,6 +5,8 @@ const resortInitialData = {
   contactPhone: "+63 111 111 1111",
   contactEmail: "info@resort.com",
   contactMedia: "https://facebook.com/resort",
+  rulesAndRegulations: "",
+  termsAndConditions: "",
   profileImage:
     "",
   payment_image_url: null,

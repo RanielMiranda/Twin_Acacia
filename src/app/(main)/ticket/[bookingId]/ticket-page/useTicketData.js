@@ -7,20 +7,6 @@ import { isMissingSupportTableError } from "./helpers";
 import { getTicketTokenRole, isTicketTokenValid } from "@/lib/ticketAccess";
 
 const TICKET_ISSUE_COLUMNS = ["id", "booking_id", "guest_name", "guest_email", "subject", "message", "status", "created_at"].join(", ");
-const TICKET_ISSUE_ARCHIVE_COLUMNS = [
-  "id",
-  "source_issue_id",
-  "booking_id",
-  "resort_id",
-  "guest_name",
-  "guest_email",
-  "subject",
-  "message",
-  "status",
-  "created_at",
-  "resolved_at",
-  "archived_at",
-].join(", ");
 
 export function useTicketData({ normalizedBookingId, accessToken, toast }) {
   const [loading, setLoading] = useState(true);
@@ -53,7 +39,6 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
         const [
           { data: messageRows, error: messageError },
           { data: issueRows, error: issueError },
-          { data: archivedIssueRows, error: archivedIssueError },
         ] = await Promise.all([
           supabase
             .from("ticket_messages")
@@ -65,30 +50,9 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
             .select(TICKET_ISSUE_COLUMNS)
             .eq("booking_id", activeBookingId)
             .order("created_at", { ascending: true }),
-          supabase
-            .from("ticket_issues_archive")
-            .select(TICKET_ISSUE_ARCHIVE_COLUMNS)
-            .eq("booking_id", activeBookingId)
-            .order("created_at", { ascending: true }),
         ]);
         if (messageError) throw messageError;
         if (issueError && !isMissingSupportTableError(issueError)) throw issueError;
-        if (archivedIssueError && !isMissingSupportTableError(archivedIssueError)) throw archivedIssueError;
-
-        const archivedIssues = (archivedIssueRows || []).map((issue) => ({
-          id: `arch:${issue.id}`,
-          booking_id: issue.booking_id,
-          guest_name: issue.guest_name,
-          guest_email: issue.guest_email,
-          subject: issue.subject,
-          message: issue.message,
-          status: issue.status || "resolved",
-          created_at: issue.created_at,
-          resolved_at: issue.resolved_at,
-          archived_at: issue.archived_at,
-          isArchived: true,
-          source_issue_id: issue.source_issue_id,
-        }));
 
         const normalizedRole = String(roleHint || viewerRole || "").toLowerCase();
         const normalizeVisibility = (value) => {
@@ -108,7 +72,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
 
         setMessages(filteredMessages);
         setIssues(
-          [...(issueRows || []), ...archivedIssues].sort(
+          (issueRows || []).sort(
             (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
           )
         );
@@ -123,7 +87,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
         setLoadingMessages(false);
       }
     },
-    [toast],
+    [toast, viewerRole],
   );
 
   const fetchTicket = useCallback(async () => {
@@ -189,17 +153,12 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "ticket_messages", filter: `booking_id=eq.${normalizedBookingId}` },
-        () => fetchMessages(normalizedBookingId)
+        () => fetchMessages(normalizedBookingId, viewerRole)
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "ticket_issues", filter: `booking_id=eq.${normalizedBookingId}` },
-        () => fetchMessages(normalizedBookingId)
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "ticket_issues_archive", filter: `booking_id=eq.${normalizedBookingId}` },
-        () => fetchMessages(normalizedBookingId)
+        () => fetchMessages(normalizedBookingId, viewerRole)
       )
       .on(
         "postgres_changes",
@@ -217,7 +176,7 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     if (!normalizedBookingId) return undefined;
     const interval = setInterval(() => {
       fetchTicket();
-      fetchMessages(normalizedBookingId);
+      fetchMessages(normalizedBookingId, viewerRole);
     }, 20000);
     return () => clearInterval(interval);
   }, [fetchMessages, fetchTicket, normalizedBookingId]);

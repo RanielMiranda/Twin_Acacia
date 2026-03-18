@@ -22,6 +22,8 @@ const RESORT_LIST_COLUMNS = [
   "profileImage",
   "contactEmail",
   "contactPhone",
+  "rulesAndRegulations",
+  "termsAndConditions",
 ].join(", ");
 const RESORT_DETAIL_COLUMNS = [
   "id",
@@ -39,6 +41,8 @@ const RESORT_DETAIL_COLUMNS = [
   "contactEmail",
   "contactPhone",
   "contactMedia",
+  "rulesAndRegulations",
+  "termsAndConditions",
   "description",
   "extraServices",
 ].join(", ");

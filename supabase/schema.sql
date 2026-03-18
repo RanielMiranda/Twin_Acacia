@@ -61,7 +61,8 @@ alter table public.bookings
   add column if not exists pax integer not null default 0,
   add column if not exists sleeping_guests integer not null default 0,
   add column if not exists room_count integer not null default 1,
-  add column if not exists inquirer_type boolean not null default false;
+  add column if not exists inquirer_type boolean not null default false,
+  add column if not exists resort_service_ids text[] not null default '{}';
 
 create table if not exists public.booking_transactions (
   id bigint generated always as identity primary key,
@@ -89,6 +90,7 @@ create index if not exists booking_transactions_booking_id_idx on public.booking
 create index if not exists ticket_issues_booking_id_idx on public.ticket_issues(booking_id);
 create index if not exists bookings_resort_status_idx on public.bookings(resort_id, status);
 create index if not exists bookings_guest_breakdown_idx on public.bookings(pax, adult_count, children_count);
+create index if not exists bookings_resort_service_ids_idx on public.bookings using gin(resort_service_ids);
 
 alter table public.booking_transactions enable row level security;
 alter table public.ticket_issues enable row level security;
@@ -117,7 +119,22 @@ set
   ),
   sleeping_guests = coalesce((booking_form->>'sleepingGuests')::int, sleeping_guests),
   room_count = coalesce((booking_form->>'roomCount')::int, room_count),
-  inquirer_type = coalesce((booking_form->>'inquirerType') = 'agent', inquirer_type)
+  inquirer_type = coalesce((booking_form->>'inquirerType') = 'agent', inquirer_type),
+  resort_service_ids = coalesce(
+    (
+      select array_agg(service_key) filter (where service_key is not null and service_key <> '')
+      from (
+        select
+          case
+            when jsonb_typeof(service_item) = 'object' then coalesce(service_item->>'id', service_item->>'name')
+            when jsonb_typeof(service_item) = 'string' then trim(both '"' from service_item::text)
+            else null
+          end as service_key
+        from jsonb_array_elements(coalesce(booking_form->'resortServices', '[]'::jsonb)) as service_item
+      ) extracted_services
+    ),
+    resort_service_ids
+  )
 where booking_form <> '{}'::jsonb;
 
 -- ==========================================
@@ -209,21 +226,6 @@ create policy accounts_service_only on public.accounts
 -- ==========================================
 -- Phase 7: Archive Tables
 -- ==========================================
-create table if not exists public.ticket_issues_archive (
-  id bigint generated always as identity primary key,
-  source_issue_id bigint unique,
-  booking_id text not null,
-  resort_id bigint references public.resorts(id) on delete cascade,
-  guest_name text,
-  guest_email text,
-  subject text,
-  message text not null,
-  status text not null default 'resolved',
-  created_at timestamptz not null default now(),
-  resolved_at timestamptz not null default now(),
-  archived_at timestamptz not null default now()
-);
-
 create table if not exists public.owner_admin_messages_archive (
   id bigint generated always as identity primary key,
   source_message_id bigint unique,
@@ -241,26 +243,41 @@ create table if not exists public.owner_admin_messages_archive (
 alter table public.owner_admin_messages_archive
   add column if not exists sender_image text;
 
-create index if not exists ticket_issues_archive_resort_idx on public.ticket_issues_archive(resort_id);
-create index if not exists ticket_issues_archive_booking_idx on public.ticket_issues_archive(booking_id);
-create index if not exists ticket_issues_archive_resolved_idx on public.ticket_issues_archive(resolved_at desc);
+create table if not exists public.booking_archive (
+  id uuid primary key default gen_random_uuid(),
+  booking_id text references public.bookings(id) on delete set null,
+  resort_id bigint not null,
+  booking_form jsonb not null default '{}'::jsonb,
+  start_date date,
+  end_date date,
+  check_in_time text,
+  check_out_time text,
+  room_count integer,
+  archived_at timestamptz not null default now(),
+  reopen_deadline timestamptz
+);
+
 create index if not exists owner_admin_messages_archive_resort_idx on public.owner_admin_messages_archive(resort_id);
 create index if not exists owner_admin_messages_archive_resolved_idx on public.owner_admin_messages_archive(resolved_at desc);
+create index if not exists booking_archive_resort_idx on public.booking_archive(resort_id);
+create index if not exists booking_archive_booking_id_idx on public.booking_archive(booking_id);
+create index if not exists booking_archive_archived_idx on public.booking_archive(archived_at desc);
 
-alter table public.ticket_issues_archive enable row level security;
 alter table public.owner_admin_messages_archive enable row level security;
-
-drop policy if exists ticket_issues_archive_all_access on public.ticket_issues_archive;
-create policy ticket_issues_archive_all_access on public.ticket_issues_archive
-for all
-using (true)
-with check (true);
+alter table public.booking_archive enable row level security;
 
 drop policy if exists owner_admin_messages_archive_all_access on public.owner_admin_messages_archive;
 create policy owner_admin_messages_archive_all_access on public.owner_admin_messages_archive
 for all
 using (true)
 with check (true);
+
+drop policy if exists booking_archive_all_access on public.booking_archive;
+drop policy if exists booking_archive_service_only on public.booking_archive;
+create policy booking_archive_all_access on public.booking_archive
+  for all
+  using (true)
+  with check (true);
 
 -- ==========================================
 -- Phase 8: Security Hardening
@@ -277,6 +294,10 @@ begin
     return true;
   end if;
 
+  if t = 'cancelled' then
+    return true;
+  end if;
+
   if f = 'inquiry' then
     return t in ('approved inquiry', 'declined', 'cancelled', 'pending payment');
   elsif f = 'approved inquiry' then
@@ -290,11 +311,11 @@ begin
   elsif f = 'pending checkout' then
     return t in ('checked out', 'ongoing');
   elsif f = 'checked out' then
-    return false;
+    return t in ('ongoing', 'confirmed', 'pending checkout', 'inquiry');
   elsif f = 'declined' then
     return t in ('inquiry');
   elsif f = 'cancelled' then
-    return false;
+    return t in ('inquiry');
   end if;
 
   return false;
@@ -547,7 +568,7 @@ begin
   perform cron.schedule(
     'booking_status_automation',
     '*/10 * * * *',
-    $$select public.run_booking_status_automation();$$
+    $cron$select public.run_booking_status_automation();$cron$
   );
 end;
 $$;
@@ -579,3 +600,7 @@ create policy resort_caretakers_all_access on public.resort_caretakers
 alter table public.resorts
   add column if not exists payment_image_url text,
   add column if not exists bank_payment_image_url text;
+
+alter table public.resorts
+  add column if not exists "rulesAndRegulations" text,
+  add column if not exists "termsAndConditions" text;

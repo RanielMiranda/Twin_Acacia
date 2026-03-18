@@ -13,22 +13,22 @@ export function TicketAddOnsCardSection({
   canEdit = true,
 }) {
   const [services, setServices] = useState(initialServices);
+  const normalizeServiceKey = (service) => {
+    if (!service) return "";
+    if (typeof service === "string") return service;
+    return service.id || service.name || "";
+  };
 
   const toggleService = (service) => {
+    const serviceKey = normalizeServiceKey(service);
+    if (!serviceKey) return;
     setServices((prev) => {
       const current = prev || [];
-      const exists = current.some((entry) => entry?.name === service?.name);
+      const exists = current.some((entry) => normalizeServiceKey(entry) === serviceKey);
       if (exists) {
-        return current.filter((entry) => entry?.name !== service?.name);
+        return current.filter((entry) => normalizeServiceKey(entry) !== serviceKey);
       }
-      return [
-        ...current,
-        {
-          name: service?.name || "",
-          description: service?.description || "",
-          cost: Number(service?.cost || 0),
-        },
-      ];
+      return [...current, serviceKey];
     });
   };
 
@@ -50,7 +50,7 @@ export function TicketAddOnsCardSection({
       <div className="space-y-3">
         {availableServices.length > 0 ? (
           availableServices.map((service, index) => {
-            const selected = (services || []).some((entry) => entry?.name === service?.name);
+            const selected = (services || []).some((entry) => normalizeServiceKey(entry) === normalizeServiceKey(service));
             return (
               <button
                 key={`${service?.name || "service"}-${index}`}
@@ -71,7 +71,7 @@ export function TicketAddOnsCardSection({
                     ) : null}
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-blue-600">PHP {Number(service?.cost || 0).toLocaleString()}</p>
+                    <p className="text-sm font-black text-blue-600">PHP {Number(service?.cost || service?.price || 0).toLocaleString()}</p>
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                       {selected ? "Selected" : "Tap to add"}
                     </p>

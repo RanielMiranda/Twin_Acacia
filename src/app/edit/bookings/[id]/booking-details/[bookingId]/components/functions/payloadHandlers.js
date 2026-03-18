@@ -3,19 +3,21 @@ export function buildStatusAudit({
   nextDraft,
   actorMeta,
 }) {
-  const previousStatus = booking.bookingForm?.status || booking.status || null;
-  const nextStatus = nextDraft.status || previousStatus || "Inquiry";
-  const currentAudit = Array.isArray(booking.bookingForm?.statusAudit)
+  const bookingAudit = Array.isArray(booking.bookingForm?.statusAudit)
     ? booking.bookingForm.statusAudit
-    : Array.isArray(nextDraft.statusAudit)
-      ? nextDraft.statusAudit
-      : [];
+    : [];
+  const draftAudit = Array.isArray(nextDraft.statusAudit)
+    ? nextDraft.statusAudit
+    : [];
+  const currentAudit = draftAudit.length > 0 ? draftAudit : bookingAudit;
+  const lastAudit = currentAudit[currentAudit.length - 1];
+  const previousStatus = lastAudit?.to || booking.bookingForm?.status || booking.status || null;
+  const nextStatus = nextDraft.status || previousStatus || "Inquiry";
 
   if (!previousStatus || !nextStatus || previousStatus === nextStatus) {
     return currentAudit;
   }
 
-  const lastAudit = currentAudit[currentAudit.length - 1];
   if (
     lastAudit?.from === previousStatus &&
     lastAudit?.to === nextStatus &&
@@ -58,6 +60,30 @@ export function buildPersistPayload({
   const normalizedCheckOutDate =
     nextDraft.checkOutDate || booking.endDate || normalizedCheckInDate || "";
 
+  const normalizedInquirerType = String(
+    nextDraft.inquirerType || booking.bookingForm?.inquirerType || booking.inquirerType || "client"
+  ).toLowerCase();
+
+  const { agentEmail, agentPhone, agentContactEmail, agentContactPhone, ...restDraft } = nextDraft;
+
+  const inquirerEmail =
+    normalizedInquirerType === "agent"
+      ? nextDraft.email || agentEmail || agentContactEmail || ""
+      : nextDraft.email || nextDraft.stayingGuestEmail || "";
+
+  const inquirerPhone =
+    normalizedInquirerType === "agent"
+      ? nextDraft.phoneNumber || agentPhone || agentContactPhone || ""
+      : nextDraft.phoneNumber || nextDraft.stayingGuestPhone || "";
+
+  const sanitizedDraft = {
+    ...restDraft,
+    agentName: normalizedInquirerType === "agent" ? restDraft.agentName || "" : "",
+    inquirerType: normalizedInquirerType,
+    email: inquirerEmail,
+    phoneNumber: inquirerPhone,
+  };
+
   return {
     ...booking,
     roomIds: assignedRoomIds,
@@ -67,9 +93,24 @@ export function buildPersistPayload({
     checkInTime: nextDraft.checkInTime || booking.checkInTime,
     checkOutTime: nextDraft.checkOutTime || booking.checkOutTime,
     paymentDeadline: nextDraft.paymentDeadline || null,
+    adultCount: Number(nextDraft.adultCount || 0),
+    childrenCount: Number(nextDraft.childrenCount || 0),
+    pax: Number(nextDraft.guestCount || 0),
+    sleepingGuests: Number(nextDraft.sleepingGuests || 0),
+    roomCount: assignedRoomIds.length || Number(nextDraft.roomCount || 1),
+    inquirerType: normalizedInquirerType,
+    resortServiceIds: Array.isArray(nextDraft.resortServices)
+      ? nextDraft.resortServices
+          .map((entry) => {
+            if (entry && typeof entry === "object") return entry.id || entry.name || "";
+            return entry || "";
+          })
+          .filter(Boolean)
+          .map(String)
+      : [],
     bookingForm: {
       ...(booking.bookingForm || {}),
-      ...nextDraft,
+      ...sanitizedDraft,
       checkInDate: normalizedCheckInDate,
       checkOutDate: normalizedCheckOutDate,
       roomCount: assignedRoomIds.length || nextDraft.roomCount || booking.roomIds?.length || 1,
@@ -80,6 +121,21 @@ export function buildPersistPayload({
       lastActionBy: actorMeta.name || "Owner",
       lastActionRole: actorMeta.role || "owner",
       lastActionById: actorMeta.id || "",
+      stayingGuestName:
+        normalizedInquirerType === "client" &&
+        (sanitizedDraft.stayingGuestName || "") === (sanitizedDraft.guestName || "")
+          ? ""
+          : sanitizedDraft.stayingGuestName || "",
+      stayingGuestEmail:
+        normalizedInquirerType === "client" &&
+        (sanitizedDraft.stayingGuestEmail || "") === (sanitizedDraft.email || "")
+          ? ""
+          : sanitizedDraft.stayingGuestEmail || "",
+      stayingGuestPhone:
+        normalizedInquirerType === "client" &&
+        (sanitizedDraft.stayingGuestPhone || "") === (sanitizedDraft.phoneNumber || "")
+          ? ""
+          : sanitizedDraft.stayingGuestPhone || "",
     },
   };
 }

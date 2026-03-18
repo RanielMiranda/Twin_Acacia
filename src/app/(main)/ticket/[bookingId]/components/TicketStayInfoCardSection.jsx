@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { Card } from "@/components/ui/card";
@@ -18,7 +18,11 @@ export function TicketStayInfoCardSection({
   entryCode,
   viewerRole,
 }) {
-  const displayGuestName = form?.stayingGuestName || form?.guestName || "—";
+  const displayGuestName = form?.stayingGuestName || form?.guestName || "â€”";
+  const inquirerType = (form?.inquirerType || "client").toString().toLowerCase();
+  const agentName = form?.agentName || "â€”";
+  const contactEmail = form?.email || form?.stayingGuestEmail || "â€”";
+  const contactPhone = form?.phoneNumber || form?.stayingGuestPhone || "â€”";
   return (
     <Card
       id={id}
@@ -30,6 +34,14 @@ export function TicketStayInfoCardSection({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <TicketRow label="Guest Name" value={displayGuestName} />
         <TicketRow label="Status" value={booking?.status || "Inquiry"} isStatus />
+        {inquirerType === "agent" ? (
+          <TicketRow label="Agent Name" value={agentName} />
+        ) : (
+          <>
+            <TicketRow label="Contact Email" value={contactEmail} />
+            <TicketRow label="Contact Phone" value={contactPhone} />
+          </>
+        )}
         <TicketRow label="Pax" value={form?.guestCount ?? 0} />
         <TicketRow label="Adults" value={form?.adultCount ?? 0} />
         <TicketRow label="Children" value={form?.childrenCount ?? 0} />
@@ -60,12 +72,22 @@ export function TicketStayInfoCardSection({
  * Builds the same rows shown in the stay card, for use in print/download HTML (stay info only).
  */
 export function buildStayInfoRows({ form, booking, resort, approvedByName, assignedRoomNames, entryCode, viewerRole }) {
-  const displayGuestName = form?.stayingGuestName || form?.guestName || "—";
-  return [
-    ["Resort", resort?.name || "—"],
+  const displayGuestName = form?.stayingGuestName || form?.guestName || "â€”";
+  const inquirerType = (form?.inquirerType || "client").toString().toLowerCase();
+  const agentName = form?.agentName || "â€”";
+  const contactEmail = form?.email || form?.stayingGuestEmail || "â€”";
+  const contactPhone = form?.phoneNumber || form?.stayingGuestPhone || "â€”";
+  const rows = [
+    ["Resort", resort?.name || "â€”"],
     ["Guest Name", displayGuestName],
     ["Status", booking?.status || "Inquiry"],
-    ["Approved By", approvedByName || "—"],
+    ["Approved By", approvedByName || "â€”"],
+    ...(inquirerType === "agent"
+      ? [["Agent Name", agentName]]
+      : [
+          ["Contact Email", contactEmail],
+          ["Contact Phone", contactPhone],
+        ]),
     ["Pax", String(form?.guestCount ?? 0)],
     ["Adults", String(form?.adultCount ?? 0)],
     ["Children", String(form?.childrenCount ?? 0)],
@@ -73,13 +95,14 @@ export function buildStayInfoRows({ form, booking, resort, approvedByName, assig
     ["Assigned Rooms", assignedRoomNames?.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"],
     [
       "Check-In",
-      `${booking?.start_date || form?.checkInDate || "—"} ${booking?.check_in_time || form?.checkInTime || ""}`.trim(),
+      `${booking?.start_date || form?.checkInDate || "â€”"} ${booking?.check_in_time || form?.checkInTime || ""}`.trim(),
     ],
     [
       "Check-Out",
-      `${booking?.end_date || form?.checkOutDate || "—"} ${booking?.check_out_time || form?.checkOutTime || ""}`.trim(),
+      `${booking?.end_date || form?.checkOutDate || "â€”"} ${booking?.check_out_time || form?.checkOutTime || ""}`.trim(),
     ],
-    ["Location", resort?.location || "—"],
-    ["Entry Code", entryCode || "—"],
+    ["Location", resort?.location || "â€”"],
+    ["Entry Code", entryCode || "â€”"],
   ];
+  return rows;
 }

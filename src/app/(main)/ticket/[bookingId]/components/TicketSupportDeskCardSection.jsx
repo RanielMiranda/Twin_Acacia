@@ -17,12 +17,6 @@ export function TicketSupportDeskCardSection({
   setChatMessage,
   onSendMessage,
   isSendingMessage,
-  issueSubject,
-  setIssueSubject,
-  issueMessage,
-  setIssueMessage,
-  onSendIssue,
-  isSendingIssue,
 }) {
   const conversationItems = buildSupportConversationItems({
     messages,
@@ -108,30 +102,7 @@ export function TicketSupportDeskCardSection({
               {isSendingMessage ? "Sending..." : "Send"}
             </Button>
           </div>
-        ) : (
-          <div className="space-y-3 border-t border-slate-100 pt-4">
-            <p className="text-xs font-black uppercase tracking-widest text-rose-600">Issue Report</p>
-            <input
-              className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
-              placeholder="Subject of concern"
-              value={issueSubject}
-              onChange={(e) => setIssueSubject(e.target.value)}
-            />
-            <textarea
-              className="w-full min-h-28 rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
-              placeholder="Please describe your concern or issues with your stay..."
-              value={issueMessage}
-              onChange={(e) => setIssueMessage(e.target.value)}
-            />
-            <Button
-              className="rounded-full px-8 h-11 bg-slate-900 font-bold uppercase text-[10px] tracking-widest hover:bg-black transition-all"
-              onClick={onSendIssue}
-              disabled={isSendingIssue}
-            >
-              {isSendingIssue ? "Sending..." : "Send Issue Report"}
-            </Button>
-          </div>
-        )}
+        ) : null}
       </div>
     </Card>
   );

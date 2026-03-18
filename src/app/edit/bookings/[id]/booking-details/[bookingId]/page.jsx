@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useSupport } from "@/components/useclient/SupportClient";
@@ -19,7 +20,7 @@ export default function BookingDetailsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, updateBookingById, deleteBookingById, loadingBookings, createSignedProofUrl, createBookingTransaction } = useBookings();
+  const { bookings, updateBookingById, deleteBookingById, loadingBookings, createSignedProofUrl, createBookingTransaction, refreshBookings } = useBookings();
   const { loadBookingSupport, updateConcernStatus, sendTicketMessage, isMissingSupportTableError } = useSupport();
   const [messages, setMessages] = useState([]);
   const [issues, setIssues] = useState([]);
@@ -139,13 +140,9 @@ export default function BookingDetailsPage() {
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "ticket_issues_archive", filter: `booking_id=eq.${booking.id}` },
-        () => loadSupportData(booking.id)
-      )
-      .on(
-        "postgres_changes",
         { event: "*", schema: "public", table: "bookings", filter: `id=eq.${booking.id}` },
         () => {
+          refreshBookings();
           loadProofData(booking.id);
         }
       )
@@ -186,10 +183,11 @@ export default function BookingDetailsPage() {
         toast({
           message: "Support tables are not installed yet. Run supabase/schema.sql.",
           color: "amber",
+          icon: AlertTriangle,
         });
       }
     } catch (err) {
-      toast({ message: `Unable to load support data: ${err.message}`, color: "red" });
+      toast({ message: `Unable to load support data: ${err.message}`, color: "red", icon: XCircle });
     } finally {
       setRefreshingMessages(false);
     }
@@ -268,7 +266,7 @@ export default function BookingDetailsPage() {
     if (isSendingReply) return;
     const now = Date.now();
     if (now - lastOwnerReplySentAtRef.current < 5000) {
-      toast({ message: "Please wait a few seconds before sending another message.", color: "amber" });
+      toast({ message: "Please wait a few seconds before sending another message.", color: "amber", icon: AlertTriangle });
       return;
     }
     try {
@@ -291,10 +289,10 @@ export default function BookingDetailsPage() {
       await sendTicketMessage(payload);
       setOwnerReply("");
       await loadSupportData(booking.id);
-      toast({ message: "Reply sent to client.", color: "green" });
+      toast({ message: "Reply sent to client.", color: "green", icon: CheckCircle2 });
     } catch (err) {
       if (isMissingSupportTableError(err)) {
-        toast({ message: "Messaging table missing. Run supabase/schema.sql first.", color: "amber" });
+        toast({ message: "Messaging table missing. Run supabase/schema.sql first.", color: "amber", icon: AlertTriangle });
         return;
       }
       toast({ message: `Reply failed: ${err.message}`, color: "red" });
@@ -345,6 +343,29 @@ export default function BookingDetailsPage() {
           ...(entry.bookingForm || {}),
           status: "Cancelled",
           cancelledAt: new Date().toISOString(),
+          statusAudit: (() => {
+            const currentAudit = Array.isArray(entry.bookingForm?.statusAudit)
+              ? entry.bookingForm.statusAudit
+              : [];
+            const previousStatus = entry.bookingForm?.status || entry.status || null;
+            if (!previousStatus || previousStatus === "Cancelled") return currentAudit;
+            const lastAudit = currentAudit[currentAudit.length - 1];
+            if (lastAudit?.from === previousStatus && lastAudit?.to === "Cancelled") {
+              return currentAudit;
+            }
+            return [
+              ...currentAudit,
+              {
+                from: previousStatus,
+                to: "Cancelled",
+                at: new Date().toISOString(),
+                actor: "owner-ui",
+                actorRole: "owner",
+                actorId: "",
+                actorName: "Owner",
+              },
+            ];
+          })(),
         },
       }));
       toast({ message: "Booking cancelled.", color: "green" });
@@ -356,7 +377,6 @@ export default function BookingDetailsPage() {
   return (
     <div className = "mt-10">
     <BookingModernEditor
-      key={booking.id}
       booking={booking}
       resortName={currentResort?.name}
       onBack={() => router.push(`/edit/bookings/${id}`)}
