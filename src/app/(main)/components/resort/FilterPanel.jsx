@@ -7,22 +7,28 @@ export default function FilterPanel() {
   const {
     priceRange,
     setPriceRange,
+    selectedTags,
     setSelectedTags,
-    fetchResorts,
+    applyFilters,
+    clearFilters,
+    hasActiveFilters,
     loading,
   } = useFilters();
 
   const [tagSearch, setTagSearch] = React.useState("");
 
-  const applyFilters = () => {
+  React.useEffect(() => {
+    setTagSearch((selectedTags || []).join(", "));
+  }, [selectedTags]);
+
+  const applyFiltersClick = () => {
     const commaTerms = tagSearch
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
-    if (commaTerms.length > 0) {
-      setSelectedTags(Array.from(new Set(commaTerms)));
-    }
-    fetchResorts();
+    const nextTags = Array.from(new Set(commaTerms));
+    setSelectedTags(nextTags);
+    applyFilters({ selectedTags: nextTags });
   };
 
   return (
@@ -78,11 +84,18 @@ export default function FilterPanel() {
 
       <div className="mt-6 pt-4 border-t border-slate-100">
         <button
-          onClick={applyFilters}
+          onClick={applyFiltersClick}
           disabled={loading}
           className="w-full rounded-xl hover:scale-105 transition bg-blue-600 text-white text-xs font-bold uppercase tracking-wider py-3 hover:bg-blue-700 disabled:opacity-60"
         >
           {loading ? "Applying filters..." : "Search"}
+        </button>
+        <button
+          onClick={clearFilters}
+          disabled={!hasActiveFilters}
+          className="mt-3 w-full rounded-xl border border-slate-200 text-xs font-bold uppercase tracking-wider py-3 text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+        >
+          Turn off filter
         </button>
       </div>
     </div>

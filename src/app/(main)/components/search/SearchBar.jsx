@@ -14,7 +14,8 @@ export default function SearchBar() {
     startDate, 
     setStartDate, 
     endDate, 
-    setEndDate 
+    setEndDate,
+    applyFilters,
   } = useFilters();
 
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -87,7 +88,14 @@ export default function SearchBar() {
         handleGuestTypeChange={handleGuestTypeChange}
       />
 
-      <Button className="rounded-xl px-6 text-sm ">
+      <Button
+        className="rounded-xl px-6 text-sm "
+        onClick={() => {
+          applyFilters();
+          const results = document.getElementById("resorts");
+          if (results) results.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+      >
         Search
       </Button>
     </div>

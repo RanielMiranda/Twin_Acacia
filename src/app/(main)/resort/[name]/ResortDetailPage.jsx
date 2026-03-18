@@ -21,7 +21,7 @@ import { buildRequestedRange, getUnavailableRoomIds } from "@/lib/availability";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast"
 import PersistentToast from "@/components/ui/toast/PersistentToast";
-import { Mail, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useSupport } from "@/components/useclient/SupportClient";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
@@ -67,7 +67,7 @@ export default function ResortDetailPage({ name }) {
       }
       const { data, error } = await supabase
         .from("bookings")
-        .select("room_ids, start_date, end_date, check_in_time, check_out_time, status, booking_form")
+        .select("room_ids, start_date, end_date, check_in_time, check_out_time, status")
         .eq("resort_id", Number(resort.id));
       if (error) {
         console.error("Failed to load room availability:", error.message);
@@ -86,10 +86,6 @@ export default function ResortDetailPage({ name }) {
       cancelled = true;
     };
   }, [resort?.id, startDate, endDate, checkInTime, checkOutTime]);
-
-  useEffect(() => {
-    setSelectedRoomIds((prev) => prev);
-  }, [unavailableRoomIds]);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -127,7 +123,7 @@ export default function ResortDetailPage({ name }) {
     ? selectedRooms.map((room) => room.name).filter(Boolean).join(", ")
     : "";
   const hasAvailabilityConflict = unavailableRoomIds.length > 0;
-  const roomBlockingIds = [];
+  const roomBlockingIds = unavailableRoomIds;
 
 const handleSubmitInquiry = async (submittedData) => {
     try {
@@ -165,11 +161,16 @@ const handleSubmitInquiry = async (submittedData) => {
       if (error) throw error;
       if (submittedData.message) {
         try {
+          const senderRole = submittedData.inquirerType === "agent" ? "agent" : "client";
+          const senderName =
+            submittedData.inquirerType === "agent"
+              ? submittedData.agentName || submittedData.guestName || "Agent"
+              : submittedData.guestName || "Client";
           await sendTicketMessage({
             booking_id: bookingId,
             resort_id: Number(resort.id),
-            sender_role: "client",
-            sender_name: submittedData.guestName || "Client",
+            sender_role: senderRole,
+            sender_name: senderName,
             visibility: submittedData.inquirerType === "agent",
             message: submittedData.message,
           });
@@ -188,7 +189,7 @@ const handleSubmitInquiry = async (submittedData) => {
       persistentToast({
         message: inquiryMessage,
         color: "blue",
-        icon: Mail,
+        icon: CheckCircle2,
       });
     } catch (err) {
       toast({

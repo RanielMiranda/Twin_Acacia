@@ -1,5 +1,6 @@
 "use client"; // important since we're using hooks
 
+import React from "react";
 import { useRouter } from "next/navigation";
 import ResortGallery from "./ResortGallery";
 import ResortContent from "./ResortContent";
@@ -9,14 +10,17 @@ import { useFilters } from "@/components/useclient/ContextFilter";
 export default function ResortResults({ resorts }) {
   const router = useRouter(); // Next.js hook
   const { availabilityByResort } = useFilters();
-  const sortedResorts = [...(resorts || [])].sort((a, b) => {
-    const aAvailability = availabilityByResort?.[a.id];
-    const bAvailability = availabilityByResort?.[b.id];
-    const aViable = aAvailability?.viable !== false;
-    const bViable = bAvailability?.viable !== false;
-    if (aViable === bViable) return 0;
-    return aViable ? -1 : 1;
-  });
+  const sortedResorts = React.useMemo(() => {
+    const viable = [];
+    const notViable = [];
+    (resorts || []).forEach((resort) => {
+      const availability = availabilityByResort?.[resort.id];
+      const isViable = availability?.viable !== false;
+      if (isViable) viable.push(resort);
+      else notViable.push(resort);
+    });
+    return [...viable, ...notViable];
+  }, [resorts, availabilityByResort]);
 
   return (
     <div className="flex-1 flex flex-col gap-6 w-full">

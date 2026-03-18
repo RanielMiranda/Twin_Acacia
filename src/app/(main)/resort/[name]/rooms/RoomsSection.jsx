@@ -17,8 +17,6 @@ export default function RoomsSection({
   if (!resort || !resort.rooms) return null;
 
   const displayedRooms = resort.rooms.filter((room) => {
-    const roomUnavailable = (unavailableRoomIds || []).includes(room?.id?.toString());
-    if (roomUnavailable) return false;
     if (selectedTags.length === 0) return true;
     return selectedTags.every(tag => room.tags?.includes(tag));
   });
@@ -28,7 +26,7 @@ export default function RoomsSection({
       <div className="flex flex-col gap-6">
         {displayedRooms.length === 0 ? (
           <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-            <p className="text-slate-500 font-medium">No rooms match your selected period.</p>
+            <p className="text-slate-500 font-medium">No rooms match your selected filters.</p>
           </div>
         ) : (
           displayedRooms.map((room) => {
