@@ -35,6 +35,10 @@ This document covers the core booking creation paths, the booking edit console, 
   - Uses a **Supabase realtime subscription** on `bookings` (filtered by `resort_id`) to keep the list in sync without polling.
   - Tracks optimistic updates when creating/updating/deleting.
   - Exposes helpers used by booking details UI.
+- `src/app/api/booking/approve-inquiry-email/route.js` (owner action)
+  - Sends approval emails using Resend.
+  - Sends **different templates for client vs agent** and returns which recipients were successfully sent.
+  - Endpoint is called from `statusHandlers.js` when “Approve Inquiry” is triggered.
 
 ### Booking details editor
 - `src/app/edit/bookings/[id]/booking-details/[bookingId]/page.jsx`

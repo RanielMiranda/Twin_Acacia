@@ -14,11 +14,11 @@ function buildBaseUrl(request) {
   return request.nextUrl.origin;
 }
 
-function buildHtml({ guestName, resortName, ticketUrl, expiresAt }) {
+function buildHtml({ recipientName, resortName, ticketUrl, expiresAt }) {
   return `
     <div style="font-family:Arial,sans-serif;color:#0f172a;max-width:640px;margin:0 auto;padding:24px">
       <h2 style="margin:0 0 16px;font-size:24px;">Your inquiry has been approved</h2>
-      <p style="margin:0 0 12px;">Hello ${guestName || "Guest"},</p>
+      <p style="margin:0 0 12px;">Hello ${recipientName || "Guest"},</p>
       <p style="margin:0 0 12px;">
         Your inquiry for <strong>${resortName || "the resort"}</strong> has been approved.
       </p>
@@ -106,12 +106,17 @@ export async function POST(request) {
     const ticketUrl = `${baseUrl}/ticket/${booking.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
     const expiresAt = role === "agent" ? booking.booking_form?.agentTicketAccessExpiresAt : booking.booking_form?.ticketAccessExpiresAt;
 
+    const recipientName =
+      role === "agent"
+        ? booking.booking_form?.agentName || booking.booking_form?.guestName || "Agent"
+        : booking.booking_form?.stayingGuestName || booking.booking_form?.guestName || "Guest";
+
     const payload = {
       from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
       to: [email],
       subject: `Inquiry approved${resort?.name ? ` - ${resort.name}` : ""}`,
       html: buildHtml({
-        guestName: booking.booking_form?.guestName,
+        recipientName,
         resortName: resort?.name,
         ticketUrl,
         expiresAt,
