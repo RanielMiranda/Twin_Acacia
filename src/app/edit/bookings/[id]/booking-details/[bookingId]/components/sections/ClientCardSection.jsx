@@ -60,6 +60,13 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
                     onChange={(e) => setField("phoneNumber", e.target.value)}
                     placeholder="Agent phone"
                   />
+                  <input
+                    type="text"
+                    className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100 md:col-span-2"
+                    value={draft.address || ""}
+                    onChange={(e) => setField("address", e.target.value)}
+                    placeholder="Inquirer address"
+                  />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -97,6 +104,10 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
                     <span className="inline-flex items-center gap-1">
                       <Phone size={12} />
                       {draft.phoneNumber || "No phone"}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin size={12} />
+                      {draft.address || "No inquirer address"}
                     </span>
                   </>
                 ) : (

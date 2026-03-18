@@ -15,6 +15,8 @@ import {
   ChevronRight,
   MessageCircleWarning,
   Archive,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 // Components
@@ -99,6 +101,7 @@ export default function BookingManagementPage() {
     toast,
     enableAudits: activeTab === "audits",
     enableArchive: activeTab === "audits" || activeTab === "calendar",
+    archiveAutoLoad: activeTab === "audits",
   });
 
   const handleSyncData = async () => {

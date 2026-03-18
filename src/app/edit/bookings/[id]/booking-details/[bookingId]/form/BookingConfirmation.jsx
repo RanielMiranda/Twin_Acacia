@@ -118,7 +118,19 @@ export default function BookingConfirmation({
                     <div className="text-sm font-bold text-slate-700">{inquirerPhone || "-"}</div>
                   </Field>
                 </>
-              ) : null}
+              ) : (
+                <>
+                  <Field label="Guest Email">
+                    <div className="text-sm font-bold text-slate-700">{guestEmail || "-"}</div>
+                  </Field>
+                  <Field label="Guest Phone">
+                    <div className="text-sm font-bold text-slate-700">{guestPhone || "-"}</div>
+                  </Field>
+                  <Field label="Guest Address">
+                    <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
+                  </Field>
+                </>
+              )}
             </div>
           </section>
 

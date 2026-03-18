@@ -19,6 +19,7 @@ export function useBookingConsoleData({
   toast,
   enableAudits = false,
   enableArchive = false,
+  archiveAutoLoad = true,
 }) {
   const [concerns, setConcerns] = useState([]);
   const [loadingConcerns, setLoadingConcerns] = useState(false);
@@ -235,9 +236,9 @@ export function useBookingConsoleData({
   }, [enableAudits, loadAudits]);
 
   useEffect(() => {
-    if (!resortId || !enableArchive) return;
+    if (!resortId || !enableArchive || !archiveAutoLoad) return;
     loadArchivedBookings({ append: false });
-  }, [enableArchive, loadArchivedBookings, resortId]);
+  }, [archiveAutoLoad, enableArchive, loadArchivedBookings, resortId]);
 
   const declinedBookings = useMemo(
     () =>

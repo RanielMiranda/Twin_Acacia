@@ -728,6 +728,7 @@ export default function BookingCreationTemplate({
                             label="Guest"
                             value={formData.stayingGuestName || formData.guestName || "Not set"}
                           />
+                          <SummaryItem icon={Mail} label="Email" value={formData.email || "Not set"} />
                           <SummaryItem icon={Phone} label="Contact" value={formData.phoneNumber || "Not set"} />
                         </>
                       )}
