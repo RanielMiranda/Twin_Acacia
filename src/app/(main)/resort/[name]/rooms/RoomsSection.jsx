@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Users, BedDouble } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
-import { useFilters } from "@/components/useclient/ContextFilter"; 
 import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
 export default function RoomsSection({
@@ -12,14 +11,8 @@ export default function RoomsSection({
   className = "max-w-6xl mx-auto px-4 pb-16",
 }) {
   const { resort } = useResort(); 
-  const { selectedTags } = useFilters(); 
-
   if (!resort || !resort.rooms) return null;
-
-  const displayedRooms = resort.rooms.filter((room) => {
-    if (selectedTags.length === 0) return true;
-    return selectedTags.every(tag => room.tags?.includes(tag));
-  });
+  const displayedRooms = resort.rooms;
 
   return (
     <div id="rooms" className={className}>
