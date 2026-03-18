@@ -141,15 +141,6 @@ export default function BookingManagementPage() {
   useEffect(() => {
     if (!resortId) return;
     refreshBookings();
-    const interval = setInterval(() => {
-      refreshBookings();
-    }, 30000);
-    const handleFocus = () => refreshBookings();
-    window.addEventListener("focus", handleFocus);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("focus", handleFocus);
-    };
   }, [refreshBookings, resortId]);
 
   const openDetails = (targetBookingId) => {

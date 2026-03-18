@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BOOKING_TICKET_COLUMNS, TICKET_MESSAGE_COLUMNS } from "./constants";
 import { isMissingSupportTableError } from "./helpers";
 import { getTicketTokenRole, isTicketTokenValid } from "@/lib/ticketAccess";
 
 const TICKET_ISSUE_COLUMNS = ["id", "booking_id", "guest_name", "guest_email", "subject", "message", "status", "created_at"].join(", ");
+
+// NB: ticket pages can refetch frequently via realtime updates (bookings/messages).
+// Resort data is relatively stable, so cache it to avoid repeat queries.
+const resortCache = new Map();
 
 export function useTicketData({ normalizedBookingId, accessToken, toast }) {
   const [loading, setLoading] = useState(true);
@@ -123,13 +127,19 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
       setBooking(bookingData);
 
       if (bookingData?.resort_id) {
-        const { data: resortData, error: resortError } = await supabase
-          .from("resorts")
-          .select("id, name, location, contactEmail, contactPhone, contactMedia, rooms, extraServices, payment_image_url, bank_payment_image_url")
-          .eq("id", bookingData.resort_id)
-          .single();
-        if (resortError) throw resortError;
-        setResort(resortData);
+        const cachedResort = resortCache.get(bookingData.resort_id);
+        if (cachedResort) {
+          setResort(cachedResort);
+        } else {
+          const { data: resortData, error: resortError } = await supabase
+            .from("resorts")
+            .select("id, name, location, contactEmail, contactPhone, contactMedia, rooms, extraServices, payment_image_url, bank_payment_image_url")
+            .eq("id", bookingData.resort_id)
+            .single();
+          if (resortError) throw resortError;
+          setResort(resortData);
+          resortCache.set(bookingData.resort_id, resortData);
+        }
       } else {
         setResort(null);
       }
@@ -146,8 +156,10 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     fetchTicket();
   }, [fetchTicket]);
 
-  useEffect(() => {
-    if (!normalizedBookingId) return undefined;
+  const supabaseChannelRef = useRef(null);
+
+  const subscribeToTicketUpdates = useCallback(() => {
+    if (!normalizedBookingId || supabaseChannelRef.current) return;
     const channel = supabase
       .channel(`ticket-live-${normalizedBookingId}`)
       .on(
@@ -167,19 +179,37 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchMessages, fetchTicket, normalizedBookingId]);
+    supabaseChannelRef.current = channel;
+  }, [fetchMessages, fetchTicket, normalizedBookingId, viewerRole]);
+
+  const unsubscribeFromTicketUpdates = useCallback(() => {
+    if (!supabaseChannelRef.current) return;
+    supabase.removeChannel(supabaseChannelRef.current);
+    supabaseChannelRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (!normalizedBookingId) return undefined;
-    const interval = setInterval(() => {
-      fetchTicket();
-      fetchMessages(normalizedBookingId, viewerRole);
-    }, 20000);
-    return () => clearInterval(interval);
-  }, [fetchMessages, fetchTicket, normalizedBookingId]);
+
+    const handleVisibilityChange = () => {
+      if (typeof document === "undefined") return;
+
+      if (document.visibilityState === "visible") {
+        fetchTicket();
+        subscribeToTicketUpdates();
+      } else {
+        unsubscribeFromTicketUpdates();
+      }
+    };
+
+    handleVisibilityChange();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      unsubscribeFromTicketUpdates();
+    };
+  }, [fetchTicket, normalizedBookingId, subscribeToTicketUpdates, unsubscribeFromTicketUpdates]);
 
   return {
     loading,

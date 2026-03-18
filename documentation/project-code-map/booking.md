@@ -31,8 +31,9 @@ This document covers the core booking creation paths, the booking edit console, 
 
 ### Booking console data layer
 - `src/components/useclient/BookingsClient.jsx`
-  - Loads bookings for a resort and caches locally.
-  - Tracks optimistic updates when creating/updating/delete.
+  - Loads bookings for a resort and caches locally (including localStorage cache).
+  - Uses a **Supabase realtime subscription** on `bookings` (filtered by `resort_id`) to keep the list in sync without polling.
+  - Tracks optimistic updates when creating/updating/deleting.
   - Exposes helpers used by booking details UI.
 
 ### Booking details editor
@@ -55,7 +56,9 @@ This document covers the core booking creation paths, the booking edit console, 
 ## Ticket page (guest-facing booking view)
 - `src/app/(main)/ticket/[bookingId]/page.jsx`
   - Shows booking details, payments, and messaging.
-  - Uses polling + Supabase realtime subscription for updates.
+  - Uses a **Supabase realtime subscription** to keep booking/messages in sync.
+    - Subscription is active only while the tab is visible.
+    - Resorts are cached to avoid refetching static resort data on every realtime update.
 
 ### Ticket actions
 - `src/app/(main)/ticket/[bookingId]/ticket-page/useTicketActions.js`

@@ -128,6 +128,7 @@ export function BookingsProvider({ children }) {
   const [lastFetchedAt, setLastFetchedAt] = useState(null);
   const [hasHydratedCache, setHasHydratedCache] = useState(false);
   const [autoFetchedResortId, setAutoFetchedResortId] = useState(null);
+  const bookingsChannelRef = React.useRef(null);
 
   const getCacheKey = (resortId) => `bookings_cache:${resortId}`;
 
@@ -210,6 +211,54 @@ export function BookingsProvider({ children }) {
     setAutoFetchedResortId(resort.id);
     refreshBookings();
   }, [autoFetchedResortId, hasHydratedCache, refreshBookings, resort?.id]);
+
+  useEffect(() => {
+    if (!resort?.id) return;
+
+    // Supabase realtime subscription to keep bookings in sync without polling.
+    // We apply changes locally and also keep the resort cache updated.
+    const channel = supabase
+      .channel(`bookings-resort-${resort.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `resort_id=eq.${resort.id}` },
+        (payload) => {
+          const { eventType, new: newRow, old: oldRow } = payload;
+          setBookings((prev) => {
+            const current = Array.isArray(prev) ? prev : [];
+            if (eventType === "INSERT" && newRow) {
+              const inserted = toModel(newRow);
+              const next = [inserted, ...current.filter((b) => b.id !== inserted.id)];
+              syncResortBookings(next);
+              return next;
+            }
+            if (eventType === "UPDATE" && newRow) {
+              const updated = toModel(newRow);
+              const next = current.map((b) => (b.id === updated.id ? updated : b));
+              syncResortBookings(next);
+              return next;
+            }
+            if (eventType === "DELETE" && oldRow) {
+              const removedId = oldRow.id?.toString();
+              const next = current.filter((b) => b.id?.toString() !== removedId);
+              syncResortBookings(next);
+              return next;
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    bookingsChannelRef.current = channel;
+
+    return () => {
+      if (bookingsChannelRef.current) {
+        supabase.removeChannel(bookingsChannelRef.current);
+        bookingsChannelRef.current = null;
+      }
+    };
+  }, [resort?.id, syncResortBookings]);
 
   const createBooking = useCallback(
     async (booking) => {
