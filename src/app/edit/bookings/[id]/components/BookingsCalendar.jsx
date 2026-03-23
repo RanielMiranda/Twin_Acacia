@@ -79,6 +79,9 @@ export default function BookingCalendar({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarMode, setCalendarMode] = useState("all"); // all | confirmed | inquiry | past
   const [search, setSearch] = useState("");
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [modalDayLabel, setModalDayLabel] = useState("");
+  const [modalBookings, setModalBookings] = useState([]);
   const calendarToggleModes = [
     { id: "all", label: "All Bookings" },
     { id: "confirmed", label: "Confirmed / Ongoing" },
@@ -136,6 +139,19 @@ export default function BookingCalendar({
     const { startStr, endStr } = getRangeForView(currentDate);
     onLoadArchived({ append: false, search, rangeStart: startStr, rangeEnd: endStr });
   }, [calendarMode, currentDate, onLoadArchived, search]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(pointer: coarse)");
+    const update = () => setIsTouchDevice(!!media.matches);
+    update();
+    if (media.addEventListener) {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, []);
 
   const getBookingColor = (booking) => {
     if (booking?.isArchived) {
@@ -212,27 +228,28 @@ export default function BookingCalendar({
     return lines.join("\n");
   };
 
-  const getDateTooltip = (dateBookings) => {
-    if (!dateBookings?.length) return "";
-    return dateBookings
-      .slice(0, 2)
-      .map((booking) => `${getBookingTooltip(booking)}`)
-      .join("\n\n");
+  const getDateTooltipCards = (dateBookings) => {
+    if (!dateBookings?.length) return [];
+    return dateBookings.slice(0, 2);
   };
 
-  const HoverTooltip = ({ text, children, wrapperClassName = "" }) => {
-    if (!text) return children;
-    const lines = String(text).split("\n");
+  const HoverTooltip = ({ text, content, children, wrapperClassName = "" }) => {
+    if (!text && !content) return children;
+    const lines = text ? String(text).split("\n") : [];
     return (
       <div className={`relative group ${wrapperClassName}`}>
         {children}
-      <div className="pointer-events-none absolute left-1/2 top-10 z-50 hidden w-72 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] leading-4 text-slate-700 shadow-lg group-hover:block">
+        <div className="pointer-events-none absolute left-1/2 top-10 z-50 hidden -translate-x-1/2 px-3 py-2 text-[11px] leading-4 text-slate-700 group-hover:block">
           <div className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-l border-t border-slate-200 bg-white" />
-          {lines.map((line, idx) => (
-            <div key={`${line}-${idx}`} className="block">
-              {line}
-            </div>
-          ))}
+          {content ? (
+            content
+          ) : (
+            lines.map((line, idx) => (
+              <div key={`${line}-${idx}`} className="block">
+                {line}
+              </div>
+            ))
+          )}
         </div>
       </div>
     );
@@ -243,6 +260,12 @@ export default function BookingCalendar({
     const resortId = Array.isArray(params?.id) ? params.id[0] : params?.id;
     if (!resortId) return;
     router.push(`/edit/bookings/${resortId}/booking-details/${bookingId}`);
+  };
+
+  const openDayModal = (dateString, dayBookings) => {
+    if (!Array.isArray(dayBookings) || dayBookings.length === 0) return;
+    setModalDayLabel(dateString);
+    setModalBookings(dayBookings);
   };
 
   const renderMonth = (monthOffset) => {
@@ -274,13 +297,14 @@ export default function BookingCalendar({
             });
             const booking = orderedBookings[0] || null;
             const secondaryBooking = orderedBookings[1] || null;
-            const hasSplit = !!booking && !!secondaryBooking;
             const primaryColor = booking ? getBookingColor(booking) : "";
-            const splitGradientStyle = hasSplit
-              ? {
-                  backgroundImage: `linear-gradient(90deg, ${getBookingColorHex(booking)} 0%, ${getBookingColorHex(booking)} 50%, ${getBookingColorHex(secondaryBooking)} 50%, ${getBookingColorHex(secondaryBooking)} 100%)`,
-                }
-              : undefined;
+            const hasSplit = !!booking && !!secondaryBooking;
+            const canOpenDetails = (target) => {
+              if (!target) return false;
+              if (calendarMode === "past") return false;
+              if (target.isArchived) return false;
+              return true;
+            };
 
             const className = `h-9 w-full rounded-lg text-sm transition-all relative flex items-center justify-center
               ${booking ? "text-white cursor-pointer" : "hover:bg-slate-100 text-slate-600"} 
@@ -294,8 +318,10 @@ export default function BookingCalendar({
                 {booking ? (
                   hasSplit ? (
                     <span
-                      style={splitGradientStyle}
                       className={`absolute inset-0 rounded-[inherit] ${getBookingStartDate(booking) !== dateString && getBookingEndDate(booking) !== dateString ? "opacity-90" : ""}`}
+                      style={{
+                        backgroundImage: `linear-gradient(90deg, ${getBookingColorHex(booking)} 0%, ${getBookingColorHex(booking)} 50%, ${getBookingColorHex(secondaryBooking)} 50%, ${getBookingColorHex(secondaryBooking)} 100%)`,
+                      }}
                     />
                   ) : (
                     <span
@@ -307,25 +333,77 @@ export default function BookingCalendar({
               </>
             );
 
-            const isPastView = calendarMode === "past";
-            const canClick = booking && !isPastView && !booking.isArchived;
-
             return booking ? (
-              <HoverTooltip key={day} text={getDateTooltip(dateBookings)} wrapperClassName="w-full">
-                {canClick ? (
+              <div key={day} className="w-full relative">
+                <HoverTooltip
+                  wrapperClassName="w-full"
+                  content={
+                    getDateTooltipCards(orderedBookings).length > 0 ? (
+                      <div
+                        className={`grid gap-2 ${
+                          getDateTooltipCards(orderedBookings).length === 1
+                            ? "grid-cols-1 min-w-[260px] max-w-[340px]"
+                            : "grid-cols-1 sm:grid-cols-2 min-w-[260px] max-w-[420px]"
+                        }`}
+                      >
+                        {getDateTooltipCards(orderedBookings).map((entry) => (
+                          <div key={entry.id} className="rounded-md border border-slate-200 bg-white p-2">
+                            {getBookingTooltip(entry)
+                              .split("\n")
+                              .map((line, idx) => (
+                                <div key={`${entry.id}-line-${idx}`} className="block">
+                                  {line}
+                                </div>
+                              ))}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null
+                  }
+                >
                   <button
                     type="button"
-                    onClick={() => openBookingDetails(booking.id)}
+                    onClick={() => {
+                      if (isTouchDevice) {
+                        openDayModal(dateString, orderedBookings);
+                        return;
+                      }
+                      if (canOpenDetails(booking)) openBookingDetails(booking.id);
+                    }}
                     className={className}
                   >
                     {content}
                   </button>
-                ) : (
-                  <div className={className}>{content}</div>
-                )}
-              </HoverTooltip>
+                </HoverTooltip>
+              </div>
             ) : (
-              <HoverTooltip key={day} text={getDateTooltip(dateBookings)} wrapperClassName="w-full">
+              <HoverTooltip
+                key={day}
+                wrapperClassName="w-full"
+                content={
+                  getDateTooltipCards(dateBookings).length > 0 ? (
+                    <div
+                      className={`grid gap-2 ${
+                        getDateTooltipCards(dateBookings).length === 1
+                          ? "grid-cols-1 min-w-[260px] max-w-[340px]"
+                          : "grid-cols-1 sm:grid-cols-2 min-w-[260px] max-w-[420px]"
+                      }`}
+                    >
+                      {getDateTooltipCards(dateBookings).map((entry) => (
+                        <div key={entry.id} className="rounded-md border border-slate-200 bg-white p-2">
+                          {getBookingTooltip(entry)
+                            .split("\n")
+                            .map((line, idx) => (
+                              <div key={`${entry.id}-line-${idx}`} className="block">
+                                {line}
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null
+                }
+              >
                 <div className={className}>
                   {content}
                 </div>
@@ -411,7 +489,7 @@ export default function BookingCalendar({
             <ChevronRight size={20} />
           </button>
         </div>
-        
+
         {/* Active Ranges Summary at bottom of calendar */}
         {/* ... (keep your existing active ranges list) */}
       </div>
@@ -465,7 +543,70 @@ export default function BookingCalendar({
             <div className="mt-4 text-xs text-slate-500">Loading archived bookings...</div>
           ) : null}
         </div>
-
+        {modalBookings.length > 0 ? (
+          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
+            <div
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setModalBookings([])}
+            />
+            <div className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Bookings</p>
+                  <h4 className="text-lg font-black text-slate-900">{modalDayLabel || "Selected Day"}</h4>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-full border border-slate-200 px-3 py-1 text-xs font-bold text-slate-500"
+                  onClick={() => setModalBookings([])}
+                >
+                  Close
+                </button>
+              </div>
+              <div className="space-y-3 max-h-[60vh] overflow-auto pr-1">
+                {modalBookings.map((booking) => {
+                  const isArchived = !!booking.isArchived;
+                  const statusLabel = getStatusLabel(booking);
+                  const guestName =
+                    booking?.stayingGuestName ||
+                    booking?.bookingForm?.stayingGuestName ||
+                    booking?.guestName ||
+                    booking?.bookingForm?.guestName ||
+                    "Guest";
+                  const canOpen = !isArchived && calendarMode !== "past";
+                  return (
+                    <div key={booking.id} className="rounded-2xl border border-slate-200 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-slate-400">{statusLabel}</p>
+                          <p className="text-sm font-bold text-slate-900">{guestName}</p>
+                          <p className="text-xs text-slate-500">
+                            {getBookingStartDate(booking) || "..."} - {getBookingEndDate(booking) || "..."}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!canOpen}
+                          onClick={() => {
+                            if (canOpen) openBookingDetails(booking.id);
+                            setModalBookings([]);
+                          }}
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${
+                            canOpen
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-200 text-slate-500 cursor-not-allowed"
+                          }`}
+                        >
+                          Open
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : null}
     </Card>
   );
 }
