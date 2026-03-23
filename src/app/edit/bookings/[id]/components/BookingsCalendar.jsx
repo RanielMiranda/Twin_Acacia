@@ -301,15 +301,22 @@ export default function BookingCalendar({
               </>
             );
 
+            const isPastView = calendarMode === "past";
+            const canClick = booking && !isPastView && !booking.isArchived;
+
             return booking ? (
               <HoverTooltip key={day} text={getDateTooltip(dateBookings)} wrapperClassName="w-full">
-                <button
-                  type="button"
-                  onClick={() => openBookingDetails(booking.id)}
-                  className={className}
-                >
-                  {content}
-                </button>
+                {canClick ? (
+                  <button
+                    type="button"
+                    onClick={() => openBookingDetails(booking.id)}
+                    className={className}
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div className={className}>{content}</div>
+                )}
               </HoverTooltip>
             ) : (
               <HoverTooltip key={day} text={getDateTooltip(dateBookings)} wrapperClassName="w-full">

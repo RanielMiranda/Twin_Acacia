@@ -277,7 +277,7 @@ export function useBookingConsoleData({
     const inquiry = source.filter((entry) => {
       const status = normalizeStatus(entry);
       return (
-        (status.includes("inquiry") || status.includes("pending payment") || status.includes("pending checkout")) &&
+        (status.includes("inquiry") || status.includes("pending payment")) &&
         !status.includes("declined")
       );
     }).length;

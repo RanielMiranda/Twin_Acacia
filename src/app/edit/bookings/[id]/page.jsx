@@ -17,6 +17,7 @@ import {
   Archive,
   CheckCircle2,
   XCircle,
+  RefreshCw,
 } from "lucide-react";
 
 // Components
@@ -37,7 +38,6 @@ export default function BookingManagementPage() {
   const { toast } = useToast();
   const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
   const [addingBooking, setAddingBooking] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
   const [archiveSearch, setArchiveSearch] = useState("");
 
@@ -104,30 +104,40 @@ export default function BookingManagementPage() {
     archiveAutoLoad: activeTab === "audits",
   });
 
-  const handleSyncData = async () => {
-    setIsSyncing(true);
+  const handleRefreshWorkflow = async () => {
     try {
       await refreshBookings();
-      await refreshAuditArchive();
-
-      const secret = process.env.NEXT_PUBLIC_BOOKING_AUTOMATION_SECRET;
-      if (secret) {
-        const res = await fetch("/api/internal/booking-status", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${secret}`,
-          },
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body?.error || "sync failed");
-        toast({ message: "Sync complete (automation ran).", color: "green", icon: CheckCircle2 });
-      } else {
-        toast({ message: "Sync complete.", color: "green", icon: CheckCircle2 });
-      }
+      toast?.({ message: "Workflow refreshed.", color: "green", icon: CheckCircle2 });
     } catch (err) {
-      toast({ message: `Sync failed: ${err.message}`, color: "red", icon: XCircle });
-    } finally {
-      setIsSyncing(false);
+      toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
+    }
+  };
+
+  const handleRefreshCalendar = async () => {
+    try {
+      await refreshBookings();
+      await loadArchivedBookings({ append: false, search: archiveSearch });
+      toast?.({ message: "Calendar refreshed.", color: "green", icon: CheckCircle2 });
+    } catch (err) {
+      toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
+    }
+  };
+
+  const handleRefreshConcerns = async () => {
+    try {
+      await loadConcerns();
+      toast?.({ message: "Feed refreshed.", color: "green", icon: CheckCircle2 });
+    } catch (err) {
+      toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
+    }
+  };
+
+  const handleRefreshArchive = async () => {
+    try {
+      await refreshAuditArchive();
+      toast?.({ message: "Archive refreshed.", color: "green", icon: CheckCircle2 });
+    } catch (err) {
+      toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
     }
   };
 
@@ -213,14 +223,6 @@ export default function BookingManagementPage() {
           <div className="flex items-center gap-3">
             <Button
               type="button"
-              onClick={handleSyncData}
-              className="rounded-full px-2 text-xs font-black uppercase"
-              disabled={isSyncing}
-            >
-              {isSyncing ? "Syncing..." : "Sync Data"}
-            </Button>
-            <Button
-              type="button"
               onClick={() => setIsAddBookingOpen(true)}
               className="rounded-full px-2 text-xs font-black uppercase"
             >
@@ -289,10 +291,32 @@ export default function BookingManagementPage() {
         <main className="pb-20">
           {activeTab === "workflow" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-end mb-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex items-center justify-center rounded-full px-3 text-xs font-black uppercase"
+                  onClick={handleRefreshWorkflow}
+                >
+                  <RefreshCw size={14} className="mr-2" />
+                  Refresh Workflow
+                </Button>
+              </div>
               <RentalManager onOpenDetails={(item, bookingId) => openDetails(bookingId)} />
             </div>
           ) : activeTab === "calendar" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-end mb-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex items-center justify-center rounded-full px-3 text-xs font-black uppercase"
+                  onClick={handleRefreshCalendar}
+                >
+                  <RefreshCw size={14} className="mr-2" />
+                  Refresh Calendar
+                </Button>
+              </div>
               <BookingCalendar
                 fullWidth
                 archivedBookings={archivedBookings}
@@ -305,7 +329,7 @@ export default function BookingManagementPage() {
               <LiveConcernsPanel
                 concerns={concerns}
                 loading={loadingConcerns}
-                onRefresh={loadConcerns}
+                onRefresh={handleRefreshConcerns}
                 onResolve={handleResolveConcern}
                 onReopen={handleReopenConcern}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
@@ -319,7 +343,7 @@ export default function BookingManagementPage() {
                 checkedOutBookings={checkedOutBookings}
                 archivedBookings={archivedBookings}
                 loading={loadingAudits || loadingArchivedBookings}
-                onRefresh={refreshAuditArchive}
+                onRefresh={handleRefreshArchive}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
                 onReopenDeclined={handleReopenDeclined}
                 onReopenCancelled={handleReopenCancelled}

@@ -96,6 +96,13 @@ export default function Page() {
       .eq("status", "open");
 
     if (!issueErr) total += Number(openIssueCount || 0);
+
+    const { count: archiveCount, error: archiveErr } = await supabase
+      .from("booking_archive")
+      .select("id", { count: "exact", head: true })
+      .eq("resort_id", OWNER_RESORT_ID);
+
+    if (!archiveErr) total += Number(archiveCount || 0);
     setBookingsAlertCount(total);
   }, [OWNER_RESORT_ID]);
 
