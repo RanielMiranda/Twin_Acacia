@@ -332,6 +332,42 @@ export function useTicketActions({
         }
       }
 
+      try {
+        const guestName =
+          booking.booking_form?.stayingGuestName ||
+          booking.booking_form?.guestName ||
+          form.guestName ||
+          "Guest";
+        const guestEmail =
+          booking.booking_form?.stayingGuestEmail ||
+          booking.booking_form?.email ||
+          "";
+        const subject =
+          serviceSnapshots.length > 0
+            ? `Service add-on: ${serviceSnapshots.map((service) => service.name).join(", ")}`
+            : "Service add-on: cleared requested add-ons.";
+        const message =
+          serviceSnapshots.length > 0
+            ? `Requested add-on update: ${serviceSnapshots
+                .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
+                .join(", ")}`
+            : "Requested add-on update: cleared requested add-ons.";
+
+        await createTicketIssueSafe({
+          booking_id: booking.id,
+          resort_id: booking.resort_id,
+          guest_name: guestName,
+          guest_email: guestEmail,
+          subject,
+          message,
+          status: "open",
+        });
+      } catch (issueError) {
+        if (!isMissingSupportTableError(issueError)) {
+          console.error("Failed to create add-on concern:", issueError);
+        }
+      }
+
       setBooking((prev) => ({
         ...prev,
         booking_form: bookingForm,

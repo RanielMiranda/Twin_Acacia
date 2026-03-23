@@ -297,17 +297,16 @@ export function useBookingConsoleData({
 
   const handleResolveConcern = useCallback(
     async (issueId) => {
-      const confirmed = window.confirm("Resolve and permanently delete this concern?");
+      const confirmed = window.confirm("Resolve this concern?");
       if (!confirmed) return;
       try {
-        const { error } = await supabase.from("ticket_issues").delete().eq("id", issueId);
-        if (error) throw error;
+        await updateConcernStatus(issueId, "resolved");
         setConcerns((prev) => prev.filter((entry) => entry.id !== issueId));
       } catch (error) {
         console.error("Resolve concern error:", error?.message || error);
       }
     },
-    []
+    [updateConcernStatus]
   );
 
   const handleReopenConcern = useCallback(
