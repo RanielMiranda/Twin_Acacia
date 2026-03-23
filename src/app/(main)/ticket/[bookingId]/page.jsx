@@ -116,7 +116,7 @@ export default function ClientTicketPage() {
   if (loading && !booking) {
     return <TicketLoadingSkeleton />;
   }
-  if (!booking) return <div className="mt-10 p-10 text-center text-slate-500">Ticket not found.</div>;
+  if (!booking) return <div className="p-10 text-center text-slate-500">Ticket not found.</div>;
 
   const totalAmount = Number(form.totalAmount || 0);
   const paid = Number(form.downpayment || 0);

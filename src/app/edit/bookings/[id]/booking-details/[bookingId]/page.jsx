@@ -392,7 +392,7 @@ export default function BookingDetailsPage() {
   };
 
   return (
-    <div className = "mt-10">
+    <div>
     <BookingModernEditor
       booking={{ ...booking, bookingForm: effectiveBookingForm }}
       resortName={currentResort?.name}

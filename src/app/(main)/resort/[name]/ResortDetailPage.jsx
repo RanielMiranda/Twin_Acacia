@@ -98,7 +98,7 @@ export default function ResortDetailPage({ name }) {
 
   if (loading && !resort) {
     return (
-      <div className="mt-10 p-20 text-center text-gray-500">
+      <div className="p-20 text-center text-gray-500">
         Fetching Resort Details...
       </div>
     );
@@ -106,7 +106,7 @@ export default function ResortDetailPage({ name }) {
 
   if (!resort) {
     return (
-      <div className="mt-10 p-10 text-center text-gray-500">
+      <div className="p-10 text-center text-gray-500">
         Resort not found
       </div>
     );
@@ -208,7 +208,7 @@ const handleSubmitInquiry = async (submittedData) => {
   };
 
   return (
-    <div className="bg-white min-h-screen mt-10">
+    <div className="bg-white min-h-screen">
       <HeroSection
         onOpen={(index) => {
           setActiveIndex(index);

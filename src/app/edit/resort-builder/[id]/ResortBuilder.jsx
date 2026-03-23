@@ -40,8 +40,8 @@ export default function ResortBuilder({ resortId }) {
     }
   }, [resortId, resort?.id, resort, loadResort, setDraftScope, setResort]);
   
-  if (loading && !resort) return <div className="mt-10 p-20 text-center">Fetching Resort Data...</div>;
-  if (!resort) return <div className="mt-10 p-20 text-center">No resort found.</div>;
+  if (loading && !resort) return <div className="p-20 text-center">Fetching Resort Data...</div>;
+  if (!resort) return <div className="p-20 text-center">No resort found.</div>;
 
   const handleSave = async () => {
     if (!resort) return;

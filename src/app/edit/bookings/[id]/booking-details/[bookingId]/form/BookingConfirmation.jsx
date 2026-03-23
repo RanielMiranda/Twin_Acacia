@@ -65,7 +65,7 @@ export default function BookingConfirmation({
     || Number(formData.adultCount || 0) + Number(formData.childrenCount || 0);
 
   return (
-    <div className="max-w-[210mm] min-h-[297mm] mx-auto mt-10 mb-28 bg-white shadow-2xl border border-slate-200 rounded-[18px] px-10 py-12 docx-sheet">
+    <div className="max-w-[210mm] min-h-[297mm] mx-auto mb-28 bg-white shadow-2xl border border-slate-200 rounded-[18px] px-10 py-12 docx-sheet">
       <div className="flex flex-col items-center text-center border-b border-slate-200 pb-6 gap-3">
         {resortProfileImage ? (
           <img

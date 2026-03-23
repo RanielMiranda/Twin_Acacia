@@ -203,7 +203,7 @@ export default function BookingManagementPage() {
   if (!currentResort) return <div className="p-20 text-center">Unable to load resort profile. Showing booking data by resort ID.</div>;
 
   return (
-    <div className="mt-10 min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header Area */}
       <div className="max-w-[1600px] mx-auto pt-12 px-4 md:px-8">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-8">

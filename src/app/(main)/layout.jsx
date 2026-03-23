@@ -8,7 +8,7 @@ export default function MainLayout({ children }) {
   return (
     <>
       <TopBar />
-      <main>{children}</main>
+      <main className="mt-10">{children}</main>
       <Footer />
       <Analytics />
     </>
