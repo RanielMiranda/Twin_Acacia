@@ -295,7 +295,7 @@ export default function BookingManagementPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex items-center justify-center rounded-full px-3 text-xs font-black uppercase"
+                  className="flex items-center justify-center rounded-full px-3 text-xs font-black"
                   onClick={handleRefreshWorkflow}
                 >
                   <RefreshCw size={14} className="mr-2" />
@@ -310,7 +310,7 @@ export default function BookingManagementPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex items-center justify-center rounded-full px-3 text-xs font-black uppercase"
+                  className="flex items-center justify-center rounded-full px-3 text-xs font-black"
                   onClick={handleRefreshCalendar}
                 >
                   <RefreshCw size={14} className="mr-2" />

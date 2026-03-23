@@ -115,6 +115,17 @@ export function useBookingConsoleData({
   const [archivedHasMore, setArchivedHasMore] = useState(false);
   const getSessionStorage = () => (typeof window === "undefined" ? null : window.sessionStorage);
   const getArchiveCacheKey = (keyParts) => `booking_archive:${keyParts.join(":")}`;
+  const clearArchiveCache = useCallback(() => {
+    const storage = getSessionStorage();
+    if (!storage || !resortId) return;
+    const prefix = `booking_archive:${resortId}:`;
+    for (let i = storage.length - 1; i >= 0; i -= 1) {
+      const key = storage.key(i);
+      if (key && key.startsWith(prefix)) {
+        storage.removeItem(key);
+      }
+    }
+  }, [resortId]);
 
   const normalizeArchiveRows = useCallback((data) => {
     return (data || []).map((row) => {
@@ -504,8 +515,9 @@ export function useBookingConsoleData({
         if (archiveError) throw archiveError;
 
         await deleteBookingById(bookingId);
+        clearArchiveCache();
         if (enableArchive) {
-          await loadArchivedBookings();
+          await loadArchivedBookings({ append: false, limit: 50 });
         }
         if (enableAudits) {
           await loadAudits();
@@ -525,6 +537,7 @@ export function useBookingConsoleData({
       loadArchivedBookings,
       resortId,
       toast,
+      clearArchiveCache,
       unresolvedIssueBookingIds,
     ]
   );
@@ -537,11 +550,12 @@ export function useBookingConsoleData({
         const { error } = await supabase.from("booking_archive").delete().eq("id", archiveId);
         if (error) throw error;
         setArchivedBookings((prev) => prev.filter((entry) => entry.id?.toString() !== archiveId?.toString()));
+        clearArchiveCache();
       } catch (error) {
         console.error("Delete archived booking error:", error?.message || error);
       }
     },
-    []
+    [clearArchiveCache]
   );
 
   const refreshAuditArchive = useCallback(async () => {
