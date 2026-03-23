@@ -4,10 +4,6 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { TicketRow } from "./TicketRow";
 
-/**
- * Stay information card. Also used as the only content for Print Entry Pass and Download Ticket.
- * Pass stayRows (from buildStayInfoRows) for consistency with print/download.
- */
 const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection({
   id = "ticket-stay-card",
   form,
@@ -15,7 +11,6 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
   resort,
   approvedByName,
   assignedRoomNames,
-  entryCode,
   viewerRole,
 }) {
   const displayGuestName = form?.stayingGuestName || form?.guestName || "â€”";
@@ -42,11 +37,11 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
             <TicketRow label="Contact Phone" value={contactPhone} />
           </>
         )}
+        <TicketRow label="Approved By" value={approvedByName} />        
         <TicketRow label="Pax" value={form?.guestCount ?? 0} />
         <TicketRow label="Adults" value={form?.adultCount ?? 0} />
         <TicketRow label="Children" value={form?.childrenCount ?? 0} />
         <TicketRow label="Sleeping" value={form?.sleepingGuests ?? 0} />
-        <TicketRow label="Approved By" value={approvedByName} />
         <TicketRow
           label="Assigned Rooms"
           value={assignedRoomNames?.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"}
@@ -61,50 +56,9 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
           value={booking?.end_date || form?.checkOutDate}
           subValue={booking?.check_out_time || form?.checkOutTime}
         />
-        <TicketRow label="Location" value={resort?.location} />
-        <TicketRow label="Entry Code" value={entryCode} />
       </div>
     </Card>
   );
 });
 
 export { TicketStayInfoCardSection };
-
-/**
- * Builds the same rows shown in the stay card, for use in print/download HTML (stay info only).
- */
-export function buildStayInfoRows({ form, booking, resort, approvedByName, assignedRoomNames, entryCode, viewerRole }) {
-  const displayGuestName = form?.stayingGuestName || form?.guestName || "â€”";
-  const inquirerType = (form?.inquirerType || "client").toString().toLowerCase();
-  const agentName = form?.agentName || "â€”";
-  const contactEmail = form?.email || form?.stayingGuestEmail || "â€”";
-  const contactPhone = form?.phoneNumber || form?.stayingGuestPhone || "â€”";
-  const rows = [
-    ["Resort", resort?.name || "â€”"],
-    ["Guest Name", displayGuestName],
-    ["Status", booking?.status || "Inquiry"],
-    ["Approved By", approvedByName || "â€”"],
-    ...(inquirerType === "agent"
-      ? [["Agent Name", agentName]]
-      : [
-          ["Contact Email", contactEmail],
-          ["Contact Phone", contactPhone],
-        ]),
-    ["Pax", String(form?.guestCount ?? 0)],
-    ["Adults", String(form?.adultCount ?? 0)],
-    ["Children", String(form?.childrenCount ?? 0)],
-    ["Sleeping", String(form?.sleepingGuests ?? 0)],
-    ["Assigned Rooms", assignedRoomNames?.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"],
-    [
-      "Check-In",
-      `${booking?.start_date || form?.checkInDate || "â€”"} ${booking?.check_in_time || form?.checkInTime || ""}`.trim(),
-    ],
-    [
-      "Check-Out",
-      `${booking?.end_date || form?.checkOutDate || "â€”"} ${booking?.check_out_time || form?.checkOutTime || ""}`.trim(),
-    ],
-    ["Location", resort?.location || "â€”"],
-    ["Entry Code", entryCode || "â€”"],
-  ];
-  return rows;
-}

@@ -187,7 +187,7 @@ const handleSubmitInquiry = async (submittedData) => {
         console.info("Client ticket link (for testing until email is enabled):", ticketUrl);
       }
       const inquiryMessage =
-        "Your inquiry has been sent. Please wait for an Email response.";
+        "Your inquiry has been sent. Please wait for an response via email.";
       persistentToast({
         message: inquiryMessage,
         color: "blue",

@@ -109,7 +109,7 @@ export default function ClientTicketPage() {
     toast,
   });
 
-  const { openPrintEntryPass, downloadTicket } = useTicketImageActions({ booking, toast });
+  const { downloadTicket } = useTicketImageActions({ booking, toast });
 
   const stayInfoPayload = useMemo(() => buildStayInfoPayload(booking, form, resort), [booking, form, resort]);
 
@@ -139,7 +139,6 @@ export default function ClientTicketPage() {
       <TicketHeaderSection
         bookingId={booking.id}
         canAccessEntryPass={canAccessEntryPass}
-        onPrintEntryPass={openPrintEntryPass}
         onDownloadTicket={downloadTicket}
         viewerRole={viewerRole}
       />
@@ -150,7 +149,6 @@ export default function ClientTicketPage() {
         resort={resort}
         approvedByName={stayInfoPayload?.approvedByName}
         assignedRoomNames={stayInfoPayload?.assignedRoomNames}
-        entryCode={stayInfoPayload?.entryCode}
         viewerRole={viewerRole}
       />
 
