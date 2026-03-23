@@ -301,12 +301,15 @@ export function useBookingConsoleData({
       if (!confirmed) return;
       try {
         await updateConcernStatus(issueId, "resolved");
-        setConcerns((prev) => prev.filter((entry) => entry.id !== issueId));
+        setConcerns((prev) =>
+          prev.map((entry) => (entry.id === issueId ? { ...entry, status: "resolved" } : entry))
+        );
+        toast?.({ message: "Concern resolved.", color: "blue", icon: AlertTriangle });
       } catch (error) {
         console.error("Resolve concern error:", error?.message || error);
       }
     },
-    [updateConcernStatus]
+    [toast, updateConcernStatus]
   );
 
   const handleReopenConcern = useCallback(
