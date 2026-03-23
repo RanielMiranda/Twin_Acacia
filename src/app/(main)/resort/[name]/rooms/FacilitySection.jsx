@@ -55,6 +55,9 @@ export default function FacilitySection({ facilities, onOpen, className = "max-w
                 <img
                   src={facility?.image || ""}
                   alt={facility?.name || "Facility"}
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                   className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${isLast ? "brightness-50" : ""}`}
                 />
                 {isLast && hasMore && (

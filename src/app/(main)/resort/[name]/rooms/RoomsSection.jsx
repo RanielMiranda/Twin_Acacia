@@ -49,6 +49,9 @@ export default function RoomsSection({
                       src={getTransformedSupabaseImageUrl(room.gallery?.[0] || resort.gallery[0], { width: 960, quality: 80, format: "webp" })}
                       srcSet={getSupabaseSrcSet(room.gallery?.[0] || resort.gallery[0])}
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
                       onClick={(e) => {
                         e.stopPropagation();
                         onOpenRoomGallery(room.gallery, 0);
@@ -64,6 +67,9 @@ export default function RoomsSection({
                         src={getTransformedSupabaseImageUrl(room.gallery[1], { width: 640, quality: 80, format: "webp" })}
                         srcSet={getSupabaseSrcSet(room.gallery[1], [320, 480, 640], 80)}
                         sizes="(max-width: 768px) 50vw, 25vw"
+                        loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
                         onClick={(e) => {
                           e.stopPropagation();
                           onOpenRoomGallery(room.gallery, 1);
@@ -80,6 +86,9 @@ export default function RoomsSection({
                         src={getTransformedSupabaseImageUrl(room.gallery[2], { width: 640, quality: 80, format: "webp" })}
                         srcSet={getSupabaseSrcSet(room.gallery[2], [320, 480, 640], 80)}
                         sizes="(max-width: 768px) 50vw, 25vw"
+                        loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
                         onClick={(e) => {
                           e.stopPropagation();
                           onOpenRoomGallery(room.gallery, 2);

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 import HeroSection from "./rooms/HeroSection";
@@ -10,10 +11,9 @@ import ShortcutBar from "./rooms/ShortcutBar";
 import FacilitySection from "./rooms/FacilitySection";
 import ServicesSection from "./rooms/ServicesSection";
 
-import GalleryModal from "./components/GalleryModal";
-import FacilityGalleryModal from "./components/FacilityGalleryModal";
-
-import ContactOwnerModal from "./components/ContactOwnerModal";
+const GalleryModal = dynamic(() => import("./components/GalleryModal"), { ssr: false });
+const FacilityGalleryModal = dynamic(() => import("./components/FacilityGalleryModal"), { ssr: false });
+const ContactOwnerModal = dynamic(() => import("./components/ContactOwnerModal"), { ssr: false });
 import RoomFilterPanel from "./rooms/filters/RoomFilterPanel";
 import { useFilters } from "@/components/useclient/ContextFilter";
 import { buildRequestedRange, getUnavailableRoomIds } from "@/lib/availability";
@@ -259,7 +259,7 @@ const handleSubmitInquiry = async (submittedData) => {
           </div>
 
           <aside className="hidden xl:sticky xl:top-24 xl:self-start xl:block">
-            <div className="overflow-visible rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_80px_-36px_rgba(15,23,42,0.45)]">
+            <div className="overflow-visible rounded-[2rem] bg-white shadow-xl border-t border-slate-100">
 
               <div className="p-6">
                 <RoomFilterPanel embedded selectedRoomSummary={selectedRoomSummary} />

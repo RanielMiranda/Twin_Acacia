@@ -1,16 +1,13 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
 import {
   TicketHeaderSection,
-  TicketAddOnsCardSection,
   TicketStayInfoCardSection,
-  TicketPaymentCardSection,
-  TicketSupportDeskCardSection,
-  TicketIssueCardSection,
 } from "./components";
 import { DEFAULT_PAYMENT_METHOD } from "./ticket-page/constants";
 import { buildStayInfoPayload } from "./ticket-page/helpers";
@@ -18,6 +15,23 @@ import { TicketLoadingSkeleton } from "./ticket-page/TicketLoadingSkeleton";
 import { useTicketData } from "./ticket-page/useTicketData";
 import { useTicketActions } from "./ticket-page/useTicketActions";
 import { useTicketImageActions } from "./ticket-page/useTicketImageActions";
+
+const TicketPaymentCardSection = dynamic(
+  () => import("./components").then((mod) => mod.TicketPaymentCardSection),
+  { loading: () => <div className="h-40 rounded-2xl border border-slate-200 bg-white" /> }
+);
+const TicketAddOnsCardSection = dynamic(
+  () => import("./components").then((mod) => mod.TicketAddOnsCardSection),
+  { loading: () => <div className="h-40 rounded-2xl border border-slate-200 bg-white" /> }
+);
+const TicketSupportDeskCardSection = dynamic(
+  () => import("./components").then((mod) => mod.TicketSupportDeskCardSection),
+  { loading: () => <div className="h-40 rounded-2xl border border-slate-200 bg-white" /> }
+);
+const TicketIssueCardSection = dynamic(
+  () => import("./components").then((mod) => mod.TicketIssueCardSection),
+  { loading: () => <div className="h-40 rounded-2xl border border-slate-200 bg-white" /> }
+);
 
 export default function ClientTicketPage() {
   const { bookingId } = useParams();

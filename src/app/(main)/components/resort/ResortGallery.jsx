@@ -2,7 +2,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
-export default function ResortGallery({ resort }) {
+export default function ResortGallery({ resort, prioritize = false }) {
   const gallery = resort.gallery || [];
   const mainImage = gallery[0];
   const topMini = gallery[1];
@@ -23,6 +23,9 @@ export default function ResortGallery({ resort }) {
             src={getTransformedSupabaseImageUrl(mainImage, { width: 1024, quality: 80, format: "webp" })}
             srcSet={getSupabaseSrcSet(mainImage)}
             sizes="(max-width: 768px) 100vw, 75vw"
+            loading={prioritize ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={prioritize ? "high" : "low"}
             className={imageClasses}
             alt={resort.name}
           />
@@ -37,6 +40,9 @@ export default function ResortGallery({ resort }) {
               src={getTransformedSupabaseImageUrl(topMini, { width: 640, quality: 80, format: "webp" })}
               srcSet={getSupabaseSrcSet(topMini, [320, 480, 640], 80)}
               sizes="(max-width: 768px) 50vw, 25vw"
+              loading={prioritize ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={prioritize ? "high" : "low"}
               className={imageClasses}
               alt={`${resort.name} 1`}
             />
@@ -48,6 +54,9 @@ export default function ResortGallery({ resort }) {
               src={getTransformedSupabaseImageUrl(bottomMini, { width: 640, quality: 80, format: "webp" })}
               srcSet={getSupabaseSrcSet(bottomMini, [320, 480, 640], 80)}
               sizes="(max-width: 768px) 50vw, 25vw"
+              loading={prioritize ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={prioritize ? "high" : "low"}
               className={imageClasses}
               alt={`${resort.name} 2`}
             />
