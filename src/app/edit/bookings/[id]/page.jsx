@@ -40,6 +40,8 @@ export default function BookingManagementPage() {
   const [addingBooking, setAddingBooking] = useState(false);
   const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
   const [archiveSearch, setArchiveSearch] = useState("");
+  const [archiveSearchInput, setArchiveSearchInput] = useState("");
+  const [archiveMonthFilter, setArchiveMonthFilter] = useState("");
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -122,6 +124,37 @@ export default function BookingManagementPage() {
       toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
     }
   };
+
+  const handleArchiveSearch = async () => {
+    const next = archiveSearchInput;
+    setArchiveSearch(next);
+    await loadArchivedBookings({ append: false, search: next });
+  };
+
+  const handleArchiveJumpMonth = async (monthValue) => {
+    if (!monthValue) return;
+    const [year, month] = monthValue.split("-").map((val) => Number(val));
+    if (!year || !month) return;
+    setArchiveMonthFilter(monthValue);
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0);
+    const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+    const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+    await loadArchivedBookings({ append: false, search: archiveSearch, rangeStart: startStr, rangeEnd: endStr });
+  };
+
+  const handleArchiveClearMonth = async () => {
+    setArchiveMonthFilter("");
+    await loadArchivedBookings({ append: false, search: archiveSearch });
+  };
+
+  useEffect(() => {
+    if (activeTab === "audits") return;
+    if (!archiveMonthFilter && !archiveSearchInput && !archiveSearch) return;
+    setArchiveMonthFilter("");
+    setArchiveSearchInput("");
+    setArchiveSearch("");
+  }, [activeTab, archiveMonthFilter, archiveSearch, archiveSearchInput]);
 
   const handleRefreshConcerns = async () => {
     try {
@@ -353,11 +386,12 @@ export default function BookingManagementPage() {
                 onResolveCheckedOut={handleResolveCheckedOut}
                 onDeleteArchived={handleDeleteArchivedBooking}
                 unresolvedIssueBookingIds={unresolvedIssueBookingIds}
-                searchValue={archiveSearch}
-                onSearchChange={(value) => {
-                  setArchiveSearch(value);
-                  loadArchivedBookings({ append: false, search: value });
-                }}
+                searchValue={archiveSearchInput}
+                onSearchChange={(value) => setArchiveSearchInput(value)}
+                onSearchSubmit={handleArchiveSearch}
+                onJumpMonth={handleArchiveJumpMonth}
+                onClearMonth={handleArchiveClearMonth}
+                monthFilter={archiveMonthFilter}
                 hasMoreArchived={archivedHasMore}
                 onLoadMoreArchived={() => loadArchivedBookings({ append: true, search: archiveSearch })}
               />

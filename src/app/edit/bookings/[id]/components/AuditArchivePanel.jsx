@@ -25,10 +25,24 @@ export default function AuditArchivePanel({
   unresolvedIssueBookingIds = new Set(),
   searchValue = "",
   onSearchChange,
+  onSearchSubmit,
+  onJumpMonth,
+  onClearMonth,
+  monthFilter = "",
   hasMoreArchived = false,
   onLoadMoreArchived,
 }) {
   const [activeTab, setActiveTab] = useState("declined");
+  const [monthInput, setMonthInput] = useState("");
+  const matchesMonthFilter = React.useCallback(
+    (dateValue) => {
+      if (!monthFilter) return true;
+      if (!dateValue) return false;
+      const normalized = String(dateValue).slice(0, 7);
+      return normalized === monthFilter;
+    },
+    [monthFilter]
+  );
 
   const normalizedSearch = useMemo(() => searchValue.trim().toLowerCase(), [searchValue]);
   const matchesSearch = React.useCallback(
@@ -59,8 +73,10 @@ export default function AuditArchivePanel({
 
   const filteredArchived = useMemo(
     () =>
-      (archivedBookings || []),
-    [archivedBookings]
+      (archivedBookings || []).filter((item) =>
+        matchesMonthFilter(item.startDate || item.bookingForm?.checkInDate || item.bookingForm?.checkOutDate)
+      ),
+    [archivedBookings, matchesMonthFilter]
   );
 
   const filteredDeclined = useMemo(
@@ -73,8 +89,10 @@ export default function AuditArchivePanel({
           item.startDate,
           item.endDate,
         ])
+      ).filter((item) =>
+        matchesMonthFilter(item.startDate || item.endDate || item.bookingForm?.checkInDate || item.bookingForm?.checkOutDate)
       ),
-    [declinedBookings, matchesSearch]
+    [declinedBookings, matchesSearch, matchesMonthFilter]
   );
 
   const filteredCancelled = useMemo(
@@ -87,8 +105,10 @@ export default function AuditArchivePanel({
           item.startDate,
           item.endDate,
         ])
+      ).filter((item) =>
+        matchesMonthFilter(item.startDate || item.endDate || item.bookingForm?.checkInDate || item.bookingForm?.checkOutDate)
       ),
-    [cancelledBookings, matchesSearch]
+    [cancelledBookings, matchesSearch, matchesMonthFilter]
   );
   const filteredCheckedOut = useMemo(
     () =>
@@ -100,8 +120,10 @@ export default function AuditArchivePanel({
           item.startDate,
           item.endDate,
         ])
+      ).filter((item) =>
+        matchesMonthFilter(item.startDate || item.endDate || item.bookingForm?.checkInDate || item.bookingForm?.checkOutDate)
       ),
-    [checkedOutOnlyBookings, matchesSearch]
+    [checkedOutOnlyBookings, matchesSearch, matchesMonthFilter]
   );
 
   return (
@@ -144,14 +166,55 @@ export default function AuditArchivePanel({
             </button>
           ))}
         </div>
-        <div className="relative w-full md:max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={searchValue}
-            onChange={(e) => onSearchChange?.(e.target.value)}
-            placeholder="Search guest, agent, or date"
-            className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-slate-600"
-          />
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchValue}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              placeholder="Search guest or agent"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-slate-600"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 px-3 text-xs font-bold"
+            onClick={() => onSearchSubmit?.()}
+          >
+            Search
+          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              type="month"
+              value={monthInput}
+              onChange={(e) => setMonthInput(e.target.value)}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 px-3 text-xs font-bold"
+              onClick={() => {
+                if (monthInput) onJumpMonth?.(monthInput);
+              }}
+            >
+              Go
+            </Button>
+            {monthFilter ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 px-3 text-xs font-bold"
+                onClick={() => {
+                  setMonthInput("");
+                  onClearMonth?.();
+                }}
+              >
+                All Months
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
       {filteredCheckedOut.length > 0 ? (

@@ -79,6 +79,8 @@ export default function BookingCalendar({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarMode, setCalendarMode] = useState("all"); // all | confirmed | inquiry | past
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [monthInput, setMonthInput] = useState("");
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [modalDayLabel, setModalDayLabel] = useState("");
   const [modalBookings, setModalBookings] = useState([]);
@@ -260,6 +262,21 @@ export default function BookingCalendar({
     const resortId = Array.isArray(params?.id) ? params.id[0] : params?.id;
     if (!resortId) return;
     router.push(`/edit/bookings/${resortId}/booking-details/${bookingId}`);
+  };
+
+  const applySearch = () => {
+    setSearch(searchInput);
+    if (calendarMode === "past" && onLoadArchived) {
+      const { startStr, endStr } = getRangeForView(currentDate);
+      onLoadArchived({ append: false, search: searchInput, rangeStart: startStr, rangeEnd: endStr });
+    }
+  };
+
+  const jumpToMonth = () => {
+    if (!monthInput) return;
+    const [year, month] = monthInput.split("-").map((val) => Number(val));
+    if (!year || !month) return;
+    setCurrentDate(new Date(year, month - 1, 1));
   };
 
   const openDayModal = (dateString, dayBookings) => {
@@ -454,15 +471,39 @@ export default function BookingCalendar({
           </div>
         
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative w-full max-w-md">
+        <div className="flex flex-wrap items-center gap-3 w-full">
+          <div className="relative w-full">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search guest, agent, or date"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search guest, agent, or date (YYYY-MM-DD)"
               className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-slate-600"
             />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 px-3 text-[11px] font-bold"
+            onClick={applySearch}
+          >
+            Search
+          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              type="month"
+              value={monthInput}
+              onChange={(e) => setMonthInput(e.target.value)}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 px-3 text-[11px] font-bold"
+              onClick={jumpToMonth}
+            >
+              Go
+            </Button>
           </div>
         </div>
 
