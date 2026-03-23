@@ -64,6 +64,7 @@ export default function BookingCreationTemplate({
   title,
   subtitle,
   headerImageUrl,
+  addressLabel = "Inquirer Address",
   onSubmit,
 }) {
   const [agreed, setAgreed] = useState(false);
@@ -501,12 +502,17 @@ export default function BookingCreationTemplate({
                   <input name="phoneNumber" value={formData.phoneNumber ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
                 </div>
               </div>
-              {formData.inquirerType === "client" ? (
-                <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Inquirer Address (optional)</label>
-                  <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
-                </div>
-              ) : null}
+              <div className="space-y-1">
+                <label className="text-xs font-black uppercase text-slate-400 ml-1">{addressLabel} (optional)</label>
+                <input
+                  name="address"
+                  value={formData.address ?? ""}
+                  onChange={handleChange}
+                  type="text"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Street, city, province"
+                />
+              </div>              
             </div>
           )}
 
@@ -525,10 +531,6 @@ export default function BookingCreationTemplate({
                   <div className="space-y-1">
                     <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Contact Number</label>
                     <input name="stayingGuestPhone" value={formData.stayingGuestPhone ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
-                  </div>
-                  <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-black uppercase text-slate-400 ml-1">Inquirer Address (optional)</label>
-                    <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
                   </div>
                 </div>
               ) : null}
@@ -736,7 +738,7 @@ export default function BookingCreationTemplate({
                       <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
                       <SummaryItem icon={Clock} label="Schedule" value={`${formatTime(formData.checkInTime)} - ${formatTime(formData.checkOutTime)}`} />
                       <SummaryItem icon={PlusCircle} label="Rooms" value={selectedRoomNamesDerived.length > 0 ? selectedRoomNamesDerived.join(", ") : "Not set"} />
-                      <SummaryItem icon={MapPin} label="Inquirer Address" value={formData.address || "Not set"} />
+                      <SummaryItem icon={MapPin} label={addressLabel} value={formData.address || "Not set"} />
                       {showAddOns ? (
                         <SummaryItem
                           icon={PlusCircle}

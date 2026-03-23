@@ -15,7 +15,11 @@ export function normalizeRoomIds(roomIds) {
 
 export function isBlockingStatus(status) {
   const normalized = String(status || "").toLowerCase();
-  return normalized.includes("confirm") || normalized.includes("ongoing");
+  return (
+    normalized.includes("confirm") ||
+    normalized.includes("ongoing") ||
+    normalized.includes("approved")
+  );
 }
 
 export function buildRequestedRange({ startDate, endDate, checkInTime, checkOutTime }) {

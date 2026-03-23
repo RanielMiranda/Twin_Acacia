@@ -25,6 +25,7 @@ export default function ManualBookingModal({
       submitLabel={isSubmitting ? "Adding..." : "Add Booking"}
       isSubmitting={isSubmitting}
       title="Manual Booking"
+      addressLabel="Inquirer Address"
       onSubmit={onSubmit}
     />
   );

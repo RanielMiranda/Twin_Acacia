@@ -320,8 +320,8 @@ export function useTicketActions({
                   .join(", ")}`
               : "Requested add-on update: cleared requested add-ons.",
           idempotency_key: buildMessageIdempotencyKey(
-            normalizedServiceIds.length > 0
-              ? normalizedServiceIds.join("|")
+            normalizedServiceKeys.length > 0
+              ? normalizedServiceKeys.join("|")
               : "cleared",
             "client-addons"
           ),
@@ -335,7 +335,7 @@ export function useTicketActions({
       setBooking((prev) => ({
         ...prev,
         booking_form: bookingForm,
-        resort_service_ids: normalizedServiceIds,
+        resort_service_ids: normalizedServiceKeys,
       }));
       await fetchTicket();
       await fetchMessages(booking.id);

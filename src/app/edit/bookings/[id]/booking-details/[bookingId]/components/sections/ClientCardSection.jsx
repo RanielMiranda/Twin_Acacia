@@ -49,16 +49,16 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
                   <input
                     type="email"
                     className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
-                    value={draft.email || ""}
-                    onChange={(e) => setField("email", e.target.value)}
-                    placeholder="Agent email"
+                    value={draft.stayingGuestEmail || ""}
+                    onChange={(e) => setField("stayingGuestEmail", e.target.value)}
+                    placeholder="Guest email"
                   />
                   <input
                     type="text"
                     className="text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100"
-                    value={draft.phoneNumber || ""}
-                    onChange={(e) => setField("phoneNumber", e.target.value)}
-                    placeholder="Agent phone"
+                    value={draft.stayingGuestPhone || ""}
+                    onChange={(e) => setField("stayingGuestPhone", e.target.value)}
+                    placeholder="Guest phone"
                   />
                   <input
                     type="text"
@@ -114,11 +114,11 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
                   <>
                     <span className="inline-flex items-center gap-1">
                       <Mail size={12} />
-                      {draft.email || "No email"}
+                      {draft.stayingGuestEmail || "No guest email"}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <Phone size={12} />
-                      {draft.phoneNumber || "No phone"}
+                      {draft.stayingGuestPhone || "No guest phone"}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <MapPin size={12} />
