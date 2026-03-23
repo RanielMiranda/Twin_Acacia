@@ -536,7 +536,7 @@ export default function BookingCalendar({
       </div>
         <div className="space-y-2 relative z-0">
           <p className="my-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Resort Booking Ranges</p>
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-3 sm:pb-2 whitespace-nowrap">
             {(calendarMode === "past" ? [...filteredArchivedList, ...filteredBookingList] : filteredBookingList)
               .filter((booking) => (calendarMode === "past" ? isPastStatus(booking) : shouldShowOnCalendar(booking)))
               .filter((booking) => {
