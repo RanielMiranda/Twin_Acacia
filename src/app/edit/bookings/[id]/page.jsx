@@ -224,7 +224,7 @@ export default function BookingManagementPage() {
             <Button
               type="button"
               onClick={() => setIsAddBookingOpen(true)}
-              className="rounded-full px-2 text-xs font-black uppercase"
+              className="rounded-full px-2 text-md"
             >
               Add Booking
             </Button>
