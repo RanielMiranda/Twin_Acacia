@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { CreditCard, Upload, ShieldCheck, Loader2, CheckCircle2, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,27 @@ const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
       : resortPaymentImageUrl || resortBankPaymentImageUrl;
   const hasReference = !!chosenReferenceUrl && typeof chosenReferenceUrl === "string";
   const [referenceExpanded, setReferenceExpanded] = useState(false);
+  const [proofPreviewExpanded, setProofPreviewExpanded] = useState(null);
   const locked = !canSubmitPayment;
   const bigImageUrl = hasReference
     ? getTransformedSupabaseImageUrl(chosenReferenceUrl, { width: 1024, quality: 95, format: "webp" })
     : null;
+  const proofPreviews = useMemo(
+    () =>
+      (proofFiles || [])
+        .filter((file) => file instanceof File)
+        .map((file) => ({
+          name: file.name,
+          url: URL.createObjectURL(file),
+        })),
+    [proofFiles]
+  );
+
+  useEffect(() => {
+    return () => {
+      proofPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [proofPreviews]);
   return (
     <Card className="p-6 md:p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem]">
       <h3 className="text-sm font-black text-emerald-600 uppercase tracking-[0.2em] mb-6 md:mb-8 flex items-center gap-2">
@@ -162,6 +179,30 @@ const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
               </div>
             </div>
           </label>
+          {proofPreviews.length ? (
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Selected Image Preview
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {proofPreviews.map((preview) => (
+                  <button
+                    type="button"
+                    key={preview.url}
+                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                    onClick={() => setProofPreviewExpanded(preview.url)}
+                    aria-label={`Preview ${preview.name}`}
+                  >
+                    <img
+                      src={preview.url}
+                      alt={preview.name}
+                      className="h-28 w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className={`bg-slate-900 rounded-2xl p-6 md:p-8 text-white flex flex-col justify-between ${hasReference ? "lg:col-span-4 order-3" : "lg:col-span-4"}`}>
@@ -205,6 +246,31 @@ const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
           </Button>
         </div>
       </div>
+      {proofPreviewExpanded ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+          onClick={() => setProofPreviewExpanded(null)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Escape" && setProofPreviewExpanded(null)}
+          aria-label="Close preview"
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/90 text-slate-700 hover:bg-white"
+            onClick={() => setProofPreviewExpanded(null)}
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={proofPreviewExpanded}
+            alt="Uploaded proof (enlarged)"
+            className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      ) : null}
     </Card>
   );
 });
