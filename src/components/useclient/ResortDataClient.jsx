@@ -187,10 +187,14 @@ export function ResortDataProvider({ children }) {
       }
 
       const resortIds = allResorts.map((resort) => Number(resort.id)).filter((id) => Number.isFinite(id));
-      const { data, error } = await supabase
+      let query = supabase
         .from("bookings")
-        .select("resort_id, room_ids, start_date, end_date, check_in_time, check_out_time, status, booking_form")
-        .in("resort_id", resortIds);
+        .select("resort_id, room_ids, start_date, end_date, check_in_time, check_out_time, status")
+        .in("resort_id", resortIds)
+        .lte("start_date", requestedRange.endDate)
+        .or(`end_date.gte.${requestedRange.startDate},end_date.is.null`);
+
+      const { data, error } = await query;
       if (error) {
         console.error("Availability fetch error:", error.message);
         if (!cancelled) setAvailabilityByResort({});
