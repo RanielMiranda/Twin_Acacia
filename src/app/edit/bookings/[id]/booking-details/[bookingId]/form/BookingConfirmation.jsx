@@ -14,14 +14,18 @@ export default function BookingConfirmation({
   const formData = data || {};
 
   const inquirerType = String(formData.inquirerType || "client").toLowerCase();
-  const inquirerName = inquirerType === "agent" ? (formData.agentName || formData.guestName || "") : (formData.guestName || "");
+  const isAgent = inquirerType === "agent";
+  const inquirerName = isAgent
+    ? (formData.agentName || formData.guestName || "")
+    : (formData.guestName || "");
   const inquirerEmail = formData.email || "";
   const inquirerPhone = formData.phoneNumber || "";
+  const inquirerAddress = formData.address || "";
 
   const guestName = formData.stayingGuestName || formData.guestName || "-";
-  const guestEmail = formData.stayingGuestEmail || "";
-  const guestPhone = formData.stayingGuestPhone || "";
-  const clientAddress = formData.address || "";
+  const guestEmail = isAgent ? "" : (formData.stayingGuestEmail || inquirerEmail || "-");
+  const guestPhone = isAgent ? "" : (formData.stayingGuestPhone || inquirerPhone || "-");
+  const guestAddress = isAgent ? "" : (inquirerAddress || "-");
 
   const selectedServices = Array.isArray(formData.resortServices)
     ? formData.resortServices
@@ -86,27 +90,7 @@ export default function BookingConfirmation({
           <section className="space-y-3">
             <h2 className=" mt-5 text-xs font-black uppercase tracking-wider text-slate-500">Contact Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Guest Name">
-                <div className="text-sm font-bold text-slate-700">{guestName}</div>
-              </Field>
-
-              {guestEmail ? (
-                <Field label="Guest Email">
-                  <div className="text-sm font-bold text-slate-700">{guestEmail}</div>
-                </Field>
-              ) : null}
-
-              {guestPhone ? (
-                <Field label="Guest Phone">
-                  <div className="text-sm font-bold text-slate-700">{guestPhone}</div>
-                </Field>
-              ) : null}
-
-                  <Field label="Inquirer Address">
-                    <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
-                  </Field>
-
-              {inquirerType === "agent" ? (
+              {isAgent ? (
                 <>
                   <Field label="Inquirer Name">
                     <div className="text-sm font-bold text-slate-700">{inquirerName || "-"}</div>
@@ -117,9 +101,24 @@ export default function BookingConfirmation({
                   <Field label="Inquirer Phone">
                     <div className="text-sm font-bold text-slate-700">{inquirerPhone || "-"}</div>
                   </Field>
+                  <Field label="Inquirer Address">
+                    <div className="text-sm font-bold text-slate-700">{inquirerAddress || "-"}</div>
+                  </Field>
+                  <Field label="Guest Name">
+                    <div className="text-sm font-bold text-slate-700">{guestName}</div>
+                  </Field>
+                  <Field label="Guest Email">
+                    <div className="text-sm font-bold text-slate-700">{formData.stayingGuestEmail || "-"}</div>
+                  </Field>
+                  <Field label="Guest Phone">
+                    <div className="text-sm font-bold text-slate-700">{formData.stayingGuestPhone || "-"}</div>
+                  </Field>
                 </>
               ) : (
                 <>
+                  <Field label="Guest Name">
+                    <div className="text-sm font-bold text-slate-700">{guestName}</div>
+                  </Field>
                   <Field label="Guest Email">
                     <div className="text-sm font-bold text-slate-700">{guestEmail || "-"}</div>
                   </Field>
@@ -127,7 +126,7 @@ export default function BookingConfirmation({
                     <div className="text-sm font-bold text-slate-700">{guestPhone || "-"}</div>
                   </Field>
                   <Field label="Guest Address">
-                    <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
+                    <div className="text-sm font-bold text-slate-700">{guestAddress || "-"}</div>
                   </Field>
                 </>
               )}
