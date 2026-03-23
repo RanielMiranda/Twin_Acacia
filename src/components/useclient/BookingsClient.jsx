@@ -191,17 +191,21 @@ export function BookingsProvider({ children }) {
   const syncResortBookings = useCallback(
     (nextBookings) => {
       setBookings(nextBookings);
-      updateResort((prev) => {
-        if (!prev) return prev;
-        if (prev.bookings === nextBookings) return prev;
-        return { ...prev, bookings: nextBookings };
-      });
       if (typeof window !== "undefined" && resort?.id) {
         localStorage.setItem(getCacheKey(resort.id), JSON.stringify(nextBookings));
       }
     },
-    [resort?.id, updateResort]
+    [resort?.id]
   );
+
+  useEffect(() => {
+    if (!resort) return;
+    updateResort((prev) => {
+      if (!prev) return prev;
+      if (prev.bookings === bookings) return prev;
+      return { ...prev, bookings };
+    });
+  }, [bookings, resort, updateResort]);
 
   const refreshBookings = useCallback(async () => {
     if (!resort?.id) return;
@@ -260,7 +264,7 @@ export function BookingsProvider({ children }) {
   );
 
   useEffect(() => {
-    if (!resort?.id) return;
+    if (!resort?.id || hasHydratedCache) return;
     if (typeof window === "undefined") return;
     try {
       const cached = localStorage.getItem(getCacheKey(resort.id));
@@ -287,7 +291,7 @@ export function BookingsProvider({ children }) {
     } finally {
       setHasHydratedCache(true);
     }
-  }, [resort, updateResort]);
+  }, [hasHydratedCache, resort?.id, updateResort]);
 
   useEffect(() => {
     if (!resort?.id || !hasHydratedCache) return;

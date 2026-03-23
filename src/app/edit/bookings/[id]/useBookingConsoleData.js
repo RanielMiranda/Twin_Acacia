@@ -117,19 +117,30 @@ export function useBookingConsoleData({
   const getArchiveCacheKey = (keyParts) => `booking_archive:${keyParts.join(":")}`;
 
   const normalizeArchiveRows = useCallback((data) => {
-    return (data || []).map((row) => ({
-      id: row.id,
-      bookingId: row.booking_id || null,
-      resortId: row.resort_id,
-      startDate: row.start_date || row.booking_form?.checkInDate || null,
-      endDate: row.end_date || row.booking_form?.checkOutDate || null,
-      checkInTime: row.check_in_time || row.booking_form?.checkInTime || "14:00",
-      checkOutTime: row.check_out_time || row.booking_form?.checkOutTime || "11:00",
-      roomCount: row.room_count || row.booking_form?.roomCount || 1,
-      bookingForm: row.booking_form || {},
-      archivedAt: row.archived_at,
-      isArchived: true,
-    }));
+    return (data || []).map((row) => {
+      let bookingForm = row.booking_form || {};
+      if (typeof bookingForm === "string") {
+        try {
+          bookingForm = JSON.parse(bookingForm);
+        } catch {
+          bookingForm = {};
+        }
+      }
+
+      return {
+        id: row.id,
+        bookingId: row.booking_id || null,
+        resortId: row.resort_id,
+        startDate: row.start_date || bookingForm.checkInDate || null,
+        endDate: row.end_date || bookingForm.checkOutDate || null,
+        checkInTime: row.check_in_time || bookingForm.checkInTime || "14:00",
+        checkOutTime: row.check_out_time || bookingForm.checkOutTime || "11:00",
+        roomCount: row.room_count || bookingForm.roomCount || 1,
+        bookingForm,
+        archivedAt: row.archived_at,
+        isArchived: true,
+      };
+    });
   }, []);
 
   const loadArchivedBookings = useCallback(
@@ -154,12 +165,14 @@ export function useBookingConsoleData({
           const cachedRaw = storage.getItem(cacheKey);
           if (cachedRaw) {
             const cachedRows = JSON.parse(cachedRaw);
-            setArchivedBookings(cachedRows);
-            archiveCursorRef.current = cachedRows.length;
-            archiveQueryRef.current = nextQuery;
-            setArchivedHasMore(cachedRows.length === limit);
-            setLoadingArchivedBookings(false);
-            return;
+            if (Array.isArray(cachedRows) && cachedRows.length > 0) {
+              setArchivedBookings(cachedRows);
+              archiveCursorRef.current = cachedRows.length;
+              archiveQueryRef.current = nextQuery;
+              setArchivedHasMore(cachedRows.length === limit);
+              setLoadingArchivedBookings(false);
+              return;
+            }
           }
         }
 
@@ -237,7 +250,7 @@ export function useBookingConsoleData({
 
   useEffect(() => {
     if (!resortId || !enableArchive || !archiveAutoLoad) return;
-    loadArchivedBookings({ append: false });
+    loadArchivedBookings({ append: false, limit: 50 });
   }, [archiveAutoLoad, enableArchive, loadArchivedBookings, resortId]);
 
   const declinedBookings = useMemo(
@@ -532,7 +545,9 @@ export function useBookingConsoleData({
   const refreshAuditArchive = useCallback(async () => {
     const tasks = [];
     if (enableAudits) tasks.push(loadAudits());
-    if (enableArchive) tasks.push(loadArchivedBookings({ append: false }));
+    if (enableArchive) {
+      tasks.push(loadArchivedBookings({ append: false, limit: 50 }));
+    }
     await Promise.all(tasks);
   }, [enableArchive, enableAudits, loadAudits, loadArchivedBookings]);
 

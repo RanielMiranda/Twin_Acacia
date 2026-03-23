@@ -297,7 +297,7 @@ export default function BookingManagementPage() {
                 fullWidth
                 archivedBookings={archivedBookings}
                 archivedLoading={loadingArchivedBookings}
-                onLoadArchived={(payload) => loadArchivedBookings(payload)}
+                onLoadArchived={loadArchivedBookings}
               />
             </div>
           ) : activeTab === "concerns" ? (

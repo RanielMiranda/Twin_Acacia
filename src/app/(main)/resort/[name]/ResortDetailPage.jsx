@@ -187,7 +187,7 @@ const handleSubmitInquiry = async (submittedData) => {
         console.info("Client ticket link (for testing until email is enabled):", ticketUrl);
       }
       const inquiryMessage =
-        "Your inquiry has been sent. The owner will review your request and confirm it via email.";
+        "Your inquiry has been sent. Please wait for an Email response.";
       persistentToast({
         message: inquiryMessage,
         color: "blue",
@@ -328,7 +328,7 @@ const handleSubmitInquiry = async (submittedData) => {
       )}
       <div className="xl:hidden fixed inset-x-0 bottom-4 z-40 px-4">
         <button
-          className="mx-auto flex w-full max-w-sm items-center justify-center rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-bold text-white shadow-2xl"
+          className="mx-auto flex w-full max-w-sm items-center justify-center rounded-2xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-2xl"
           onClick={() => setMobileFiltersOpen(true)}
         >
           Filters

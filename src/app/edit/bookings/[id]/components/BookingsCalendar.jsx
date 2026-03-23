@@ -47,7 +47,7 @@ function isConfirmedStatus(booking) {
 function isPastStatus(booking) {
   if (booking?.isArchived) return true;
   const normalized = getNormalizedStatus(booking);
-  return normalized.includes("checked out");
+  return normalized.includes("checked out") || normalized.includes("checked-out") || normalized.includes("pending checkout");
 }
 
 function isInquiryStatus(booking) {
