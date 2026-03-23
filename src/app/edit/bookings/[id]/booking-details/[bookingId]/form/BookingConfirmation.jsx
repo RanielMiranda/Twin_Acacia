@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { buildServiceSnapshot, getServiceKey } from "@/lib/utils";
 
 export default function BookingConfirmation({
@@ -65,7 +64,10 @@ export default function BookingConfirmation({
     || Number(formData.adultCount || 0) + Number(formData.childrenCount || 0);
 
   return (
-    <div className="max-w-[210mm] min-h-[297mm] mx-auto mb-28 bg-white shadow-2xl border border-slate-200 rounded-[18px] px-10 py-12 docx-sheet">
+    <div
+      id="booking-confirmation-sheet"
+      className="bg-white shadow-2xl border border-slate-200 rounded-[18px] px-10 py-12 docx-sheet"
+    >
       <div className="flex flex-col items-center text-center border-b border-slate-200 pb-6 gap-3">
         {resortProfileImage ? (
           <img
@@ -228,30 +230,7 @@ export default function BookingConfirmation({
             </div>
           </section>
 
-        </div>
-      <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto bg-blue-600 hover:bg-blue-700 md:-translate-x-1/2 z-50 flex items-center justify-between gap-3 bg-white/95 backdrop-blur border border-slate-200 shadow-xl rounded-2xl px-4 py-3 print:hidden">
-        <Button type="button" variant="" onClick={() => window.print()}>
-          Download
-        </Button>
       </div>
-      <style jsx global>{`
-        @media print {
-          body {
-            background: #fff !important;
-          }
-          .docx-sheet {
-            margin: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            width: 210mm !important;
-            min-height: 297mm !important;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

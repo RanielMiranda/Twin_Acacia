@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import BookingForm from "./BookingConfirmation";
+import { Button } from "@/components/ui/button";
+import { toPng } from "html-to-image";
 
 export default function BookingDetailsFormPage() {
   const params = useParams();
@@ -104,19 +106,48 @@ export default function BookingDetailsFormPage() {
     resortName: currentResort?.name,
   };
 
+  const handleDownload = useCallback(async () => {
+    const el = document.getElementById("booking-confirmation-sheet");
+    if (!el) return;
+    try {
+      const dataUrl = await toPng(el, {
+        quality: 1,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+        style: { borderRadius: "1.125rem" },
+      });
+      if (!dataUrl) return;
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `booking-form-${currentResort?.name || "resort"}.png`;
+      link.click();
+    } catch (error) {
+      console.error("Failed to download booking form image:", error);
+    }
+  }, [currentResort?.name]);
+
   return (
     <div className="p-4 md:p-8 bg-slate-50 min-h-screen">
       {(loading && !currentResort) || loadingBookings || loadingDetail ? (
         <div className="text-center text-slate-500 mt-20">Loading booking form...</div>
       ) : (
-      <BookingForm
-        data={initialData}
-        resortName={currentResort?.name}
-        resortProfileImage={currentResort?.profileImage}
-        resortPrice={Number(currentResort?.price || 0)}
-        resortExtraServices={currentResort?.extraServices || []}
-        readOnly
-      />
+      <>
+        <div className="max-w-[210mm] min-h-[297mm] mx-auto mb-28">
+          <BookingForm
+            data={initialData}
+            resortName={currentResort?.name}
+            resortProfileImage={currentResort?.profileImage}
+            resortPrice={Number(currentResort?.price || 0)}
+            resortExtraServices={currentResort?.extraServices || []}
+            readOnly
+          />
+        </div>
+        <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 z-50 flex items-center justify-between gap-3 bg-white/95 backdrop-blur border border-slate-200 shadow-xl rounded-2xl px-4 py-3">
+          <Button type="button" variant="" onClick={handleDownload}>
+            Download
+          </Button>
+        </div>
+      </>
       )}
     </div>
   );
