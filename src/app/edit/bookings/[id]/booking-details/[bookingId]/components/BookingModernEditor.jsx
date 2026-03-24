@@ -173,9 +173,10 @@ export default function BookingModernEditor({
   }, [draft.adultCount, draft.childrenCount, draft.guestCount]);
 
   useEffect(() => {
-    const next = loadDraftFromStorage({ booking, inlineDraftKey, isEditing });
-    if (!isEditing) setDraft(next);
-  }, [booking, inlineDraftKey, isEditing]);
+    if (isEditing) return;
+    const next = loadDraftFromStorage({ booking, inlineDraftKey, isEditing: false });
+    setDraft(next);
+  }, [booking, inlineDraftKey]);
 
   const proofSource = proofOverrideForm || draft;
   const paymentReviewPending =
