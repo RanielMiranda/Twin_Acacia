@@ -25,6 +25,7 @@ export async function handleSetStatusAction({
   persist,
   onStayConfirmed,
   toast,
+  actorMeta,
 }) {
   if (actionBusy) return;
   const wasConfirmed = String(draft.status || "").toLowerCase().includes("confirm");

@@ -27,8 +27,7 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
         Stay Information
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <TicketRow label="Guest Name" value={displayGuestName} />
-        <TicketRow label="Status" value={booking?.status || "Inquiry"} isStatus />
+        <TicketRow label="Guest Name" value={displayGuestName} />    
         {inquirerType === "agent" ? (
           <TicketRow label="Agent Name" value={agentName} />
         ) : (
@@ -36,16 +35,15 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
             <TicketRow label="Contact Email" value={contactEmail} />
             <TicketRow label="Contact Phone" value={contactPhone} />
           </>
-        )}
-        <TicketRow label="Approved By" value={approvedByName} />        
+        )}      
+        <TicketRow label="Approved By" value={approvedByName} />          
+       
         <TicketRow label="Pax" value={form?.guestCount ?? 0} />
         <TicketRow label="Adults" value={form?.adultCount ?? 0} />
         <TicketRow label="Children" value={form?.childrenCount ?? 0} />
         <TicketRow label="Sleeping" value={form?.sleepingGuests ?? 0} />
-        <TicketRow
-          label="Assigned Rooms"
-          value={assignedRoomNames?.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"}
-        />
+              
+        <TicketRow label="Status" value={booking?.status || "Inquiry"} isStatus />                 
         <TicketRow
           label="Check-In"
           value={booking?.start_date || form?.checkInDate}
@@ -56,6 +54,10 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
           value={booking?.end_date || form?.checkOutDate}
           subValue={booking?.check_out_time || form?.checkOutTime}
         />
+        <TicketRow
+          label="Assigned Rooms"
+          value={assignedRoomNames?.length > 0 ? assignedRoomNames.join(", ") : "Pending assignment"}
+        />            
       </div>
     </Card>
   );

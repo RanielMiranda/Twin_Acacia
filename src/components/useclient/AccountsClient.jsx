@@ -65,7 +65,11 @@ export function AccountsProvider({ children }) {
     });
     const body = await readJson(response);
     setAccounts((prev) => [body.account, ...prev]);
-    return { account: body.account, setupLink: body.setupLink };
+    return {
+      account: body.account,
+      setupLink: body.setupLink,
+      emailSent: body.emailSent,
+    };
   }, []);
 
   const updateAccount = useCallback(
