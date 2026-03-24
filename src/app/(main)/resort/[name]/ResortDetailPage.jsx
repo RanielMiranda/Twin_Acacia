@@ -28,8 +28,53 @@ import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAc
 import { normalizeBookingSubmission } from "@/components/booking/payloadData/buildBookingPayload";
 import { buildServiceSnapshots } from "@/lib/utils";
 
+const ResortDetailSkeleton = () => (
+  <div className="bg-white min-h-screen animate-pulse">
+    <div className="h-90 md:h-105 bg-slate-200" />
+    <div className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-8 xl:gap-12 items-start">
+        <div className="min-w-0 space-y-10">
+          <div className="rounded-3xl border border-slate-200 p-6">
+            <div className="h-8 w-2/3 bg-slate-200 rounded-full mb-3" />
+            <div className="h-4 w-1/3 bg-slate-200 rounded-full mb-6" />
+            <div className="h-20 w-full bg-slate-200 rounded-2xl" />
+          </div>
+          <div className="rounded-3xl border border-slate-200 p-6">
+            <div className="h-5 w-1/4 bg-slate-200 rounded-full mb-4" />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="h-24 bg-slate-200 rounded-2xl" />
+              <div className="h-24 bg-slate-200 rounded-2xl" />
+              <div className="h-24 bg-slate-200 rounded-2xl" />
+            </div>
+          </div>
+          <div className="rounded-3xl border border-slate-200 p-6">
+            <div className="h-5 w-1/4 bg-slate-200 rounded-full mb-4" />
+            <div className="h-32 bg-slate-200 rounded-2xl" />
+          </div>
+          <div className="rounded-3xl border border-slate-200 p-6">
+            <div className="h-6 w-1/3 bg-slate-200 rounded-full mb-6" />
+            <div className="space-y-4">
+              <div className="h-28 bg-slate-200 rounded-2xl" />
+              <div className="h-28 bg-slate-200 rounded-2xl" />
+            </div>
+          </div>
+        </div>
+
+        <aside className="hidden xl:block">
+          <div className="rounded-4xl border border-slate-200 p-6 space-y-6">
+            <div className="h-8 bg-slate-200 rounded-2xl" />
+            <div className="h-10 bg-slate-200 rounded-2xl" />
+            <div className="h-12 bg-slate-200 rounded-2xl" />
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+);
+
 export default function ResortDetailPage({ name }) {
   const { resort, loadResort, loading } = useResort();
+  const [hasRequestedResort, setHasRequestedResort] = useState(false);
 
   const [facilityIndex, setFacilityIndex] = useState(0);
   const [facilityOpen, setFacilityOpen] = useState(false);
@@ -48,7 +93,8 @@ export default function ResortDetailPage({ name }) {
   const { sendTicketMessage, isMissingSupportTableError } = useSupport();
   useEffect(() => {
     if (!name) return;
-        const decodedName = decodeURIComponent(name);
+    const decodedName = decodeURIComponent(name);
+    setHasRequestedResort(true);
     if (!resort || resort.name !== decodedName) {
       loadResort(decodedName, false);
     }
@@ -96,18 +142,20 @@ export default function ResortDetailPage({ name }) {
     };
   }, [mobileFiltersOpen]);
 
-  if (loading && !resort) {
-    return (
-      <div className="p-20 text-center text-gray-500">
-        Fetching Resort Details...
-      </div>
-    );
+  if (!resort && (loading || !hasRequestedResort)) {
+    return <ResortDetailSkeleton />;
   }
 
   if (!resort) {
     return (
-      <div className="p-10 text-center text-gray-500">
-        Resort not found
+      <div className="relative">
+        <ResortDetailSkeleton />
+        <div className="absolute inset-0 z-50 flex items-start justify-center px-6 pt-10 md:pt-16">
+          <div className="rounded-3xl border border-slate-200 bg-white/90 backdrop-blur px-8 py-6 text-center shadow-lg max-w-md w-full">
+            <p className="text-sm font-semibold text-slate-700">Resort not found.</p>
+            <p className="text-xs text-slate-500 mt-1">Try refreshing or check the resort link.</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -259,13 +307,13 @@ const handleSubmitInquiry = async (submittedData) => {
           </div>
 
           <aside className="hidden xl:sticky xl:top-24 xl:self-start xl:block">
-            <div className="overflow-visible rounded-[2rem] bg-white shadow-xl border-t border-slate-100">
+            <div className="overflow-visible rounded-4xl bg-white shadow-xl border-t border-slate-100">
 
               <div className="p-6">
                 <RoomFilterPanel embedded selectedRoomSummary={selectedRoomSummary} />
               </div>
 
-              <div className="border-t border-slate-100 px-6 py-5 space-y-4 bg-slate-50/80 rounded-b-[2rem]">
+              <div className="border-t border-slate-100 px-6 py-5 space-y-4 bg-slate-50/80 rounded-b-4xl">
                 {hasAvailabilityConflict ? (
                   <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">
                     Resort is unavailable for the selected dates.
@@ -341,7 +389,7 @@ const handleSubmitInquiry = async (submittedData) => {
             className="absolute inset-0"
             onClick={() => setMobileFiltersOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 mx-auto h-[75vh] max-w-xl rounded-t-[2rem] bg-white shadow-2xl">
+          <div className="absolute bottom-0 left-0 right-0 mx-auto h-[75vh] max-w-xl rounded-t-4xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">

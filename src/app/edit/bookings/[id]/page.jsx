@@ -239,7 +239,7 @@ export default function BookingManagementPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header Area */}
-      <div className="max-w-[1600px] mx-auto pt-12 px-4 md:px-8">
+      <div className="max-w-400 mx-auto pt-12 px-4 md:px-8">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-8">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl">

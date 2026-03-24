@@ -5,11 +5,13 @@ import { supabase } from "@/lib/supabase";
 import SearchBar from "../search/SearchBar";
 import { getSupabaseSrcSet, getTransformedSupabaseImageUrl } from "@/lib/utils";
 
-const FALLBACK_HERO_IMAGE = "/resort-fallback.svg";
+const FALLBACK_HERO_IMAGE = null;
 
 export default function HeroBanner() {
   const [heroImages, setHeroImages] = useState([FALLBACK_HERO_IMAGE]);
   const [heroIndex, setHeroIndex] = useState(0);
+  const [nextIndex, setNextIndex] = useState(0);
+  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -37,40 +39,75 @@ export default function HeroBanner() {
     if (!heroImages.length || heroImages.length === 1) return;
 
     const interval = setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % heroImages.length);
+      const upcoming = (heroIndex + 1) % heroImages.length;
+      setNextIndex(upcoming);
+      setIsFading(true);
     }, 7000);
 
     return () => clearInterval(interval);
-  }, [heroImages]);
+  }, [heroImages, heroIndex]);
+
+  useEffect(() => {
+    if (!isFading) return undefined;
+    const timeout = setTimeout(() => {
+      setHeroIndex(nextIndex);
+      setIsFading(false);
+    }, 1200);
+    return () => clearTimeout(timeout);
+  }, [isFading, nextIndex]);
 
   if (!heroImages.length) return null;
 
   const activeImage = heroImages[heroIndex] || FALLBACK_HERO_IMAGE;
-  const heroSrc = getTransformedSupabaseImageUrl(activeImage, { width: 1280, quality: 72, format: "webp" });
-  const heroSrcSet = getSupabaseSrcSet(activeImage, [640, 960, 1280], 72);
+  const upcomingImage = heroImages[nextIndex] || FALLBACK_HERO_IMAGE;
+  const activeSrc = activeImage
+    ? getTransformedSupabaseImageUrl(activeImage, { width: 1280, quality: 72, format: "webp" })
+    : null;
+  const activeSrcSet = activeImage ? getSupabaseSrcSet(activeImage, [640, 960, 1280], 72) : null;
+  const nextSrc = upcomingImage
+    ? getTransformedSupabaseImageUrl(upcomingImage, { width: 1280, quality: 72, format: "webp" })
+    : null;
+  const nextSrcSet = upcomingImage ? getSupabaseSrcSet(upcomingImage, [640, 960, 1280], 72) : null;
 
   return (
-    <div className="mt-10 relative h-[560px] md:h-[460px] group">
+    <div className="mt-10 relative h-140 md:h-115 group">
       <div className="absolute inset-0 overflow-hidden">
-        <img
-          key={activeImage}
-          src={heroSrc}
-          srcSet={heroSrcSet}
-          sizes="100vw"
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-          className="
-            absolute w-full h-full object-cover
-            transition-transform duration-[5000ms] ease-out
-            group-hover:scale-105
-          "
-          alt="Featured resort view"
-        />
+        {activeImage ? (
+          <div className="absolute inset-0">
+            <img
+              key={`next-${upcomingImage}`}
+              src={nextSrc}
+              srcSet={nextSrcSet}
+              sizes="100vw"
+              loading="lazy"
+              fetchPriority="auto"
+              decoding="async"
+              className="absolute inset-0 w-full h-full object-cover"
+              alt="Featured resort view"
+            />
+            <img
+              key={`active-${activeImage}`}
+              src={activeSrc}
+              srcSet={activeSrcSet}
+              sizes="100vw"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className={`
+                absolute inset-0 w-full h-full object-cover
+                transition-opacity duration-[1600ms] ease-in-out
+                ${isFading ? "opacity-0" : "opacity-100"}
+              `}
+              alt="Featured resort view"
+            />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-slate-500" />
+        )}
       </div>
 
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+      {activeImage ? <div className="absolute inset-0 bg-black/40 pointer-events-none" /> : null}
 
       {/* Title */}
       <div className="absolute inset-0 flex flex-col justify-start md:justify-center items-center px-4 pt-16 md:pt-0">
