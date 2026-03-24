@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, FileText, AlertCircle, Ticket, Mail } from "lucide-react";
+import { ChevronLeft, FileText, AlertCircle, Ticket, Mail, CircleX  } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast/Toast";
 import { useToast } from "@/components/ui/toast/ToastProvider";
@@ -424,9 +424,6 @@ export default function BookingModernEditor({
           </button>
 
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center justify-start sm:justify-center">
-            <Button variant="outline" onClick={onOpenForm} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
-              <FileText size={16} className="mr-2" /> View Form
-            </Button>
             {status === "Approved Inquiry" && (
               <Button
                 variant="outline"
@@ -435,7 +432,10 @@ export default function BookingModernEditor({
               >
                 <Mail size={16} className="mr-2" /> Resend Email
               </Button>
-            )}
+            )}            
+            <Button variant="outline" onClick={onOpenForm} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
+              <FileText size={16} className="mr-2" /> View Form
+            </Button>
             <Button variant="outline" onClick={onOpenTicket} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
               <Ticket size={16} className="mr-2" /> Client Ticket
             </Button>
@@ -446,6 +446,7 @@ export default function BookingModernEditor({
               }}
               className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs px-4 sm:px-6"
             >
+              <CircleX size={16} className="mr-2" />
               Cancel Booking
             </Button>
           </div>

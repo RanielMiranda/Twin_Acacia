@@ -148,9 +148,9 @@ export default function AuditArchivePanel({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
         <div className="flex flex-wrap gap-2">
           {[
-            { id: "declined", label: "Declined" },
-            { id: "cancelled", label: "Cancelled" },
-            { id: "history", label: "Checked Out" },
+            { id: "declined", label: "Declined", count: filteredDeclined.length },
+            { id: "cancelled", label: "Cancelled", count: filteredCancelled.length },
+            { id: "history", label: "Checked Out", count: filteredCheckedOut.length },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -162,7 +162,16 @@ export default function AuditArchivePanel({
                   : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
               }`}
             >
-              {tab.label}
+              <span className="flex items-center gap-2">
+                {tab.label}
+                <span
+                  className={`inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[9px] font-black ${
+                    activeTab === tab.id ? "bg-white/15 text-white" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </span>
             </button>
           ))}
         </div>
