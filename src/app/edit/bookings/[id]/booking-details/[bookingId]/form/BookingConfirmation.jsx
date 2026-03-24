@@ -207,7 +207,7 @@ export default function BookingConfirmation({
                 <div className="space-y-2">
                   <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Payment Details</p>
                   <div className="flex items-center justify-between">
-                    <span>Downpayment</span>
+                    <span>Total Paid</span>
                     <span className="font-bold">PHP {Number(formData.downpayment || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between">

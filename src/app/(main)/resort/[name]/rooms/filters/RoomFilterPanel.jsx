@@ -63,7 +63,7 @@ export default function RoomFilterPanel({
             <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Time In</p>
             <input
               type="time"
-              value={checkInTime || "14:00"}
+              value={checkInTime || "12:00"}
               onChange={(e) => setCheckInTime(e.target.value)}
               className="w-full bg-transparent text-sm font-semibold outline-none"
             />
@@ -72,7 +72,7 @@ export default function RoomFilterPanel({
             <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Time Out</p>
             <input
               type="time"
-              value={checkOutTime || "12:00"}
+              value={checkOutTime || "17:00"}
               onChange={(e) => setCheckOutTime(e.target.value)}
               className="w-full bg-transparent text-sm font-semibold outline-none"
             />

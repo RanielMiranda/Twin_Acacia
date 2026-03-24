@@ -9,8 +9,8 @@ const buildInitialFormData = ({
   guests = { adults: 0, children: 0 },
   startDate = "",
   endDate = "",
-  checkInTime = "14:00",
-  checkOutTime = "12:00",
+  checkInTime = "12:00",
+  checkOutTime = "17:00",
   initialSelectedRoomIds = [],
   initialSelectedRoomNames = [],
 }) => ({
@@ -35,8 +35,8 @@ const buildInitialFormData = ({
   selectedRoomNames: initialSelectedRoomNames,
   checkInDate: startDate,
   checkOutDate: endDate,
-  checkInTime: checkInTime || "14:00",
-  checkOutTime: checkOutTime || "12:00",
+  checkInTime: checkInTime || "12:00",
+  checkOutTime: checkOutTime || "17:00",
   message: "",
   selectedServices: [],
 });

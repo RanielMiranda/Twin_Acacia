@@ -10,8 +10,8 @@ const RESORT_CACHE_TS_KEY = "resorts_cache_v1_ts";
 const getStorage = () => (typeof window === "undefined" ? null : window.sessionStorage);
 const DEFAULT_PRICE_RANGE = { min: 10000, max: 30000 };
 const DEFAULT_GUESTS = { adults: 2, children: 0, rooms: 1 };
-const DEFAULT_CHECKIN_TIME = "14:00";
-const DEFAULT_CHECKOUT_TIME = "12:00";
+const DEFAULT_CHECKIN_TIME = "12:00";
+const DEFAULT_CHECKOUT_TIME = "17:00";
 const RESORT_LIST_COLUMNS = [
   "id",
   "name",

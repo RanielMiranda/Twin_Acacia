@@ -106,10 +106,9 @@ export default function BookingEditorActionBar({
       return [
         {
           key: "back",
-          label: "Back One Step",
-          variant: "",
+          label: "Previous Step",
           className:
-            "rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-50",
+            "border shadow-md hover:bg-slate-100 rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-50",
           onClick: () => runWithConfirmation("Are you sure you want to go back one step?", onBackOneStep),
         },
         hasBalance
@@ -172,10 +171,9 @@ export default function BookingEditorActionBar({
       return [
         {
           key: "back",
-          label: "Back One Step",
-          variant: "",
+          label: "Previous Step",
           className:
-            "rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-50",
+            "border shadow-md hover:bg-slate-100 rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-50",
           onClick: () => runWithConfirmation("Are you sure you want to go back one step?", onBackOneStep),
         },
         {
@@ -201,10 +199,9 @@ export default function BookingEditorActionBar({
       return [
         {
           key: "back",
-          label: "Back One Step",
-          variant: "",
+          label: "Previous Step",
           className:
-            "rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-50",
+            "border shadow-md hover:bg-slate-100 rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-50",
           onClick: () => runWithConfirmation("Are you sure you want to go back one step?", onBackOneStep),
         },
         {
@@ -231,10 +228,9 @@ export default function BookingEditorActionBar({
       return [
         {
           key: "back",
-          label: "Back One Step",
-          variant: "",
+          label: "Previous Step",
           className:
-            "rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-50",
+            "border shadow-md hover:bg-slate-100 rounded-full w-full md:w-auto px-6 md:px-8 h-11 md:h-12 font-bold text-xs border-slate-300 text-slate-700 hover:bg-slate-50",
           onClick: () => runWithConfirmation("Are you sure you want to go back one step?", onBackOneStep),
         },
         {

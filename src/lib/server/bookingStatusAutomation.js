@@ -161,7 +161,7 @@ export async function runBookingStatusAutomation({ limit = 500, nowMs = Date.now
     if (!shouldAutoMoveToPendingCheckout(status)) return false;
     const { endDate, checkOutTime } = resolveStayDates(row);
     if (!endDate) return false;
-    const checkoutMs = buildDateTimeMs(endDate, checkOutTime || "12:00");
+    const checkoutMs = buildDateTimeMs(endDate, checkOutTime || "17:00");
     if (!checkoutMs) return false;
     return checkoutMs <= nowMs;
   });

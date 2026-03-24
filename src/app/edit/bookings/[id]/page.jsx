@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
+  Plus,
 } from "lucide-react";
 
 // Components
@@ -259,7 +260,7 @@ export default function BookingManagementPage() {
               onClick={() => setIsAddBookingOpen(true)}
               className="rounded-full px-2 text-md"
             >
-              Add Booking
+              <Plus size={16} className="mr-2" /> Add Booking
             </Button>
           </div>
         </header>

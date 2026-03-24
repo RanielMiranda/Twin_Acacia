@@ -47,8 +47,8 @@ function toModel(row) {
   const inquirerPhone = row.inquirer_phone || row.booking_form?.phoneNumber || "";
   const inquirerAddress = row.inquirer_address || row.booking_form?.address || "";
   const roomName = row.room_name || row.booking_form?.roomName || "";
-  const checkInTime = row.check_in_time || "14:00";
-  const checkOutTime = row.check_out_time || "11:00";
+  const checkInTime = row.check_in_time || "12:00";
+  const checkOutTime = row.check_out_time || "17:00";
   const status = row.status || row.booking_form?.status || "Inquiry";
 
   return {

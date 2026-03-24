@@ -218,6 +218,7 @@ export default function BookingCalendar({
     const startDate = getBookingStartDate(booking) || "--";
     const endDate = getBookingEndDate(booking) || startDate;
     const statusLabel = getStatusLabel(booking);
+    const showStatus = !isPastStatus(booking);
     const lines = [
       `Guest: ${guestName}`,
       agentName ? `Agent: ${agentName}` : null,
@@ -225,7 +226,7 @@ export default function BookingCalendar({
       roomCount ? `Rooms: ${roomCount}` : null,
       `Dates: ${startDate} \u2192 ${endDate}`,
       `Times: ${checkIn} \u2192 ${checkOut}`,
-      `Status: ${statusLabel} (${typeLabel})`,
+      showStatus ? `Status: ${statusLabel} (${typeLabel})` : null,
     ].filter(Boolean);
     return lines.join("\n");
   };
@@ -554,7 +555,7 @@ export default function BookingCalendar({
                   booking?.guestName ||
                   booking?.bookingForm?.guestName ||
                   "Guest";
-                const roomLabel = getStatusLabel(booking);
+                const roomLabel = calendarMode === "past" ? "Checked Out" : getStatusLabel(booking);
 
                 const shouldDisableCard = calendarMode === "past" && booking?.isArchived;
 

@@ -137,6 +137,11 @@ export function useBookingConsoleData({
           bookingForm = {};
         }
       }
+      const inquirerType = (bookingForm.inquirerType || "client").toString().toLowerCase();
+      const stayingGuestEmail = bookingForm.stayingGuestEmail || "";
+      const stayingGuestPhone = bookingForm.stayingGuestPhone || "";
+      const inquirerEmail = bookingForm.email || "";
+      const inquirerPhone = bookingForm.phoneNumber || "";
 
       return {
         id: row.id,
@@ -144,9 +149,17 @@ export function useBookingConsoleData({
         resortId: row.resort_id,
         startDate: row.start_date || bookingForm.checkInDate || null,
         endDate: row.end_date || bookingForm.checkOutDate || null,
-        checkInTime: row.check_in_time || bookingForm.checkInTime || "14:00",
-        checkOutTime: row.check_out_time || bookingForm.checkOutTime || "11:00",
+        checkInTime: row.check_in_time || bookingForm.checkInTime || "12:00",
+        checkOutTime: row.check_out_time || bookingForm.checkOutTime || "17:00",
         roomCount: row.room_count || bookingForm.roomCount || 1,
+        inquirerType,
+        guestName: bookingForm.guestName || "",
+        agentName: bookingForm.agentName || "",
+        stayingGuestName: bookingForm.stayingGuestName || "",
+        stayingGuestEmail,
+        stayingGuestPhone,
+        inquirerEmail,
+        inquirerPhone,
         bookingForm,
         archivedAt: row.archived_at,
         isArchived: true,
@@ -459,31 +472,36 @@ export function useBookingConsoleData({
         }
       }
       const inquirerType = (source.inquirerType || form.inquirerType || "client").toString().toLowerCase();
-      const guestEmail = form.stayingGuestEmail || "";
-      const guestPhone = form.stayingGuestPhone || "";
-      const contactEmail = inquirerType === "agent" ? form.email || "" : guestEmail;
-      const contactPhone = inquirerType === "agent" ? form.phoneNumber || "" : guestPhone;
+      const guestEmail = source.stayingGuestEmail || form.stayingGuestEmail || "";
+      const guestPhone = source.stayingGuestPhone || form.stayingGuestPhone || "";
+      const contactEmail =
+        inquirerType === "agent"
+          ? source.inquirerEmail || form.email || ""
+          : guestEmail || source.inquirerEmail || form.email || "";
+      const contactPhone =
+        inquirerType === "agent"
+          ? source.inquirerPhone || form.phoneNumber || ""
+          : guestPhone || source.inquirerPhone || form.phoneNumber || "";
 
       const archiveForm = {
-        stayingGuestName: form.stayingGuestName || form.guestName || "",
-        guestName: form.guestName || "",
-        agentName: form.agentName || "",
-        stayingGuestEmail: form.stayingGuestEmail || "",
-        stayingGuestPhone: form.stayingGuestPhone || "",
-        roomName: form.roomName || "",
+        stayingGuestName: source.stayingGuestName || form.stayingGuestName || form.guestName || "",
+        guestName: source.guestName || form.guestName || "",
+        agentName: source.agentName || form.agentName || "",
+        stayingGuestEmail: guestEmail,
+        stayingGuestPhone: guestPhone,
+        roomName: source.roomName || form.roomName || "",
         checkInDate: source.startDate || form.checkInDate || null,
         checkOutDate: source.endDate || form.checkOutDate || null,
-        checkInTime: source.checkInTime || form.checkInTime || "14:00",
-        checkOutTime: source.checkOutTime || form.checkOutTime || "11:00",
+        checkInTime: source.checkInTime || form.checkInTime || "12:00",
+        checkOutTime: source.checkOutTime || form.checkOutTime || "17:00",
         roomCount: Number(source.roomCount || form.roomCount || 1),
         inquirerType,
         email: contactEmail,
         phoneNumber: contactPhone,
-        address: form.address || "",
+        address: source.inquirerAddress || form.address || "",
         adultCount: Number(source.adultCount ?? form.adultCount ?? 0),
         childrenCount: Number(source.childrenCount ?? form.childrenCount ?? 0),
         sleepingGuests: Number(source.sleepingGuests ?? form.sleepingGuests ?? 0),
-        status: "Checked Out",
       };
 
       try {

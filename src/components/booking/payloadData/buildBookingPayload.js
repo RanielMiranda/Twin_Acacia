@@ -62,8 +62,8 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
     assignedRoomIds: resolvedRoomIds,
     checkInDate: submittedData.checkInDate || "",
     checkOutDate: submittedData.checkOutDate || "",
-    checkInTime: submittedData.checkInTime || "14:00",
-    checkOutTime: submittedData.checkOutTime || "11:00",
+    checkInTime: submittedData.checkInTime || "12:00",
+    checkOutTime: submittedData.checkOutTime || "17:00",
     status: submittedData.status || "Inquiry",
     paymentMethod: submittedData.paymentMethod || "Pending",
     downpayment: Number(submittedData.downpayment || 0),
@@ -82,8 +82,8 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
     roomIds: resolvedRoomIds,
     startDate: submittedData.checkInDate || null,
     endDate: submittedData.checkOutDate || null,
-    checkInTime: submittedData.checkInTime || "14:00",
-    checkOutTime: submittedData.checkOutTime || "11:00",
+    checkInTime: submittedData.checkInTime || "12:00",
+    checkOutTime: submittedData.checkOutTime || "17:00",
     inquirerType,
   };
 

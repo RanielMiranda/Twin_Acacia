@@ -89,8 +89,8 @@ export default function BookingDetailsFormPage() {
     guestAddress: address,
     checkInDate: sourceBooking?.startDate || bookingForm.checkInDate || "",
     checkOutDate: sourceBooking?.endDate || bookingForm.checkOutDate || "",
-    checkInTime: sourceBooking?.checkInTime || bookingForm.checkInTime || "14:00",
-    checkOutTime: sourceBooking?.checkOutTime || bookingForm.checkOutTime || "11:00",
+    checkInTime: sourceBooking?.checkInTime || bookingForm.checkInTime || "12:00",
+    checkOutTime: sourceBooking?.checkOutTime || bookingForm.checkOutTime || "17:00",
     roomName:
       bookingForm.roomName ||
       (sourceBooking?.roomIds || [])
@@ -132,7 +132,7 @@ export default function BookingDetailsFormPage() {
         <div className="text-center text-slate-500 mt-20">Loading booking form...</div>
       ) : (
       <>
-        <div className="max-w-[210mm] min-h-[297mm] mx-auto mb-28">
+        <div className="max-w-4xl min-h-[297mm] mx-auto mb-28">
           <BookingForm
             data={initialData}
             resortName={currentResort?.name}
