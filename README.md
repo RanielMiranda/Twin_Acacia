@@ -1,6 +1,8 @@
 # Resort Booking Platform
 
-Full-stack web app for managing resorts, bookings, and guest communication. It includes a public guest experience, an owner/admin portal, and operational tooling for the full booking lifecycle.
+This is a full-stack web application for managing resorts, bookings, and guest communication. 
+
+It provides a public booking experience, a dedicated owner/admin portal, and operational tools to handle the complete booking lifecycle—from inquiry to checkout and payment verification.
 
 ## Key Features
 - Public resort browsing and booking inquiries
