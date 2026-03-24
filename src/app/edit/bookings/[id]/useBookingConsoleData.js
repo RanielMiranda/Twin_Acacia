@@ -412,6 +412,45 @@ export function useBookingConsoleData({
       const confirmed = window.confirm(message);
       if (!confirmed) return;
       try {
+        const source = (bookings || []).find((entry) => entry.id?.toString() === bookingId?.toString());
+        if (source) {
+          let form = source.bookingForm || {};
+          const needsProofHydrate =
+            !form?.paymentProofFolder &&
+            !(Array.isArray(form?.paymentProofUrls) && form.paymentProofUrls.length > 0) &&
+            !form?.paymentProofUrl;
+          if (needsProofHydrate) {
+            try {
+              const { data, error } = await supabase
+                .from("bookings")
+                .select("booking_form")
+                .eq("id", bookingId)
+                .maybeSingle();
+              if (!error && data?.booking_form) {
+                form = data.booking_form;
+              }
+            } catch {
+              // If hydrate fails, continue without proof cleanup.
+            }
+          }
+
+          const proofFolder =
+            form?.paymentProofFolder ||
+            getStorageFolderFromPublicUrl((form?.paymentProofUrls || [])[0]) ||
+            getStorageFolderFromPublicUrl(form?.paymentProofUrl);
+
+          if (proofFolder) {
+            try {
+              await fetch("/api/storage/delete-proof-folder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ folder: proofFolder }),
+              });
+            } catch (deleteError) {
+              console.warn("Failed to delete payment proof folder", deleteError?.message || deleteError);
+            }
+          }
+        }
         await deleteBookingById(bookingId);
         if (enableAudits) {
           await loadAudits();
@@ -422,7 +461,7 @@ export function useBookingConsoleData({
         toast?.({ message: `Unable to resolve: ${error?.message}`, color: "red", icon: XCircle });
       }
     },
-    [deleteBookingById, enableAudits, loadAudits, toast]
+    [bookings, deleteBookingById, enableAudits, loadAudits, toast]
   );
 
   const handleResolveDeclined = useCallback(
@@ -512,7 +551,11 @@ export function useBookingConsoleData({
 
         if (proofFolder) {
           try {
-            await deleteSupabaseFolder(supabase, proofFolder);
+            await fetch("/api/storage/delete-proof-folder", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ folder: proofFolder }),
+            });
           } catch (deleteError) {
             console.warn("Failed to delete payment proof folder", deleteError?.message || deleteError);
           }
