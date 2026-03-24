@@ -65,10 +65,6 @@ export default function TopBar() {
               Contact
             </button>
             <div className="w-[1px] h-6 bg-slate-200 mx-2" />
-
-            <Link href="/auth/login" className="hover:text-blue-600 transition">
-              Login Page
-            </Link>            
           </div>
 
           {/* Mobile Menu Button */}
@@ -115,13 +111,6 @@ export default function TopBar() {
               Contact
             </button>
 
-            <Link
-              href="/auth/login"
-              onClick={() => setIsMenuOpen(false)}
-              className="hover:text-blue-600 transition"
-            >
-              Login Page
-            </Link>            
           </div>
         </div>
       </div>

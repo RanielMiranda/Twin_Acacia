@@ -115,4 +115,94 @@ VALUES
   'Leo Garcia','','','','',
   'leo@gmail.com','09211234567',
   'Room A','address'
+),
+
+-- 105
+(
+  105,
+  10,
+  '[1]',
+  '2025-10-05',
+  '2025-10-06',
+  '14:00',
+  '12:00',
+  'Checked Out',
+  '{"email":"carlosd@gmail.com","roomId":1,"status":"Checked Out","address":"Quezon City","roomName":"Room A","agentName":"Carlos Dela Torre","guestName":"Carlos Dela Torre","downpayment":3000,"phoneNumber":"09170000001","statusAudit":[],"totalAmount":15000,"inquirerType":"agent","lastActionBy":"account name","paymentMethod":"GCash","lastActionById":"6","lastActionRole":"owner","assignedRoomIds":[1],"paymentProofUrl":null,"paymentVerified":false,"selectedRoomIds":[1],"confirmationStub":null,"paymentProofUrls":[],"stayingGuestName":"Carlos Dela Torre","assignedRoomNames":["Room A"],"paymentVerifiedAt":null,"stayingGuestEmail":"carlosd@gmail.com","stayingGuestPhone":"09170000001","paymentSubmittedAt":null,"pendingDownpayment":0,"pendingPaymentMethod":null,"paymentPendingApproval":false}',
+  2,2,4,0,1,true,
+  ARRAY[]::uuid[],
+  'Carlos Dela Torre','Carlos Dela Torre','Carlos Dela Torre','carlosd@gmail.com','09170000001',
+  'carlosd@gmail.com','09170000001',
+  'Room A','Quezon City'
+),
+
+-- 106
+(
+  106,
+  10,
+  '[1]',
+  '2025-10-20',
+  '2025-10-21',
+  '14:00',
+  '12:00',
+  'Checked Out',
+  '{"email":"angelar@gmail.com","roomId":1,"status":"Checked Out","address":"Pasig City","roomName":"Room A","agentName":"Angela Reyes","guestName":"Angela Reyes","downpayment":3000,"phoneNumber":"09170000002","statusAudit":[],"totalAmount":15000,"inquirerType":"agent","lastActionBy":"account name","paymentMethod":"GCash","lastActionById":"6","lastActionRole":"owner","assignedRoomIds":[1],"paymentProofUrl":null,"paymentVerified":false,"selectedRoomIds":[1],"confirmationStub":null,"paymentProofUrls":[],"stayingGuestName":"Angela Reyes","assignedRoomNames":["Room A"],"paymentVerifiedAt":null,"stayingGuestEmail":"angelar@gmail.com","stayingGuestPhone":"09170000002","paymentSubmittedAt":null,"pendingDownpayment":0,"pendingPaymentMethod":null,"paymentPendingApproval":false}',
+  2,2,4,0,1,true,
+  ARRAY[]::uuid[],
+  'Angela Reyes','Angela Reyes','Angela Reyes','angelar@gmail.com','09170000002',
+  'angelar@gmail.com','09170000002',
+  'Room A','Pasig City'
+),
+
+-- 107
+(
+  107,
+  10,
+  '[1]',
+  '2025-11-03',
+  '2025-11-05',
+  '14:00',
+  '12:00',
+  'Checked Out',
+  '{"email":"josephl@gmail.com","roomId":1,"status":"Checked Out","address":"Makati City","roomName":"Room A","agentName":"Joseph Lim","guestName":"Joseph Lim","downpayment":3000,"phoneNumber":"09170000003","statusAudit":[],"totalAmount":15000,"inquirerType":"agent","lastActionBy":"account name","paymentMethod":"GCash","lastActionById":"6","lastActionRole":"owner","assignedRoomIds":[1],"paymentProofUrl":null,"paymentVerified":false,"selectedRoomIds":[1],"confirmationStub":null,"paymentProofUrls":[],"stayingGuestName":"Joseph Lim","assignedRoomNames":["Room A"],"paymentVerifiedAt":null,"stayingGuestEmail":"josephl@gmail.com","stayingGuestPhone":"09170000003","paymentSubmittedAt":null,"pendingDownpayment":0,"pendingPaymentMethod":null,"paymentPendingApproval":false}',
+  2,2,4,0,1,true,
+  ARRAY[]::uuid[],
+  'Joseph Lim','Joseph Lim','Joseph Lim','josephl@gmail.com','09170000003',
+  'josephl@gmail.com','09170000003',
+  'Room A','Makati City'
+),
+
+-- 108
+(
+  108,
+  10,
+  '[1]',
+  '2025-11-25',
+  '2025-11-27',
+  '14:00',
+  '12:00',
+  'Checked Out',
+  '{"email":"marielp@gmail.com","roomId":1,"status":"Checked Out","address":"Taguig City","roomName":"Room A","agentName":"Mariel Perez","guestName":"Mariel Perez","downpayment":3000,"phoneNumber":"09170000004","statusAudit":[],"totalAmount":15000,"inquirerType":"agent","lastActionBy":"account name","paymentMethod":"GCash","lastActionById":"6","lastActionRole":"owner","assignedRoomIds":[1],"paymentProofUrl":null,"paymentVerified":false,"selectedRoomIds":[1],"confirmationStub":null,"paymentProofUrls":[],"stayingGuestName":"Mariel Perez","assignedRoomNames":["Room A"],"paymentVerifiedAt":null,"stayingGuestEmail":"marielp@gmail.com","stayingGuestPhone":"09170000004","paymentSubmittedAt":null,"pendingDownpayment":0,"pendingPaymentMethod":null,"paymentPendingApproval":false}',
+  2,2,4,0,1,true,
+  ARRAY[]::uuid[],
+  'Mariel Perez','Mariel Perez','Mariel Perez','marielp@gmail.com','09170000004',
+  'marielp@gmail.com','09170000004',
+  'Room A','Taguig City'
+),
+
+-- 109
+(
+  109,
+  10,
+  '[1]',
+  '2025-12-10',
+  '2025-12-12',
+  '14:00',
+  '12:00',
+  'Checked Out',
+  '{"email":"danielc@gmail.com","roomId":1,"status":"Checked Out","address":"Manila City","roomName":"Room A","agentName":"Daniel Cruz","guestName":"Daniel Cruz","downpayment":3000,"phoneNumber":"09170000005","statusAudit":[],"totalAmount":15000,"inquirerType":"agent","lastActionBy":"account name","paymentMethod":"GCash","lastActionById":"6","lastActionRole":"owner","assignedRoomIds":[1],"paymentProofUrl":null,"paymentVerified":false,"selectedRoomIds":[1],"confirmationStub":null,"paymentProofUrls":[],"stayingGuestName":"Daniel Cruz","assignedRoomNames":["Room A"],"paymentVerifiedAt":null,"stayingGuestEmail":"danielc@gmail.com","stayingGuestPhone":"09170000005","paymentSubmittedAt":null,"pendingDownpayment":0,"pendingPaymentMethod":null,"paymentPendingApproval":false}',
+  2,2,4,0,1,true,
+  ARRAY[]::uuid[],
+  'Daniel Cruz','Daniel Cruz','Daniel Cruz','danielc@gmail.com','09170000005',
+  'danielc@gmail.com','09170000005',
+  'Room A','Manila City'
 );

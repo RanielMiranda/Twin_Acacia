@@ -1,15 +1,16 @@
 # TODO Before Release
 
 ## Subdomains & Routing
-- Re-enable middleware subdomain rules for portal-only access.
+- Middleware subdomain rules enforced in `src/middleware.js` (portal-only access).
 - Configure DNS + Vercel domains for `portal.<domain>`.
-- Verify login and protected routes only work on portal subdomain.
+- Set `PORTAL_HOST` (e.g., `portal.domain.com`) in production env.
+- Verify `/auth/login`, `/admin`, `/owner`, `/edit` only work on portal subdomain.
 
 ## Notifications
-- Buy and configure Semaphore SMS.
-- Verify SMS sends on booking confirmation.
-- Verify Resend email sending after domain is verified.
-- Verify Resend email content is correct for client vs agent (approval emails).
+- Buy and configure Semaphore SMS (`SEMAPHORE_API_KEY`).
+- Verify SMS sends on booking confirmation (caretaker notice, no ticket link).
+- Verify Resend email sending after domain is verified (`RESEND_API`, `RESEND_FROM_EMAIL`).
+- Verify Resend email content for: inquiry approval + account setup invites.
 
 ## Booking Automation
 - Confirm cron schedule + automation endpoint works in production.

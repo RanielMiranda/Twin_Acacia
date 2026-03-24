@@ -44,6 +44,11 @@ This project uses Next.js App Router with folder-based routing. Below is the cur
 
 ### Booking
 - `/api/booking/approve-inquiry-email` — send inquiry approval email
+- `/api/booking/notify-caretakers` — send caretaker SMS on confirmation
 
 ### Internal
 - `/api/internal/booking-status` — triggers booking status automation (cron-safe)
+
+## Subdomain routing (portal)
+- Admin/owner/edit routes are enforced in `src/middleware.js` to only allow access from the portal host.
+- Configure `PORTAL_HOST` (e.g., `portal.domain.com`) so `/admin`, `/owner`, `/edit`, and `/auth/login` redirect to the portal domain.
