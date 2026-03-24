@@ -1,27 +1,42 @@
-# Agoda-Style Resort Booking Platform
+# Resort Booking Platform
 
-This project is a Next.js (App Router) web app for managing resorts, bookings, and tickets. It includes a public guest experience, an admin/owner portal, and operational tooling for booking workflows.
+This is a full-stack web application for managing resorts, bookings, and guest communication. It provides a public booking experience, a dedicated owner/admin portal, and operational tools to handle the complete booking lifecycle—from inquiry to checkout and payment verification.
 
 ## Key Features
+
+### Guest Experience
 - Public resort browsing and booking inquiries
-- Booking console for owners (confirmed/ongoing/checkout workflow)
 - Ticket pages for clients/agents with messaging and payment proof uploads
-- Admin console for accounts and resort management
+
+### Booking Management
+- Booking console for owners (confirmed → ongoing → checkout workflow)
 - Automated booking status transitions
-- Notifications: email (Resend) + SMS (Semaphore)
+
+### Admin & Operations
+- Admin console for accounts and resort management
+
+### Notifications
+- Email (Resend) for approvals and account setup
+- SMS (Semaphore) for operational alerts
 
 ## Tech Stack
 - Next.js (App Router)
-- Supabase (DB + storage)
-- Resend (email)
-- Semaphore (SMS)
-- NameCheap (Domain)
-- Vercel (Frontend)
+- Supabase (Database + Storage)
+- Resend (Email API)
+- Semaphore (SMS API)
+- Namecheap (Domain)
+- Vercel (Hosting & Deployment)
 
 ## Getting Started (Local)
 1. Install dependencies
+``` 
+npm install
+```
 2. Create `.env.local` with required keys (see below)
 3. Run the dev server
+``` 
+npm run dev
+```
 
 ## Environment Variables
 Required for core functionality:
