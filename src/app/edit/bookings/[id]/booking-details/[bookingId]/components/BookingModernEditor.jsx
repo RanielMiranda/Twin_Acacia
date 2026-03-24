@@ -298,6 +298,7 @@ export default function BookingModernEditor({
       resortName,
       resortExtraServices,
       persist,
+      toast,
       onStayConfirmed: (message) => {
         const guestLabel = draft.stayingGuestName || draft.guestName || "Guest";
         const detail = message ? ` ${message}` : "";

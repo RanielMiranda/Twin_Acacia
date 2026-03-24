@@ -24,6 +24,7 @@ export async function handleSetStatusAction({
   resortExtraServices = [],
   persist,
   onStayConfirmed,
+  toast,
 }) {
   if (actionBusy) return;
   const wasConfirmed = String(draft.status || "").toLowerCase().includes("confirm");
@@ -79,12 +80,23 @@ export async function handleSetStatusAction({
       });
       onStayConfirmed?.(message);
       try {
-        await fetch("/api/booking/notify-caretakers", {
+        const response = await fetch("/api/booking/notify-caretakers", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ bookingId: booking.id }),
         });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result?.ok === false) {
+          toast?.({
+            message: `Error: ${result?.error || response.statusText || "Caretaker notification failed."}`,
+            color: "red",
+          });
+        }
       } catch (error) {
+        toast?.({
+          message: `Error: ${error?.message || "Caretaker notification failed."}`,
+          color: "red",
+        });
         console.error("Caretaker SMS failed:", error?.message || error);
       }
     }
