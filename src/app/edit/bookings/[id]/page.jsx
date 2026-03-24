@@ -66,6 +66,7 @@ export default function BookingManagementPage() {
 
   const currentResort = resort?.id?.toString() === id?.toString() ? resort : null;
   const resortId = Number(currentResort?.id || 0);
+  const hasRefreshedStatus = React.useRef(false);
 
   const {
     concerns,
@@ -106,6 +107,26 @@ export default function BookingManagementPage() {
     enableArchive: activeTab === "audits" || activeTab === "calendar",
     archiveAutoLoad: activeTab === "audits",
   });
+
+  useEffect(() => {
+    if (!resortId || hasRefreshedStatus.current) return;
+    hasRefreshedStatus.current = true;
+    const runRefresh = async () => {
+      try {
+        const response = await fetch("/api/booking/refresh-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resortId }),
+        });
+        if (response.ok) {
+          await refreshBookings();
+        }
+      } catch {
+        // Non-blocking: ignore refresh errors.
+      }
+    };
+    runRefresh();
+  }, [resortId, refreshBookings]);
 
   const handleRefreshWorkflow = async () => {
     try {

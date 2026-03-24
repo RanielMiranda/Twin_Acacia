@@ -98,6 +98,15 @@ export function useTicketData({ normalizedBookingId, accessToken, toast }) {
     if (!normalizedBookingId) return;
     setLoading(true);
     try {
+      try {
+        await fetch("/api/booking/refresh-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId: normalizedBookingId, token: accessToken }),
+        });
+      } catch {
+        // Non-blocking: status refresh can fail without blocking ticket view.
+      }
       const sessionRole = staffRole || (await refreshSessionRole());
       const { data: bookingRows, error: bookingError } = await supabase
         .from("bookings")

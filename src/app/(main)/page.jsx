@@ -21,8 +21,9 @@ const ResortSection = dynamic(() => import("./components/resort/ResortSection"),
 export default function Page() {
   return (
     <>
-    <div className = "bg-slate-50">
+    <div className = "bg-white">
       <HeroBanner />
+      <div className="bg-gray-50 shadow-md max-w-full p-6"></div>      
       <div id="resorts">
         <ResortSection />
       </div>

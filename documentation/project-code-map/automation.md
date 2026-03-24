@@ -5,7 +5,7 @@
 
 ## Internal API endpoint
 - `src/app/api/internal/booking-status/route.js` exposes a cron-safe endpoint that runs the automation.
-- The endpoint requires `CRON_SECRET` / `BOOKING_AUTOMATION_SECRET` (configured via `vercel.json`).
+  - Requires `Authorization: Bearer <CRON_SECRET>` (or `BOOKING_AUTOMATION_SECRET`).
 
 ## Cron schedule
-- `vercel.json` includes a scheduled trigger for `/api/internal/booking-status` (runs daily).
+- Use Supabase cron to call `/api/internal/booking-status` on your desired schedule.

@@ -14,7 +14,7 @@ export const PREVIOUS_STATUS = {
   "Approved Inquiry": "Inquiry",
   "Pending Payment": "Approved Inquiry",
   "Confirmed": "Pending Payment",
-  "Ongoing": "Confirmed",
+  "Ongoing": "Pending Payment",
   "Pending Checkout": "Ongoing",
   "Checked Out": "Pending Checkout",
 };

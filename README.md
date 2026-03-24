@@ -1,23 +1,14 @@
 # Resort Booking Platform
 
-This is a full-stack web application for managing resorts, bookings, and guest communication. It provides a public booking experience, a dedicated owner/admin portal, and operational tools to handle the complete booking lifecycle—from inquiry to checkout and payment verification.
+Full-stack web app for managing resorts, bookings, and guest communication. It includes a public guest experience, an owner/admin portal, and operational tooling for the full booking lifecycle.
 
 ## Key Features
-
-### Guest Experience
 - Public resort browsing and booking inquiries
 - Ticket pages for clients/agents with messaging and payment proof uploads
-
-### Booking Management
-- Booking console for owners (confirmed → ongoing → checkout workflow)
+- Booking console for owners (confirmed -> ongoing -> checkout workflow)
 - Automated booking status transitions
-
-### Admin & Operations
 - Admin console for accounts and resort management
-
-### Notifications
-- Email (Resend) for approvals and account setup
-- SMS (Semaphore) for operational alerts
+- Notifications via email (Resend) and SMS (Semaphore)
 
 ## Tech Stack
 - Next.js (App Router)
@@ -25,34 +16,35 @@ This is a full-stack web application for managing resorts, bookings, and guest c
 - Resend (Email API)
 - Semaphore (SMS API)
 - Namecheap (Domain)
-- Vercel (Hosting & Deployment)
+- Vercel (Hosting)
 
 ## Getting Started (Local)
 1. Install dependencies
-``` 
+```
 npm install
 ```
 2. Create `.env.local` with required keys (see below)
 3. Run the dev server
-``` 
+```
 npm run dev
 ```
 
 ## Environment Variables
-Required for core functionality:
+Required:
 ```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-SESSION_SECRET=
+NEXT_PUBLIC_SUPABASE_URL=from Supabase project settings -> API
+NEXT_PUBLIC_SUPABASE_ANON_KEY=from Supabase project settings -> API
+SUPABASE_SERVICE_ROLE_KEY=from Supabase project settings -> API (service_role)
+SESSION_SECRET=any random string you create (e.g., local-dev-secret-123)
 ```
 
 Notifications:
 ```
-RESEND_API=
-RESEND_FROM_EMAIL=
-SEMAPHORE_API_KEY=
-SEMAPHORE_SENDER_NAME=
+RESEND_API=code from resend
+RESEND_FROM_EMAIL=defaultemail
+ADMIN_CONTACT_EMAIL=admin@gmail.com
+SEMAPHORE_API_KEY=code
+SEMAPHORE_SENDER_NAME=defaultname
 ```
 
 Portal routing:
@@ -60,10 +52,10 @@ Portal routing:
 PORTAL_HOST=portal.yourdomain.com
 ```
 
-Automation:
+Automation (Supabase cron calls the endpoint below):
 ```
-CRON_SECRET=
-BOOKING_AUTOMATION_SECRET=
+CRON_SECRET=any random string you create (used as Bearer token)
+BOOKING_AUTOMATION_SECRET=optional fallback (can be same as CRON_SECRET)
 ```
 
 ## Portal Subdomain Routing
@@ -71,15 +63,21 @@ Admin/owner/edit routes are enforced in `src/middleware.js` to only allow access
 - Public domain: guests browse, inquire, and access tickets
 - Portal domain (`portal.domain.com`): login, admin, owner, edit
 
-For local testing you can use:
+Local testing:
 ```
 127.0.0.1 portal.localhost
 ```
-and visit `http://portal.localhost:3000`.
+Visit `http://portal.localhost:3000`.
 
 ## Notifications
-- **Email**: `RESEND_API` + `RESEND_FROM_EMAIL` power inquiry approval and account setup links.
-- **SMS**: `SEMAPHORE_API_KEY` sends caretaker notifications on booking confirmation.
+- Email: `RESEND_API` + `RESEND_FROM_EMAIL` power inquiry approvals and account setup invites.
+- Contact form: `ADMIN_CONTACT_EMAIL` receives messages from the homepage contact modal.
+- SMS: `SEMAPHORE_API_KEY` sends caretaker notifications on booking confirmation.
+
+## Automation Notes (Supabase Cron)
+- Supabase cron should call: `https://yourdomain.com/api/internal/booking-status`.
+- Add header: `Authorization: Bearer <CRON_SECRET>`.
+- The Supabase `automation_settings` table is optional; the app does not read it unless you wire it in.
 
 ## Useful Docs
 - App routes: `documentation/project-code-map/app-routes.md`
@@ -90,7 +88,6 @@ and visit `http://portal.localhost:3000`.
 - Release checklist: `documentation/TODO before release.md`
 
 ## Scripts
-Use standard Next.js commands:
 ```
 npm run dev
 npm run build
@@ -98,4 +95,4 @@ npm run start
 ```
 
 ## Notes
-- This README is high-level. For internal architecture and code references, use the docs above.
+For internal architecture and code references, use the docs above.
