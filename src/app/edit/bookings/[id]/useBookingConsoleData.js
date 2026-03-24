@@ -203,7 +203,7 @@ export function useBookingConsoleData({
         let query = supabase
           .from("booking_archive")
           .select(
-            "id, booking_id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at"
+            "id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at"
           )
           .eq("resort_id", resortId)
           .order("archived_at", { ascending: false })
@@ -545,9 +545,9 @@ export function useBookingConsoleData({
 
       try {
         const proofFolder =
-          source.bookingForm?.paymentProofFolder ||
-          getStorageFolderFromPublicUrl((source.bookingForm?.paymentProofUrls || [])[0]) ||
-          getStorageFolderFromPublicUrl(source.bookingForm?.paymentProofUrl);
+          form?.paymentProofFolder ||
+          getStorageFolderFromPublicUrl((form?.paymentProofUrls || [])[0]) ||
+          getStorageFolderFromPublicUrl(form?.paymentProofUrl);
 
         if (proofFolder) {
           try {
@@ -561,8 +561,7 @@ export function useBookingConsoleData({
           }
         }
 
-        const { error: archiveError } = await supabase.from("booking_archive").insert({
-          booking_id: source.id?.toString(),
+        const baseArchivePayload = {
           resort_id: resortId,
           booking_form: archiveForm,
           start_date: archiveForm.checkInDate,
@@ -572,7 +571,9 @@ export function useBookingConsoleData({
           room_count: archiveForm.roomCount,
           archived_at: new Date().toISOString(),
           reopen_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        });
+        };
+
+        const { error: archiveError } = await supabase.from("booking_archive").insert(baseArchivePayload);
         if (archiveError) throw archiveError;
 
         await deleteBookingById(bookingId);
