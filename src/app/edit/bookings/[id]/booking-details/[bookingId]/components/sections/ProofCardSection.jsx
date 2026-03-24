@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Image as ImageIcon, ExternalLink, CheckCircle } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Image as ImageIcon, ExternalLink, CheckCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "../BookingEditorAtoms";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +11,7 @@ export default function ProofCardSection({
   resolveSignedProofUrl,
 }) {
   const [folderProofUrls, setFolderProofUrls] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const proofFolder = useMemo(() => {
     if (draft?.paymentProofFolder) return draft.paymentProofFolder;
@@ -21,41 +22,44 @@ export default function ProofCardSection({
     return getStorageFolderFromPublicUrl(urlCandidate);
   }, [draft?.paymentProofFolder, draft?.paymentProofUrl, draft?.paymentProofUrls, proofPreviewUrls]);
 
-  useEffect(() => {
+  const refreshFolderProofs = useCallback(async () => {
     if (!proofFolder) return;
-
     let cancelled = false;
-    const loadAll = async () => {
-      try {
-        const urls = [];
-        const limit = 1000;
-        let offset = 0;
+    setIsRefreshing(true);
+    try {
+      const urls = [];
+      const limit = 1000;
+      let offset = 0;
 
-        while (true) {
-          const { data: items, error } = await supabase.storage.from(BUCKET_NAME).list(proofFolder, {
-            limit,
-            offset,
-            sortBy: { column: "name", order: "asc" },
-          });
-          if (error || cancelled) break;
-          if (!items || items.length === 0) break;
+      while (true) {
+        const { data: items, error } = await supabase.storage.from(BUCKET_NAME).list(proofFolder, {
+          limit,
+          offset,
+          sortBy: { column: "name", order: "asc" },
+        });
+        if (error || cancelled) break;
+        if (!items || items.length === 0) break;
 
-          urls.push(...items.map((item) => getPublicUrl(`${proofFolder}/${item.name}`)));
-          if (items.length < limit) break;
-          offset += limit;
-        }
-
-        if (!cancelled) setFolderProofUrls(urls);
-      } catch {
-        // ignore
+        urls.push(...items.map((item) => getPublicUrl(`${proofFolder}/${item.name}`)));
+        if (items.length < limit) break;
+        offset += limit;
       }
-    };
 
-    loadAll();
+      if (!cancelled) setFolderProofUrls(urls);
+    } catch {
+      // ignore
+    } finally {
+      if (!cancelled) setIsRefreshing(false);
+    }
     return () => {
       cancelled = true;
     };
   }, [proofFolder]);
+
+  useEffect(() => {
+    if (!proofFolder) return;
+    refreshFolderProofs();
+  }, [proofFolder, refreshFolderProofs]);
 
   const proofUrls =
     folderProofUrls.length > 0
@@ -81,11 +85,24 @@ export default function ProofCardSection({
     >
       <div className="flex justify-between items-center mb-6">
         <SectionLabel icon={<ImageIcon size={14} />} label="Proof of Payment" />
-        {hasProof ? (
-          <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-1 rounded-md animate-pulse">RECEIVED</span>
-        ) : (
-          <span className="bg-slate-200 text-slate-500 text-[9px] font-black px-2 py-1 rounded-md">AWAITING</span>
-        )}
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 rounded-full text-[10px] flex items-center justify-center"
+            onClick={refreshFolderProofs}
+            disabled={isRefreshing}
+          >
+            <RefreshCw size={12} className={isRefreshing ? "animate-spin mr-1" : "mr-1"} />
+            {isRefreshing ? "Refreshing" : "Refresh"}
+          </Button>
+          {hasProof ? (
+            <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-1 rounded-md animate-pulse">RECEIVED</span>
+          ) : (
+            <span className="bg-slate-200 text-slate-500 text-[9px] font-black px-2 py-1 rounded-md">AWAITING</span>
+          )}
+        </div>
       </div>
 
       {hasProof ? (

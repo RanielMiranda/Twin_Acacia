@@ -32,7 +32,7 @@ export default function AuditArchivePanel({
   hasMoreArchived = false,
   onLoadMoreArchived,
 }) {
-  const [activeTab, setActiveTab] = useState("declined");
+  const [activeTab, setActiveTab] = useState("history");
   const [monthInput, setMonthInput] = useState("");
   const matchesMonthFilter = React.useCallback(
     (dateValue) => {
@@ -148,9 +148,9 @@ export default function AuditArchivePanel({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
         <div className="flex flex-wrap gap-2">
           {[
-            { id: "declined", label: "Declined", count: filteredDeclined.length },
-            { id: "cancelled", label: "Cancelled", count: filteredCancelled.length },
             { id: "history", label: "Checked Out", count: filteredCheckedOut.length },
+            { id: "cancelled", label: "Cancelled", count: filteredCancelled.length },
+            { id: "declined", label: "Declined", count: filteredDeclined.length },
           ].map((tab) => (
             <button
               key={tab.id}
