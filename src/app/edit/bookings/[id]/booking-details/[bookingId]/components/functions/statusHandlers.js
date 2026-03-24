@@ -283,10 +283,7 @@ export async function handleVerifyProofAction({
       paymentPendingApproval: false,
       paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
       // Keep proof urls for audit/log viewing (do not delete the image immediately)
-      status:
-        draft.status === "Pending Payment"
-          ? "Confirmed"
-          : draft.status,
+      status: draft.status,
     };
     setDraft(next);
     await persist(next);

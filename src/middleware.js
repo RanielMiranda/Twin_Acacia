@@ -6,6 +6,9 @@ export async function middleware(request) {
   if (pathname.startsWith("/_next")) {
     return NextResponse.next();
   }
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
   if (pathname.includes(".") && !pathname.endsWith("/")) {
     return NextResponse.next();
   }

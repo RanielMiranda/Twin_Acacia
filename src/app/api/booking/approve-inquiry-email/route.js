@@ -54,6 +54,7 @@ export async function POST(request) {
   }
 
   const bookingId = String(body?.bookingId || "").trim();
+  const forceSend = Boolean(body?.force);
   if (!bookingId) {
     return NextResponse.json({ ok: false, error: "bookingId is required" }, { status: 400 });
   }
@@ -74,7 +75,7 @@ export async function POST(request) {
     return NextResponse.json({ ok: false, error: "Booking is not in Approved Inquiry status" }, { status: 409 });
   }
 
-  if (booking.booking_form?.approvedInquiryEmailSentAt) {
+  if (!forceSend && booking.booking_form?.approvedInquiryEmailSentAt) {
     return NextResponse.json({ ok: true, skipped: true, reason: "Already sent" }, { status: 200 });
   }
 
@@ -87,8 +88,8 @@ export async function POST(request) {
   const clientEmailSent = !!booking.booking_form?.approvedInquiryEmailSentAtClient;
   const agentEmailSent = !!booking.booking_form?.approvedInquiryEmailSentAtAgent;
 
-  const shouldSendClientEmail = !!clientEmail && !!clientToken && !clientEmailSent;
-  const shouldSendAgentEmail = !!agentEmail && !!agentToken && !agentEmailSent;
+  const shouldSendClientEmail = !!clientEmail && !!clientToken && (forceSend || !clientEmailSent);
+  const shouldSendAgentEmail = !!agentEmail && !!agentToken && (forceSend || !agentEmailSent);
 
   if (!shouldSendClientEmail && !shouldSendAgentEmail) {
     return NextResponse.json({ ok: true, skipped: true, reason: "Already sent" }, { status: 200 });
@@ -100,7 +101,7 @@ export async function POST(request) {
     .eq("id", Number(booking.resort_id))
     .maybeSingle();
 
-  const baseUrl = buildBaseUrl(request);
+  const baseUrl = process.env.PUBLIC_APP_HOST || buildBaseUrl(request);
 
   const sendEmail = async (email, token, role) => {
     const ticketUrl = `${baseUrl}/ticket/${booking.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;

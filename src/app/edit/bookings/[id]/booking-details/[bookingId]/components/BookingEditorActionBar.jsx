@@ -214,6 +214,14 @@ export default function BookingEditorActionBar({
             runWithConfirmation("Request payment reminder for this booking?", onRequestPayment),
         },
         {
+          key: "confirm",
+          label: "Confirm",
+          className:
+            "rounded-full w-full md:w-auto flex items-center justify-center px-6 md:px-10 h-11 md:h-12 font-bold shadow-lg transition-all flex gap-2 bg-emerald-600 hover:bg-emerald-700 text-white",
+          icon: <CheckCircle size={18} />,
+          onClick: () => runWithConfirmation("Confirm this booking?", onConfirmStay),
+        },
+        {
           key: "edit",
           label: "Edit",
           className:

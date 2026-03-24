@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, FileText, AlertCircle, Ticket } from "lucide-react";
+import { ChevronLeft, FileText, AlertCircle, Ticket, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast/Toast";
 import { useToast } from "@/components/ui/toast/ToastProvider";
@@ -365,6 +365,30 @@ export default function BookingModernEditor({
     });
   };
 
+  const handleResendApprovalEmail = async () => {
+    try {
+      const response = await fetch("/api/booking/approve-inquiry-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: booking.id, force: true }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to resend approval email.");
+      }
+      toast?.({
+        message: "Email has been resent.",
+        color: "green",
+        icon: Mail,
+      });
+    } catch (error) {
+      toast?.({
+        message: error.message || "Failed to resend approval email.",
+        color: "red",
+      });
+    }
+  };
+
   const handleRevertStep = async () => {
     await handleRevertStepAction({ actionBusy, setActionBusy, draft, setDraft, persist });
   };
@@ -403,6 +427,15 @@ export default function BookingModernEditor({
             <Button variant="outline" onClick={onOpenForm} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
               <FileText size={16} className="mr-2" /> View Form
             </Button>
+            {status === "Approved Inquiry" && (
+              <Button
+                variant="outline"
+                onClick={handleResendApprovalEmail}
+                className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6"
+              >
+                <Mail size={16} className="mr-2" /> Resend Email
+              </Button>
+            )}
             <Button variant="outline" onClick={onOpenTicket} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
               <Ticket size={16} className="mr-2" /> Client Ticket
             </Button>
