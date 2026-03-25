@@ -235,6 +235,7 @@ export function ResortDataProvider({ children }) {
           hasEnoughRooms,
           hasEnoughPax,
           viable: hasEnoughRooms && hasEnoughPax,
+          requestedPax,
         };
       });
       if (!cancelled) setAvailabilityByResort(next);
@@ -260,6 +261,7 @@ export function ResortDataProvider({ children }) {
     const safeMax = Math.max(min, max);
     const midpoint = (safeMin + safeMax) / 2;
     const normalizedDestination = appliedDestination.trim().toLowerCase();
+    const requestedPax = Number(appliedGuests.adults || 0) + Number(appliedGuests.children || 0);
 
     const distanceToRange = (price) => {
       if (price < safeMin) return safeMin - price;

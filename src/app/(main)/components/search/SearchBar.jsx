@@ -2,12 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button"
 
 import DateRangeField from "./calendar/DateRangeField";
-import GuestField from "./guest/GuestField";
 
 import { useFilters } from "@/components/useclient/ContextFilter";
 export default function SearchBar() {
-  const { 
-    setGuests, 
+  const {
     startDate, 
     setStartDate, 
     endDate, 
@@ -16,7 +14,6 @@ export default function SearchBar() {
   } = useFilters();
 
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [guestType, setGuestType] = useState("Solo Traveler");
 
   const containerRef = useRef(null);
 
@@ -34,15 +31,7 @@ export default function SearchBar() {
     return date.toLocaleString("default", { weekday: "long" });
   }
 
-  function handleGuestTypeChange(type) {
-    setGuestType(type);
-
-    if (type === "Solo Traveler") {
-      setGuests({ adults: 1, children: 0, rooms: 1 });
-    } else if (type === "Couple") {
-      setGuests({ adults: 2, children: 0, rooms: 1 });
-    }
-  }
+  // Guest selector removed from homepage search.
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -68,14 +57,6 @@ export default function SearchBar() {
         setActiveDropdown={setActiveDropdown}
         formatFullDate={formatFullDate}
         formatWeekday={formatWeekday}
-      />
-
-      <GuestField
-        guestType={guestType}
-        setGuestType={setGuestType}
-        activeDropdown={activeDropdown}
-        setActiveDropdown={setActiveDropdown}
-        handleGuestTypeChange={handleGuestTypeChange}
       />
 
       <Button

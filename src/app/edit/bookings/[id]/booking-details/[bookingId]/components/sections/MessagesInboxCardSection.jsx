@@ -100,10 +100,13 @@ export default function MessagesInboxCardSection({
             const isOwner = item.senderRole === "owner";
             const isIssue = item.kind === "issue";
             const resolved = isResolvedConversationItem(item);
+            const trimmedBody = String(item.body || "").trim();
+            const hasBody = trimmedBody.length > 0;
             const isInitialInquiryNote =
               item.kind === "message" &&
               item.senderRole === "client" &&
-              item.id === earliestClientMessageId;
+              item.id === earliestClientMessageId &&
+              hasBody;
             const visibility = normalizeVisibility(item.visibility);
             const ownerTargetLabel =
               isOwner && item.kind === "message"
@@ -146,7 +149,7 @@ export default function MessagesInboxCardSection({
                     </Button>
                   ) : null}
                 </div>
-                <p>{item.body}</p>
+                <p>{hasBody ? item.body : "No inquiry note provided."}</p>
                 {item.createdAt ? (
                   <p className="mt-1 text-[10px] text-slate-400">
                     {new Date(item.createdAt).toLocaleString()}

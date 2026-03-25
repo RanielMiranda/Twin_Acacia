@@ -62,6 +62,10 @@ export default function ResortResults({ resorts }) {
             ? (resort.rooms || []).filter((room) => availability.availableRoomIds.has(room?.id?.toString()))
             : (resort.rooms || []);
         const isViable = availability?.viable !== false;
+        const totalResortPax = (resort.rooms || []).reduce((sum, room) => sum + Number(room?.guests || 0), 0);
+        const requestedPax = Number(availability?.requestedPax || 0);
+        const paxInsufficient = requestedPax > 0 && totalResortPax < requestedPax;
+        const isUnavailable = !isViable || paxInsufficient;
         const prioritizeImages = index === 0;
         return (
         <LazyCard key={resort.name} minHeight={360}>
@@ -70,8 +74,9 @@ export default function ResortResults({ resorts }) {
           >
             <div className="flex-1 max-w-full">
               <div
-                className="cursor-pointer"
+                className={`${isUnavailable ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
                 onClick={() => {
+                  if (isUnavailable) return;
                   window.scrollTo({ top: 0, behavior: "smooth" });
                   router.push(`/resort/${encodeURIComponent(resort.name)}`);
                 }}
@@ -85,11 +90,11 @@ export default function ResortResults({ resorts }) {
               <div className="flex-1 p-4 sm:p-6">
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <p className="font-semibold">Available Rooms</p>
-                  {!isViable ? (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-200 rounded-full px-2 py-0.5">
-                      Unavailable
-                    </span>
-                  ) : null}
+                {isUnavailable ? (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-200 rounded-full px-2 py-0.5">
+                    Unavailable
+                  </span>
+                ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {roomList.map((room) => (
@@ -120,6 +125,19 @@ export default function ResortResults({ resorts }) {
                     ))}
                   </div>
                 </div>
+                <div className="mt-4">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Total Resort Pax
+                  </p>
+                  <p className="text-sm font-semibold text-slate-700">
+                    Up to {totalResortPax} guests
+                  </p>
+                  {paxInsufficient ? (
+                    <p className="mt-1 text-[10px] font-semibold text-rose-600">
+                      Not enough capacity for your group.
+                    </p>
+                  ) : null}
+                </div>
               </div>
 
               <div className="p-4 sm:p-6 bg-white">
@@ -141,9 +159,11 @@ export default function ResortResults({ resorts }) {
                 <Button
                   className="w-full rounded-xl text-lg hover:scale-105 transition"
                   onClick={() => {
+                    if (isUnavailable) return;
                     window.scrollTo({ top: 0, behavior: "smooth" });
                     router.push(`/resort/${encodeURIComponent(resort.name)}`);
                   }}
+                  disabled={isUnavailable}
                 >
                   Check Availability
                 </Button>
