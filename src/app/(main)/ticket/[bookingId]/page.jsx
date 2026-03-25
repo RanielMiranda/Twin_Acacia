@@ -158,13 +158,12 @@ export default function ClientTicketPage() {
     seen.add(url);
     orderedUrls.push(url);
   };
-  (Array.isArray(form.paymentProofUrls) ? form.paymentProofUrls.filter(Boolean) : []).forEach(pushUrl);
-  if (form.paymentProofUrl) pushUrl(form.paymentProofUrl);
+  // Only use proof log URLs (single source of truth).
   proofLogItems.forEach((item) => pushUrl(item.url));
   const pendingNote = form.pendingPaymentNote && String(form.pendingPaymentNote).trim();
   const submittedProofItems = orderedUrls.map((url) => ({
     url,
-    note: proofNoteByUrl[url] || (pendingNote && (form.paymentProofUrls || []).includes(url) ? pendingNote : ""),
+    note: proofNoteByUrl[url] || pendingNote || "",
   }));
   const status = String(booking.status || "").toLowerCase();
   const isConcernOnlyMode =

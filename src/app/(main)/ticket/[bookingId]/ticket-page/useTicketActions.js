@@ -97,16 +97,7 @@ export function useTicketActions({
     }
     setIsSubmitting(true);
     try {
-      const existingProofUrls = Array.isArray(booking.booking_form?.paymentProofUrls)
-        ? booking.booking_form.paymentProofUrls.filter(Boolean)
-        : booking.booking_form?.paymentProofUrl
-          ? [booking.booking_form.paymentProofUrl]
-          : [];
       const { urls: uploadedProofUrls, folder: proofFolder } = await uploadProofs();
-      const mergedProofUrls = Array.from(
-        new Set([...(existingProofUrls || []), ...(uploadedProofUrls || [])].filter(Boolean))
-      );
-      const nextProofUrls = mergedProofUrls.length > 0 ? mergedProofUrls : existingProofUrls;
       const nextProofFolder = proofFolder || booking.booking_form?.paymentProofFolder || null;
       const existingProofLog = Array.isArray(booking.booking_form?.paymentProofLog)
         ? booking.booking_form.paymentProofLog
@@ -131,8 +122,6 @@ export function useTicketActions({
         paymentVerified: false,
         paymentVerifiedAt: null,
         paymentProofFolder: nextProofFolder,
-        paymentProofUrl: nextProofUrls[0] || null,
-        paymentProofUrls: nextProofUrls,
         paymentProofLog: [...existingProofLog, proofLogEntry],
         paymentSubmittedAt: new Date().toISOString(),
       };

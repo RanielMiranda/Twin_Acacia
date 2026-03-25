@@ -28,8 +28,7 @@ export function loadDraftFromStorage({ booking, inlineDraftKey, isEditing }) {
       pendingPaymentMethod: base.pendingPaymentMethod,
       paymentPendingApproval: base.paymentPendingApproval,
       paymentDeadline: base.paymentDeadline,
-      paymentProofUrl: base.paymentProofUrl,
-      paymentProofUrls: base.paymentProofUrls,
+      paymentProofLog: base.paymentProofLog,
       paymentSubmittedAt: base.paymentSubmittedAt,
       paymentVerified: base.paymentVerified,
       paymentVerifiedAt: base.paymentVerifiedAt,
@@ -89,7 +88,10 @@ export function handleCancelInlineAction({
 }) {
   const base = buildDraftFromBooking(booking);
   setDraft(base);
-  setProofPreviewUrl(base.paymentProofUrl || null);
+  const firstProofUrl = Array.isArray(base.paymentProofLog)
+    ? base.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : [])).filter(Boolean)[0]
+    : null;
+  setProofPreviewUrl(firstProofUrl || null);
   if (typeof window !== "undefined") localStorage.removeItem(inlineDraftKey);
   setIsEditing(false);
 }

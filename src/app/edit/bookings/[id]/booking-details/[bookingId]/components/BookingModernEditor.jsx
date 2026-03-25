@@ -74,7 +74,11 @@ export default function BookingModernEditor({
   const [renderedAt] = useState(() => Date.now());
   const inlineDraftKey = `booking_inline_draft:${booking.id}`;
   const [draft, setDraft] = useState(() => buildDraftFromBooking(booking));
-  const [proofPreviewUrls, setProofPreviewUrls] = useState(() => buildDraftFromBooking(booking).paymentProofUrls || []);
+  const [proofPreviewUrls, setProofPreviewUrls] = useState(() =>
+    (buildDraftFromBooking(booking).paymentProofLog || [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean)
+  );
   const [assignedRoomIds, setAssignedRoomIds] = useState(() => booking.roomIds || []);
   const [actorMeta, setActorMeta] = useState({ name: "Owner", role: "owner", id: "" });
   useEffect(() => {
@@ -197,20 +201,25 @@ export default function BookingModernEditor({
       pendingDownpayment: proofOverrideForm.pendingDownpayment ?? prev.pendingDownpayment,
       pendingPaymentMethod: proofOverrideForm.pendingPaymentMethod ?? prev.pendingPaymentMethod,
       pendingPaymentNote: proofOverrideForm.pendingPaymentNote ?? prev.pendingPaymentNote,
-      paymentProofUrl: proofOverrideForm.paymentProofUrl ?? prev.paymentProofUrl,
-      paymentProofUrls: proofOverrideForm.paymentProofUrls ?? prev.paymentProofUrls,
+      paymentProofLog: proofOverrideForm.paymentProofLog ?? prev.paymentProofLog,
       paymentSubmittedAt: proofOverrideForm.paymentSubmittedAt ?? prev.paymentSubmittedAt,
     }));
   }, [proofOverrideForm, isEditing]);
   useEffect(() => {
-    setProofPreviewUrls(Array.isArray(proofSource.paymentProofUrls) ? proofSource.paymentProofUrls : []);
-  }, [proofSource.paymentProofUrls]);
+    const urls = (Array.isArray(proofSource.paymentProofLog) ? proofSource.paymentProofLog : [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean);
+    setProofPreviewUrls(urls);
+  }, [proofSource.paymentProofLog]);
 
   const resolveSignedProofUrls = async () => {
-    if (!Array.isArray(proofSource.paymentProofUrls) || proofSource.paymentProofUrls.length === 0) return;
+    const proofUrls = (Array.isArray(proofSource.paymentProofLog) ? proofSource.paymentProofLog : [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean);
+    if (proofUrls.length === 0) return;
     try {
       const signedUrls = await Promise.all(
-        proofSource.paymentProofUrls.map(async (proofUrl) => (await createSignedProofUrl?.(proofUrl, 60 * 60)) || proofUrl)
+        proofUrls.map(async (proofUrl) => (await createSignedProofUrl?.(proofUrl, 60 * 60)) || proofUrl)
       );
       setProofPreviewUrls(signedUrls.filter(Boolean));
     } catch {
@@ -233,7 +242,9 @@ export default function BookingModernEditor({
     !!draft.checkOutDate &&
     new Date(draft.checkOutDate).getTime() < new Date(draft.checkInDate).getTime();
   const normalizedStatus = status.toLowerCase();
-  const hasProof = Array.isArray(proofSource.paymentProofUrls) && proofSource.paymentProofUrls.length > 0;
+  const hasProof = Array.isArray(proofSource.paymentProofLog)
+    ? proofSource.paymentProofLog.some((entry) => Array.isArray(entry?.urls) && entry.urls.length > 0)
+    : false;
   const effectivePaid = Number(draft.downpayment || 0) + (status === "Confirmed" ? Number(draft.pendingDownpayment || 0) : 0);
   const balance = Math.max(0, Number(draft.totalAmount || 0) - effectivePaid);
   const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;

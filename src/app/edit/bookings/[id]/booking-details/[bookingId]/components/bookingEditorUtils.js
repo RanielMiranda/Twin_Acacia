@@ -1,13 +1,3 @@
-function normalizeProofUrls(form) {
-  if (Array.isArray(form.paymentProofUrls) && form.paymentProofUrls.length > 0) {
-    return form.paymentProofUrls.filter(Boolean);
-  }
-  if (form.paymentProofUrl) {
-    return [form.paymentProofUrl];
-  }
-  return [];
-}
-
 export function buildDraftFromBooking(booking) {
   const form = booking.bookingForm || {};
   const adults = Number(booking.adultCount ?? form.adultCount ?? 0);
@@ -25,7 +15,6 @@ export function buildDraftFromBooking(booking) {
   const pendingDownpayment = paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
   const pendingPaymentMethod = paymentPendingApproval ? form.pendingPaymentMethod || null : null;
   const pendingPaymentNote = paymentPendingApproval ? form.pendingPaymentNote || "" : form.pendingPaymentNote || "";
-  const paymentProofUrls = normalizeProofUrls(form);
   const roomNameFromAssigned =
     (form.assignedRoomNames || []).length > 0
       ? form.assignedRoomNames.join(", ")
@@ -89,8 +78,7 @@ export function buildDraftFromBooking(booking) {
     paymentPendingApproval,
     totalAmount,
     paymentDeadline,
-    paymentProofUrl: paymentProofUrls[0] || null,
-    paymentProofUrls,
+    paymentProofLog: Array.isArray(form.paymentProofLog) ? form.paymentProofLog : [],
     paymentSubmittedAt: form.paymentSubmittedAt || null,
     paymentVerified,
     paymentVerifiedAt: form.paymentVerifiedAt || null,

@@ -417,8 +417,7 @@ export function useBookingConsoleData({
           let form = source.bookingForm || {};
           const needsProofHydrate =
             !form?.paymentProofFolder &&
-            !(Array.isArray(form?.paymentProofUrls) && form.paymentProofUrls.length > 0) &&
-            !form?.paymentProofUrl;
+            !(Array.isArray(form?.paymentProofLog) && form.paymentProofLog.some((entry) => Array.isArray(entry?.urls) && entry.urls.length > 0));
           if (needsProofHydrate) {
             try {
               const { data, error } = await supabase
@@ -436,8 +435,12 @@ export function useBookingConsoleData({
 
           const proofFolder =
             form?.paymentProofFolder ||
-            getStorageFolderFromPublicUrl((form?.paymentProofUrls || [])[0]) ||
-            getStorageFolderFromPublicUrl(form?.paymentProofUrl);
+            getStorageFolderFromPublicUrl(
+              (Array.isArray(form?.paymentProofLog)
+                ? form.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+                : []
+              ).filter(Boolean)[0]
+            );
 
           if (proofFolder) {
             try {
@@ -494,8 +497,7 @@ export function useBookingConsoleData({
       let form = source.bookingForm || {};
       const needsProofHydrate =
         !form?.paymentProofFolder &&
-        !(Array.isArray(form?.paymentProofUrls) && form.paymentProofUrls.length > 0) &&
-        !form?.paymentProofUrl;
+        !(Array.isArray(form?.paymentProofLog) && form.paymentProofLog.some((entry) => Array.isArray(entry?.urls) && entry.urls.length > 0));
       if (needsProofHydrate) {
         try {
           const { data, error } = await supabase
@@ -546,8 +548,12 @@ export function useBookingConsoleData({
       try {
         const proofFolder =
           form?.paymentProofFolder ||
-          getStorageFolderFromPublicUrl((form?.paymentProofUrls || [])[0]) ||
-          getStorageFolderFromPublicUrl(form?.paymentProofUrl);
+          getStorageFolderFromPublicUrl(
+            (Array.isArray(form?.paymentProofLog)
+              ? form.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+              : []
+            ).filter(Boolean)[0]
+          );
 
         if (proofFolder) {
           try {

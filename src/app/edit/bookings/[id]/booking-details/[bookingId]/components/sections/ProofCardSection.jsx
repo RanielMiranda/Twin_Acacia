@@ -24,10 +24,11 @@ export default function ProofCardSection({
     if (draft?.paymentProofFolder) return draft.paymentProofFolder;
     const urlCandidate =
       (Array.isArray(proofPreviewUrls) && proofPreviewUrls.length > 0 && proofPreviewUrls[0]) ||
-      (Array.isArray(draft.paymentProofUrls) && draft.paymentProofUrls.length > 0 && draft.paymentProofUrls[0]) ||
-      draft.paymentProofUrl;
+      (Array.isArray(draft.paymentProofLog) && draft.paymentProofLog.length > 0
+        ? draft.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : [])).filter(Boolean)[0]
+        : null);
     return getStorageFolderFromPublicUrl(urlCandidate);
-  }, [draft?.paymentProofFolder, draft?.paymentProofUrl, draft?.paymentProofUrls, proofPreviewUrls]);
+  }, [draft?.paymentProofFolder, draft?.paymentProofLog, proofPreviewUrls]);
 
   const refreshFolderProofs = useCallback(async () => {
     if (!proofFolder) return;
@@ -73,9 +74,9 @@ export default function ProofCardSection({
       ? folderProofUrls
       : Array.isArray(proofPreviewUrls) && proofPreviewUrls.length > 0
       ? proofPreviewUrls
-      : Array.isArray(draft.paymentProofUrls)
-      ? draft.paymentProofUrls
-      : [];
+      : (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
+          .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+          .filter(Boolean);
 
   const proofLogItems = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
     .flatMap((entry) =>

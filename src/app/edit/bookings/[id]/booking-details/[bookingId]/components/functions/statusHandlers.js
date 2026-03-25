@@ -10,7 +10,12 @@ import { supabase } from "@/lib/supabase";
 function getProofFolder(draft) {
   const explicit = draft?.paymentProofFolder;
   if (explicit) return explicit;
-  const urlCandidate = Array.isArray(draft?.paymentProofUrls) ? draft.paymentProofUrls[0] : draft?.paymentProofUrl;
+  const urlCandidate =
+    Array.isArray(draft?.paymentProofLog)
+      ? draft.paymentProofLog
+          .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+          .filter(Boolean)[0]
+      : null;
   return getStorageFolderFromPublicUrl(urlCandidate);
 }
 
@@ -256,6 +261,26 @@ export async function handleVerifyProofAction({
   setActionBusy(true);
   try {
     const proofFolder = getProofFolder(draft);
+    const submittedUrls = Array.isArray(draft.paymentProofLog)
+      ? draft.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : [])).filter(Boolean)
+      : [];
+    const loggedUrls = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean);
+    const missingUrls = submittedUrls.filter((url) => !loggedUrls.includes(url));
+    const submitLogEntry =
+      missingUrls.length > 0
+        ? {
+            at: draft.paymentSubmittedAt || new Date().toISOString(),
+            action: "submit_payment_proof",
+            paymentMethod: draft.pendingPaymentMethod || draft.paymentMethod,
+            amount: Number(draft.pendingDownpayment || 0),
+            folder: proofFolder,
+            urls: missingUrls,
+            note: draft.pendingPaymentNote || "",
+          }
+        : null;
+
     const nextLogEntry = {
       at: new Date().toISOString(),
       action: "payment_verified",
@@ -284,7 +309,9 @@ export async function handleVerifyProofAction({
       pendingPaymentMethod: null,
       pendingPaymentNote: "",
       paymentPendingApproval: false,
-      paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
+      paymentProofLog: Array.isArray(draft.paymentProofLog)
+        ? [...draft.paymentProofLog, ...(submitLogEntry ? [submitLogEntry] : []), nextLogEntry]
+        : [...(submitLogEntry ? [submitLogEntry] : []), nextLogEntry],
       // Keep proof urls for audit/log viewing (do not delete the image immediately)
       status: draft.status,
     };
@@ -323,15 +350,10 @@ export async function handleDeclineProofAction({
   setActionBusy(true);
   try {
     const proofFolder = getProofFolder(draft);
-    const urlCandidates = Array.isArray(draft.paymentProofUrls) && draft.paymentProofUrls.length > 0
-      ? draft.paymentProofUrls.filter(Boolean)
-      : draft.paymentProofUrl
-        ? [draft.paymentProofUrl]
-        : [];
     const logUrls = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
       .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
       .filter(Boolean);
-    const urlsToDelete = Array.from(new Set([...urlCandidates, ...logUrls]));
+    const urlsToDelete = Array.from(new Set([...logUrls]));
     if (urlsToDelete.length > 0) {
       try {
         await deleteSupabasePublicUrls(supabase, urlsToDelete);
@@ -364,11 +386,6 @@ export async function handleDeclineProofAction({
       paymentVerified: false,
       paymentVerifiedAt: null,
       paymentProofLog: [...cleanedLog, nextLogEntry],
-      // Keep proof URLs in logs, but clear the current proof to allow re-upload.
-      paymentProofUrl: null,
-      paymentProofUrls: (Array.isArray(draft.paymentProofUrls) ? draft.paymentProofUrls : []).filter(
-        (url) => !urlsToDelete.includes(url)
-      ),
     };
     setDraft(next);
     await persist(next);
