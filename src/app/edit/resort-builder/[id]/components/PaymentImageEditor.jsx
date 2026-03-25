@@ -46,6 +46,20 @@ export default function PaymentImageEditor() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex flex-col gap-3">
           <p className="text-xs font-black uppercase tracking-widest text-slate-500">GCash Reference</p>
+          <div className="space-y-2">
+            <input
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+              placeholder="GCash account name"
+              value={resort.gcash_account_name || ""}
+              onChange={(e) => updateResort("gcash_account_name", e.target.value)}
+            />
+            <input
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+              placeholder="GCash account number"
+              value={resort.gcash_account_number || ""}
+              onChange={(e) => updateResort("gcash_account_number", e.target.value)}
+            />
+          </div>
           <input
             ref={gcashInputRef}
             type="file"
@@ -91,6 +105,26 @@ export default function PaymentImageEditor() {
         </div>
         <div className="flex flex-col gap-3">
           <p className="text-xs font-black uppercase tracking-widest text-slate-500">Bank Reference</p>
+          <div className="space-y-2">
+            <input
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+              placeholder="Bank name (e.g., BPI, BDO)"
+              value={resort.bank_name || ""}
+              onChange={(e) => updateResort("bank_name", e.target.value)}
+            />
+            <input
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+              placeholder="Account name"
+              value={resort.bank_account_name || ""}
+              onChange={(e) => updateResort("bank_account_name", e.target.value)}
+            />
+            <input
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700"
+              placeholder="Account number"
+              value={resort.bank_account_number || ""}
+              onChange={(e) => updateResort("bank_account_number", e.target.value)}
+            />
+          </div>
           <input
             ref={bankInputRef}
             type="file"

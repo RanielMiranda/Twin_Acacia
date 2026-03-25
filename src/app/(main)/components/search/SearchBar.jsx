@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button"
 
-import DestinationField from "./destination/DestinationField";
 import DateRangeField from "./calendar/DateRangeField";
 import GuestField from "./guest/GuestField";
 
 import { useFilters } from "@/components/useclient/ContextFilter";
 export default function SearchBar() {
   const { 
-    destination,
-    setDestination,
     setGuests, 
     startDate, 
     setStartDate, 
@@ -62,13 +59,6 @@ export default function SearchBar() {
       ref={containerRef}
       className="relative z-20 flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap gap-2 bg-white rounded-xl p-[1vh]"
     >
-      <DestinationField
-        destination={destination}
-        setDestination={setDestination}
-        activeDropdown={activeDropdown}
-        setActiveDropdown={setActiveDropdown}
-      />
-
       <DateRangeField
         startDate={startDate}
         endDate={endDate}

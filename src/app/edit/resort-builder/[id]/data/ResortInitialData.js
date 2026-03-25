@@ -11,6 +11,11 @@ const resortInitialData = {
     "",
   payment_image_url: null,
   bank_payment_image_url: null,
+  gcash_account_name: "",
+  gcash_account_number: "",
+  bank_name: "",
+  bank_account_name: "",
+  bank_account_number: "",
 
   description: {
     summary:

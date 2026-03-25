@@ -57,6 +57,13 @@ export default function BookingModernEditor({
   statusAudits = [],
   transactions = [],
   resortPaymentImageUrl,
+  resortBankPaymentImageUrl,
+  gcashAccountName,
+  gcashAccountNumber,
+  bankName,
+  bankAccountName,
+  bankAccountNumber,
+  onPaymentProofUpdated,
   onEditingChange,
   proofOverrideForm,
 }) {
@@ -189,6 +196,7 @@ export default function BookingModernEditor({
       paymentPendingApproval: proofOverrideForm.paymentPendingApproval ?? prev.paymentPendingApproval,
       pendingDownpayment: proofOverrideForm.pendingDownpayment ?? prev.pendingDownpayment,
       pendingPaymentMethod: proofOverrideForm.pendingPaymentMethod ?? prev.pendingPaymentMethod,
+      pendingPaymentNote: proofOverrideForm.pendingPaymentNote ?? prev.pendingPaymentNote,
       paymentProofUrl: proofOverrideForm.paymentProofUrl ?? prev.paymentProofUrl,
       paymentProofUrls: proofOverrideForm.paymentProofUrls ?? prev.paymentProofUrls,
       paymentSubmittedAt: proofOverrideForm.paymentSubmittedAt ?? prev.paymentSubmittedAt,
@@ -404,6 +412,7 @@ export default function BookingModernEditor({
       createBookingTransaction,
       booking,
     });
+    onPaymentProofUpdated?.();
   };
 
   const handleDeclineProof = async () => {
@@ -507,6 +516,13 @@ export default function BookingModernEditor({
               proofPreviewUrls={proofPreviewUrls}
               draft={proofSource}
               resolveSignedProofUrl={resolveSignedProofUrls}
+              resortPaymentImageUrl={resortPaymentImageUrl}
+              resortBankPaymentImageUrl={resortBankPaymentImageUrl}
+              gcashAccountName={gcashAccountName}
+              gcashAccountNumber={gcashAccountNumber}
+              bankName={bankName}
+              bankAccountName={bankAccountName}
+              bankAccountNumber={bankAccountNumber}
             />
 
             <PaymentCardSection

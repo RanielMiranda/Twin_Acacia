@@ -436,6 +436,18 @@ export default function BookingDetailsPage() {
       statusAudits={statusAudits}
       transactions={transactions}
       resortPaymentImageUrl={currentResort?.payment_image_url}
+      resortBankPaymentImageUrl={currentResort?.bank_payment_image_url}
+      gcashAccountName={currentResort?.gcash_account_name}
+      gcashAccountNumber={currentResort?.gcash_account_number}
+      bankName={currentResort?.bank_name}
+      bankAccountName={currentResort?.bank_account_name}
+      bankAccountNumber={currentResort?.bank_account_number}
+      onPaymentProofUpdated={() => {
+        if (booking?.id) {
+          refreshBookingById(booking.id);
+          loadProofData(booking.id, { force: true });
+        }
+      }}
       onEditingChange={setIsEditing}
       proofOverrideForm={proofOverrideForm}
     />

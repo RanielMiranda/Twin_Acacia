@@ -71,10 +71,17 @@ export default function FacilityGalleryModal({
         <aside className="bg-white rounded-2xl p-6 md:p-8 shadow-2xl border border-slate-100 max-h-[72vh] overflow-auto">
           <p className="text-[11px] uppercase tracking-[0.2em] font-black text-blue-600">Facility</p>
           <h3 className="mt-2 text-2xl font-black text-slate-900">{facility?.name || "Unnamed Facility"}</h3>
-          <p className="mt-4 text-sm text-slate-600 leading-relaxed">
-            {facility?.description ||
-              "Facility details are currently not set. Add a description from the editor."}
-          </p>
+          <ul className="mt-4 text-sm text-slate-600 leading-relaxed list-disc pl-5 space-y-2">
+            {(facility?.description
+              ? String(facility.description)
+                  .split(/\r?\n/)
+                  .map((line) => line.replace(/^\s*[•\-*]\s*/, "").trim())
+                  .filter(Boolean)
+              : ["Facility details are currently not set. Add a description from the editor."]
+            ).map((line, idx) => (
+              <li key={`${facility?.name || "facility"}-desc-${idx}`}>{line}</li>
+            ))}
+          </ul>
           <div className="mt-6 rounded-xl border border-slate-100 bg-slate-50 p-4 text-xs text-slate-500">
             {currentIndex + 1} of {safeFacilities.length}
           </div>

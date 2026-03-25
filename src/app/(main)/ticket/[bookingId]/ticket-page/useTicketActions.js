@@ -14,11 +14,13 @@ export function useTicketActions({
   viewerRole,
   paymentMethod,
   downpayment,
+  paymentNote,
   proofFiles,
   fetchTicket,
   fetchMessages,
   setBooking,
   setProofFiles,
+  setPaymentNote,
   issueSubject,
   setIssueSubject,
   issueMessage,
@@ -66,7 +68,9 @@ export function useTicketActions({
         .trim()
         .replace(/[^a-z0-9-_]/gi, "-")
         .toLowerCase();
-      const path = `${proofFolder}/${safeBase || `proof-${index + 1}`}.webp`;
+      const uniqueSuffix = `${Date.now()}-${index + 1}`;
+      const fileStem = safeBase ? `${safeBase}-${uniqueSuffix}` : `proof-${uniqueSuffix}`;
+      const path = `${proofFolder}/${fileStem}.webp`;
       const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, normalizedFile, {
         upsert: true,
         contentType: normalizedFile?.type || "image/webp",
@@ -99,7 +103,10 @@ export function useTicketActions({
           ? [booking.booking_form.paymentProofUrl]
           : [];
       const { urls: uploadedProofUrls, folder: proofFolder } = await uploadProofs();
-      const nextProofUrls = uploadedProofUrls.length > 0 ? uploadedProofUrls : existingProofUrls;
+      const mergedProofUrls = Array.from(
+        new Set([...(existingProofUrls || []), ...(uploadedProofUrls || [])].filter(Boolean))
+      );
+      const nextProofUrls = mergedProofUrls.length > 0 ? mergedProofUrls : existingProofUrls;
       const nextProofFolder = proofFolder || booking.booking_form?.paymentProofFolder || null;
       const existingProofLog = Array.isArray(booking.booking_form?.paymentProofLog)
         ? booking.booking_form.paymentProofLog
@@ -111,12 +118,15 @@ export function useTicketActions({
         paymentMethod,
         amount: Number(downpayment || 0),
         folder: nextProofFolder,
+        urls: uploadedProofUrls,
+        note: paymentNote?.trim() || "",
       };
 
       const bookingForm = {
         ...(booking.booking_form || {}),
         pendingPaymentMethod: paymentMethod,
         pendingDownpayment: Number(downpayment || 0),
+        pendingPaymentNote: paymentNote?.trim() || "",
         paymentPendingApproval: true,
         paymentVerified: false,
         paymentVerifiedAt: null,
@@ -128,15 +138,6 @@ export function useTicketActions({
       };
 
       const normalizedStatus = String(booking.status || "").toLowerCase();
-      const isPendingCheckout = normalizedStatus === "pending checkout";
-      if (isPendingCheckout && !bookingForm.checkoutPaymentRequestedAt) {
-        toast({
-          message: "Payment upload is locked until the owner requests payment for checkout.",
-          color: "amber",
-        });
-        return;
-      }
-
       const nextStatus =
         normalizedStatus.includes("inquiry") || normalizedStatus === "approved inquiry"
           ? "Pending Payment"
@@ -162,6 +163,7 @@ export function useTicketActions({
 
       setBooking((prev) => ({ ...prev, booking_form: bookingForm, status: nextStatus }));
       setProofFiles?.([]);
+      setPaymentNote?.("");
       await fetchTicket();
       toast({
         message: "Payment proof submitted. Waiting for owner approval.",

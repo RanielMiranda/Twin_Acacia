@@ -45,6 +45,7 @@ export default function ClientTicketPage() {
   const [chatMessage, setChatMessage] = useState("");
 
   const [paymentDraft, setPaymentDraft] = useState({ method: null, downpayment: null });
+  const [paymentNote, setPaymentNote] = useState("");
   const [proofFiles, setProofFiles] = useState([]);
 
   const { loading, booking, setBooking, resort, messages, issues, loadingMessages, fetchTicket, fetchMessages, viewerRole } = useTicketData({
@@ -109,11 +110,13 @@ export default function ClientTicketPage() {
     viewerRole,
     paymentMethod,
     downpayment,
+    paymentNote,
     proofFiles,
     fetchTicket,
     fetchMessages,
     setBooking,
     setProofFiles,
+    setPaymentNote,
     issueSubject,
     setIssueSubject,
     issueMessage,
@@ -137,6 +140,32 @@ export default function ClientTicketPage() {
   const pendingPaid = form.paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
   const effectivePaid = paid + pendingPaid;
   const balance = Math.max(0, totalAmount - effectivePaid);
+  const proofLogItems = Array.isArray(form.paymentProofLog)
+    ? form.paymentProofLog.flatMap((entry) =>
+        Array.isArray(entry?.urls)
+          ? entry.urls.filter(Boolean).map((url) => ({ url, note: entry?.note ? String(entry.note).trim() : "" }))
+          : []
+      )
+    : [];
+  const proofNoteByUrl = proofLogItems.reduce((acc, item) => {
+    if (!acc[item.url] && item.note) acc[item.url] = item.note;
+    return acc;
+  }, {});
+  const orderedUrls = [];
+  const seen = new Set();
+  const pushUrl = (url) => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    orderedUrls.push(url);
+  };
+  (Array.isArray(form.paymentProofUrls) ? form.paymentProofUrls.filter(Boolean) : []).forEach(pushUrl);
+  if (form.paymentProofUrl) pushUrl(form.paymentProofUrl);
+  proofLogItems.forEach((item) => pushUrl(item.url));
+  const pendingNote = form.pendingPaymentNote && String(form.pendingPaymentNote).trim();
+  const submittedProofItems = orderedUrls.map((url) => ({
+    url,
+    note: proofNoteByUrl[url] || (pendingNote && (form.paymentProofUrls || []).includes(url) ? pendingNote : ""),
+  }));
   const status = String(booking.status || "").toLowerCase();
   const isConcernOnlyMode =
     status.includes("declined") ||
@@ -176,17 +205,21 @@ export default function ClientTicketPage() {
         setPaymentMethod={setPaymentMethod}
         downpayment={downpayment}
         setDownpayment={setDownpayment}
+        paymentNote={paymentNote}
+        setPaymentNote={setPaymentNote}
         proofFiles={proofFiles}
         setProofFiles={setProofFiles}
         isSubmitting={isSubmitting}
         onSubmitDownpayment={handleSubmitDownpayment}
         resortPaymentImageUrl={resort?.payment_image_url}
         resortBankPaymentImageUrl={resort?.bank_payment_image_url}
-        canSubmitPayment={
-          (status.includes("pending payment") ||
-            (status.includes("pending checkout") && !!form.checkoutPaymentRequestedAt)) &&
-          !form.paymentPendingApproval
-        }
+        gcashAccountName={resort?.gcash_account_name}
+        gcashAccountNumber={resort?.gcash_account_number}
+        bankName={resort?.bank_name}
+        bankAccountName={resort?.bank_account_name}
+        bankAccountNumber={resort?.bank_account_number}
+        submittedProofItems={submittedProofItems}
+        canSubmitPayment={!form.paymentPendingApproval}
       />
 
       {viewerRole !== "agent" ? (

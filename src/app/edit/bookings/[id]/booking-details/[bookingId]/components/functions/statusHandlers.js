@@ -4,7 +4,8 @@ import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAc
 import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { PREVIOUS_STATUS } from "../bookingEditorConfig";
 import { notifyCaretakerOnBookingConfirmed } from "@/lib/caretakerNotifications";
-import { getStorageFolderFromPublicUrl } from "@/lib/utils";
+import { deleteSupabasePublicUrls, getStorageFolderFromPublicUrl } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 function getProofFolder(draft) {
   const explicit = draft?.paymentProofFolder;
@@ -259,6 +260,7 @@ export async function handleVerifyProofAction({
       at: new Date().toISOString(),
       action: "payment_verified",
       folder: proofFolder,
+      note: draft.pendingPaymentNote || "",
     };
 
     const approvedAmount = Number(draft.pendingDownpayment || 0);
@@ -280,6 +282,7 @@ export async function handleVerifyProofAction({
       paymentMethod: nextMethod,
       pendingDownpayment: 0,
       pendingPaymentMethod: null,
+      pendingPaymentNote: "",
       paymentPendingApproval: false,
       paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
       // Keep proof urls for audit/log viewing (do not delete the image immediately)
@@ -320,24 +323,52 @@ export async function handleDeclineProofAction({
   setActionBusy(true);
   try {
     const proofFolder = getProofFolder(draft);
+    const urlCandidates = Array.isArray(draft.paymentProofUrls) && draft.paymentProofUrls.length > 0
+      ? draft.paymentProofUrls.filter(Boolean)
+      : draft.paymentProofUrl
+        ? [draft.paymentProofUrl]
+        : [];
+    const logUrls = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean);
+    const urlsToDelete = Array.from(new Set([...urlCandidates, ...logUrls]));
+    if (urlsToDelete.length > 0) {
+      try {
+        await deleteSupabasePublicUrls(supabase, urlsToDelete);
+      } catch (error) {
+        console.error("Failed to delete proof images:", error?.message || error);
+      }
+    }
+
     const nextLogEntry = {
       at: new Date().toISOString(),
       action: "payment_declined",
       folder: proofFolder,
+      note: draft.pendingPaymentNote || "",
     };
+    const cleanedLog = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : []).map((entry) => {
+      if (!Array.isArray(entry?.urls) || entry.urls.length === 0) return entry;
+      return {
+        ...entry,
+        urls: entry.urls.filter((url) => !urlsToDelete.includes(url)),
+      };
+    });
 
     const next = {
       ...draft,
       paymentPendingApproval: false,
       pendingDownpayment: 0,
       pendingPaymentMethod: null,
+      pendingPaymentNote: "",
       paymentSubmittedAt: null,
       paymentVerified: false,
       paymentVerifiedAt: null,
-      paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
+      paymentProofLog: [...cleanedLog, nextLogEntry],
       // Keep proof URLs in logs, but clear the current proof to allow re-upload.
       paymentProofUrl: null,
-      paymentProofUrls: [],
+      paymentProofUrls: (Array.isArray(draft.paymentProofUrls) ? draft.paymentProofUrls : []).filter(
+        (url) => !urlsToDelete.includes(url)
+      ),
     };
     setDraft(next);
     await persist(next);

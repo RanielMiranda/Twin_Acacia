@@ -24,6 +24,7 @@ export function buildDraftFromBooking(booking) {
   const paymentPendingApproval = !!form.paymentPendingApproval && !paymentVerified;
   const pendingDownpayment = paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
   const pendingPaymentMethod = paymentPendingApproval ? form.pendingPaymentMethod || null : null;
+  const pendingPaymentNote = paymentPendingApproval ? form.pendingPaymentNote || "" : form.pendingPaymentNote || "";
   const paymentProofUrls = normalizeProofUrls(form);
   const roomNameFromAssigned =
     (form.assignedRoomNames || []).length > 0
@@ -84,6 +85,7 @@ export function buildDraftFromBooking(booking) {
     downpayment: Number(form.downpayment || 0),
     pendingDownpayment,
     pendingPaymentMethod,
+    pendingPaymentNote,
     paymentPendingApproval,
     totalAmount,
     paymentDeadline,
