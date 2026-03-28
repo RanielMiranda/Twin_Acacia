@@ -24,7 +24,7 @@ function CaretakerRow({
     <div className="grid grid-cols-12 px-6 py-4 border-t border-slate-100 hover:bg-blue-50/40 transition group items-center bg-white">
       <div className="col-span-5">
         <input
-          className="w-full font-semibold bg-transparent border-none p-0 focus:ring-0 focus:text-blue-600"
+          className="w-full font-semibold bg-transparent border-none p-0 focus:ring-0 focus:text-sky-700"
           value={caretaker.name}
           placeholder="caretaker_name"
           onChange={(e) => updateCaretakerLocal(index, "name", e.target.value)}
@@ -198,7 +198,7 @@ export default function CaretakerEditor() {
         </div>
         <Button
           onClick={addCaretaker}
-          className="rounded-full hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+          className="rounded-full hover:scale-105 bg-sky-700 hover:bg-sky-800 text-white flex items-center justify-center"
           disabled={busy || !resort?.id}
         >
           <Plus size={16} className="mr-2" />
@@ -237,7 +237,7 @@ export default function CaretakerEditor() {
         <div className="border-t border-slate-100 px-6 py-3">
           <button
             onClick={addCaretaker}
-            className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-800 transition"
+            className="text-sm hover:scale-105 text-sky-700 font-semibold hover:text-sky-800 transition"
             disabled={busy || !resort?.id}
           >
             + Add another caretaker

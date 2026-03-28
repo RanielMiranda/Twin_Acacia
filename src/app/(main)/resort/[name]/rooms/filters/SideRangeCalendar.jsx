@@ -71,7 +71,7 @@ export default function SideRangeCalendar({
                   "flex h-10 w-10 items-center justify-center text-sm transition-colors",
                   isPast ? "cursor-not-allowed text-gray-300" : "hover:bg-blue-100",
                   inRange ? "rounded-md bg-blue-100 text-blue-700" : "rounded-full",
-                  isStart || isEnd ? "relative z-10 rounded-full bg-blue-600 font-semibold text-white hover:bg-blue-600" : "",
+                  isStart || isEnd ? "relative z-10 rounded-full bg-sky-700 font-semibold text-white hover:bg-sky-700" : "",
                 ].join(" ")}
               >
                 {date.getUTCDate()}

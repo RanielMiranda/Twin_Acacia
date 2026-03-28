@@ -133,7 +133,7 @@ export default function AmenitiesEditor() {
 
         <button
           onClick={() => bulkInputRef.current?.click()}
-          className="flex items-center hover:scale-105 gap-2 px-4 py-3 rounded-lg bg-blue-600 text-white text-md font-medium hover:bg-blue-700 transition"
+          className="flex items-center hover:scale-105 gap-2 px-4 py-3 rounded-lg bg-sky-700 text-white text-md font-medium hover:bg-sky-800 transition"
         >
           <Plus size={16} />
           Add Facilities

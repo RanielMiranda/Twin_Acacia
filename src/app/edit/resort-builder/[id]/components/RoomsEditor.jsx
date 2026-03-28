@@ -59,7 +59,7 @@ function SortableRoomTag({ id, tag, onRemove, onUpdate }) {
       style={style}
       className={`group relative bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:bg-blue-50 hover:text-blue-700 transition-all border border-transparent ${isDragging ? "shadow-md ring-2 ring-blue-400 opacity-50" : ""}`}
     >
-      <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-blue-600">
+      <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-sky-700">
         <GripVertical size={12} />
       </button>
       <input 
@@ -145,7 +145,7 @@ export default function RoomsEditor() {
 
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold text-slate-800">Available Rooms</h2>
-        <Button onClick={addRoom} className="rounded-full hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center">
+        <Button onClick={addRoom} className="rounded-full hover:scale-105 bg-sky-700 hover:bg-sky-800 text-white shadow-lg flex items-center justify-center">
           <Plus size={16} className="mr-2"/> Add Room
         </Button>
       </div>
@@ -241,7 +241,7 @@ export default function RoomsEditor() {
                 <div className="flex items-center gap-1">
                   <button 
                     onClick={() => { setActiveRoomId(room.id); fileInputRef.current.click(); }}
-                    className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
+                    className="p-2 text-slate-400 hover:text-sky-700 transition-colors"
                     title="Add Images"
                   >
                     <Camera size={18}/>
@@ -258,7 +258,7 @@ export default function RoomsEditor() {
               {/* STATS */}
               <div className="flex gap-2 text-sm mb-4">
                 <span className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-2xl border border-blue-100">
-                  <Users size={14} className="text-blue-600"/> 
+                  <Users size={14} className="text-sky-700"/> 
                   <BlurInput 
                     key={`room-guests-${room.id}-${room.guests}`}
                     type="number" 
@@ -268,7 +268,7 @@ export default function RoomsEditor() {
                   />
                 </span>
                 <span className="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-2xl border border-blue-100 flex-1">
-                  <BedDouble size={14} className="text-blue-600 shrink-0"/> 
+                  <BedDouble size={14} className="text-sky-700 shrink-0"/> 
                   <BlurInput 
                     key={`room-beds-${room.id}-${room.beds}`}
                     className="bg-transparent border-none p-0 w-full focus:ring-0 font-semibold text-blue-700" 
@@ -301,7 +301,7 @@ export default function RoomsEditor() {
                     </SortableContext>
                   </DndContext>
                   <button onClick={() => handleRoomUpdate(room.id, { tags: [...(room.tags || []), ""] })} 
-                    className="border border-dashed border-slate-300 text-slate-400 px-3 py-1 rounded-full text-xs hover:text-blue-600 hover:border-blue-400 transition-all flex items-center gap-1">
+                    className="border border-dashed border-slate-300 text-slate-400 px-3 py-1 rounded-full text-xs hover:text-sky-700 hover:border-sky-400 transition-all flex items-center gap-1">
                     <Plus size={12} /> Add
                   </button>
                 </div>
