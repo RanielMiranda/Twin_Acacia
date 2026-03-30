@@ -1,8 +1,10 @@
-import { MapPin, Mail, Phone, Facebook } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Facebook, Mail, MapPin, Phone } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-10" }) {
   const { resort } = useResort();
+  const [openPanel, setOpenPanel] = useState(null);
 
   if (!resort) return null;
 
@@ -95,26 +97,49 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
             {resort.description?.summary}
           </div>
         </div>
+      </div>
+        <div className="mt-6 space-y-4">
+          <AccordionCard
+            title="Rules and Regulations"
+            open={openPanel === "rules"}
+            onToggle={() => setOpenPanel((prev) => (prev === "rules" ? null : "rules"))}
+          >
+            {resort.rulesAndRegulations || "No rules and regulations added yet."}
+          </AccordionCard>
+          <AccordionCard
+            title="Terms and Conditions"
+            open={openPanel === "terms"}
+            onToggle={() => setOpenPanel((prev) => (prev === "terms" ? null : "terms"))}
+          >
+            {resort.termsAndConditions || "No terms and conditions added yet."}
+          </AccordionCard>
+        </div>      
+    </section>
+  );
+}
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <details className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-            <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              Rules and Regulations
-            </summary>
-            <div className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">
-              {resort.rulesAndRegulations || "No rules and regulations added yet."}
-            </div>
-          </details>
-          <details className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-            <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">
-              Terms and Conditions
-            </summary>
-            <div className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">
-              {resort.termsAndConditions || "No terms and conditions added yet."}
-            </div>
-          </details>
+function AccordionCard({ title, open, onToggle, children }) {
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-md">
+      <button
+        type="button"
+        onClick={onToggle}
+        style={{ cursor: 'pointer' }}
+        className="flex w-full items-center justify-between gap-4 text-left"
+      >
+        <span className="text-sm font-semibold text-slate-900">{title}</span>
+        <ChevronDown
+          size={18}
+          className={`shrink-0 text-slate-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      <div className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out ${open ? "mt-3 grid-rows-[1fr] opacity-100" : "mt-0 grid-rows-[0fr] opacity-70"}`}>
+        <div className="overflow-hidden">
+          <div className="whitespace-pre-line text-sm leading-6 text-slate-600">
+            {children}
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

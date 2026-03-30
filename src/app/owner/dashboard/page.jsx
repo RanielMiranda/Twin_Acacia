@@ -66,7 +66,7 @@ export default function Page() {
       return;
     }
     setResortData(data || null);
-  }, [OWNER_RESORT_ID, toast]);
+  }, [OWNER_RESORT_ID]);
 
   const loadBookingsAlertCount = useCallback(async () => {
     if (!OWNER_RESORT_ID) {
@@ -74,7 +74,7 @@ export default function Page() {
       return;
     }
     let total = 0;
-    const { count: inquiryCount, error: inquiryErr } = await supabase
+    const { count: actionableBookingCount, error: bookingErr } = await supabase
       .from("bookings")
       .select("id", { count: "exact", head: true })
       .eq("resort_id", OWNER_RESORT_ID)
@@ -87,7 +87,7 @@ export default function Page() {
         "Pending checkout",
       ]);
 
-    if (!inquiryErr) total += Number(inquiryCount || 0);
+    if (!bookingErr) total += Number(actionableBookingCount || 0);
 
     const { count: openIssueCount, error: issueErr } = await supabase
       .from("ticket_issues")
@@ -96,13 +96,6 @@ export default function Page() {
       .eq("status", "open");
 
     if (!issueErr) total += Number(openIssueCount || 0);
-
-    const { count: archiveCount, error: archiveErr } = await supabase
-      .from("booking_archive")
-      .select("id", { count: "exact", head: true })
-      .eq("resort_id", OWNER_RESORT_ID);
-
-    if (!archiveErr) total += Number(archiveCount || 0);
     setBookingsAlertCount(total);
   }, [OWNER_RESORT_ID]);
 
@@ -174,7 +167,7 @@ export default function Page() {
       unread: row.sender_role === "admin" && row.status !== "resolved",
     }));
     setAdminMessages(rows);
-  }, [OWNER_RESORT_ID]);
+  }, [OWNER_RESORT_ID, toast]);
 
   const handleOpenAdminModal = async () => {
     await loadOwnerAdminMessages();

@@ -93,7 +93,7 @@ export default function ResortDetailPage({ name }) {
     const decodedName = decodeURIComponent(name);
     setHasRequestedResort(true);
     if (!resort || resort.name !== decodedName) {
-      loadResort(decodedName, false);
+      loadResort(decodedName, false, false);
     }
   }, [name, loadResort, resort]);
 
