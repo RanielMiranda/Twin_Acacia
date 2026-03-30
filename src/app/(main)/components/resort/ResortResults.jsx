@@ -8,40 +8,37 @@ import { Button } from "@/components/ui/button";
 import { useFilters } from "@/components/useclient/ContextFilter";
 import { ArrowRight, CheckCircle2, TriangleAlert, Users } from "lucide-react";
 
+const LazyCard = React.memo(function LazyCard({ children, minHeight = 360 }) {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(() => typeof IntersectionObserver === "undefined");
+
+  useEffect(() => {
+    if (isVisible || !ref.current || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  return (
+    <div ref={ref} style={{ minHeight }}>
+      {isVisible ? children : <div className="h-full w-full rounded-2xl bg-slate-100" />}
+    </div>
+  );
+});
+
 export default function ResortResults({ resorts }) {
   const router = useRouter(); // Next.js hook
   const { availabilityByResort } = useFilters();
-  const LazyCard = ({ children, minHeight = 360 }) => {
-    const ref = useRef(null);
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-      if (isVisible) return;
-      if (!ref.current || typeof IntersectionObserver === "undefined") {
-        setIsVisible(true);
-        return;
-      }
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setIsVisible(true);
-              observer.disconnect();
-            }
-          });
-        },
-        { rootMargin: "200px" }
-      );
-      observer.observe(ref.current);
-      return () => observer.disconnect();
-    }, [isVisible]);
-
-    return (
-      <div ref={ref} style={{ minHeight }}>
-        {isVisible ? children : <div className="h-full w-full rounded-2xl bg-slate-100" />}
-      </div>
-    );
-  };
   const sortedResorts = React.useMemo(() => {
     const viable = [];
     const notViable = [];
@@ -70,7 +67,7 @@ export default function ResortResults({ resorts }) {
         const isUnavailable = !isViable || paxInsufficient;
         const prioritizeImages = index === 0;
         return (
-        <LazyCard key={resort.name} minHeight={360}>
+        <LazyCard key={resort.id || resort.name} minHeight={360}>
           <div
             className={`overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(15,23,42,0.12)] ${!isViable ? "opacity-90" : ""}`}
           >
@@ -175,7 +172,7 @@ export default function ResortResults({ resorts }) {
                   </p>
                 )}
                 <Button
-                  className="flex w-full items-center justify-center rounded-2xl bg-sky-600 text-base font-semibold text-white transition hover:-translate-y-1 hover:bg-sky-700"
+                  className="flex w-full items-center justify-center rounded-2xl bg-blue-600 text-base font-semibold text-white transition hover:-translate-y-1 hover:bg-blue-700"
                   onClick={() => {
                     if (isUnavailable) return;
                     window.scrollTo({ top: 0, behavior: "smooth" });

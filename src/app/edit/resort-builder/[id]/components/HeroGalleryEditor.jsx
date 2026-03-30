@@ -50,12 +50,12 @@ export default function HeroGalleryEditor() {
 
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-sky-700">Resort overview</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blue-600">Resort overview</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">
             {resort.name || "Resort name"}
           </h1>
         </div>
-        <Button onClick={() => addInputRef.current?.click()} className="bg-sky-600 shadow-xl transition-all hover:-translate-y-0.5 hover:bg-sky-700">
+        <Button onClick={() => addInputRef.current?.click()} className="bg-blue-600 shadow-xl transition-all hover:-translate-y-0.5 hover:bg-blue-700">
           <Camera size={16} className="mr-2 text-white" />
           Add Photos
         </Button>

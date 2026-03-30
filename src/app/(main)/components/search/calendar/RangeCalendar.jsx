@@ -67,7 +67,7 @@ export default function RangeCalendar({
                   isPast ? "cursor-not-allowed text-gray-300" : "hover:bg-blue-100",
                   inRange ? "rounded-md bg-blue-100 text-blue-700" : "rounded-full",
                   isBlocked && !inRange && !isStart && !isEnd ? "rounded-md bg-rose-100 text-rose-700" : "",
-                  isStart || isEnd ? "relative z-10 rounded-full bg-sky-700 font-semibold text-white hover:bg-sky-700" : "",
+                  isStart || isEnd ? "relative z-10 rounded-full bg-blue-600 font-semibold text-white hover:bg-blue-600" : "",
                 ].join(" ")}
                 disabled={isPast}
               >

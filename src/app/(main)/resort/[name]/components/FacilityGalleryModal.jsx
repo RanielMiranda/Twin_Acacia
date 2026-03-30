@@ -69,7 +69,7 @@ export default function FacilityGalleryModal({
         </div>
 
         <aside className="bg-white rounded-2xl p-6 md:p-8 shadow-2xl border border-slate-100 h-[60vh] md:h-[80vh] overflow-auto">
-          <p className="text-[11px] uppercase tracking-[0.2em] font-black text-sky-700">Facility</p>
+          <p className="text-[11px] uppercase tracking-[0.2em] font-black text-blue-600">Facility</p>
           <h3 className="mt-2 text-2xl font-black text-slate-900">{facility?.name || "Unnamed Facility"}</h3>
           <ul className="mt-4 text-sm text-slate-600 leading-relaxed list-disc pl-5 space-y-2">
             {(facility?.description

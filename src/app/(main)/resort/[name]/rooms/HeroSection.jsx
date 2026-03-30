@@ -18,7 +18,7 @@ export default function HeroSection({ onOpen }) {
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-sky-700">Resort overview</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blue-600">Resort overview</p>
             <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950 md:text-5xl">{resort.name}</h1>
           </div>
         </div>

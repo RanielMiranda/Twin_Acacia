@@ -27,7 +27,7 @@ export default function ServicesTable({ services, className = "max-w-6xl mx-auto
               {service.description}
             </div>
 
-            <div className="col-span-2 text-right font-bold text-sky-700">
+            <div className="col-span-2 text-right font-bold text-blue-600">
               ₱{service.cost?.toLocaleString()}
             </div>
           </div>

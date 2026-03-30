@@ -66,7 +66,7 @@ function SortableRow({
       {/* Service Name */}
       <div className="col-span-2">
         <input
-          className="w-full font-semibold bg-transparent border-none p-0 focus:ring-0 focus:text-sky-700"
+          className="w-full font-semibold bg-transparent border-none p-0 focus:ring-0 focus:text-blue-600"
           value={service.name}
           onChange={(e) =>
             updateServiceLocal(index, "name", e.target.value)
@@ -89,7 +89,7 @@ function SortableRow({
       </div>
 
       {/* Price */}
-      <div className="col-span-2 text-right flex justify-end items-center font-bold text-sky-700">
+      <div className="col-span-2 text-right flex justify-end items-center font-bold text-blue-600">
         <span className="mr-1">₱</span>
         <input
           type="number"
@@ -194,7 +194,7 @@ export default function ServicesEditor() {
         <h2 className="text-2xl font-semibold">Extra Services</h2>
         <Button
           onClick={addService}
-          className="rounded-full hover:scale-105 bg-sky-700 hover:bg-sky-800 text-white flex items-center justify-center"
+          className="rounded-full hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
         >
           <Plus size={16} className="mr-2" />
           Add Service
@@ -238,7 +238,7 @@ export default function ServicesEditor() {
         <div className="border-t border-slate-100 px-6 py-3">
           <button
             onClick={addService}
-            className="text-sm hover:scale-105 text-sky-700 font-semibold hover:text-sky-800 transition"
+            className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-700 transition"
           >
             + Add another service
           </button>

@@ -20,7 +20,7 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
 
           <div className="flex-1 space-y-4">
             <div className="flex flex-wrap items-center gap-3">
-              <p className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-sky-700">
+              <p className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-blue-600">
                 Resort profile
               </p>
               {resort.price ? (
@@ -54,7 +54,7 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
                     href={resort.contactMedia}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sky-700 font-medium"
+                    className="text-blue-600 font-medium"
                   >
                     Visit our Facebook Page
                   </a>
@@ -83,7 +83,7 @@ export default function ProfileSection({ className = "max-w-6xl mx-auto px-4 py-
           {resort.tags?.map((tag, index) => (
             <span
               key={index}
-              className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase text-sky-700 shadow-sm"
+              className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase text-blue-600 shadow-sm"
             >
               {tag}
             </span>

@@ -70,7 +70,7 @@ export default function SearchBar() {
           onClick={() => setActiveDropdown((prev) => (prev === "guests" ? null : "guests"))}
         >
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-sky-50 p-2 text-sky-700">
+            <div className="rounded-full bg-sky-50 p-2 text-blue-600">
               <Users size={16} />
             </div>
             <div>
@@ -119,7 +119,7 @@ export default function SearchBar() {
       </div>
 
       <Button
-        className="min-h-14 rounded-[1.25rem] bg-sky-600 px-7 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-sky-700"
+        className="min-h-14 rounded-[1.25rem] bg-blue-600 px-7 text-sm font-semibold text-white hover:-translate-y-0.5 hover:bg-blue-700"
         onClick={() => {
           applyFilters();
           const results = document.getElementById("resorts");

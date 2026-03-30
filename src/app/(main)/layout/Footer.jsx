@@ -32,7 +32,7 @@ export default function Footer() {
 
             <button
               onClick={() => setOpen(true)}
-              className="rounded-xl bg-sky-600 px-6 py-3 font-medium text-white transition hover:-translate-y-0.5 hover:bg-sky-700"
+              className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:-translate-y-0.5 hover:bg-blue-700"
             >
               Send a Message
             </button>

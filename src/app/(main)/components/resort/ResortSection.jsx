@@ -27,10 +27,10 @@ export default function ResortSection() {
     <section id="resorts" className="mx-auto w-full max-w-7xl px-4 py-10 md:py-14">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-sky-700">Featured resorts</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blue-600">Featured resorts</p>
           <h2 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950">Shortlist-worthy stays, presented like a live marketplace.</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">
-            The homepage now focuses on a tighter set of 4 to 6 resorts so the experience feels curated, premium, and ready for launch.
+            Refine your results to find the right stay faster. 
           </p>
         </div>
         <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-sm">
@@ -47,7 +47,7 @@ export default function ResortSection() {
         <button
           type="button"
           onClick={() => setMobileFiltersOpen(true)}
-          className="flex w-full items-center justify-between rounded-t-[1.6rem] bg-sky-600 px-5 py-4 text-left text-white shadow-[0_-12px_40px_rgba(2,132,199,0.28)]"
+          className="flex w-full items-center justify-between rounded-t-[1.6rem] bg-blue-600 px-5 py-4 text-left text-white shadow-[0_-12px_40px_rgba(37,99,235,0.28)]"
         >
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sky-100">Refine results</p>
@@ -65,7 +65,7 @@ export default function ResortSection() {
           <div className="absolute bottom-0 left-0 right-0 h-[82vh] rounded-t-[2rem] bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-700">Refine results</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-600">Refine results</p>
                 <p className="mt-1 text-sm text-slate-500">{filterSummary}</p>
               </div>
               <button

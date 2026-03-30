@@ -80,7 +80,7 @@ export default function HeroBanner() {
 
       <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
         <div className="pt-4 md:pt-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700 shadow-sm backdrop-blur">
+          <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-blue-600 shadow-sm backdrop-blur">
             <Sparkles size={14} />
             Resort stays made simple
           </div>
@@ -97,17 +97,17 @@ export default function HeroBanner() {
 
           <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-3">
             <div className="rounded-[1.4rem] border border-white/80 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
-              <CalendarRange className="mb-3 text-sky-700" size={18} />
+              <CalendarRange className="mb-3 text-blue-600" size={18} />
               <p className="text-sm font-semibold text-slate-900">Date-based search</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">Keep the fast booking journey front and center.</p>
             </div>
             <div className="rounded-[1.4rem] border border-white/80 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
-              <ShieldCheck className="mb-3 text-sky-700" size={18} />
+              <ShieldCheck className="mb-3 text-blue-600" size={18} />
               <p className="text-sm font-semibold text-slate-900">Trusted listings</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">Premium presentation with practical booking details.</p>
             </div>
             <div className="rounded-[1.4rem] border border-white/80 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
-              <ArrowRight className="mb-3 text-sky-700" size={18} />
+              <ArrowRight className="mb-3 text-blue-600" size={18} />
               <p className="text-sm font-semibold text-slate-900">Clear next step</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">Compare, shortlist, and contact owners with confidence.</p>
             </div>

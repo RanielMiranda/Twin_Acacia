@@ -29,7 +29,7 @@ function SortableTag({ tagValue, tagId, index, onRemove, onRename }) {
     <div
       ref={setNodeRef}
       style={style}
-      className="group flex items-center gap-1 rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 shadow-sm"
+      className="group flex items-center gap-1 rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-blue-600 shadow-sm"
     >
       <button {...attributes} {...listeners} className="cursor-grab text-sky-300 hover:text-sky-500">
         <GripVertical size={14} />
@@ -145,7 +145,7 @@ export default function ProfileEditor() {
 
           <div className="w-full flex-1 space-y-4">
             <div className="flex flex-wrap items-center gap-3">
-              <p className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-sky-700">
+              <p className="rounded-full bg-sky-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-blue-600">
                 Resort profile
               </p>
               <div className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">

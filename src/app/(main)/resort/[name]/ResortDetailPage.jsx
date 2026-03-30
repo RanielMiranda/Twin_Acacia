@@ -279,7 +279,7 @@ export default function ResortDetailPage({ name }) {
       <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6 lg:py-10">
         <div className="mb-8 grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="rounded-[2rem] border border-white/80 bg-white/75 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur md:p-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-sky-700">Plan this stay</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-blue-600">Plan this stay</p>
             <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Check dates and room fit</h3>
             <p className="mt-2 text-sm leading-6 text-slate-500">
               Keep the same inquiry flow, just with a cleaner booking panel and clearer decision state.
@@ -337,7 +337,7 @@ export default function ResortDetailPage({ name }) {
                 ) : null}
                 <button
                   className={`w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white transition ${
-                    hasAvailabilityConflict ? "cursor-not-allowed bg-slate-300" : "bg-sky-600 hover:bg-sky-700"
+                    hasAvailabilityConflict ? "cursor-not-allowed bg-slate-300" : "bg-blue-600 hover:bg-blue-700"
                   }`}
                   onClick={() => {
                     if (hasAvailabilityConflict) return;
@@ -393,7 +393,7 @@ export default function ResortDetailPage({ name }) {
 
       <div className="fixed inset-x-0 bottom-4 z-40 px-4 xl:hidden">
         <button
-          className="mx-auto flex w-full max-w-sm items-center justify-center rounded-2xl bg-sky-600 px-4 py-3.5 text-sm font-bold text-white shadow-2xl"
+          className="mx-auto flex w-full max-w-sm items-center justify-center rounded-2xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-2xl"
           onClick={() => setMobileFiltersOpen(true)}
         >
           Filters
@@ -407,7 +407,7 @@ export default function ResortDetailPage({ name }) {
           <div className="absolute bottom-0 left-0 right-0 mx-auto h-[75vh] max-w-xl rounded-t-4xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">Filters</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-600">Filters</p>
                 <h3 className="text-lg font-semibold text-slate-900">Plan this stay</h3>
               </div>
               <button
@@ -427,7 +427,7 @@ export default function ResortDetailPage({ name }) {
                 />
                 <button
                   className={`mt-4 w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white ${
-                    hasAvailabilityConflict ? "cursor-not-allowed bg-slate-300" : "bg-sky-600 hover:bg-sky-700"
+                    hasAvailabilityConflict ? "cursor-not-allowed bg-slate-300" : "bg-blue-600 hover:bg-blue-700"
                   }`}
                   onClick={() => {
                     if (hasAvailabilityConflict) return;

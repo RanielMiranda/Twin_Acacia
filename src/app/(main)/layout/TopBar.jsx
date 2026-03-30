@@ -38,7 +38,7 @@ export default function TopBar() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
           <Link
             href="/"
-            className="shrink-0 text-xl font-semibold tracking-tight text-sky-700 md:text-2xl"
+            className="shrink-0 text-xl font-semibold tracking-tight text-blue-600 md:text-2xl"
             onClick={() => {
               window.scrollTo({ top: 0, behavior: "smooth" });
               setIsMenuOpen(false);
@@ -58,7 +58,7 @@ export default function TopBar() {
               <button onClick={scrollToAbout} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">About</button>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="rounded-full bg-sky-700 px-5 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-sky-800"
+                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700"
               >
                 Contact
               </button>
@@ -83,7 +83,7 @@ export default function TopBar() {
                   setIsModalOpen(true);
                   setIsMenuOpen(false);
                 }}
-                className="rounded-2xl bg-sky-700 px-4 py-3 text-left text-sm font-semibold text-white"
+                className="rounded-2xl bg-blue-600 px-4 py-3 text-left text-sm font-semibold text-white"
               >
                 Contact
               </button>

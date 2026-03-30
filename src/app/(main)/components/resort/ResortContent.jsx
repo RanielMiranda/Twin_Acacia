@@ -24,7 +24,7 @@ export default function ResortContent({ resort, prioritize = false }) {
           />
         )}
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-sky-700">Resort highlight</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-blue-600">Resort highlight</p>
           <div className="text-xl font-semibold tracking-tight text-slate-950">{resort.name}</div>
         </div>
       </div>
