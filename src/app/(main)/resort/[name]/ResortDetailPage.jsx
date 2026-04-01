@@ -280,10 +280,10 @@ export default function ResortDetailPage({ name }) {
         <div className="mb-8 grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="rounded-[2rem] border border-white/80 bg-white/75 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur md:p-6">
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-blue-600">Plan this stay</p>
-            <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Check dates and room fit</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Keep the same inquiry flow, just with a cleaner booking panel and clearer decision state.
-            </p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">Check the details provided by the resort.</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500"> 
+                Review the resort information, facilities, and rooms to ensure it meets your needs before contacting the owner.
+              </p>
           </div>
         </div>
 
@@ -303,6 +303,9 @@ export default function ResortDetailPage({ name }) {
                 <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
                   Choose the rooms that fit this stay
                 </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Click on the rooms below to select them based on your needs.
+                </p>                
               </div>
 
               <RoomsSection

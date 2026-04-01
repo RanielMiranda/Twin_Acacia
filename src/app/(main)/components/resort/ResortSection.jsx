@@ -28,7 +28,7 @@ export default function ResortSection() {
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blue-600">Featured resorts</p>
-          <h2 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950">Shortlist-worthy stays, presented like a live marketplace.</h2>
+          <h2 className="mt-2 text-4xl font-semibold tracking-tight text-slate-950">Explore, compare, and book your ideal resort stay.</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">
             Refine your results to find the right stay faster. 
           </p>
