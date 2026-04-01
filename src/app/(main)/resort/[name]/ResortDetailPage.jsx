@@ -441,9 +441,6 @@ export default function ResortDetailPage({ name }) {
         >
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sky-100">Filter and contact</p>
-            <p className="mt-1 text-sm font-semibold">
-              {selectedRoomIds.length > 0 ? `${selectedRoomIds.length} selected` : "Open"}
-            </p>
           </div>
           <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Open</span>
         </button>

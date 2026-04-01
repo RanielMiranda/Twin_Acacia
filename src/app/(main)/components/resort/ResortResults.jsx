@@ -56,10 +56,7 @@ export default function ResortResults({ resorts }) {
 
       {sortedResorts.map((resort, index) => {
         const availability = availabilityByResort?.[resort.id];
-        const roomList =
-          availability?.availableRoomIds instanceof Set
-            ? (resort.rooms || []).filter((room) => availability.availableRoomIds.has(room?.id?.toString()))
-            : (resort.rooms || []);
+        const roomList = resort.rooms || [];
         const isViable = availability?.viable !== false;
         const totalResortPax = (resort.rooms || []).reduce((sum, room) => sum + Number(room?.guests || 0), 0);
         const requestedPax = Number(availability?.requestedPax || 0);
@@ -89,7 +86,7 @@ export default function ResortResults({ resorts }) {
             <div className="flex w-full flex-col xl:w-[330px]">
               <div className="flex-1 p-5 sm:p-6">
                 <div className="mb-3 flex items-center justify-between gap-2">
-                  <p className="font-semibold text-slate-900">Available Rooms</p>
+                  <p className="font-semibold text-slate-900">Rooms</p>
                 {isUnavailable ? (
                   <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-rose-700">
                     Unavailable
