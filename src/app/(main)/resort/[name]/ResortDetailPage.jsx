@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, X } from "lucide-react";
 import { useResort } from "@/components/useclient/ContextEditor";
 import { useFilters } from "@/components/useclient/ContextFilter";
 import { useSupport } from "@/components/useclient/SupportClient";
@@ -21,6 +21,7 @@ import ShortcutBar from "./rooms/ShortcutBar";
 import FacilitySection from "./rooms/FacilitySection";
 import ServicesSection from "./rooms/ServicesSection";
 import RoomFilterPanel from "./rooms/filters/RoomFilterPanel";
+import SideRangeCalendar from "./rooms/filters/SideRangeCalendar";
 
 const GalleryModal = dynamic(() => import("./components/GalleryModal"), { ssr: false });
 const FacilityGalleryModal = dynamic(() => import("./components/FacilityGalleryModal"), { ssr: false });
@@ -82,6 +83,7 @@ export default function ResortDetailPage({ name }) {
   const [roomImages, setRoomImages] = useState([]);
   const [contactOpen, setContactOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
   const [unavailableRoomIds, setUnavailableRoomIds] = useState([]);
   const [selectedRoomIds, setSelectedRoomIds] = useState([]);
   const { startDate, endDate, checkInTime, checkOutTime } = useFilters();
@@ -276,6 +278,32 @@ export default function ResortDetailPage({ name }) {
       />
       <ShortcutBar />
 
+      {(activeDropdown === "start" || activeDropdown === "end") && (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setActiveDropdown(null)}
+          />
+          <div className="absolute inset-0 z-10 flex items-center justify-center p-4">
+            <SideRangeCalendar
+              startDate={startDate}
+              endDate={endDate}
+              activeDropdown={activeDropdown}
+              onClose={() => setActiveDropdown(null)}
+              monthCount={mobileFiltersOpen ? 1 : 2}
+              mobileCentered={mobileFiltersOpen}
+              onChange={(s, e) => {
+                setStartDate(s);
+                setEndDate(e);
+                if (activeDropdown === "start" && s && !e) {
+                  setActiveDropdown("end");
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6 lg:py-10">
         <div className="mb-8 grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="rounded-[2rem] border border-white/80 bg-white/75 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur md:p-6">
@@ -329,7 +357,12 @@ export default function ResortDetailPage({ name }) {
           <aside className="hidden xl:sticky xl:top-36 xl:self-start xl:block">
             <div className="overflow-visible rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.10)]">
               <div className="p-6">
-                <RoomFilterPanel embedded selectedRoomSummary={selectedRoomSummary} />
+                <RoomFilterPanel
+              embedded
+              selectedRoomSummary={selectedRoomSummary}
+              activeDropdown={activeDropdown}
+              setActiveDropdown={setActiveDropdown}
+            />
               </div>
 
               <div className="space-y-4 rounded-b-[2rem] border-t border-slate-100 bg-slate-50/80 px-6 py-5">
@@ -394,13 +427,19 @@ export default function ResortDetailPage({ name }) {
         />
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-4 z-40 px-4 xl:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
         <button
-          className="mx-auto flex w-full max-w-sm items-center justify-center rounded-2xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-2xl"
+          type="button"
           onClick={() => setMobileFiltersOpen(true)}
+          className="flex w-full items-center justify-between rounded-t-[1.6rem] bg-blue-600 px-5 py-4 text-left text-white shadow-[0_-12px_40px_rgba(37,99,235,0.28)]"
         >
-          Filters
-          {selectedRoomIds.length > 0 ? ` - ${selectedRoomIds.length} selected` : ""}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sky-100">Filter and contact</p>
+            <p className="mt-1 text-sm font-semibold">
+              {selectedRoomIds.length > 0 ? `${selectedRoomIds.length} selected` : "Open"}
+            </p>
+          </div>
+          <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">Open</span>
         </button>
       </div>
 
@@ -414,10 +453,12 @@ export default function ResortDetailPage({ name }) {
                 <h3 className="text-lg font-semibold text-slate-900">Plan this stay</h3>
               </div>
               <button
-                className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600"
+                type="button"
+                className="rounded-full border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 transition"
                 onClick={() => setMobileFiltersOpen(false)}
+                aria-label="Close filters"
               >
-                Close
+                <X size={18} />
               </button>
             </div>
             <div className="h-[calc(75vh-73px)] overflow-y-auto px-5 py-5">
@@ -427,6 +468,8 @@ export default function ResortDetailPage({ name }) {
                   mobileSheet
                   showTitle={false}
                   selectedRoomSummary={selectedRoomSummary}
+                  activeDropdown={activeDropdown}
+                  setActiveDropdown={setActiveDropdown}
                 />
                 <button
                   className={`mt-4 w-full rounded-2xl px-4 py-3.5 text-sm font-bold text-white ${

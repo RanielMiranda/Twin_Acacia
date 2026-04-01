@@ -134,16 +134,12 @@ export default function HeroSection({ onOpen }) {
             <div className="grid gap-3 h-full">
               {middleColumnImages.map((img, idx) => {
                 const imageIndex = idx + 1;
-                const cornerClass =
-                  idx === 0
-                    ? "rounded-3xl lg:rounded-l-none lg:rounded-br-none"
-                    : "rounded-3xl lg:rounded-l-none lg:rounded-tr-none";
 
                 return (
                   <button
                     key={imageIndex}
                     onClick={() => onOpen(imageIndex)}
-                    className={`group relative overflow-hidden ${cornerClass} h-full`}
+                    className={`group relative overflow-hidden h-full`}
                   >
                     <img
                       src={getTransformedSupabaseImageUrl(img, {
@@ -200,7 +196,7 @@ export default function HeroSection({ onOpen }) {
         </div>
 
         {/* Button */}
-        <div className="mt-2 flex justify-end">
+        <div className="mt-4 flex justify-end">
           <button
             onClick={() => onOpen(0)}
             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-950"

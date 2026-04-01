@@ -81,28 +81,28 @@ export default function RangeCalendar({
   }
 
   return (
-    <div className="rounded-bl-2xl rounded-br-2xl bg-white p-4 shadow-xl">
-      <div className="mb-3 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setBaseMonth((prev) => addMonths(prev, -1))}
-          className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
-          aria-label="Previous month"
-        >
-          <ChevronLeft size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={() => setBaseMonth((prev) => addMonths(prev, 1))}
-          className="rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
-          aria-label="Next month"
-        >
-          <ChevronRight size={16} />
-        </button>
-      </div>
-      <div className="flex gap-4">
-        {renderMonth(baseMonth)}
-        {renderMonth(addMonths(baseMonth, 1))}
+    <div className="relative overflow-hidden rounded-[32px]">
+      <button
+        type="button"
+        onClick={() => setBaseMonth((prev) => addMonths(prev, -1))}
+        className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2 text-slate-500 shadow-sm hover:bg-slate-50"
+        aria-label="Previous month"
+      >
+        <ChevronLeft size={18} />
+      </button>
+      <button
+        type="button"
+        onClick={() => setBaseMonth((prev) => addMonths(prev, 1))}
+        className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-slate-200 bg-white p-2 text-slate-500 shadow-sm hover:bg-slate-50"
+        aria-label="Next month"
+      >
+        <ChevronRight size={18} />
+      </button>
+      <div className="p-6">
+        <div className="flex gap-4 justify-center">
+          {renderMonth(baseMonth)}
+          {renderMonth(addMonths(baseMonth, 1))}
+        </div>
       </div>
     </div>
   );

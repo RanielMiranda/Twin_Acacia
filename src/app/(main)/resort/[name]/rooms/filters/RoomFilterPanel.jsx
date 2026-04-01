@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Calendar, ChevronDown, Users } from "lucide-react";
-import SideRangeCalendar from "./SideRangeCalendar";
 import { useFilters } from "@/components/useclient/ContextFilter"; 
 
 export default function RoomFilterPanel({
@@ -8,6 +7,8 @@ export default function RoomFilterPanel({
   mobileSheet = false,
   showTitle = true,
   selectedRoomSummary = "",
+  activeDropdown = null,
+  setActiveDropdown = () => {},
 }) {
   const { 
     selectedTags, 
@@ -23,8 +24,6 @@ export default function RoomFilterPanel({
     checkOutTime,
     setCheckOutTime,
   } = useFilters();
-
-  const [activeDropdown, setActiveDropdown] = useState(null);
 
   const formatFullDate = (date) =>
     date.toLocaleDateString("default", { month: "short", day: "numeric", year: "numeric" });
@@ -176,25 +175,6 @@ function DateRangeField({
         <div className="mt-1 text-[11px] uppercase tracking-wide text-slate-400">{endDate ? formatWeekday(endDate) : "End"}</div>
       </button>
 
-      {(activeDropdown === "start" || activeDropdown === "end") && (
-        <div className={mobileSheet ? "" : "absolute right-full top-0 mr-4 z-[1000]"}>
-          <SideRangeCalendar
-            startDate={startDate}
-            endDate={endDate}
-            activeDropdown={activeDropdown}
-            onClose={() => setActiveDropdown(null)}
-            monthCount={mobileSheet ? 1 : 2}
-            mobileCentered={mobileSheet}
-            onChange={(s, e) => {
-              setStartDate(s);
-              setEndDate(e);
-              if (activeDropdown === "start" && s && !e) {
-                setActiveDropdown("end");
-              }
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }
