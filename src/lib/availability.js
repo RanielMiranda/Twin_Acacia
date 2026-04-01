@@ -18,7 +18,7 @@ export function isBlockingStatus(status) {
   return (
     normalized.includes("confirm") ||
     normalized.includes("ongoing") ||
-    normalized.includes("approved")
+    normalized.includes("pending checkout")
   );
 }
 
