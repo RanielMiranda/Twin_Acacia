@@ -151,6 +151,12 @@ export default function ResortDetailPage({ name }) {
     };
   }, [mobileFiltersOpen]);
 
+  useEffect(() => {
+    if ((activeDropdown === "start" || activeDropdown === "end") && mobileFiltersOpen) {
+      setMobileFiltersOpen(false);
+    }
+  }, [activeDropdown, mobileFiltersOpen]);
+
   if (!resort && (loading || !hasRequestedResort)) {
     return <ResortDetailSkeleton />;
   }
