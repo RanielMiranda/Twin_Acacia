@@ -9,6 +9,7 @@ import {
   TicketHeaderSection,
   TicketStayInfoCardSection,
 } from "./components";
+import { AccordionCard } from "@/components/ui/AccordionCard";
 import { DEFAULT_PAYMENT_METHOD } from "./ticket-page/constants";
 import { buildStayInfoPayload } from "./ticket-page/helpers";
 import { TicketLoadingSkeleton } from "./ticket-page/TicketLoadingSkeleton";
@@ -43,6 +44,7 @@ export default function ClientTicketPage() {
   const [issueSubject, setIssueSubject] = useState("");
   const [issueMessage, setIssueMessage] = useState("");
   const [chatMessage, setChatMessage] = useState("");
+  const [openPanel, setOpenPanel] = useState(null);
 
   const [paymentDraft, setPaymentDraft] = useState({ method: null, downpayment: null });
   const [paymentNote, setPaymentNote] = useState("");
@@ -193,6 +195,24 @@ export default function ClientTicketPage() {
         assignedRoomNames={stayInfoPayload?.assignedRoomNames}
         viewerRole={viewerRole}
       />
+
+      <div className="space-y-4">
+        <AccordionCard
+          title="Rules and Regulations"
+          open={openPanel === "rules"}
+          onToggle={() => setOpenPanel((prev) => (prev === "rules" ? null : "rules"))}
+        >
+          {resort?.rulesAndRegulations || resort?.rules_and_regulations || "No rules and regulations added yet."}
+        </AccordionCard>
+
+        <AccordionCard
+          title="Terms and Conditions"
+          open={openPanel === "terms"}
+          onToggle={() => setOpenPanel((prev) => (prev === "terms" ? null : "terms"))}
+        >
+          {resort?.termsAndConditions || resort?.terms_and_conditions || "No terms and conditions added yet."}
+        </AccordionCard>
+      </div>
 
       <TicketPaymentCardSection
         totalAmount={totalAmount}

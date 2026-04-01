@@ -9,7 +9,7 @@ export default function ShortcutBar() {
   };
 
   return (
-    <div className="sticky top-16 z-30 mt-2 border-y border-slate-200/70 bg-white/85 shadow-sm backdrop-blur">
+    <div className="sticky top-16 z-30 border-y border-slate-200/70 bg-white/85 shadow-sm backdrop-blur">
       <div className="mx-auto flex max-w-7xl gap-3 overflow-x-auto px-4 py-3 text-sm font-medium text-slate-600">
         
         <button

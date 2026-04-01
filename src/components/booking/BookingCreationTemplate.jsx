@@ -27,6 +27,7 @@ const buildInitialFormData = ({
   adultCount: Number(guests?.adults || 0),
   childrenCount: Number(guests?.children || 0),
   guestCount: Number((guests?.adults || 0) + (guests?.children || 0)),
+  pax: Number((guests?.adults || 0) + (guests?.children || 0)),
   sleepingGuests: 0,
   roomCount: initialSelectedRoomIds.length,
   roomName: initialSelectedRoomNames.join(", "),
@@ -159,6 +160,7 @@ export default function BookingCreationTemplate({
         area: saved.area || base.area,
         address: saved.address || "",
         message: saved.message || "",
+        pax: Number(saved.pax ?? base.pax),
         sleepingGuests: Number(saved.sleepingGuests || 0),
       });
     } catch {

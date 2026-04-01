@@ -326,7 +326,7 @@ export default function ResortDetailPage({ name }) {
             </section>
           </div>
 
-          <aside className="hidden xl:sticky xl:top-24 xl:self-start xl:block">
+          <aside className="hidden xl:sticky xl:top-36 xl:self-start xl:block">
             <div className="overflow-visible rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.10)]">
               <div className="p-6">
                 <RoomFilterPanel embedded selectedRoomSummary={selectedRoomSummary} />
