@@ -20,14 +20,12 @@ const ResortSection = dynamic(() => import("./components/resort/ResortSection"),
 //Home Page
 export default function Page() {
   return (
-    <>
-    <div className = "bg-white">
+    <div className="bg-[linear-gradient(180deg,#f8fbff_0%,#eef4f8_32%,#f8fafc_100%)] text-slate-900">
       <HeroBanner />
-      <div className="bg-gray-50 shadow-md max-w-full p-6"></div>      
+      
       <div id="resorts">
         <ResortSection />
       </div>
     </div>
-    </>
   );
 }

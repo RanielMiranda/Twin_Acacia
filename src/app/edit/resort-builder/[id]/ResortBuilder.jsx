@@ -71,7 +71,7 @@ export default function ResortBuilder({ resortId }) {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20 pt-10">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#f4f8fb_26%,#ffffff_100%)] pb-20 pt-10">
       <HeroGalleryEditor />
       <ShortcutBar />
       <ProfileEditor />

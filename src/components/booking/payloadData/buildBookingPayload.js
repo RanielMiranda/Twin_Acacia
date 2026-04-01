@@ -28,7 +28,8 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
 
   const adultCount = Number(submittedData.adultCount || 0);
   const childrenCount = Number(submittedData.childrenCount || 0);
-  const pax = Number(submittedData.pax ?? adultCount + childrenCount);
+  const guestCount = submittedData.guestCount != null ? Number(submittedData.guestCount) : adultCount + childrenCount;
+  const pax = submittedData.pax != null ? Number(submittedData.pax) : guestCount;
 
   const inquirerType = submittedData.inquirerType || "client";
   const isAgent = inquirerType === "agent";
@@ -43,6 +44,11 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
     inquirerType,
     agentName: submittedData.agentName || "",
     guestName: submittedData.guestName || "",
+    adultCount,
+    childrenCount,
+    guestCount,
+    pax,
+    sleepingGuests: Number(submittedData.sleepingGuests || 0),
     ...(isAgent
       ? {
           stayingGuestName: submittedData.stayingGuestName || "",

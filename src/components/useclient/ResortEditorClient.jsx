@@ -139,12 +139,12 @@ export function ResortEditorProvider({ children }) {
   }, [draftScope, setDraftScope]);
 
   const loadResort = useCallback(
-    async (identifier, isId = true) => {
+    async (identifier, isId = true, preferDraft = true) => {
       if (!identifier) return;
       const scope = isId ? `id:${identifier}` : `name:${identifier}`;
       setDraftScope(scope);
       const identifierText = String(identifier).trim();
-      if (typeof window !== "undefined") {
+      if (preferDraft && typeof window !== "undefined") {
         try {
           const cachedDraft = readDraftByScope(scope);
           const draftMatchesTarget = isId

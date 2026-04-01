@@ -407,6 +407,7 @@ export default function BookingDetailsPage() {
       onOpenTicket={() => {
         if (typeof window === "undefined") return;
         const token = effectiveBookingForm?.ticketAccessToken
+          || booking?.bookingForm?.ticketAccessToken
           || booking?.booking_form?.ticketAccessToken
           || booking?.booking_form?.ticket_access_token
           || "";

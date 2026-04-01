@@ -40,7 +40,7 @@ export default function RoomFilterPanel({
       className={`w-full h-fit flex flex-col gap-6 ${
         embedded
           ? ""
-          : "lg:w-80 bg-white shadow-md rounded-2xl p-6 lg:sticky lg:top-24"
+          : "lg:w-80 bg-white shadow-md rounded-2xl p-6 lg:sticky lg:top-28"
       }`}
     >
       {showTitle ? <h3 className="text-lg font-semibold">Plan your stay</h3> : null}

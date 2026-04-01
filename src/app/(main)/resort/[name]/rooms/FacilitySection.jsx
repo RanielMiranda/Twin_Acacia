@@ -50,6 +50,7 @@ export default function FacilitySection({ facilities, onOpen, className = "max-w
             <div key={`${facility?.name || "facility"}-${idx}`} className="flex-shrink-0 w-48 snap-start group relative">
               <button
                 onClick={() => openModal(idx)}
+                style={{ cursor: 'pointer' }}
                 className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 relative shadow-sm border border-slate-200 block text-left"
               >
                 <img

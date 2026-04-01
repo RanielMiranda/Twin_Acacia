@@ -69,7 +69,7 @@ const TicketAddOnsCardSection = React.memo(function TicketAddOnsCardSection({
                 disabled={!canEdit || isSubmitting}
                 className={`w-full text-left rounded-2xl border px-4 py-4 transition-all disabled:opacity-60 ${
                   selected
-                    ? "border-blue-300 bg-blue-50 ring-1 ring-blue-100"
+                    ? "border-blue-200 bg-blue-50 ring-1 ring-blue-100"
                     : "border-slate-100 bg-slate-50 hover:border-slate-200"
                 }`}
               >
@@ -98,7 +98,7 @@ const TicketAddOnsCardSection = React.memo(function TicketAddOnsCardSection({
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
           type="button"
-          className="rounded-2xl bg-blue-600 hover:bg-black"
+          className="rounded-2xl bg-blue-600 hover:bg-blue-700"
           onClick={() => onSubmit(services)}
           disabled={!canEdit || isSubmitting || availableServices.length === 0}
         >

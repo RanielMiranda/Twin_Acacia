@@ -238,7 +238,7 @@ export default function ServicesEditor() {
         <div className="border-t border-slate-100 px-6 py-3">
           <button
             onClick={addService}
-            className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-800 transition"
+            className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-700 transition"
           >
             + Add another service
           </button>
