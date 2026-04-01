@@ -86,7 +86,7 @@ export default function ResortDetailPage({ name }) {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [unavailableRoomIds, setUnavailableRoomIds] = useState([]);
   const [selectedRoomIds, setSelectedRoomIds] = useState([]);
-  const { startDate, endDate, checkInTime, checkOutTime } = useFilters();
+  const { startDate, setStartDate, endDate, setEndDate, checkInTime, setCheckInTime, checkOutTime, setCheckOutTime } = useFilters();
   const { toast, persistentToast } = useToast();
   const { sendTicketMessage, isMissingSupportTableError } = useSupport();
 

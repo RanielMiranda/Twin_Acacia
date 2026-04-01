@@ -50,7 +50,8 @@ export default function SideRangeCalendar({
             const isStart = isSameDay(date, startDate);
             const isEnd = isSameDay(date, endDate);
             const inRange = isBetween(date, startDate, endDate);
-            const isPast = date < todayUTC;
+            const normalize = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const isPast = normalize(date) < normalize(todayUTC);
 
             return (
               <button
@@ -58,6 +59,9 @@ export default function SideRangeCalendar({
                 disabled={isPast}
                 onClick={() => {
                   if (isPast) return;
+                  if (process.env.NODE_ENV !== "production") {
+                    console.log({ clicked: date, startDate, endDate, activeDropdown });
+                  }
 
                   const next = getNextRange({
                     date,
