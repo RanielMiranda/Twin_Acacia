@@ -27,16 +27,17 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
   const handleSendInvite = async () => {
     setSubmitting(true);
     try {
-      const { setupLink } = await createAccountInvite({
+      const { setupLink, emailSent } = await createAccountInvite({
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
         role: formData.role,
       });
-      console.info(`Account setup link (${formData.role}):`, setupLink);
       toast({
-        message: "Invite created. Setup link was logged to browser console.",
+        message: emailSent
+          ? "Invite created. Setup link sent to email."
+          : "Invite created. Email was not sent.",
         color: "green",
         icon: CheckCircle2,
       });
@@ -149,7 +150,7 @@ export default function InviteOwnerModal({ isOpen, onClose }) {
               </div>
               <h3 className="text-xl font-bold text-slate-900">Ready to create account invite</h3>
               <p className="text-slate-500 mt-2">
-                No email will be sent. The setup link will be logged in browser console.
+                The setup link will be emailed to the account owner.
               </p>
               <div className="mt-6 text-left p-4 rounded-2xl border border-slate-100 bg-slate-50">
                 <p className="text-xs font-bold uppercase text-slate-400">Summary</p>

@@ -1,119 +1,190 @@
 "use client"; // important since we're using hooks
 
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ResortGallery from "./ResortGallery";
 import ResortContent from "./ResortContent";
 import { Button } from "@/components/ui/button";
 import { useFilters } from "@/components/useclient/ContextFilter";
+import { ArrowRight, CheckCircle2, TriangleAlert, Users } from "lucide-react";
+
+const LazyCard = React.memo(function LazyCard({ children, minHeight = 360 }) {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(() => typeof IntersectionObserver === "undefined");
+
+  useEffect(() => {
+    if (isVisible || !ref.current || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  return (
+    <div ref={ref} style={{ minHeight }}>
+      {isVisible ? children : <div className="h-full w-full rounded-2xl bg-slate-100" />}
+    </div>
+  );
+});
 
 export default function ResortResults({ resorts }) {
   const router = useRouter(); // Next.js hook
   const { availabilityByResort } = useFilters();
-  const sortedResorts = [...(resorts || [])].sort((a, b) => {
-    const aAvailability = availabilityByResort?.[a.id];
-    const bAvailability = availabilityByResort?.[b.id];
-    const aViable = aAvailability?.viable !== false;
-    const bViable = bAvailability?.viable !== false;
-    if (aViable === bViable) return 0;
-    return aViable ? -1 : 1;
-  });
+  const sortedResorts = React.useMemo(() => {
+    const viable = [];
+    const notViable = [];
+    (resorts || []).forEach((resort) => {
+      const availability = availabilityByResort?.[resort.id];
+      const isViable = availability?.viable !== false;
+      if (isViable) viable.push(resort);
+      else notViable.push(resort);
+    });
+    return [...viable, ...notViable].slice(0, 6);
+  }, [resorts, availabilityByResort]);
 
   return (
     <div className="flex-1 flex flex-col gap-6 w-full">
-      {sortedResorts.map((resort) => {
+
+      {sortedResorts.map((resort, index) => {
         const availability = availabilityByResort?.[resort.id];
-        const roomList =
-          availability?.availableRoomIds instanceof Set
-            ? (resort.rooms || []).filter((room) => availability.availableRoomIds.has(room?.id?.toString()))
-            : (resort.rooms || []);
+        const roomList = resort.rooms || [];
         const isViable = availability?.viable !== false;
+        const totalResortPax = (resort.rooms || []).reduce((sum, room) => sum + Number(room?.guests || 0), 0);
+        const requestedPax = Number(availability?.requestedPax || 0);
+        const paxInsufficient = requestedPax > 0 && totalResortPax < requestedPax;
+        const isUnavailable = !isViable || paxInsufficient;
+        const prioritizeImages = index === 0;
         return (
-        <div
-          key={resort.name}
-          className={`flex flex-col sm:flex-row bg-white shadow rounded-2xl overflow-hidden ${!isViable ? "opacity-90" : ""}`}
-        >
-          <div className="flex-1 max-w-full">
-            <div
-              className="cursor-pointer"
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                router.push(`/resort/${encodeURIComponent(resort.name)}`);
-              }}
-            >
-              <ResortGallery resort={resort} />
-            </div>
-            <ResortContent resort={resort} />
-          </div>
-
-          <div className="w-full sm:w-72 flex flex-col">
-            <div className="flex-1 p-4 sm:p-6">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <p className="font-semibold">Available Rooms</p>
-                {!isViable ? (
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-200 rounded-full px-2 py-0.5">
-                    Unavailable
-                  </span>
-                ) : null}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {roomList.map((room) => (
-                  <div key={room.id} className="relative group">
-                    <div className="bg-blue-100 px-2 py-1 rounded-2xl text-xs">
-                      {room.name}
-                    </div>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-700 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition whitespace-nowrap z-50">
-                      {room.guests} Guests - {room.beds} Beds
-                      <br />PHP {room.price}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Facilities
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {(resort.facilities || []).map((facility, index) => (
-                    <span
-                      key={index}
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md"
-                    >
-                      {facility?.name || "Facility"}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 sm:p-6 bg-white">
-              <p className="text-sm font-medium text-gray-600 mb-1">Average pricing</p>
-              <p className="text-2xl font-bold text-blue-600 mb-3">PHP {Number(resort.price || 0).toLocaleString()}</p>
-              {Number(resort.description?.meta?.pricing?.forAsLowAs || 0) > 0 && (
-                <p className="text-xs font-semibold text-emerald-600 mb-1">
-                  For as low as PHP {Number(resort.description?.meta?.pricing?.forAsLowAs || 0).toLocaleString()}
-                </p>
-              )}
-              {resort.description?.meta?.pricing?.customOfferLabel && (
-                <p className="text-xs text-slate-500 mb-4">
-                  {resort.description?.meta?.pricing?.customOfferLabel}
-                  {Number(resort.description?.meta?.pricing?.customOfferPrice || 0) > 0
-                    ? `: PHP ${Number(resort.description?.meta?.pricing?.customOfferPrice || 0).toLocaleString()}`
-                    : ""}
-                </p>
-              )}
-              <Button
-                className="w-full rounded-xl text-lg hover:scale-105 transition"
+        <LazyCard key={resort.id || resort.name} minHeight={360}>
+          <div
+            className={`overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(15,23,42,0.12)] ${!isViable ? "opacity-90" : ""}`}
+          >
+            <div className="flex flex-col xl:flex-row">
+            <div className="flex-1 max-w-full border-b border-slate-100 xl:border-b-0 xl:border-r">
+              <div
+                className={`${isUnavailable ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
                 onClick={() => {
+                  if (isUnavailable) return;
                   window.scrollTo({ top: 0, behavior: "smooth" });
                   router.push(`/resort/${encodeURIComponent(resort.name)}`);
                 }}
               >
-                Check Availability
-              </Button>
+                <ResortGallery resort={resort} prioritize={prioritizeImages} />
+              </div>
+              <ResortContent resort={resort} prioritize={prioritizeImages} />
+            </div>
+
+            <div className="flex w-full flex-col xl:w-[330px]">
+              <div className="flex-1 p-5 sm:p-6">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <p className="font-semibold text-slate-900">Rooms</p>
+                {isUnavailable ? (
+                  <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-rose-700">
+                    Unavailable
+                  </span>
+                ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {roomList.map((room) => (
+                    <div key={room.id} className="relative group">
+                      <div className="rounded-full bg-sky-100 px-3 py-1.5 text-xs font-medium text-sky-800">
+                        {room.name}
+                      </div>
+                      <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2 text-xs text-white opacity-0 transition group-hover:opacity-100">
+                        {room.guests} Guests - {room.beds} Beds
+                        <br />PHP {room.price}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 rounded-[1.5rem] bg-slate-50 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-slate-900">
+                    <Users size={16} />
+                    <p className="text-sm font-semibold">Stay snapshot</p>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-700">
+                    Up to {totalResortPax} guests
+                  </p>
+                  {paxInsufficient ? (
+                    <p className="mt-1 text-[11px] font-semibold text-rose-600">
+                      Not enough capacity for your selected group size.
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[11px] font-medium text-emerald-600">
+                      Capacity looks aligned with your current search.
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-5">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    Facilities
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {(resort.facilities || []).map((facility, index) => (
+                      <span
+                        key={index}
+                        className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600"
+                      >
+                        {facility?.name || "Facility"}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100 bg-slate-50/80 p-5 sm:p-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="mb-1 text-sm font-medium text-slate-500">Average pricing</p>
+                    <p className="text-3xl font-semibold tracking-tight text-slate-950">PHP {Number(resort.price || 0).toLocaleString()}</p>
+                  </div>
+                  {isUnavailable ? (
+                    <TriangleAlert className="text-rose-500" size={18} />
+                  ) : (
+                    <CheckCircle2 className="text-emerald-500" size={18} />
+                  )}
+                </div>
+                {Number(resort.description?.meta?.pricing?.forAsLowAs || 0) > 0 && (
+                  <p className="mb-1 text-xs font-semibold text-emerald-600">
+                    For as low as PHP {Number(resort.description?.meta?.pricing?.forAsLowAs || 0).toLocaleString()}
+                  </p>
+                )}
+                {resort.description?.meta?.pricing?.customOfferLabel && (
+                  <p className="mb-4 text-xs text-slate-500">
+                    {resort.description?.meta?.pricing?.customOfferLabel}
+                    {Number(resort.description?.meta?.pricing?.customOfferPrice || 0) > 0
+                      ? `: PHP ${Number(resort.description?.meta?.pricing?.customOfferPrice || 0).toLocaleString()}`
+                      : ""}
+                  </p>
+                )}
+                <Button
+                  className="flex w-full items-center justify-center rounded-2xl bg-blue-600 text-base font-semibold text-white transition hover:-translate-y-1 hover:bg-blue-700"
+                  onClick={() => {
+                    if (isUnavailable) return;
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    router.push(`/resort/${encodeURIComponent(resort.name)}`);
+                  }}
+                  disabled={isUnavailable}
+                >
+                  <ArrowRight size={16} className="mr-2" />
+                  Check Availability
+                </Button>
+              </div>
+            </div>
             </div>
           </div>
-        </div>
+        </LazyCard>
         );
       })}
     </div>

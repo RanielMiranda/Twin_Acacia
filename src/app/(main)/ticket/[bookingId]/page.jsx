@@ -1,23 +1,38 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import Toast from "@/components/ui/toast/Toast";
 import {
   TicketHeaderSection,
-  TicketAddOnsCardSection,
   TicketStayInfoCardSection,
-  TicketPaymentCardSection,
-  TicketSupportDeskCardSection,
-  TicketIssueCardSection,
 } from "./components";
+import { AccordionCard } from "@/components/ui/AccordionCard";
 import { DEFAULT_PAYMENT_METHOD } from "./ticket-page/constants";
 import { buildStayInfoPayload } from "./ticket-page/helpers";
 import { TicketLoadingSkeleton } from "./ticket-page/TicketLoadingSkeleton";
 import { useTicketData } from "./ticket-page/useTicketData";
 import { useTicketActions } from "./ticket-page/useTicketActions";
 import { useTicketImageActions } from "./ticket-page/useTicketImageActions";
+
+const TicketPaymentCardSection = dynamic(
+  () => import("./components").then((mod) => mod.TicketPaymentCardSection),
+  { loading: () => <div className="h-40 rounded-2xl border border-slate-200 bg-white" /> }
+);
+const TicketAddOnsCardSection = dynamic(
+  () => import("./components").then((mod) => mod.TicketAddOnsCardSection),
+  { loading: () => <div className="h-40 rounded-2xl border border-slate-200 bg-white" /> }
+);
+const TicketSupportDeskCardSection = dynamic(
+  () => import("./components").then((mod) => mod.TicketSupportDeskCardSection),
+  { loading: () => <div className="h-40 rounded-2xl border border-slate-200 bg-white" /> }
+);
+const TicketIssueCardSection = dynamic(
+  () => import("./components").then((mod) => mod.TicketIssueCardSection),
+  { loading: () => <div className="h-40 rounded-2xl border border-slate-200 bg-white" /> }
+);
 
 export default function ClientTicketPage() {
   const { bookingId } = useParams();
@@ -29,8 +44,10 @@ export default function ClientTicketPage() {
   const [issueSubject, setIssueSubject] = useState("");
   const [issueMessage, setIssueMessage] = useState("");
   const [chatMessage, setChatMessage] = useState("");
+  const [openPanel, setOpenPanel] = useState(null);
 
   const [paymentDraft, setPaymentDraft] = useState({ method: null, downpayment: null });
+  const [paymentNote, setPaymentNote] = useState("");
   const [proofFiles, setProofFiles] = useState([]);
 
   const { loading, booking, setBooking, resort, messages, issues, loadingMessages, fetchTicket, fetchMessages, viewerRole } = useTicketData({
@@ -64,15 +81,12 @@ export default function ClientTicketPage() {
         rawForm.stayingGuestEmail || (inquirerType === "client" ? contactEmail : ""),
       stayingGuestPhone:
         rawForm.stayingGuestPhone || (inquirerType === "client" ? contactPhone : ""),
-      resortServices: Array.isArray(booking.resort_service_ids)
-        ? booking.resort_service_ids.filter(Boolean)
-        : Array.isArray(rawForm.resortServices)
-          ? rawForm.resortServices
-              .map((entry) => {
-                if (entry && typeof entry === "object") return entry.id || entry.name || "";
-                return entry || "";
-              })
+      resortServices: Array.isArray(rawForm.resortServices)
+        ? rawForm.resortServices
+        : Array.isArray(booking.resort_service_ids)
+          ? booking.resort_service_ids
               .filter(Boolean)
+              .map((id) => ({ id, name: id, cost: 0 }))
           : [],
     };
   }, [booking]);
@@ -98,11 +112,13 @@ export default function ClientTicketPage() {
     viewerRole,
     paymentMethod,
     downpayment,
+    paymentNote,
     proofFiles,
     fetchTicket,
     fetchMessages,
     setBooking,
     setProofFiles,
+    setPaymentNote,
     issueSubject,
     setIssueSubject,
     issueMessage,
@@ -112,20 +128,45 @@ export default function ClientTicketPage() {
     toast,
   });
 
-  const { openPrintEntryPass, downloadTicket } = useTicketImageActions({ booking, toast });
+  const { downloadTicket } = useTicketImageActions({ booking, toast });
 
   const stayInfoPayload = useMemo(() => buildStayInfoPayload(booking, form, resort), [booking, form, resort]);
 
   if (loading && !booking) {
     return <TicketLoadingSkeleton />;
   }
-  if (!booking) return <div className="mt-10 p-10 text-center text-slate-500">Ticket not found.</div>;
+  if (!booking) return <div className="p-10 text-center text-slate-500">Ticket not found.</div>;
 
   const totalAmount = Number(form.totalAmount || 0);
   const paid = Number(form.downpayment || 0);
   const pendingPaid = form.paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
   const effectivePaid = paid + pendingPaid;
   const balance = Math.max(0, totalAmount - effectivePaid);
+  const proofLogItems = Array.isArray(form.paymentProofLog)
+    ? form.paymentProofLog.flatMap((entry) =>
+        Array.isArray(entry?.urls)
+          ? entry.urls.filter(Boolean).map((url) => ({ url, note: entry?.note ? String(entry.note).trim() : "" }))
+          : []
+      )
+    : [];
+  const proofNoteByUrl = proofLogItems.reduce((acc, item) => {
+    if (!acc[item.url] && item.note) acc[item.url] = item.note;
+    return acc;
+  }, {});
+  const orderedUrls = [];
+  const seen = new Set();
+  const pushUrl = (url) => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    orderedUrls.push(url);
+  };
+  // Only use proof log URLs (single source of truth).
+  proofLogItems.forEach((item) => pushUrl(item.url));
+  const pendingNote = form.pendingPaymentNote && String(form.pendingPaymentNote).trim();
+  const submittedProofItems = orderedUrls.map((url) => ({
+    url,
+    note: proofNoteByUrl[url] || pendingNote || "",
+  }));
   const status = String(booking.status || "").toLowerCase();
   const isConcernOnlyMode =
     status.includes("declined") ||
@@ -142,7 +183,6 @@ export default function ClientTicketPage() {
       <TicketHeaderSection
         bookingId={booking.id}
         canAccessEntryPass={canAccessEntryPass}
-        onPrintEntryPass={openPrintEntryPass}
         onDownloadTicket={downloadTicket}
         viewerRole={viewerRole}
       />
@@ -153,9 +193,26 @@ export default function ClientTicketPage() {
         resort={resort}
         approvedByName={stayInfoPayload?.approvedByName}
         assignedRoomNames={stayInfoPayload?.assignedRoomNames}
-        entryCode={stayInfoPayload?.entryCode}
         viewerRole={viewerRole}
       />
+
+      <div className="space-y-4">
+        <AccordionCard
+          title="Rules and Regulations"
+          open={openPanel === "rules"}
+          onToggle={() => setOpenPanel((prev) => (prev === "rules" ? null : "rules"))}
+        >
+          {resort?.rulesAndRegulations || resort?.rules_and_regulations || "No rules and regulations added yet."}
+        </AccordionCard>
+
+        <AccordionCard
+          title="Terms and Conditions"
+          open={openPanel === "terms"}
+          onToggle={() => setOpenPanel((prev) => (prev === "terms" ? null : "terms"))}
+        >
+          {resort?.termsAndConditions || resort?.terms_and_conditions || "No terms and conditions added yet."}
+        </AccordionCard>
+      </div>
 
       <TicketPaymentCardSection
         totalAmount={totalAmount}
@@ -167,17 +224,21 @@ export default function ClientTicketPage() {
         setPaymentMethod={setPaymentMethod}
         downpayment={downpayment}
         setDownpayment={setDownpayment}
+        paymentNote={paymentNote}
+        setPaymentNote={setPaymentNote}
         proofFiles={proofFiles}
         setProofFiles={setProofFiles}
         isSubmitting={isSubmitting}
         onSubmitDownpayment={handleSubmitDownpayment}
         resortPaymentImageUrl={resort?.payment_image_url}
         resortBankPaymentImageUrl={resort?.bank_payment_image_url}
-        canSubmitPayment={
-          (status.includes("pending payment") ||
-            (status.includes("pending checkout") && !!form.checkoutPaymentRequestedAt)) &&
-          !form.paymentPendingApproval
-        }
+        gcashAccountName={resort?.gcash_account_name}
+        gcashAccountNumber={resort?.gcash_account_number}
+        bankName={resort?.bank_name}
+        bankAccountName={resort?.bank_account_name}
+        bankAccountNumber={resort?.bank_account_number}
+        submittedProofItems={submittedProofItems}
+        canSubmitPayment={!form.paymentPendingApproval}
       />
 
       {viewerRole !== "agent" ? (

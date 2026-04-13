@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { CreditCard, Upload, ShieldCheck, Loader2, CheckCircle2, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { CreditCard, Upload, ShieldCheck, Loader2, CheckCircle2, X, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getTransformedSupabaseImageUrl } from "@/lib/utils";
 
-export function TicketPaymentCardSection({
+const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
   totalAmount,
   paid,
   pendingPaid = 0,
@@ -16,13 +16,21 @@ export function TicketPaymentCardSection({
   setPaymentMethod,
   downpayment,
   setDownpayment,
+  paymentNote,
+  setPaymentNote,
   proofFiles,
   setProofFiles,
   isSubmitting,
   onSubmitDownpayment,
   resortPaymentImageUrl,
   resortBankPaymentImageUrl,
+  gcashAccountName,
+  gcashAccountNumber,
+  bankName,
+  bankAccountName,
+  bankAccountNumber,
   canSubmitPayment = true,
+  submittedProofItems = [],
 }) {
   const chosenReferenceUrl =
     paymentMethod === "Bank"
@@ -30,10 +38,44 @@ export function TicketPaymentCardSection({
       : resortPaymentImageUrl || resortBankPaymentImageUrl;
   const hasReference = !!chosenReferenceUrl && typeof chosenReferenceUrl === "string";
   const [referenceExpanded, setReferenceExpanded] = useState(false);
+  const [proofPreviewExpanded, setProofPreviewExpanded] = useState(null);
+  const [submittedActiveIndex, setSubmittedActiveIndex] = useState(0);
   const locked = !canSubmitPayment;
   const bigImageUrl = hasReference
     ? getTransformedSupabaseImageUrl(chosenReferenceUrl, { width: 1024, quality: 95, format: "webp" })
     : null;
+  const gcashDetails = [
+    gcashAccountName ? `Account Name: ${gcashAccountName}` : null,
+    gcashAccountNumber ? `Account Number: ${gcashAccountNumber}` : null,
+  ].filter(Boolean);
+  const bankDetails = [
+    bankName ? `Bank: ${bankName}` : null,
+    bankAccountName ? `Account Name: ${bankAccountName}` : null,
+    bankAccountNumber ? `Account Number: ${bankAccountNumber}` : null,
+  ].filter(Boolean);
+  const proofPreviews = useMemo(
+    () =>
+      (proofFiles || [])
+        .filter((file) => file instanceof File)
+        .map((file) => ({
+          name: file.name,
+          url: URL.createObjectURL(file),
+        })),
+    [proofFiles]
+  );
+
+  useEffect(() => {
+    return () => {
+      proofPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [proofPreviews]);
+  useEffect(() => {
+    if (submittedProofItems.length === 0) {
+      setSubmittedActiveIndex(0);
+      return;
+    }
+    setSubmittedActiveIndex((prev) => Math.min(prev, submittedProofItems.length - 1));
+  }, [submittedProofItems]);
   return (
     <Card className="p-6 md:p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem]">
       <h3 className="text-sm font-black text-emerald-600 uppercase tracking-[0.2em] mb-6 md:mb-8 flex items-center gap-2">
@@ -71,6 +113,17 @@ export function TicketPaymentCardSection({
                 className="w-full h-full object-contain pointer-events-none"
               />
             </button>
+            {(paymentMethod === "Bank" ? bankDetails : gcashDetails).length > 0 ? (
+              <div className="mt-3 w-full rounded-2xl border border-slate-100 bg-white p-3 text-[11px] text-slate-600 space-y-1">
+                {(paymentMethod === "Bank" ? bankDetails : gcashDetails).map((line, idx) => (
+                  <p key={`payment-detail-${idx}`} className="font-semibold">{line}</p>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 w-full rounded-2xl border border-slate-100 bg-white p-3 text-[11px] text-slate-400">
+                Add payment account details in the resort builder.
+              </div>
+            )}
             {referenceExpanded && bigImageUrl && (
               <div
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
@@ -162,6 +215,42 @@ export function TicketPaymentCardSection({
               </div>
             </div>
           </label>
+          <label className="block space-y-2">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              Payment Note (Reference / Sender Details)
+            </span>
+            <textarea
+              className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 min-h-[90px] resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+              value={paymentNote || ""}
+              onChange={(e) => setPaymentNote?.(e.target.value)}
+              placeholder="Example: Ref #123456, sent from Juan D."
+              disabled={locked}
+            />
+          </label>
+          {proofPreviews.length ? (
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Selected Image Preview
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {proofPreviews.map((preview) => (
+                  <button
+                    type="button"
+                    key={preview.url}
+                    className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                    onClick={() => setProofPreviewExpanded(preview.url)}
+                    aria-label={`Preview ${preview.name}`}
+                  >
+                    <img
+                      src={preview.url}
+                      alt={preview.name}
+                      className="h-28 w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className={`bg-slate-900 rounded-2xl p-6 md:p-8 text-white flex flex-col justify-between ${hasReference ? "lg:col-span-4 order-3" : "lg:col-span-4"}`}>
@@ -205,6 +294,114 @@ export function TicketPaymentCardSection({
           </Button>
         </div>
       </div>
+      {proofPreviewExpanded ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+          onClick={() => setProofPreviewExpanded(null)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Escape" && setProofPreviewExpanded(null)}
+          aria-label="Close preview"
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/90 text-slate-700 hover:bg-white"
+            onClick={() => setProofPreviewExpanded(null)}
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={proofPreviewExpanded}
+            alt="Uploaded proof (enlarged)"
+            className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      ) : null}
+      {submittedProofItems.length ? (
+        <div className="space-y-2 mt-6">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            Submitted Proofs
+          </p>
+          <div className="rounded-2xl border border-slate-200 bg-white/90 p-3">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+              <button
+                type="button"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/80 p-2 text-slate-700 shadow hover:bg-white"
+                onClick={() =>
+                  setSubmittedActiveIndex((prev) =>
+                    submittedProofItems.length ? (prev - 1 + submittedProofItems.length) % submittedProofItems.length : 0
+                  )
+                }
+                aria-label="Previous proof"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/80 p-2 text-slate-700 shadow hover:bg-white"
+                onClick={() =>
+                  setSubmittedActiveIndex((prev) =>
+                    submittedProofItems.length ? (prev + 1) % submittedProofItems.length : 0
+                  )
+                }
+                aria-label="Next proof"
+              >
+                <ChevronRight size={18} />
+              </button>
+              <button
+                type="button"
+                className="block w-full"
+                onClick={() => setProofPreviewExpanded(submittedProofItems[submittedActiveIndex]?.url)}
+                aria-label="Open proof fullscreen"
+              >
+                <img
+                  src={submittedProofItems[submittedActiveIndex]?.url}
+                  alt={`Submitted proof ${submittedActiveIndex + 1}`}
+                  className="h-56 sm:h-72 w-full object-cover"
+                />
+              </button>
+              <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-full text-[10px]"
+                  onClick={() => setProofPreviewExpanded(submittedProofItems[submittedActiveIndex]?.url)}
+                >
+                  View Fullscreen <ExternalLink size={12} className="ml-2" />
+                </Button>
+              </div>
+            </div>
+            {submittedProofItems[submittedActiveIndex]?.note ? (
+              <div className="mt-2 text-[10px] text-slate-600 font-semibold">
+                {submittedProofItems[submittedActiveIndex].note}
+              </div>
+            ) : null}
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {submittedProofItems.map((proof, index) => (
+                <button
+                  type="button"
+                  key={`${proof.url}-${index}`}
+                  onClick={() => setSubmittedActiveIndex(index)}
+                  className={`h-16 w-24 flex-shrink-0 overflow-hidden rounded-xl border ${
+                    index === submittedActiveIndex ? "border-emerald-400 ring-2 ring-emerald-200" : "border-slate-200"
+                  }`}
+                  aria-label={`Preview proof ${index + 1}`}
+                >
+                  <img
+                    src={proof.url}
+                    alt={`Submitted proof ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </Card>
   );
-}
+});
+
+export { TicketPaymentCardSection };

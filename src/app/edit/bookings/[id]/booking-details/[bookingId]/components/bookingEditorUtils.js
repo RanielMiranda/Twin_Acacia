@@ -1,13 +1,3 @@
-function normalizeProofUrls(form) {
-  if (Array.isArray(form.paymentProofUrls) && form.paymentProofUrls.length > 0) {
-    return form.paymentProofUrls.filter(Boolean);
-  }
-  if (form.paymentProofUrl) {
-    return [form.paymentProofUrl];
-  }
-  return [];
-}
-
 export function buildDraftFromBooking(booking) {
   const form = booking.bookingForm || {};
   const adults = Number(booking.adultCount ?? form.adultCount ?? 0);
@@ -24,7 +14,7 @@ export function buildDraftFromBooking(booking) {
   const paymentPendingApproval = !!form.paymentPendingApproval && !paymentVerified;
   const pendingDownpayment = paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
   const pendingPaymentMethod = paymentPendingApproval ? form.pendingPaymentMethod || null : null;
-  const paymentProofUrls = normalizeProofUrls(form);
+  const pendingPaymentNote = paymentPendingApproval ? form.pendingPaymentNote || "" : form.pendingPaymentNote || "";
   const roomNameFromAssigned =
     (form.assignedRoomNames || []).length > 0
       ? form.assignedRoomNames.join(", ")
@@ -78,17 +68,17 @@ export function buildDraftFromBooking(booking) {
     sleepingGuests,
     checkInDate: form.checkInDate || booking.startDate || "",
     checkOutDate: form.checkOutDate || booking.endDate || "",
-    checkInTime: form.checkInTime || booking.checkInTime || "14:00",
-    checkOutTime: form.checkOutTime || booking.checkOutTime || "11:00",
+    checkInTime: form.checkInTime || booking.checkInTime || "12:00",
+    checkOutTime: form.checkOutTime || booking.checkOutTime || "17:00",
     paymentMethod: form.paymentMethod || "Pending",
     downpayment: Number(form.downpayment || 0),
     pendingDownpayment,
     pendingPaymentMethod,
+    pendingPaymentNote,
     paymentPendingApproval,
     totalAmount,
     paymentDeadline,
-    paymentProofUrl: paymentProofUrls[0] || null,
-    paymentProofUrls,
+    paymentProofLog: Array.isArray(form.paymentProofLog) ? form.paymentProofLog : [],
     paymentSubmittedAt: form.paymentSubmittedAt || null,
     paymentVerified,
     paymentVerifiedAt: form.paymentVerifiedAt || null,

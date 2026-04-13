@@ -1,34 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Briefcase } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { buildServiceSnapshot, getServiceKey } from "@/lib/utils";
 
-export function TicketAddOnsCardSection({
+const TicketAddOnsCardSection = React.memo(function TicketAddOnsCardSection({
   initialServices = [],
   availableServices = [],
   onSubmit,
   isSubmitting = false,
   canEdit = true,
 }) {
-  const [services, setServices] = useState(initialServices);
-  const normalizeServiceKey = (service) => {
-    if (!service) return "";
-    if (typeof service === "string") return service;
-    return service.id || service.name || "";
-  };
+  const normalizeServiceKey = (service) => getServiceKey(service);
+
+  const initialServiceSnapshots = useMemo(() => {
+    const keys = Array.isArray(initialServices) ? initialServices : [];
+    return keys
+      .map((item) => {
+        const key = getServiceKey(item);
+        if (!key) return null;
+        return buildServiceSnapshot(key, availableServices);
+      })
+      .filter(Boolean);
+  }, [initialServices, availableServices]);
+
+  const [services, setServices] = useState(initialServiceSnapshots);
 
   const toggleService = (service) => {
     const serviceKey = normalizeServiceKey(service);
     if (!serviceKey) return;
+
     setServices((prev) => {
       const current = prev || [];
       const exists = current.some((entry) => normalizeServiceKey(entry) === serviceKey);
       if (exists) {
         return current.filter((entry) => normalizeServiceKey(entry) !== serviceKey);
       }
-      return [...current, serviceKey];
+      return [...current, buildServiceSnapshot(serviceKey, availableServices)];
     });
   };
 
@@ -59,7 +69,7 @@ export function TicketAddOnsCardSection({
                 disabled={!canEdit || isSubmitting}
                 className={`w-full text-left rounded-2xl border px-4 py-4 transition-all disabled:opacity-60 ${
                   selected
-                    ? "border-blue-300 bg-blue-50 ring-1 ring-blue-100"
+                    ? "border-blue-200 bg-blue-50 ring-1 ring-blue-100"
                     : "border-slate-100 bg-slate-50 hover:border-slate-200"
                 }`}
               >
@@ -88,7 +98,7 @@ export function TicketAddOnsCardSection({
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
           type="button"
-          className="rounded-2xl bg-blue-600 hover:bg-black"
+          className="rounded-2xl bg-blue-600 hover:bg-blue-700"
           onClick={() => onSubmit(services)}
           disabled={!canEdit || isSubmitting || availableServices.length === 0}
         >
@@ -97,4 +107,6 @@ export function TicketAddOnsCardSection({
       </div>
     </Card>
   );
-}
+});
+
+export { TicketAddOnsCardSection };

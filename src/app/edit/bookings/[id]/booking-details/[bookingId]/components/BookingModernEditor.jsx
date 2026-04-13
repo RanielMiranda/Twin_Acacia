@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, FileText, AlertCircle, Ticket } from "lucide-react";
+import { ChevronLeft, FileText, AlertCircle, Ticket, Mail, CircleX  } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Toast from "@/components/ui/toast/Toast";
 import { useToast } from "@/components/ui/toast/ToastProvider";
@@ -57,6 +57,13 @@ export default function BookingModernEditor({
   statusAudits = [],
   transactions = [],
   resortPaymentImageUrl,
+  resortBankPaymentImageUrl,
+  gcashAccountName,
+  gcashAccountNumber,
+  bankName,
+  bankAccountName,
+  bankAccountNumber,
+  onPaymentProofUpdated,
   onEditingChange,
   proofOverrideForm,
 }) {
@@ -67,7 +74,11 @@ export default function BookingModernEditor({
   const [renderedAt] = useState(() => Date.now());
   const inlineDraftKey = `booking_inline_draft:${booking.id}`;
   const [draft, setDraft] = useState(() => buildDraftFromBooking(booking));
-  const [proofPreviewUrls, setProofPreviewUrls] = useState(() => buildDraftFromBooking(booking).paymentProofUrls || []);
+  const [proofPreviewUrls, setProofPreviewUrls] = useState(() =>
+    (buildDraftFromBooking(booking).paymentProofLog || [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean)
+  );
   const [assignedRoomIds, setAssignedRoomIds] = useState(() => booking.roomIds || []);
   const [actorMeta, setActorMeta] = useState({ name: "Owner", role: "owner", id: "" });
   useEffect(() => {
@@ -173,9 +184,10 @@ export default function BookingModernEditor({
   }, [draft.adultCount, draft.childrenCount, draft.guestCount]);
 
   useEffect(() => {
-    const next = loadDraftFromStorage({ booking, inlineDraftKey, isEditing });
-    if (!isEditing) setDraft(next);
-  }, [booking, inlineDraftKey, isEditing]);
+    if (isEditing) return;
+    const next = loadDraftFromStorage({ booking, inlineDraftKey, isEditing: false });
+    setDraft(next);
+  }, [booking, inlineDraftKey]);
 
   const proofSource = proofOverrideForm || draft;
   const paymentReviewPending =
@@ -188,20 +200,26 @@ export default function BookingModernEditor({
       paymentPendingApproval: proofOverrideForm.paymentPendingApproval ?? prev.paymentPendingApproval,
       pendingDownpayment: proofOverrideForm.pendingDownpayment ?? prev.pendingDownpayment,
       pendingPaymentMethod: proofOverrideForm.pendingPaymentMethod ?? prev.pendingPaymentMethod,
-      paymentProofUrl: proofOverrideForm.paymentProofUrl ?? prev.paymentProofUrl,
-      paymentProofUrls: proofOverrideForm.paymentProofUrls ?? prev.paymentProofUrls,
+      pendingPaymentNote: proofOverrideForm.pendingPaymentNote ?? prev.pendingPaymentNote,
+      paymentProofLog: proofOverrideForm.paymentProofLog ?? prev.paymentProofLog,
       paymentSubmittedAt: proofOverrideForm.paymentSubmittedAt ?? prev.paymentSubmittedAt,
     }));
   }, [proofOverrideForm, isEditing]);
   useEffect(() => {
-    setProofPreviewUrls(Array.isArray(proofSource.paymentProofUrls) ? proofSource.paymentProofUrls : []);
-  }, [proofSource.paymentProofUrls]);
+    const urls = (Array.isArray(proofSource.paymentProofLog) ? proofSource.paymentProofLog : [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean);
+    setProofPreviewUrls(urls);
+  }, [proofSource.paymentProofLog]);
 
   const resolveSignedProofUrls = async () => {
-    if (!Array.isArray(proofSource.paymentProofUrls) || proofSource.paymentProofUrls.length === 0) return;
+    const proofUrls = (Array.isArray(proofSource.paymentProofLog) ? proofSource.paymentProofLog : [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean);
+    if (proofUrls.length === 0) return;
     try {
       const signedUrls = await Promise.all(
-        proofSource.paymentProofUrls.map(async (proofUrl) => (await createSignedProofUrl?.(proofUrl, 60 * 60)) || proofUrl)
+        proofUrls.map(async (proofUrl) => (await createSignedProofUrl?.(proofUrl, 60 * 60)) || proofUrl)
       );
       setProofPreviewUrls(signedUrls.filter(Boolean));
     } catch {
@@ -224,7 +242,9 @@ export default function BookingModernEditor({
     !!draft.checkOutDate &&
     new Date(draft.checkOutDate).getTime() < new Date(draft.checkInDate).getTime();
   const normalizedStatus = status.toLowerCase();
-  const hasProof = Array.isArray(proofSource.paymentProofUrls) && proofSource.paymentProofUrls.length > 0;
+  const hasProof = Array.isArray(proofSource.paymentProofLog)
+    ? proofSource.paymentProofLog.some((entry) => Array.isArray(entry?.urls) && entry.urls.length > 0)
+    : false;
   const effectivePaid = Number(draft.downpayment || 0) + (status === "Confirmed" ? Number(draft.pendingDownpayment || 0) : 0);
   const balance = Math.max(0, Number(draft.totalAmount || 0) - effectivePaid);
   const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;
@@ -296,7 +316,10 @@ export default function BookingModernEditor({
       nextStatus,
       booking,
       resortName,
+      resortExtraServices,
       persist,
+      toast,
+      actorMeta,
       onStayConfirmed: (message) => {
         const guestLabel = draft.stayingGuestName || draft.guestName || "Guest";
         const detail = message ? ` ${message}` : "";
@@ -362,6 +385,30 @@ export default function BookingModernEditor({
     });
   };
 
+  const handleResendApprovalEmail = async () => {
+    try {
+      const response = await fetch("/api/booking/approve-inquiry-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId: booking.id, force: true }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result?.error || "Failed to resend approval email.");
+      }
+      toast?.({
+        message: "Email has been resent.",
+        color: "green",
+        icon: Mail,
+      });
+    } catch (error) {
+      toast?.({
+        message: error.message || "Failed to resend approval email.",
+        color: "red",
+      });
+    }
+  };
+
   const handleRevertStep = async () => {
     await handleRevertStepAction({ actionBusy, setActionBusy, draft, setDraft, persist });
   };
@@ -376,6 +423,7 @@ export default function BookingModernEditor({
       createBookingTransaction,
       booking,
     });
+    onPaymentProofUpdated?.();
   };
 
   const handleDeclineProof = async () => {
@@ -397,6 +445,15 @@ export default function BookingModernEditor({
           </button>
 
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center justify-start sm:justify-center">
+            {status === "Approved Inquiry" && (
+              <Button
+                variant="outline"
+                onClick={handleResendApprovalEmail}
+                className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6"
+              >
+                <Mail size={16} className="mr-2" /> Resend Email
+              </Button>
+            )}            
             <Button variant="outline" onClick={onOpenForm} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
               <FileText size={16} className="mr-2" /> View Form
             </Button>
@@ -410,6 +467,7 @@ export default function BookingModernEditor({
               }}
               className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-red-200 text-red-600 hover:bg-red-50 font-bold text-xs px-4 sm:px-6"
             >
+              <CircleX size={16} className="mr-2" />
               Cancel Booking
             </Button>
           </div>
@@ -469,6 +527,13 @@ export default function BookingModernEditor({
               proofPreviewUrls={proofPreviewUrls}
               draft={proofSource}
               resolveSignedProofUrl={resolveSignedProofUrls}
+              resortPaymentImageUrl={resortPaymentImageUrl}
+              resortBankPaymentImageUrl={resortBankPaymentImageUrl}
+              gcashAccountName={gcashAccountName}
+              gcashAccountNumber={gcashAccountNumber}
+              bankName={bankName}
+              bankAccountName={bankAccountName}
+              bankAccountNumber={bankAccountNumber}
             />
 
             <PaymentCardSection

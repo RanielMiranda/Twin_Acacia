@@ -29,8 +29,8 @@ export default function RentalManager({ onOpenDetails }) {
       const agentName = form.agentName || "";
       const displayName = inquirerType === "agent" ? (agentName || "Agent") : clientName;
       const { contactEmail, contactPhone, clientEmail, clientPhone } = getContactMeta(booking);
-      const checkInTime = booking.checkInTime || form.checkInTime || "14:00";
-      const checkOutTime = booking.checkOutTime || form.checkOutTime || "11:00";
+      const checkInTime = booking.checkInTime || form.checkInTime || "12:00";
+      const checkOutTime = booking.checkOutTime || form.checkOutTime || "17:00";
       const adultCount = Number(booking.adultCount ?? form.adultCount ?? 0);
       const childrenCount = Number(booking.childrenCount ?? form.childrenCount ?? 0);
       const sleepingGuests = Number(booking.sleepingGuests ?? form.sleepingGuests ?? 0);

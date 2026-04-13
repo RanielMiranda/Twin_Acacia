@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME, convertImageFileToWebp, toSafeSegment } from "@/lib/utils";
+import { BUCKET_NAME, convertImageFileToWebp, toSafeSegment, buildServiceSnapshots, computeBookingTotalAmount } from "@/lib/utils";
 import { isMissingSupportTableError } from "./helpers";
 import { useSupport } from "@/components/useclient/SupportClient";
 
@@ -14,11 +14,13 @@ export function useTicketActions({
   viewerRole,
   paymentMethod,
   downpayment,
+  paymentNote,
   proofFiles,
   fetchTicket,
   fetchMessages,
   setBooking,
   setProofFiles,
+  setPaymentNote,
   issueSubject,
   setIssueSubject,
   issueMessage,
@@ -66,7 +68,9 @@ export function useTicketActions({
         .trim()
         .replace(/[^a-z0-9-_]/gi, "-")
         .toLowerCase();
-      const path = `${proofFolder}/${safeBase || `proof-${index + 1}`}.webp`;
+      const uniqueSuffix = `${Date.now()}-${index + 1}`;
+      const fileStem = safeBase ? `${safeBase}-${uniqueSuffix}` : `proof-${uniqueSuffix}`;
+      const path = `${proofFolder}/${fileStem}.webp`;
       const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, normalizedFile, {
         upsert: true,
         contentType: normalizedFile?.type || "image/webp",
@@ -93,13 +97,7 @@ export function useTicketActions({
     }
     setIsSubmitting(true);
     try {
-      const existingProofUrls = Array.isArray(booking.booking_form?.paymentProofUrls)
-        ? booking.booking_form.paymentProofUrls.filter(Boolean)
-        : booking.booking_form?.paymentProofUrl
-          ? [booking.booking_form.paymentProofUrl]
-          : [];
       const { urls: uploadedProofUrls, folder: proofFolder } = await uploadProofs();
-      const nextProofUrls = uploadedProofUrls.length > 0 ? uploadedProofUrls : existingProofUrls;
       const nextProofFolder = proofFolder || booking.booking_form?.paymentProofFolder || null;
       const existingProofLog = Array.isArray(booking.booking_form?.paymentProofLog)
         ? booking.booking_form.paymentProofLog
@@ -111,32 +109,24 @@ export function useTicketActions({
         paymentMethod,
         amount: Number(downpayment || 0),
         folder: nextProofFolder,
+        urls: uploadedProofUrls,
+        note: paymentNote?.trim() || "",
       };
 
       const bookingForm = {
         ...(booking.booking_form || {}),
         pendingPaymentMethod: paymentMethod,
         pendingDownpayment: Number(downpayment || 0),
+        pendingPaymentNote: paymentNote?.trim() || "",
         paymentPendingApproval: true,
         paymentVerified: false,
         paymentVerifiedAt: null,
         paymentProofFolder: nextProofFolder,
-        paymentProofUrl: nextProofUrls[0] || null,
-        paymentProofUrls: nextProofUrls,
         paymentProofLog: [...existingProofLog, proofLogEntry],
         paymentSubmittedAt: new Date().toISOString(),
       };
 
       const normalizedStatus = String(booking.status || "").toLowerCase();
-      const isPendingCheckout = normalizedStatus === "pending checkout";
-      if (isPendingCheckout && !bookingForm.checkoutPaymentRequestedAt) {
-        toast({
-          message: "Payment upload is locked until the owner requests payment for checkout.",
-          color: "amber",
-        });
-        return;
-      }
-
       const nextStatus =
         normalizedStatus.includes("inquiry") || normalizedStatus === "approved inquiry"
           ? "Pending Payment"
@@ -162,6 +152,7 @@ export function useTicketActions({
 
       setBooking((prev) => ({ ...prev, booking_form: bookingForm, status: nextStatus }));
       setProofFiles?.([]);
+      setPaymentNote?.("");
       await fetchTicket();
       toast({
         message: "Payment proof submitted. Waiting for owner approval.",
@@ -268,19 +259,31 @@ export function useTicketActions({
       toast({ message: "Please wait a few seconds before sending another add-on request.", color: "amber" });
       return;
     }
-    const normalizedServiceIds = (services || [])
+    const normalizedServiceKeys = (services || [])
       .map((service) => {
         if (service && typeof service === "object") return service.id || service.name || "";
         return service || "";
       })
       .map((serviceId) => String(serviceId || "").trim())
       .filter(Boolean);
+    const serviceSnapshots = buildServiceSnapshots(
+      normalizedServiceKeys,
+      Array.isArray(resort?.extraServices) ? resort.extraServices : []
+    );
 
     setIsSavingAddOns(true);
     try {
       lastAddOnsSentAtRef.current = now;
+      const baseRate = Number(booking.booking_form?.totalAmount || 0) || Number(resort?.price || 0);
+      const computedTotal = computeBookingTotalAmount({
+        basePrice: baseRate,
+        serviceSnapshots,
+      });
+
       const bookingForm = {
         ...(booking.booking_form || {}),
+        totalAmount: computedTotal,
+        resortServices: serviceSnapshots,
         addOnsUpdatedAt: new Date().toISOString(),
       };
 
@@ -288,7 +291,7 @@ export function useTicketActions({
         .from("bookings")
         .update({
           booking_form: bookingForm,
-          resort_service_ids: normalizedServiceIds,
+          resort_service_ids: normalizedServiceKeys,
         })
         .eq("id", booking.id);
 
@@ -302,21 +305,14 @@ export function useTicketActions({
           sender_name: form.guestName || "Client",
           visibility: viewerRole === "agent" ? true : false,
           message:
-            normalizedServiceIds.length > 0
-              ? `Requested add-on update: ${normalizedServiceIds
-                  .map((serviceId) => {
-                    const matchedService = (resort?.extraServices || []).find(
-                      (service) => String(service?.id) === serviceId || String(service?.name) === serviceId
-                    );
-                    const serviceName = matchedService?.name || serviceId;
-                    const serviceCost = Number(matchedService?.cost || matchedService?.price || 0);
-                    return `${serviceName} (PHP ${serviceCost.toLocaleString()})`;
-                  })
+            serviceSnapshots.length > 0
+              ? `Requested add-on update: ${serviceSnapshots
+                  .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
                   .join(", ")}`
               : "Requested add-on update: cleared requested add-ons.",
           idempotency_key: buildMessageIdempotencyKey(
-            normalizedServiceIds.length > 0
-              ? normalizedServiceIds.join("|")
+            normalizedServiceKeys.length > 0
+              ? normalizedServiceKeys.join("|")
               : "cleared",
             "client-addons"
           ),
@@ -327,7 +323,47 @@ export function useTicketActions({
         }
       }
 
-      setBooking((prev) => ({ ...prev, booking_form: bookingForm, resort_service_ids: normalizedServiceIds }));
+      try {
+        const guestName =
+          booking.booking_form?.stayingGuestName ||
+          booking.booking_form?.guestName ||
+          form.guestName ||
+          "Guest";
+        const guestEmail =
+          booking.booking_form?.stayingGuestEmail ||
+          booking.booking_form?.email ||
+          "";
+        const subject =
+          serviceSnapshots.length > 0
+            ? `Service add-on: ${serviceSnapshots.map((service) => service.name).join(", ")}`
+            : "Service add-on: cleared requested add-ons.";
+        const message =
+          serviceSnapshots.length > 0
+            ? `Requested add-on update: ${serviceSnapshots
+                .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
+                .join(", ")}`
+            : "Requested add-on update: cleared requested add-ons.";
+
+        await createTicketIssueSafe({
+          booking_id: booking.id,
+          resort_id: booking.resort_id,
+          guest_name: guestName,
+          guest_email: guestEmail,
+          subject,
+          message,
+          status: "open",
+        });
+      } catch (issueError) {
+        if (!isMissingSupportTableError(issueError)) {
+          console.error("Failed to create add-on concern:", issueError);
+        }
+      }
+
+      setBooking((prev) => ({
+        ...prev,
+        booking_form: bookingForm,
+        resort_service_ids: normalizedServiceKeys,
+      }));
       await fetchTicket();
       await fetchMessages(booking.id);
       toast({ message: "Add-on request sent to owner.", color: "green" });

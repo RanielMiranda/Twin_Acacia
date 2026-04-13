@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export function TicketIssueCardSection({
+const TicketIssueCardSection = React.memo(function TicketIssueCardSection({
   issueSubject,
   setIssueSubject,
   issueMessage,
@@ -50,4 +50,6 @@ export function TicketIssueCardSection({
       </div>
     </Card>
   );
-}
+});
+
+export { TicketIssueCardSection };

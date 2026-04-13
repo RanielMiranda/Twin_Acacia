@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { X, Calendar, User, CheckCircle2, ArrowRight, ArrowLeft, Phone, MapPin, Clock, PlusCircle, Check } from "lucide-react";
+import { X, Calendar, User, CheckCircle2, ArrowRight, ArrowLeft, Phone, MapPin, Clock, PlusCircle, Check, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const buildInitialFormData = ({
@@ -9,8 +9,8 @@ const buildInitialFormData = ({
   guests = { adults: 0, children: 0 },
   startDate = "",
   endDate = "",
-  checkInTime = "14:00",
-  checkOutTime = "12:00",
+  checkInTime = "12:00",
+  checkOutTime = "17:00",
   initialSelectedRoomIds = [],
   initialSelectedRoomNames = [],
 }) => ({
@@ -27,6 +27,7 @@ const buildInitialFormData = ({
   adultCount: Number(guests?.adults || 0),
   childrenCount: Number(guests?.children || 0),
   guestCount: Number((guests?.adults || 0) + (guests?.children || 0)),
+  pax: Number((guests?.adults || 0) + (guests?.children || 0)),
   sleepingGuests: 0,
   roomCount: initialSelectedRoomIds.length,
   roomName: initialSelectedRoomNames.join(", "),
@@ -35,8 +36,8 @@ const buildInitialFormData = ({
   selectedRoomNames: initialSelectedRoomNames,
   checkInDate: startDate,
   checkOutDate: endDate,
-  checkInTime: checkInTime || "14:00",
-  checkOutTime: checkOutTime || "12:00",
+  checkInTime: checkInTime || "12:00",
+  checkOutTime: checkOutTime || "17:00",
   message: "",
   selectedServices: [],
 });
@@ -64,6 +65,7 @@ export default function BookingCreationTemplate({
   title,
   subtitle,
   headerImageUrl,
+  addressLabel = "Inquirer Address",
   onSubmit,
 }) {
   const [agreed, setAgreed] = useState(false);
@@ -158,6 +160,7 @@ export default function BookingCreationTemplate({
         area: saved.area || base.area,
         address: saved.address || "",
         message: saved.message || "",
+        pax: Number(saved.pax ?? base.pax),
         sleepingGuests: Number(saved.sleepingGuests || 0),
       });
     } catch {
@@ -326,7 +329,7 @@ export default function BookingCreationTemplate({
     return found ? found.name : key;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const selectedRoomIds = (formData.selectedRoomIds || []).filter(
       (id) => !blockedIds.has(id?.toString())
     );
@@ -366,13 +369,23 @@ export default function BookingCreationTemplate({
             selectedServices: normalizedServices,
           };
 
-    onSubmit?.(normalized);
+    let shouldClearDraft = true;
+    try {
+      const result = await onSubmit?.(normalized);
+      if (result === false) {
+        shouldClearDraft = false;
+      }
+    } catch {
+      shouldClearDraft = false;
+    }
 
-    if (enableDraftPersistence && typeof window !== "undefined" && draftKey) {
+    if (shouldClearDraft && enableDraftPersistence && typeof window !== "undefined" && draftKey) {
       sessionStorage.removeItem(draftKey);
     }
 
-    handleClose();
+    if (shouldClearDraft) {
+      handleClose();
+    }
   };
 
   if (!resort || !isOpen) return null;
@@ -491,12 +504,17 @@ export default function BookingCreationTemplate({
                   <input name="phoneNumber" value={formData.phoneNumber ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
                 </div>
               </div>
-              {formData.inquirerType === "client" ? (
-                <div className="space-y-1">
-                  <label className="text-xs font-black uppercase text-slate-400 ml-1">Address (optional)</label>
-                  <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
-                </div>
-              ) : null}
+              <div className="space-y-1">
+                <label className="text-xs font-black uppercase text-slate-400 ml-1">{addressLabel} (optional)</label>
+                <input
+                  name="address"
+                  value={formData.address ?? ""}
+                  onChange={handleChange}
+                  type="text"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Street, city, province"
+                />
+              </div>              
             </div>
           )}
 
@@ -515,10 +533,6 @@ export default function BookingCreationTemplate({
                   <div className="space-y-1">
                     <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Contact Number</label>
                     <input name="stayingGuestPhone" value={formData.stayingGuestPhone ?? ""} onChange={handleChange} type="tel" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="+(63) 917 180 2394" />
-                  </div>
-                  <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-black uppercase text-slate-400 ml-1">Guest Address (optional)</label>
-                    <input name="address" value={formData.address ?? ""} onChange={handleChange} type="text" className="w-full px-4 py-3 rounded-xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Street, city, province" />
                   </div>
                 </div>
               ) : null}
@@ -718,6 +732,7 @@ export default function BookingCreationTemplate({
                             label="Guest"
                             value={formData.stayingGuestName || formData.guestName || "Not set"}
                           />
+                          <SummaryItem icon={Mail} label="Email" value={formData.email || "Not set"} />
                           <SummaryItem icon={Phone} label="Contact" value={formData.phoneNumber || "Not set"} />
                         </>
                       )}
@@ -725,7 +740,7 @@ export default function BookingCreationTemplate({
                       <SummaryItem icon={Calendar} label="Dates" value={`${formData.checkInDate} to ${formData.checkOutDate}`} />
                       <SummaryItem icon={Clock} label="Schedule" value={`${formatTime(formData.checkInTime)} - ${formatTime(formData.checkOutTime)}`} />
                       <SummaryItem icon={PlusCircle} label="Rooms" value={selectedRoomNamesDerived.length > 0 ? selectedRoomNamesDerived.join(", ") : "Not set"} />
-                      <SummaryItem icon={MapPin} label="Address" value={formData.address || "Not set"} />
+                      <SummaryItem icon={MapPin} label={addressLabel} value={formData.address || "Not set"} />
                       {showAddOns ? (
                         <SummaryItem
                           icon={PlusCircle}

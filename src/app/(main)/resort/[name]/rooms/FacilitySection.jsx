@@ -50,11 +50,15 @@ export default function FacilitySection({ facilities, onOpen, className = "max-w
             <div key={`${facility?.name || "facility"}-${idx}`} className="flex-shrink-0 w-48 snap-start group relative">
               <button
                 onClick={() => openModal(idx)}
+                style={{ cursor: 'pointer' }}
                 className="w-full aspect-square rounded-2xl overflow-hidden bg-gray-100 relative shadow-sm border border-slate-200 block text-left"
               >
                 <img
                   src={facility?.image || ""}
                   alt={facility?.name || "Facility"}
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                   className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${isLast ? "brightness-50" : ""}`}
                 />
                 {isLast && hasMore && (

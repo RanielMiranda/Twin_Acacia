@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Calendar, ChevronDown, Users } from "lucide-react";
-import SideRangeCalendar from "./SideRangeCalendar";
 import { useFilters } from "@/components/useclient/ContextFilter"; 
 
 export default function RoomFilterPanel({
@@ -8,6 +7,8 @@ export default function RoomFilterPanel({
   mobileSheet = false,
   showTitle = true,
   selectedRoomSummary = "",
+  activeDropdown = null,
+  setActiveDropdown = () => {},
 }) {
   const { 
     selectedTags, 
@@ -24,8 +25,6 @@ export default function RoomFilterPanel({
     setCheckOutTime,
   } = useFilters();
 
-  const [activeDropdown, setActiveDropdown] = useState(null);
-
   const formatFullDate = (date) =>
     date.toLocaleDateString("default", { month: "short", day: "numeric", year: "numeric" });
   const formatWeekday = (date) =>
@@ -40,7 +39,7 @@ export default function RoomFilterPanel({
       className={`w-full h-fit flex flex-col gap-6 ${
         embedded
           ? ""
-          : "lg:w-80 bg-white shadow-md rounded-2xl p-6 lg:sticky lg:top-24"
+          : "lg:w-80 bg-white shadow-md rounded-2xl p-6 lg:sticky lg:top-28"
       }`}
     >
       {showTitle ? <h3 className="text-lg font-semibold">Plan your stay</h3> : null}
@@ -63,7 +62,7 @@ export default function RoomFilterPanel({
             <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Time In</p>
             <input
               type="time"
-              value={checkInTime || "14:00"}
+              value={checkInTime || "12:00"}
               onChange={(e) => setCheckInTime(e.target.value)}
               className="w-full bg-transparent text-sm font-semibold outline-none"
             />
@@ -72,7 +71,7 @@ export default function RoomFilterPanel({
             <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Time Out</p>
             <input
               type="time"
-              value={checkOutTime || "12:00"}
+              value={checkOutTime || "17:00"}
               onChange={(e) => setCheckOutTime(e.target.value)}
               className="w-full bg-transparent text-sm font-semibold outline-none"
             />
@@ -176,25 +175,6 @@ function DateRangeField({
         <div className="mt-1 text-[11px] uppercase tracking-wide text-slate-400">{endDate ? formatWeekday(endDate) : "End"}</div>
       </button>
 
-      {(activeDropdown === "start" || activeDropdown === "end") && (
-        <div className={mobileSheet ? "" : "absolute right-full top-0 mr-4 z-[1000]"}>
-          <SideRangeCalendar
-            startDate={startDate}
-            endDate={endDate}
-            activeDropdown={activeDropdown}
-            onClose={() => setActiveDropdown(null)}
-            monthCount={mobileSheet ? 1 : 2}
-            mobileCentered={mobileSheet}
-            onChange={(s, e) => {
-              setStartDate(s);
-              setEndDate(e);
-              if (activeDropdown === "start" && s && !e) {
-                setActiveDropdown("end");
-              }
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }

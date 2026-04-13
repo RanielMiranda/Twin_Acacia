@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, X } from "lucide-react";
 import RangeCalendar from "./RangeCalendar";
 
 
@@ -62,28 +62,49 @@ export default function DateRangeField({
         </button>
 
         {(activeDropdown === "start" || activeDropdown === "end") && (
-          <div
-            className={`${
-              inline
-                ? "absolute left-0 top-full mt-3 z-50 w-[420px]"
-                : "fixed top-1/2 left-1/2 -translate-x-1/2 translate-y-1/10 mt-0 z-[9999] w-[420px]"
-            } shadow-2xl`}
-          >
-            <RangeCalendar
-              startDate={startDate}
-              endDate={endDate}
-              activeDropdown={activeDropdown}
-              blockedRanges={blockedRanges}
-              onChange={(s, e) => {
-                setStartDate(s);
-                setEndDate(e);
+          <>
+            {!inline ? (
+              <div
+                className="fixed inset-0 z-[9998] bg-black/25"
+                onClick={() => setActiveDropdown(null)}
+              />
+            ) : null}
 
-                if (autoAdvance && activeDropdown === "start" && s) {
-                  setActiveDropdown("end");
-                }
-              }}
-            />
-          </div>
+            <div
+              className={`${
+                inline
+                  ? "absolute left-0 top-full mt-3 z-50 w-[420px]"
+                  : "fixed left-1/2 top-1/2 z-[9999] w-[min(92vw,520px)] -translate-x-1/2 -translate-y-1/2"
+              }`}
+            >
+              <div className="relative rounded-[32px] bg-white shadow-2xl animate-in fade-in zoom-in duration-200">
+                <button
+                  type="button"
+                  className="absolute right-3 top-3 z-20 rounded-full border border-slate-200 bg-white p-2 text-slate-500 shadow-sm transition hover:bg-slate-50"
+                  onClick={() => setActiveDropdown(null)}
+                  aria-label="Close calendar"
+                >
+                  <X size={18} />
+                </button>
+                <div className="p-4">
+                  <RangeCalendar
+                    startDate={startDate}
+                    endDate={endDate}
+                    activeDropdown={activeDropdown}
+                    blockedRanges={blockedRanges}
+                    onChange={(s, e) => {
+                      setStartDate(s);
+                      setEndDate(e);
+
+                      if (autoAdvance && activeDropdown === "start" && s) {
+                        setActiveDropdown("end");
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
   );

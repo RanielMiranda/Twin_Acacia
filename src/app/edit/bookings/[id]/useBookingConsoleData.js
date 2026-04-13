@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { deleteSupabasePublicUrls, deleteSupabaseFolder, getStorageFolderFromPublicUrl } from "@/lib/utils";
 
@@ -16,6 +17,9 @@ export function useBookingConsoleData({
   listResortConcerns,
   updateConcernStatus,
   toast,
+  enableAudits = false,
+  enableArchive = false,
+  archiveAutoLoad = true,
 }) {
   const [concerns, setConcerns] = useState([]);
   const [loadingConcerns, setLoadingConcerns] = useState(false);
@@ -106,46 +110,157 @@ export function useBookingConsoleData({
     }
   }, [bookings]);
 
-  const loadArchivedBookings = useCallback(async () => {
-    if (!resortId) return;
-    setLoadingArchivedBookings(true);
-    try {
-      const { data, error } = await supabase
-        .from("booking_archive")
-        .select(
-          "id, booking_id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at"
-        )
-        .eq("resort_id", resortId)
-        .order("archived_at", { ascending: false });
-      if (error) throw error;
+  const archiveCursorRef = useRef(0);
+  const archiveQueryRef = useRef({ search: "", rangeStart: null, rangeEnd: null });
+  const [archivedHasMore, setArchivedHasMore] = useState(false);
+  const getSessionStorage = () => (typeof window === "undefined" ? null : window.sessionStorage);
+  const getArchiveCacheKey = (keyParts) => `booking_archive:${keyParts.join(":")}`;
+  const clearArchiveCache = useCallback(() => {
+    const storage = getSessionStorage();
+    if (!storage || !resortId) return;
+    const prefix = `booking_archive:${resortId}:`;
+    for (let i = storage.length - 1; i >= 0; i -= 1) {
+      const key = storage.key(i);
+      if (key && key.startsWith(prefix)) {
+        storage.removeItem(key);
+      }
+    }
+  }, [resortId]);
 
-      const mapped = (data || []).map((row) => ({
+  const normalizeArchiveRows = useCallback((data) => {
+    return (data || []).map((row) => {
+      let bookingForm = row.booking_form || {};
+      if (typeof bookingForm === "string") {
+        try {
+          bookingForm = JSON.parse(bookingForm);
+        } catch {
+          bookingForm = {};
+        }
+      }
+      const inquirerType = (bookingForm.inquirerType || "client").toString().toLowerCase();
+      const stayingGuestEmail = bookingForm.stayingGuestEmail || "";
+      const stayingGuestPhone = bookingForm.stayingGuestPhone || "";
+      const inquirerEmail = bookingForm.email || "";
+      const inquirerPhone = bookingForm.phoneNumber || "";
+
+      return {
         id: row.id,
         bookingId: row.booking_id || null,
         resortId: row.resort_id,
-        startDate: row.start_date || row.booking_form?.checkInDate || null,
-        endDate: row.end_date || row.booking_form?.checkOutDate || null,
-        checkInTime: row.check_in_time || row.booking_form?.checkInTime || "14:00",
-        checkOutTime: row.check_out_time || row.booking_form?.checkOutTime || "11:00",
-        roomCount: row.room_count || row.booking_form?.roomCount || 1,
-        bookingForm: row.booking_form || {},
+        startDate: row.start_date || bookingForm.checkInDate || null,
+        endDate: row.end_date || bookingForm.checkOutDate || null,
+        checkInTime: row.check_in_time || bookingForm.checkInTime || "12:00",
+        checkOutTime: row.check_out_time || bookingForm.checkOutTime || "17:00",
+        roomCount: row.room_count || bookingForm.roomCount || 1,
+        inquirerType,
+        guestName: bookingForm.guestName || "",
+        agentName: bookingForm.agentName || "",
+        stayingGuestName: bookingForm.stayingGuestName || "",
+        stayingGuestEmail,
+        stayingGuestPhone,
+        inquirerEmail,
+        inquirerPhone,
+        bookingForm,
         archivedAt: row.archived_at,
         isArchived: true,
-      }));
+      };
+    });
+  }, []);
 
-      setArchivedBookings(mapped);
-    } catch (error) {
-      const missingTable =
-        error.message?.includes("booking_archive") &&
-        (error.message?.includes("does not exist") || error.message?.includes("schema cache"));
-      if (!missingTable) {
-        console.error("Archive load error:", error?.message || error);
+  const loadArchivedBookings = useCallback(
+    async ({ append = false, search = "", rangeStart = null, rangeEnd = null, limit = 50 } = {}) => {
+      if (!resortId) return;
+      setLoadingArchivedBookings(true);
+      const trimmedSearch = String(search || "").trim().toLowerCase();
+      const nextQuery = { search: trimmedSearch, rangeStart, rangeEnd };
+      const sameQuery =
+        archiveQueryRef.current.search === nextQuery.search &&
+        archiveQueryRef.current.rangeStart === nextQuery.rangeStart &&
+        archiveQueryRef.current.rangeEnd === nextQuery.rangeEnd;
+      const shouldAppend = append && sameQuery;
+      const offset = shouldAppend ? archiveCursorRef.current : 0;
+
+      try {
+        const storage = getSessionStorage();
+        const cacheScope = rangeStart && rangeEnd ? [rangeStart, rangeEnd] : ["all"];
+        const canUseCache = !!storage && !shouldAppend;
+        if (canUseCache) {
+          const cacheKey = getArchiveCacheKey([resortId, ...cacheScope, trimmedSearch || "_"]);
+          const cachedRaw = storage.getItem(cacheKey);
+          if (cachedRaw) {
+            const cachedRows = JSON.parse(cachedRaw);
+            if (Array.isArray(cachedRows) && cachedRows.length > 0) {
+              setArchivedBookings(cachedRows);
+              archiveCursorRef.current = cachedRows.length;
+              archiveQueryRef.current = nextQuery;
+              setArchivedHasMore(cachedRows.length === limit);
+              setLoadingArchivedBookings(false);
+              return;
+            }
+          }
+        }
+
+        let query = supabase
+          .from("booking_archive")
+          .select(
+            "id, resort_id, booking_form, start_date, end_date, check_in_time, check_out_time, room_count, archived_at"
+          )
+          .eq("resort_id", resortId)
+          .order("archived_at", { ascending: false })
+          .range(offset, offset + limit - 1);
+
+        if (rangeStart && rangeEnd) {
+          query = query.lte("start_date", rangeEnd).or(`end_date.gte.${rangeStart},end_date.is.null`);
+        }
+
+        if (trimmedSearch) {
+          const searchDate = /^\d{4}-\d{2}-\d{2}$/.test(trimmedSearch) ? trimmedSearch : null;
+          if (searchDate) {
+            query = query.or(`start_date.eq.${searchDate},end_date.eq.${searchDate}`);
+          } else {
+            const like = `%${trimmedSearch}%`;
+            query = query.or(
+              `booking_form->>stayingGuestName.ilike.${like},booking_form->>guestName.ilike.${like},booking_form->>agentName.ilike.${like},booking_form->>roomName.ilike.${like}`
+            );
+          }
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        const mapped = normalizeArchiveRows(data);
+
+        if (shouldAppend) {
+          setArchivedBookings((prev) => [...prev, ...mapped]);
+        } else {
+          setArchivedBookings(mapped);
+        }
+
+        archiveCursorRef.current = offset + mapped.length;
+        archiveQueryRef.current = nextQuery;
+        setArchivedHasMore(mapped.length === limit);
+
+        const shouldCache = !!storage && !shouldAppend;
+        if (shouldCache) {
+          const cacheKey = getArchiveCacheKey([resortId, ...cacheScope, trimmedSearch || "_"]);
+          storage.setItem(cacheKey, JSON.stringify(mapped));
+        }
+      } catch (error) {
+        const missingTable =
+          error.message?.includes("booking_archive") &&
+          (error.message?.includes("does not exist") || error.message?.includes("schema cache"));
+        if (!missingTable) {
+          console.error("Archive load error:", error?.message || error);
+        }
+        if (!append) {
+          setArchivedBookings([]);
+        }
+        setArchivedHasMore(false);
+      } finally {
+        setLoadingArchivedBookings(false);
       }
-      setArchivedBookings([]);
-    } finally {
-      setLoadingArchivedBookings(false);
-    }
-  }, [resortId]);
+    },
+    [normalizeArchiveRows, resortId]
+  );
 
   useEffect(() => {
     if (!resortId) return;
@@ -153,13 +268,14 @@ export function useBookingConsoleData({
   }, [loadConcerns, resortId]);
 
   useEffect(() => {
+    if (!enableAudits) return;
     loadAudits();
-  }, [loadAudits]);
+  }, [enableAudits, loadAudits]);
 
   useEffect(() => {
-    if (!resortId) return;
-    loadArchivedBookings();
-  }, [loadArchivedBookings, resortId]);
+    if (!resortId || !enableArchive || !archiveAutoLoad) return;
+    loadArchivedBookings({ append: false, limit: 50 });
+  }, [archiveAutoLoad, enableArchive, loadArchivedBookings, resortId]);
 
   const declinedBookings = useMemo(
     () =>
@@ -185,7 +301,7 @@ export function useBookingConsoleData({
     const inquiry = source.filter((entry) => {
       const status = normalizeStatus(entry);
       return (
-        (status.includes("inquiry") || status.includes("pending payment") || status.includes("pending checkout")) &&
+        (status.includes("inquiry") || status.includes("pending payment")) &&
         !status.includes("declined")
       );
     }).length;
@@ -205,17 +321,19 @@ export function useBookingConsoleData({
 
   const handleResolveConcern = useCallback(
     async (issueId) => {
-      const confirmed = window.confirm("Resolve and permanently delete this concern?");
+      const confirmed = window.confirm("Resolve this concern?");
       if (!confirmed) return;
       try {
-        const { error } = await supabase.from("ticket_issues").delete().eq("id", issueId);
-        if (error) throw error;
-        setConcerns((prev) => prev.filter((entry) => entry.id !== issueId));
+        await updateConcernStatus(issueId, "resolved");
+        setConcerns((prev) =>
+          prev.map((entry) => (entry.id === issueId ? { ...entry, status: "resolved" } : entry))
+        );
+        toast?.({ message: "Concern resolved.", color: "blue", icon: AlertTriangle });
       } catch (error) {
         console.error("Resolve concern error:", error?.message || error);
       }
     },
-    []
+    [toast, updateConcernStatus]
   );
 
   const handleReopenConcern = useCallback(
@@ -264,12 +382,14 @@ export function useBookingConsoleData({
         if (error) throw error;
 
         await refreshBookings();
-        await loadAudits();
+        if (enableAudits) {
+          await loadAudits();
+        }
       } catch (error) {
         console.error("Reopen booking error:", error?.message || error);
       }
     },
-    [loadAudits, refreshBookings]
+    [enableAudits, loadAudits, refreshBookings]
   );
 
   const handleReopenDeclined = useCallback(
@@ -292,15 +412,59 @@ export function useBookingConsoleData({
       const confirmed = window.confirm(message);
       if (!confirmed) return;
       try {
+        const source = (bookings || []).find((entry) => entry.id?.toString() === bookingId?.toString());
+        if (source) {
+          let form = source.bookingForm || {};
+          const needsProofHydrate =
+            !form?.paymentProofFolder &&
+            !(Array.isArray(form?.paymentProofLog) && form.paymentProofLog.some((entry) => Array.isArray(entry?.urls) && entry.urls.length > 0));
+          if (needsProofHydrate) {
+            try {
+              const { data, error } = await supabase
+                .from("bookings")
+                .select("booking_form")
+                .eq("id", bookingId)
+                .maybeSingle();
+              if (!error && data?.booking_form) {
+                form = data.booking_form;
+              }
+            } catch {
+              // If hydrate fails, continue without proof cleanup.
+            }
+          }
+
+          const proofFolder =
+            form?.paymentProofFolder ||
+            getStorageFolderFromPublicUrl(
+              (Array.isArray(form?.paymentProofLog)
+                ? form.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+                : []
+              ).filter(Boolean)[0]
+            );
+
+          if (proofFolder) {
+            try {
+              await fetch("/api/storage/delete-proof-folder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ folder: proofFolder }),
+              });
+            } catch (deleteError) {
+              console.warn("Failed to delete payment proof folder", deleteError?.message || deleteError);
+            }
+          }
+        }
         await deleteBookingById(bookingId);
-        await loadAudits();
-        toast?.({ message: `Booking resolved.`, color: toastColor });
+        if (enableAudits) {
+          await loadAudits();
+        }
+        toast?.({ message: `Booking resolved.`, color: toastColor, icon: CheckCircle2 });
       } catch (error) {
         console.error("Resolve booking error:", error?.message || error);
-        toast?.({ message: `Unable to resolve: ${error?.message}`, color: "red" });
+        toast?.({ message: `Unable to resolve: ${error?.message}`, color: "red", icon: XCircle });
       }
     },
-    [deleteBookingById, loadAudits, toast]
+    [bookings, deleteBookingById, enableAudits, loadAudits, toast]
   );
 
   const handleResolveDeclined = useCallback(
@@ -316,7 +480,7 @@ export function useBookingConsoleData({
   const handleResolveCheckedOut = useCallback(
     async (bookingId) => {
       if (unresolvedIssueBookingIds.has(bookingId?.toString())) {
-        toast?.({ message: "Resolve blocked: this booking has unresolved issues.", color: "amber" });
+        toast?.({ message: "Resolve blocked: this booking has unresolved issues.", color: "amber", icon: AlertTriangle });
         return;
       }
 
@@ -325,56 +489,85 @@ export function useBookingConsoleData({
 
       const source = (bookings || []).find((entry) => entry.id?.toString() === bookingId?.toString());
       if (!source) {
-        toast?.({ message: "Booking not found. Attempting cleanup.", color: "amber" });
+        toast?.({ message: "Booking not found. Attempting cleanup.", color: "amber", icon: AlertTriangle });
         await deleteBookingById(bookingId);
         return;
       }
 
-      const form = source.bookingForm || {};
+      let form = source.bookingForm || {};
+      const needsProofHydrate =
+        !form?.paymentProofFolder &&
+        !(Array.isArray(form?.paymentProofLog) && form.paymentProofLog.some((entry) => Array.isArray(entry?.urls) && entry.urls.length > 0));
+      if (needsProofHydrate) {
+        try {
+          const { data, error } = await supabase
+            .from("bookings")
+            .select("booking_form")
+            .eq("id", bookingId)
+            .maybeSingle();
+          if (!error && data?.booking_form) {
+            form = data.booking_form;
+          }
+        } catch {
+          // If hydrate fails, continue without proof cleanup.
+        }
+      }
       const inquirerType = (source.inquirerType || form.inquirerType || "client").toString().toLowerCase();
-      const guestEmail = form.stayingGuestEmail || "";
-      const guestPhone = form.stayingGuestPhone || "";
-      const contactEmail = inquirerType === "agent" ? form.email || "" : guestEmail;
-      const contactPhone = inquirerType === "agent" ? form.phoneNumber || "" : guestPhone;
+      const guestEmail = source.stayingGuestEmail || form.stayingGuestEmail || "";
+      const guestPhone = source.stayingGuestPhone || form.stayingGuestPhone || "";
+      const contactEmail =
+        inquirerType === "agent"
+          ? source.inquirerEmail || form.email || ""
+          : guestEmail || source.inquirerEmail || form.email || "";
+      const contactPhone =
+        inquirerType === "agent"
+          ? source.inquirerPhone || form.phoneNumber || ""
+          : guestPhone || source.inquirerPhone || form.phoneNumber || "";
 
       const archiveForm = {
-        stayingGuestName: form.stayingGuestName || form.guestName || "",
-        guestName: form.guestName || "",
-        agentName: form.agentName || "",
-        stayingGuestEmail: form.stayingGuestEmail || "",
-        stayingGuestPhone: form.stayingGuestPhone || "",
-        roomName: form.roomName || "",
+        stayingGuestName: source.stayingGuestName || form.stayingGuestName || form.guestName || "",
+        guestName: source.guestName || form.guestName || "",
+        agentName: source.agentName || form.agentName || "",
+        stayingGuestEmail: guestEmail,
+        stayingGuestPhone: guestPhone,
+        roomName: source.roomName || form.roomName || "",
         checkInDate: source.startDate || form.checkInDate || null,
         checkOutDate: source.endDate || form.checkOutDate || null,
-        checkInTime: source.checkInTime || form.checkInTime || "14:00",
-        checkOutTime: source.checkOutTime || form.checkOutTime || "11:00",
+        checkInTime: source.checkInTime || form.checkInTime || "12:00",
+        checkOutTime: source.checkOutTime || form.checkOutTime || "17:00",
         roomCount: Number(source.roomCount || form.roomCount || 1),
         inquirerType,
         email: contactEmail,
         phoneNumber: contactPhone,
-        address: form.address || "",
+        address: source.inquirerAddress || form.address || "",
         adultCount: Number(source.adultCount ?? form.adultCount ?? 0),
         childrenCount: Number(source.childrenCount ?? form.childrenCount ?? 0),
         sleepingGuests: Number(source.sleepingGuests ?? form.sleepingGuests ?? 0),
-        status: "Checked Out",
       };
 
       try {
         const proofFolder =
-          source.bookingForm?.paymentProofFolder ||
-          getStorageFolderFromPublicUrl((source.bookingForm?.paymentProofUrls || [])[0]) ||
-          getStorageFolderFromPublicUrl(source.bookingForm?.paymentProofUrl);
+          form?.paymentProofFolder ||
+          getStorageFolderFromPublicUrl(
+            (Array.isArray(form?.paymentProofLog)
+              ? form.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+              : []
+            ).filter(Boolean)[0]
+          );
 
         if (proofFolder) {
           try {
-            await deleteSupabaseFolder(supabase, proofFolder);
+            await fetch("/api/storage/delete-proof-folder", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ folder: proofFolder }),
+            });
           } catch (deleteError) {
             console.warn("Failed to delete payment proof folder", deleteError?.message || deleteError);
           }
         }
 
-        const { error: archiveError } = await supabase.from("booking_archive").insert({
-          booking_id: source.id?.toString(),
+        const baseArchivePayload = {
           resort_id: resortId,
           booking_form: archiveForm,
           start_date: archiveForm.checkInDate,
@@ -384,19 +577,37 @@ export function useBookingConsoleData({
           room_count: archiveForm.roomCount,
           archived_at: new Date().toISOString(),
           reopen_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        });
+        };
+
+        const { error: archiveError } = await supabase.from("booking_archive").insert(baseArchivePayload);
         if (archiveError) throw archiveError;
 
         await deleteBookingById(bookingId);
-        await loadArchivedBookings();
-        await loadAudits();
-        toast?.({ message: "Checked-out booking archived.", color: "green" });
+        clearArchiveCache();
+        if (enableArchive) {
+          await loadArchivedBookings({ append: false, limit: 50 });
+        }
+        if (enableAudits) {
+          await loadAudits();
+        }
+        toast?.({ message: "Checked-out booking archived.", color: "green", icon: CheckCircle2 });
       } catch (error) {
         console.error("Delete checked-out booking error:", error?.message || error);
-        toast?.({ message: `Archive failed: ${error?.message}`, color: "red" });
+        toast?.({ message: `Archive failed: ${error?.message}`, color: "red", icon: XCircle });
       }
     },
-    [bookings, deleteBookingById, loadAudits, loadArchivedBookings, resortId, toast, unresolvedIssueBookingIds]
+    [
+      bookings,
+      deleteBookingById,
+      enableArchive,
+      enableAudits,
+      loadAudits,
+      loadArchivedBookings,
+      resortId,
+      toast,
+      clearArchiveCache,
+      unresolvedIssueBookingIds,
+    ]
   );
 
   const handleDeleteArchivedBooking = useCallback(
@@ -407,16 +618,22 @@ export function useBookingConsoleData({
         const { error } = await supabase.from("booking_archive").delete().eq("id", archiveId);
         if (error) throw error;
         setArchivedBookings((prev) => prev.filter((entry) => entry.id?.toString() !== archiveId?.toString()));
+        clearArchiveCache();
       } catch (error) {
         console.error("Delete archived booking error:", error?.message || error);
       }
     },
-    []
+    [clearArchiveCache]
   );
 
   const refreshAuditArchive = useCallback(async () => {
-    await Promise.all([loadAudits(), loadArchivedBookings()]);
-  }, [loadAudits, loadArchivedBookings]);
+    const tasks = [];
+    if (enableAudits) tasks.push(loadAudits());
+    if (enableArchive) {
+      tasks.push(loadArchivedBookings({ append: false, limit: 50 }));
+    }
+    await Promise.all(tasks);
+  }, [enableArchive, enableAudits, loadAudits, loadArchivedBookings]);
 
   return {
     concerns,
@@ -425,6 +642,8 @@ export function useBookingConsoleData({
     loadingAudits,
     archivedBookings,
     loadingArchivedBookings,
+    archivedHasMore,
+    loadArchivedBookings,
     workflowCounts,
     declinedBookings,
     checkedOutBookings,

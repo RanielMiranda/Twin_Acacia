@@ -6,6 +6,7 @@ import { useResort } from "@/components/useclient/ContextEditor";
 import { useBookings } from "@/components/useclient/BookingsClient";
 import { useBookingConsoleData } from "./useBookingConsoleData";
 import { useSupport } from "@/components/useclient/SupportClient";
+import { normalizeBookingSubmission } from "@/components/booking/payloadData/buildBookingPayload";
 import {Button} from "@/components/ui/button";
 import {
   Calendar as CalendarIcon, 
@@ -14,6 +15,10 @@ import {
   ChevronRight,
   MessageCircleWarning,
   Archive,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  Plus,
 } from "lucide-react";
 
 // Components
@@ -34,8 +39,10 @@ export default function BookingManagementPage() {
   const { toast } = useToast();
   const [isAddBookingOpen, setIsAddBookingOpen] = useState(false);
   const [addingBooking, setAddingBooking] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("workflow"); // workflow | calendar | concerns | audits
+  const [archiveSearch, setArchiveSearch] = useState("");
+  const [archiveSearchInput, setArchiveSearchInput] = useState("");
+  const [archiveMonthFilter, setArchiveMonthFilter] = useState("");
 
   useEffect(() => {
     if (id) loadResort(id, true);
@@ -59,6 +66,7 @@ export default function BookingManagementPage() {
 
   const currentResort = resort?.id?.toString() === id?.toString() ? resort : null;
   const resortId = Number(currentResort?.id || 0);
+  const hasRefreshedStatus = React.useRef(false);
 
   const {
     concerns,
@@ -67,6 +75,7 @@ export default function BookingManagementPage() {
     loadingAudits,
     archivedBookings,
     loadingArchivedBookings,
+    archivedHasMore,
     workflowCounts,
     declinedBookings,
     checkedOutBookings,
@@ -84,6 +93,7 @@ export default function BookingManagementPage() {
     handleResolveCheckedOut,
     handleDeleteArchivedBooking,
     refreshAuditArchive,
+    loadArchivedBookings,
   } = useBookingConsoleData({
     resortId,
     bookings,
@@ -93,32 +103,96 @@ export default function BookingManagementPage() {
     listResortConcerns,
     updateConcernStatus,
     toast,
+    enableAudits: activeTab === "audits",
+    enableArchive: activeTab === "audits" || activeTab === "calendar",
+    archiveAutoLoad: activeTab === "audits",
   });
 
-  const handleSyncData = async () => {
-    setIsSyncing(true);
+  useEffect(() => {
+    if (!resortId || hasRefreshedStatus.current) return;
+    hasRefreshedStatus.current = true;
+    const runRefresh = async () => {
+      try {
+        const response = await fetch("/api/booking/refresh-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resortId }),
+        });
+        if (response.ok) {
+          await refreshBookings();
+        }
+      } catch {
+        // Non-blocking: ignore refresh errors.
+      }
+    };
+    runRefresh();
+  }, [resortId, refreshBookings]);
+
+  const handleRefreshWorkflow = async () => {
     try {
       await refreshBookings();
-      await refreshAuditArchive();
-
-      const secret = process.env.NEXT_PUBLIC_BOOKING_AUTOMATION_SECRET;
-      if (secret) {
-        const res = await fetch("/api/internal/booking-status", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${secret}`,
-          },
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body?.error || "sync failed");
-        toast({ message: "Sync complete (automation ran).", color: "green" });
-      } else {
-        toast({ message: "Sync complete.", color: "green" });
-      }
+      toast?.({ message: "Workflow refreshed.", color: "green", icon: CheckCircle2 });
     } catch (err) {
-      toast({ message: `Sync failed: ${err.message}`, color: "red" });
-    } finally {
-      setIsSyncing(false);
+      toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
+    }
+  };
+
+  const handleRefreshCalendar = async () => {
+    try {
+      await refreshBookings();
+      await loadArchivedBookings({ append: false, search: archiveSearch });
+      toast?.({ message: "Calendar refreshed.", color: "green", icon: CheckCircle2 });
+    } catch (err) {
+      toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
+    }
+  };
+
+  const handleArchiveSearch = async () => {
+    const next = archiveSearchInput;
+    setArchiveSearch(next);
+    await loadArchivedBookings({ append: false, search: next });
+  };
+
+  const handleArchiveJumpMonth = async (monthValue) => {
+    if (!monthValue) return;
+    const [year, month] = monthValue.split("-").map((val) => Number(val));
+    if (!year || !month) return;
+    setArchiveMonthFilter(monthValue);
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0);
+    const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+    const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+    await loadArchivedBookings({ append: false, search: archiveSearch, rangeStart: startStr, rangeEnd: endStr });
+  };
+
+  const handleArchiveClearMonth = async () => {
+    setArchiveMonthFilter("");
+    await loadArchivedBookings({ append: false, search: archiveSearch });
+  };
+
+  useEffect(() => {
+    if (activeTab === "audits") return;
+    if (!archiveMonthFilter && !archiveSearchInput && !archiveSearch) return;
+    setArchiveMonthFilter("");
+    setArchiveSearchInput("");
+    setArchiveSearch("");
+  }, [activeTab, archiveMonthFilter, archiveSearch, archiveSearchInput]);
+
+  const handleRefreshConcerns = async () => {
+    try {
+      await loadConcerns();
+      toast?.({ message: "Feed refreshed.", color: "green", icon: CheckCircle2 });
+    } catch (err) {
+      toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
+    }
+  };
+
+  const handleRefreshArchive = async () => {
+    try {
+      await refreshAuditArchive();
+      toast?.({ message: "Archive refreshed.", color: "green", icon: CheckCircle2 });
+    } catch (err) {
+      toast?.({ message: `Refresh failed: ${err.message}`, color: "red", icon: XCircle });
     }
   };
 
@@ -137,87 +211,29 @@ export default function BookingManagementPage() {
       </span>
     ) : null;
 
-  useEffect(() => {
-    if (!resortId) return;
-    refreshBookings();
-    const interval = setInterval(() => {
-      refreshBookings();
-    }, 30000);
-    const handleFocus = () => refreshBookings();
-    window.addEventListener("focus", handleFocus);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [refreshBookings, resortId]);
-
   const openDetails = (targetBookingId) => {
     router.push(`/edit/bookings/${id}/booking-details/${targetBookingId}`);
   };
 
   const handleCreateBooking = async (payload) => {
     if (!payload?.guestName?.trim()) {
-      toast?.({ message: "Guest name is required.", color: "red" });
+      toast?.({ message: "Guest name is required.", color: "red", icon: XCircle });
       return;
     }
     if (!payload.checkInDate) {
-      toast?.({ message: "Check-in date is required.", color: "red" });
+      toast?.({ message: "Check-in date is required.", color: "red", icon: XCircle });
       return;
     }
 
-    const adultCount = Number(payload.adultCount ?? 0);
-    const childrenCount = Number(payload.childrenCount ?? 0);
-    const guestCount = Number(payload.guestCount ?? adultCount + childrenCount);
-    const pax = Number(payload.pax ?? guestCount);
-
     setAddingBooking(true);
     try {
-      const isAgent = payload.inquirerType === "agent";
-      const guestName = (payload.stayingGuestName || payload.guestName || "").trim();
-      const guestEmail = (payload.stayingGuestEmail || payload.email || "").trim();
-      const guestPhone = (payload.stayingGuestPhone || payload.phoneNumber || "").trim();
-      const resortPrice = Number(currentResort?.price || 0);
-      const totalAmount = resortPrice;
-
-      const bookingForm = {
-        inquirerType: payload.inquirerType,
-        guestName,
-        ...(isAgent
-          ? {
-              stayingGuestName: payload.stayingGuestName?.trim() || guestName,
-              stayingGuestEmail: payload.stayingGuestEmail?.trim() || guestEmail,
-              stayingGuestPhone: payload.stayingGuestPhone?.trim() || guestPhone,
-            }
-          : {}),
-        address: payload.address?.trim() || "",
-        email: payload.email.trim(),
-        phoneNumber: payload.phoneNumber.trim(),
-        agentName: isAgent ? payload.agentName.trim() : "",
-        status: payload.status,
-        checkInDate: payload.checkInDate,
-        checkOutDate: payload.checkOutDate || payload.checkInDate,
-        checkInTime: payload.checkInTime || "14:00",
-        checkOutTime: payload.checkOutTime || "11:00",
-        totalAmount,
-      };
+      const { bookingModel, bookingForm } = normalizeBookingSubmission({
+        resort: currentResort,
+        submittedData: payload,
+      });
 
       const created = await createBooking({
-        status: payload.status,
-        startDate: payload.checkInDate,
-        endDate: payload.checkOutDate || payload.checkInDate,
-        checkInTime: payload.checkInTime || "14:00",
-        checkOutTime: payload.checkOutTime || "11:00",
-        roomIds: payload.selectedRoomIds || [],
-        roomCount: Number(payload.roomCount || (payload.selectedRoomIds?.length || 0) || 1),
-        adultCount,
-        childrenCount,
-        pax,
-        sleepingGuests: Number(payload.sleepingGuests || 0),
-        resortServiceIds: Array.isArray(payload.selectedServices)
-          ? payload.selectedServices.map(String).filter(Boolean)
-          : [],
-        totalAmount,
-        inquirerType: payload.inquirerType,
+        ...bookingModel,
         bookingForm: {
           ...bookingForm,
           selectedRoomIds: payload.selectedRoomIds || [],
@@ -225,12 +241,14 @@ export default function BookingManagementPage() {
       });
 
       setIsAddBookingOpen(false);
-      toast?.({ message: "Manual booking added.", color: "green" });
+      toast?.({ message: "Manual booking added.", color: "green", icon: CheckCircle2 });
       if (created?.id) {
         openDetails(created.id);
       }
+      return true;
     } catch (error) {
-      toast?.({ message: `Unable to add booking: ${error.message}`, color: "red" });
+      toast?.({ message: `Unable to add booking: ${error.message}`, color: "red", icon: XCircle });
+      return false;
     } finally {
       setAddingBooking(false);
     }
@@ -240,9 +258,9 @@ export default function BookingManagementPage() {
   if (!currentResort) return <div className="p-20 text-center">Unable to load resort profile. Showing booking data by resort ID.</div>;
 
   return (
-    <div className="mt-10 min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header Area */}
-      <div className="max-w-[1600px] mx-auto pt-12 px-4 md:px-8">
+      <div className="max-w-400 mx-auto pt-12 px-4 md:px-8">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-8">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl">
@@ -260,18 +278,10 @@ export default function BookingManagementPage() {
           <div className="flex items-center gap-3">
             <Button
               type="button"
-              onClick={handleSyncData}
-              className="rounded-full px-2 text-xs font-black uppercase"
-              disabled={isSyncing}
-            >
-              {isSyncing ? "Syncing..." : "Sync Data"}
-            </Button>
-            <Button
-              type="button"
               onClick={() => setIsAddBookingOpen(true)}
-              className="rounded-full px-2 text-xs font-black uppercase"
+              className="rounded-full px-2 text-md flex items-center justify-center mb-1"
             >
-              Add Booking
+              <Plus size={16} className="mr-2" /> Add Booking
             </Button>
           </div>
         </header>
@@ -336,18 +346,45 @@ export default function BookingManagementPage() {
         <main className="pb-20">
           {activeTab === "workflow" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-end mb-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex items-center justify-center rounded-full px-3 text-xs font-black"
+                  onClick={handleRefreshWorkflow}
+                >
+                  <RefreshCw size={14} className="mr-2" />
+                  Refresh Workflow
+                </Button>
+              </div>
               <RentalManager onOpenDetails={(item, bookingId) => openDetails(bookingId)} />
             </div>
           ) : activeTab === "calendar" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <BookingCalendar fullWidth archivedBookings={archivedBookings} />
+              <div className="flex justify-end mb-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex items-center justify-center rounded-full px-3 text-xs font-black"
+                  onClick={handleRefreshCalendar}
+                >
+                  <RefreshCw size={14} className="mr-2" />
+                  Refresh Calendar
+                </Button>
+              </div>
+              <BookingCalendar
+                fullWidth
+                archivedBookings={archivedBookings}
+                archivedLoading={loadingArchivedBookings}
+                onLoadArchived={loadArchivedBookings}
+              />
             </div>
           ) : activeTab === "concerns" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <LiveConcernsPanel
                 concerns={concerns}
                 loading={loadingConcerns}
-                onRefresh={loadConcerns}
+                onRefresh={handleRefreshConcerns}
                 onResolve={handleResolveConcern}
                 onReopen={handleReopenConcern}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
@@ -361,7 +398,7 @@ export default function BookingManagementPage() {
                 checkedOutBookings={checkedOutBookings}
                 archivedBookings={archivedBookings}
                 loading={loadingAudits || loadingArchivedBookings}
-                onRefresh={refreshAuditArchive}
+                onRefresh={handleRefreshArchive}
                 onOpenBooking={(bookingTargetId) => openDetails(bookingTargetId)}
                 onReopenDeclined={handleReopenDeclined}
                 onReopenCancelled={handleReopenCancelled}
@@ -371,6 +408,14 @@ export default function BookingManagementPage() {
                 onResolveCheckedOut={handleResolveCheckedOut}
                 onDeleteArchived={handleDeleteArchivedBooking}
                 unresolvedIssueBookingIds={unresolvedIssueBookingIds}
+                searchValue={archiveSearchInput}
+                onSearchChange={(value) => setArchiveSearchInput(value)}
+                onSearchSubmit={handleArchiveSearch}
+                onJumpMonth={handleArchiveJumpMonth}
+                onClearMonth={handleArchiveClearMonth}
+                monthFilter={archiveMonthFilter}
+                hasMoreArchived={archivedHasMore}
+                onLoadMoreArchived={() => loadArchivedBookings({ append: true, search: archiveSearch })}
               />
             </div>
           )}

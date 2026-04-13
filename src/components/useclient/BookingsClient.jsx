@@ -21,30 +21,77 @@ const BOOKING_COLUMNS = [
   "sleeping_guests",
   "room_count",
   "inquirer_type",
+  "guest_name",
+  "agent_name",
+  "staying_guest_name",
+  "staying_guest_email",
+  "staying_guest_phone",
+  "inquirer_email",
+  "inquirer_phone",
+  "inquirer_address",
+  "room_name",
   "resort_service_ids",
   "payment_deadline",
-  "booking_form",
   "created_at",
   "updated_at",
 ].join(", ");
+const BOOKING_DETAIL_COLUMNS = `${BOOKING_COLUMNS}, booking_form`;
 
 function toModel(row) {
+  const guestName = row.guest_name || row.booking_form?.guestName || "";
+  const agentName = row.agent_name || row.booking_form?.agentName || "";
+  const stayingGuestName = row.staying_guest_name || row.booking_form?.stayingGuestName || "";
+  const stayingGuestEmail = row.staying_guest_email || row.booking_form?.stayingGuestEmail || "";
+  const stayingGuestPhone = row.staying_guest_phone || row.booking_form?.stayingGuestPhone || "";
+  const inquirerEmail = row.inquirer_email || row.booking_form?.email || "";
+  const inquirerPhone = row.inquirer_phone || row.booking_form?.phoneNumber || "";
+  const inquirerAddress = row.inquirer_address || row.booking_form?.address || "";
+  const roomName = row.room_name || row.booking_form?.roomName || "";
+  const checkInTime = row.check_in_time || "12:00";
+  const checkOutTime = row.check_out_time || "17:00";
+  const status = row.status || row.booking_form?.status || "Inquiry";
+
   return {
     id: row.id,
     resortId: row.resort_id,
     roomIds: row.room_ids || [],
     startDate: row.start_date,
     endDate: row.end_date,
-    checkInTime: row.check_in_time || "14:00",
-    checkOutTime: row.check_out_time || "11:00",
-    bookingForm: row.booking_form || {},
-    inquirerType: row.inquirer_type === true || row.booking_form?.inquirerType === "agent" ? "agent" : "client",
-    status: row.status || row.booking_form?.status || "Inquiry",
+    checkInTime,
+    checkOutTime,
+    bookingForm: row.booking_form || {
+      inquirerType: row.inquirer_type === true ? "agent" : "client",
+      guestName,
+      agentName,
+      stayingGuestName,
+      stayingGuestEmail,
+      stayingGuestPhone,
+      email: inquirerEmail,
+      phoneNumber: inquirerPhone,
+      address: inquirerAddress,
+      roomName,
+      checkInDate: row.start_date || "",
+      checkOutDate: row.end_date || "",
+      checkInTime,
+      checkOutTime,
+      status,
+    },
+    inquirerType: row.inquirer_type === true ? "agent" : "client",
+    status,
     adultCount: Number(row.adult_count ?? row.booking_form?.adultCount ?? 0),
     childrenCount: Number(row.children_count ?? row.booking_form?.childrenCount ?? 0),
     pax: Number(row.pax ?? row.booking_form?.guestCount ?? row.booking_form?.pax ?? 0),
     sleepingGuests: Number(row.sleeping_guests ?? row.booking_form?.sleepingGuests ?? 0),
     roomCount: Number(row.room_count ?? row.booking_form?.roomCount ?? row.room_ids?.length ?? 0),
+    guestName,
+    agentName,
+    stayingGuestName,
+    stayingGuestEmail,
+    stayingGuestPhone,
+    inquirerEmail,
+    inquirerPhone,
+    inquirerAddress,
+    roomName,
     resortServiceIds: Array.isArray(row.resort_service_ids)
       ? row.resort_service_ids.filter(Boolean)
       : Array.isArray(row.booking_form?.resortServices)
@@ -101,6 +148,15 @@ function toRow(booking, resortId) {
     sleeping_guests: Number(form.sleepingGuests ?? booking.sleepingGuests ?? 0),
     room_count: Number(form.roomCount ?? booking.roomCount ?? booking.roomIds?.length ?? 1),
     inquirer_type: (form.inquirerType || booking.inquirerType) === "agent",
+    guest_name: form.guestName || booking.guestName || "",
+    agent_name: form.agentName || booking.agentName || "",
+    staying_guest_name: form.stayingGuestName || booking.stayingGuestName || "",
+    staying_guest_email: form.stayingGuestEmail || booking.stayingGuestEmail || "",
+    staying_guest_phone: form.stayingGuestPhone || booking.stayingGuestPhone || "",
+    inquirer_email: form.email || booking.inquirerEmail || "",
+    inquirer_phone: form.phoneNumber || booking.inquirerPhone || "",
+    inquirer_address: form.address || booking.inquirerAddress || "",
+    room_name: form.roomName || booking.roomName || "",
     resort_service_ids: Array.isArray(booking.resortServiceIds)
       ? booking.resortServiceIds.filter(Boolean).map(String)
       : Array.isArray(form.resortServices)
@@ -128,23 +184,28 @@ export function BookingsProvider({ children }) {
   const [lastFetchedAt, setLastFetchedAt] = useState(null);
   const [hasHydratedCache, setHasHydratedCache] = useState(false);
   const [autoFetchedResortId, setAutoFetchedResortId] = useState(null);
+  const bookingsChannelRef = React.useRef(null);
 
   const getCacheKey = (resortId) => `bookings_cache:${resortId}`;
 
   const syncResortBookings = useCallback(
     (nextBookings) => {
       setBookings(nextBookings);
-      updateResort((prev) => {
-        if (!prev) return prev;
-        if (prev.bookings === nextBookings) return prev;
-        return { ...prev, bookings: nextBookings };
-      });
       if (typeof window !== "undefined" && resort?.id) {
         localStorage.setItem(getCacheKey(resort.id), JSON.stringify(nextBookings));
       }
     },
-    [resort?.id, updateResort]
+    [resort?.id]
   );
+
+  useEffect(() => {
+    if (!resort) return;
+    updateResort((prev) => {
+      if (!prev) return prev;
+      if (prev.bookings === bookings) return prev;
+      return { ...prev, bookings };
+    });
+  }, [bookings, resort, updateResort]);
 
   const refreshBookings = useCallback(async () => {
     if (!resort?.id) return;
@@ -174,8 +235,36 @@ export function BookingsProvider({ children }) {
     }
   }, [resort, syncResortBookings]);
 
+  const refreshBookingById = useCallback(
+    async (bookingId) => {
+      if (!resort?.id || !bookingId) return null;
+      try {
+        const { data, error } = await supabase
+          .from("bookings")
+          .select(BOOKING_DETAIL_COLUMNS)
+          .eq("id", bookingId.toString())
+          .maybeSingle();
+        if (error || !data) throw error || new Error("Booking not found");
+        const mapped = toModel(data);
+        setBookings((prev) => {
+          const current = Array.isArray(prev) ? prev : [];
+          const next = current.map((entry) => (entry.id?.toString() === mapped.id?.toString() ? mapped : entry));
+          const hasMatch = current.some((entry) => entry.id?.toString() === mapped.id?.toString());
+          const finalList = hasMatch ? next : [mapped, ...current];
+          syncResortBookings(finalList);
+          return finalList;
+        });
+        return mapped;
+      } catch (err) {
+        setBookingsError(err?.message || String(err));
+        return null;
+      }
+    },
+    [resort?.id, syncResortBookings]
+  );
+
   useEffect(() => {
-    if (!resort?.id) return;
+    if (!resort?.id || hasHydratedCache) return;
     if (typeof window === "undefined") return;
     try {
       const cached = localStorage.getItem(getCacheKey(resort.id));
@@ -202,7 +291,7 @@ export function BookingsProvider({ children }) {
     } finally {
       setHasHydratedCache(true);
     }
-  }, [resort, updateResort]);
+  }, [hasHydratedCache, resort?.id, updateResort]);
 
   useEffect(() => {
     if (!resort?.id || !hasHydratedCache) return;
@@ -210,6 +299,54 @@ export function BookingsProvider({ children }) {
     setAutoFetchedResortId(resort.id);
     refreshBookings();
   }, [autoFetchedResortId, hasHydratedCache, refreshBookings, resort?.id]);
+
+  useEffect(() => {
+    if (!resort?.id) return;
+
+    // Supabase realtime subscription to keep bookings in sync without polling.
+    // We apply changes locally and also keep the resort cache updated.
+    const channel = supabase
+      .channel(`bookings-resort-${resort.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `resort_id=eq.${resort.id}` },
+        (payload) => {
+          const { eventType, new: newRow, old: oldRow } = payload;
+          setBookings((prev) => {
+            const current = Array.isArray(prev) ? prev : [];
+            if (eventType === "INSERT" && newRow) {
+              const inserted = toModel(newRow);
+              const next = [inserted, ...current.filter((b) => b.id !== inserted.id)];
+              syncResortBookings(next);
+              return next;
+            }
+            if (eventType === "UPDATE" && newRow) {
+              const updated = toModel(newRow);
+              const next = current.map((b) => (b.id === updated.id ? updated : b));
+              syncResortBookings(next);
+              return next;
+            }
+            if (eventType === "DELETE" && oldRow) {
+              const removedId = oldRow.id?.toString();
+              const next = current.filter((b) => b.id?.toString() !== removedId);
+              syncResortBookings(next);
+              return next;
+            }
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    bookingsChannelRef.current = channel;
+
+    return () => {
+      if (bookingsChannelRef.current) {
+        supabase.removeChannel(bookingsChannelRef.current);
+        bookingsChannelRef.current = null;
+      }
+    };
+  }, [resort?.id, syncResortBookings]);
 
   const createBooking = useCallback(
     async (booking) => {
@@ -287,6 +424,7 @@ export function BookingsProvider({ children }) {
       bookingsError,
       lastFetchedAt,
       refreshBookings,
+      refreshBookingById,
       createBooking,
       updateBookingById,
       deleteBookingById,
@@ -302,6 +440,7 @@ export function BookingsProvider({ children }) {
       lastFetchedAt,
       loadingBookings,
       refreshBookings,
+      refreshBookingById,
       syncResortBookings,
       updateBookingById,
       createBookingTransaction,

@@ -9,33 +9,33 @@ export default function ShortcutBar() {
   };
 
   return (
-    <div className="bg-gray-50 shadow-md max-w-full mt-6">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex gap-6 text-sm font-medium text-gray-600">
+    <div className="sticky top-16 z-10 border-y border-slate-200/70 bg-white/85 shadow-sm backdrop-blur">
+      <div className="mx-auto flex max-w-7xl gap-3 overflow-x-auto px-4 py-3 text-sm font-medium text-slate-600">
         
         <button
           onClick={() => scrollTo("overview")}
-          className="hover:text-blue-600 flex items-center"
+          className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
         >
           Overview
         </button>
 
         <button
           onClick={() => scrollTo("facilities")}
-          className="hover:text-blue-600 flex items-center"
+          className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
         >
           Facilities
         </button>
 
         <button
           onClick={() => scrollTo("extra-services")}
-          className="hover:text-blue-600 flex items-center"
+          className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
         >
           Additional Services
         </button>
 
         <button
           onClick={() => scrollTo("rooms")}
-          className="hover:text-blue-600 flex items-center"
+          className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
         >
           Available Rooms
         </button>

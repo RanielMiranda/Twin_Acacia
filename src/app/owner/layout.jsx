@@ -6,7 +6,7 @@ export default function AdminLayout({ children }) {
   return (
     <div>
         <OwnerTopBar />
-        {children}
+        <main className="mt-10">{children}</main>
     </div>
   );
 }

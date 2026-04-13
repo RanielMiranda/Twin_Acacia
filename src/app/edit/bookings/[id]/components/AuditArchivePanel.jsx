@@ -23,11 +23,28 @@ export default function AuditArchivePanel({
   onResolveCheckedOut,
   onDeleteArchived,
   unresolvedIssueBookingIds = new Set(),
+  searchValue = "",
+  onSearchChange,
+  onSearchSubmit,
+  onJumpMonth,
+  onClearMonth,
+  monthFilter = "",
+  hasMoreArchived = false,
+  onLoadMoreArchived,
 }) {
-  const [activeTab, setActiveTab] = useState("all");
-  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("history");
+  const [monthInput, setMonthInput] = useState("");
+  const matchesMonthFilter = React.useCallback(
+    (dateValue) => {
+      if (!monthFilter) return true;
+      if (!dateValue) return false;
+      const normalized = String(dateValue).slice(0, 7);
+      return normalized === monthFilter;
+    },
+    [monthFilter]
+  );
 
-  const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
+  const normalizedSearch = useMemo(() => searchValue.trim().toLowerCase(), [searchValue]);
   const matchesSearch = React.useCallback(
     (fields) => {
       if (!normalizedSearch) return true;
@@ -57,15 +74,9 @@ export default function AuditArchivePanel({
   const filteredArchived = useMemo(
     () =>
       (archivedBookings || []).filter((item) =>
-        matchesSearch([
-          item.bookingForm?.stayingGuestName,
-          item.bookingForm?.guestName,
-          item.bookingForm?.agentName,
-          item.startDate,
-          item.endDate,
-        ])
+        matchesMonthFilter(item.startDate || item.bookingForm?.checkInDate || item.bookingForm?.checkOutDate)
       ),
-    [archivedBookings, matchesSearch]
+    [archivedBookings, matchesMonthFilter]
   );
 
   const filteredDeclined = useMemo(
@@ -78,8 +89,10 @@ export default function AuditArchivePanel({
           item.startDate,
           item.endDate,
         ])
+      ).filter((item) =>
+        matchesMonthFilter(item.startDate || item.endDate || item.bookingForm?.checkInDate || item.bookingForm?.checkOutDate)
       ),
-    [declinedBookings, matchesSearch]
+    [declinedBookings, matchesSearch, matchesMonthFilter]
   );
 
   const filteredCancelled = useMemo(
@@ -92,8 +105,10 @@ export default function AuditArchivePanel({
           item.startDate,
           item.endDate,
         ])
+      ).filter((item) =>
+        matchesMonthFilter(item.startDate || item.endDate || item.bookingForm?.checkInDate || item.bookingForm?.checkOutDate)
       ),
-    [cancelledBookings, matchesSearch]
+    [cancelledBookings, matchesSearch, matchesMonthFilter]
   );
   const filteredCheckedOut = useMemo(
     () =>
@@ -105,8 +120,10 @@ export default function AuditArchivePanel({
           item.startDate,
           item.endDate,
         ])
+      ).filter((item) =>
+        matchesMonthFilter(item.startDate || item.endDate || item.bookingForm?.checkInDate || item.bookingForm?.checkOutDate)
       ),
-    [checkedOutOnlyBookings, matchesSearch]
+    [checkedOutOnlyBookings, matchesSearch, matchesMonthFilter]
   );
 
   return (
@@ -131,10 +148,9 @@ export default function AuditArchivePanel({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
         <div className="flex flex-wrap gap-2">
           {[
-            { id: "all", label: "All" },
-            { id: "history", label: "Checked Out" },
-            { id: "declined", label: "Declined" },
-            { id: "cancelled", label: "Cancelled" },
+            { id: "history", label: "Checked Out", count: filteredCheckedOut.length },
+            { id: "cancelled", label: "Cancelled", count: filteredCancelled.length },
+            { id: "declined", label: "Declined", count: filteredDeclined.length },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -146,18 +162,68 @@ export default function AuditArchivePanel({
                   : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
               }`}
             >
-              {tab.label}
+              <span className="flex items-center gap-2">
+                {tab.label}
+                <span
+                  className={`inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[9px] font-black ${
+                    activeTab === tab.id ? "bg-white/15 text-white" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </span>
             </button>
           ))}
         </div>
-        <div className="relative w-full md:max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search guest, agent, or date"
-            className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-slate-600"
-          />
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={searchValue}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              placeholder="Search guest or agent"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-slate-600"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 px-3 text-xs font-bold"
+            onClick={() => onSearchSubmit?.()}
+          >
+            Search
+          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              type="month"
+              value={monthInput}
+              onChange={(e) => setMonthInput(e.target.value)}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9 px-3 text-xs font-bold"
+              onClick={() => {
+                if (monthInput) onJumpMonth?.(monthInput);
+              }}
+            >
+              Go
+            </Button>
+            {monthFilter ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 px-3 text-xs font-bold"
+                onClick={() => {
+                  setMonthInput("");
+                  onClearMonth?.();
+                }}
+              >
+                All Months
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
       {filteredCheckedOut.length > 0 ? (
@@ -176,36 +242,6 @@ export default function AuditArchivePanel({
         </div>
       ) : (
         <div className="space-y-2.5 max-h-[65vh] overflow-auto pr-1">
-          {activeTab === "all" ? (
-            <div className="space-y-4">
-              <CheckedOutTabs
-                mode="all"
-                filteredArchived={filteredArchived}
-                filteredCheckedOut={filteredCheckedOut}
-                onOpenBooking={onOpenBooking}
-                onReopenCheckedOut={onReopenCheckedOut}
-                onResolveCheckedOut={onResolveCheckedOut}
-                onDeleteArchived={onDeleteArchived}
-                unresolvedIssueBookingIds={unresolvedIssueBookingIds}
-              />
-              <DeclinedTabs
-                filteredDeclined={filteredDeclined}
-                showHeading
-                onOpenBooking={onOpenBooking}
-                onReopenDeclined={onReopenDeclined}
-                onResolveDeclined={onResolveDeclined}
-              />
-              <CancelledTabs
-                filteredCancelled={filteredCancelled}
-                showHeading
-                onOpenBooking={onOpenBooking}
-                onReopenCancelled={onReopenCancelled}
-                onResolveCancelled={onResolveCancelled}
-                unresolvedIssueBookingIds={unresolvedIssueBookingIds}
-              />
-            </div>
-          ) : null}
-
           {activeTab === "history" ? (
             <CheckedOutTabs
               mode="history"
@@ -222,6 +258,7 @@ export default function AuditArchivePanel({
           {activeTab === "declined" ? (
             <DeclinedTabs
               filteredDeclined={filteredDeclined}
+              showHeading
               onOpenBooking={onOpenBooking}
               onReopenDeclined={onReopenDeclined}
               onResolveDeclined={onResolveDeclined}
@@ -231,6 +268,7 @@ export default function AuditArchivePanel({
           {activeTab === "cancelled" ? (
             <CancelledTabs
               filteredCancelled={filteredCancelled}
+              showHeading
               onOpenBooking={onOpenBooking}
               onReopenCancelled={onReopenCancelled}
               onResolveCancelled={onResolveCancelled}
@@ -239,6 +277,19 @@ export default function AuditArchivePanel({
           ) : null}
         </div>
       )}
+      {activeTab === "history" && hasMoreArchived ? (
+        <div className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full rounded-xl h-10 text-xs font-bold"
+            onClick={onLoadMoreArchived}
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "Load more"}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

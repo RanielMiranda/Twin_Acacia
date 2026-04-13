@@ -8,9 +8,9 @@ import ContactModal from "@/components/ui/modals/ContactModal";
 export default function TopBar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const router = useRouter();
   const pathname = usePathname();
+  const isResortDetail = pathname?.startsWith("/resort/");
 
   const scrollToResorts = () => {
     if (pathname === "/") {
@@ -22,116 +22,84 @@ export default function TopBar() {
     setIsMenuOpen(false);
   };
 
+  const scrollToAbout = () => {
+    const element = document.getElementById("about");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    } else if (pathname !== "/") {
+      router.push("/#about");
+    }
+    setIsMenuOpen(false);
+  };
+
   return (
     <>
-      <div className="w-full bg-white shadow-md fixed top-0 left-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          
-          {/* Logo */}
+      <div className="fixed left-0 top-0 z-50 w-full border-b border-white/70 bg-white/88 shadow-sm backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
           <Link
             href="/"
-            className="text-2xl font-bold text-blue-600"
+            className="shrink-0 text-xl font-semibold tracking-tight text-blue-600 md:text-2xl"
             onClick={() => {
               window.scrollTo({ top: 0, behavior: "smooth" });
               setIsMenuOpen(false);
             }}
           >
-            🍃 Twin Acacia
+            Twin Acacia
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex gap-8 font-medium text-gray-700 items-center">
-            <button
-              onClick={scrollToResorts}
-              className="hover:text-blue-600 transition"
-            >
-              Resorts
-            </button>
+          {isResortDetail ? (
+            <div className="hidden min-w-0 flex-1 items-center justify-end gap-2 lg:flex">
+              <button onClick={scrollToResorts} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">Resorts</button>
+              <button onClick={scrollToAbout} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">About</button>
+            </div>
+          ) : (
+            <div className="hidden items-center gap-3 md:flex">
+              <button onClick={scrollToResorts} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">Resorts</button>
+              <button onClick={scrollToAbout} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">About</button>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700"
+              >
+                Contact
+              </button>
+            </div>
+          )}
 
-            <button
-              onClick={() => {
-                const element = document.getElementById("about");
-                if (element) element.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="hover:text-blue-600 transition"
-            >
-              About
-            </button>
-
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="hover:text-blue-600 transition"
-            >
-              Contact
-            </button>
-            <div className="w-[1px] h-6 bg-slate-200 mx-2" />
-
-            <Link href="/auth/login" className="hover:text-blue-600 transition">
-              Login Page
-            </Link>            
-          </div>
-
-          {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-3xl text-gray-700"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 lg:hidden"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
           >
-            {isMenuOpen ? "✕" : "☰"}
+            {isMenuOpen ? "Close" : "Menu"}
           </button>
         </div>
 
-        {/* Mobile Menu */}
-        <div
-          className={`md:hidden bg-white shadow-md overflow-hidden transition-all duration-300 ${
-            isMenuOpen ? "max-h-96 py-4" : "max-h-0"
-          }`}
-        >
-          <div className="flex flex-col gap-4 px-4 font-medium text-gray-700">
-            <button
-              onClick={scrollToResorts}
-              className="text-left hover:text-blue-600 transition"
-            >
-              Resorts
-            </button>
-
-            <button
-              onClick={() => {
-                const element = document.getElementById("about");
-                if (element) element.scrollIntoView({ behavior: "smooth" });
-                setIsMenuOpen(false);
-              }}
-              className="text-left hover:text-blue-600 transition"
-            >
-              About
-            </button>
-
-            <button
-              onClick={() => {
-                setIsModalOpen(true);
-                setIsMenuOpen(false);
-              }}
-              className="text-left hover:text-blue-600 transition"
-            >
-              Contact
-            </button>
-
-            <Link
-              href="/auth/login"
-              onClick={() => setIsMenuOpen(false)}
-              className="hover:text-blue-600 transition"
-            >
-              Login Page
-            </Link>            
+        <div className={`overflow-hidden border-t border-slate-100 bg-white transition-all duration-300 lg:hidden ${isMenuOpen ? "max-h-[28rem] py-4" : "max-h-0"}`}>
+          <div className="flex flex-col gap-3 px-4">
+            <button onClick={scrollToResorts} className="rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50">Resorts</button>
+            <button onClick={scrollToAbout} className="rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50">About</button>
+            {isResortDetail ? null : (
+              <button
+                onClick={() => {
+                  setIsModalOpen(true);
+                  setIsMenuOpen(false);
+                }}
+                className="rounded-2xl bg-blue-600 px-4 py-3 text-left text-sm font-semibold text-white"
+              >
+                Contact
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <ContactModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        panelClass="bg-white text-black"
-        overlayClass="bg-black/70 backdrop-blur-sm"
-      />
+      {!isResortDetail ? (
+        <ContactModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          panelClass="bg-white text-black"
+          overlayClass="bg-black/70 backdrop-blur-sm"
+        />
+      ) : null}
     </>
   );
 }

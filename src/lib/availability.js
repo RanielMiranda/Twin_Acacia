@@ -15,7 +15,11 @@ export function normalizeRoomIds(roomIds) {
 
 export function isBlockingStatus(status) {
   const normalized = String(status || "").toLowerCase();
-  return normalized.includes("confirm") || normalized.includes("ongoing");
+  return (
+    normalized.includes("confirm") ||
+    normalized.includes("ongoing") ||
+    normalized.includes("pending checkout")
+  );
 }
 
 export function buildRequestedRange({ startDate, endDate, checkInTime, checkOutTime }) {
@@ -25,8 +29,8 @@ export function buildRequestedRange({ startDate, endDate, checkInTime, checkOutT
   return {
     startDate: start,
     endDate: end,
-    checkInTime: checkInTime || "14:00",
-    checkOutTime: checkOutTime || "11:00",
+    checkInTime: checkInTime || "12:00",
+    checkOutTime: checkOutTime || "17:00",
   };
 }
 
@@ -34,8 +38,8 @@ export function toBookingRange(bookingRow) {
   return {
     startDate: bookingRow.start_date,
     endDate: bookingRow.end_date || bookingRow.start_date,
-    checkInTime: bookingRow.check_in_time || bookingRow.booking_form?.checkInTime || "14:00",
-    checkOutTime: bookingRow.check_out_time || bookingRow.booking_form?.checkOutTime || "11:00",
+    checkInTime: bookingRow.check_in_time || bookingRow.booking_form?.checkInTime || "12:00",
+    checkOutTime: bookingRow.check_out_time || bookingRow.booking_form?.checkOutTime || "17:00",
     bookingForm: bookingRow.booking_form || {},
   };
 }

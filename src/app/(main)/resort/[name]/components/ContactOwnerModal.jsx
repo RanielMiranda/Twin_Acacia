@@ -39,6 +39,7 @@ export default function ContactOwnerModal({
       submitLabel="Send Inquiry"
       title={resort?.name || "Resort Inquiry"}
       headerImageUrl={resort?.profileImage}
+      addressLabel="Address"
       onSubmit={onSubmitInquiry}
     />
   );

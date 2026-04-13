@@ -20,7 +20,16 @@ export default function BookingDetailsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { resort, loadResort, setResort, loading } = useResort();
-  const { bookings, updateBookingById, deleteBookingById, loadingBookings, createSignedProofUrl, createBookingTransaction, refreshBookings } = useBookings();
+  const {
+    bookings,
+    updateBookingById,
+    deleteBookingById,
+    loadingBookings,
+    createSignedProofUrl,
+    createBookingTransaction,
+    refreshBookings,
+    refreshBookingById,
+  } = useBookings();
   const { loadBookingSupport, updateConcernStatus, sendTicketMessage, isMissingSupportTableError } = useSupport();
   const [messages, setMessages] = useState([]);
   const [issues, setIssues] = useState([]);
@@ -32,6 +41,7 @@ export default function BookingDetailsPage() {
   const [refreshingMessages, setRefreshingMessages] = useState(false);
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [realtimeAvailable, setRealtimeAvailable] = useState(false);
   const lastOwnerReplySentAtRef = useRef(0);
 
   const hashString = (value) => {
@@ -109,6 +119,7 @@ export default function BookingDetailsPage() {
   const booking = (bookings || []).find(
     (entry) => entry.id.toString() === bookingId?.toString()
   );
+  const effectiveBookingForm = proofOverrideForm || booking?.bookingForm || {};
   const bookingConflicts = (bookings || []).filter((entry) => {
     if (!booking || entry.id?.toString() === booking.id?.toString()) return false;
     const normalizedStatus = String(entry.status || entry.bookingForm?.status || "").toLowerCase();
@@ -142,8 +153,8 @@ export default function BookingDetailsPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "bookings", filter: `id=eq.${booking.id}` },
         () => {
-          refreshBookings();
-          loadProofData(booking.id);
+          refreshBookingById(booking.id);
+          loadProofData(booking.id, { force: true });
         }
       )
       .on(
@@ -156,7 +167,9 @@ export default function BookingDetailsPage() {
         { event: "*", schema: "public", table: "booking_transactions", filter: `booking_id=eq.${booking.id}` },
         () => loadStatusAudits(booking.id)
       )
-      .subscribe();
+      .subscribe((status) => {
+        setRealtimeAvailable(status === "SUBSCRIBED");
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -164,14 +177,14 @@ export default function BookingDetailsPage() {
   }, [booking?.id]);
 
   useEffect(() => {
-    if (!booking?.id || isEditing) return undefined;
+    if (!booking?.id || isEditing || realtimeAvailable) return undefined;
     const interval = setInterval(() => {
       loadSupportData(booking.id);
       loadStatusAudits(booking.id);
       loadProofData(booking.id);
     }, 15000);
     return () => clearInterval(interval);
-  }, [booking?.id, isEditing]);
+  }, [booking?.id, isEditing, realtimeAvailable]);
 
   const loadSupportData = async (activeBookingId) => {
     setRefreshingMessages(true);
@@ -232,7 +245,11 @@ export default function BookingDetailsPage() {
     }
   };
 
-  const loadProofData = async (activeBookingId) => {
+  const lastProofFetchAtRef = useRef(0);
+  const loadProofData = async (activeBookingId, { force = false } = {}) => {
+    const now = Date.now();
+    if (!force && now - lastProofFetchAtRef.current < 30_000) return;
+    lastProofFetchAtRef.current = now;
     try {
       const { data, error } = await supabase
         .from("bookings")
@@ -307,7 +324,7 @@ export default function BookingDetailsPage() {
       try {
         const resortName =
           currentResort?.name ||
-          booking?.bookingForm?.resortName ||
+          effectiveBookingForm?.resortName ||
           booking?.booking_form?.resortName ||
           `resort-${booking?.resort_id || booking?.resortId || "unknown"}`;
         const safeResort = toSafeSegment(resortName);
@@ -375,9 +392,9 @@ export default function BookingDetailsPage() {
   };
 
   return (
-    <div className = "mt-10">
+    <div>
     <BookingModernEditor
-      booking={booking}
+      booking={{ ...booking, bookingForm: effectiveBookingForm }}
       resortName={currentResort?.name}
       onBack={() => router.push(`/edit/bookings/${id}`)}
       onSave={(next) => updateBookingById(booking.id, next)}
@@ -389,11 +406,14 @@ export default function BookingDetailsPage() {
       }}
       onOpenTicket={() => {
         if (typeof window === "undefined") return;
-        const token = booking?.bookingForm?.ticketAccessToken
+        const token = effectiveBookingForm?.ticketAccessToken
+          || booking?.bookingForm?.ticketAccessToken
           || booking?.booking_form?.ticketAccessToken
           || booking?.booking_form?.ticket_access_token
           || "";
-        const url = `${window.location.origin}/ticket/${booking.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+        const publicHost = process.env.NEXT_PUBLIC_PUBLIC_HOST?.trim();
+        const baseUrl = publicHost || window.location.origin;
+        const url = `${baseUrl}/ticket/${booking.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
         window.open(url, "_blank", "noopener,noreferrer");
       }}
       onOpenBooking={(targetId) => router.push(`/edit/bookings/${id}/booking-details/${targetId}`)}
@@ -417,6 +437,18 @@ export default function BookingDetailsPage() {
       statusAudits={statusAudits}
       transactions={transactions}
       resortPaymentImageUrl={currentResort?.payment_image_url}
+      resortBankPaymentImageUrl={currentResort?.bank_payment_image_url}
+      gcashAccountName={currentResort?.gcash_account_name}
+      gcashAccountNumber={currentResort?.gcash_account_number}
+      bankName={currentResort?.bank_name}
+      bankAccountName={currentResort?.bank_account_name}
+      bankAccountNumber={currentResort?.bank_account_number}
+      onPaymentProofUpdated={() => {
+        if (booking?.id) {
+          refreshBookingById(booking.id);
+          loadProofData(booking.id, { force: true });
+        }
+      }}
       onEditingChange={setIsEditing}
       proofOverrideForm={proofOverrideForm}
     />

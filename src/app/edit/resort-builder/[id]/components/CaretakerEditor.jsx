@@ -237,7 +237,7 @@ export default function CaretakerEditor() {
         <div className="border-t border-slate-100 px-6 py-3">
           <button
             onClick={addCaretaker}
-            className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-800 transition"
+            className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-700 transition"
             disabled={busy || !resort?.id}
           >
             + Add another caretaker

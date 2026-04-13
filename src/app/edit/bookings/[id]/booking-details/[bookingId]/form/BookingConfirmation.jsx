@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { buildServiceSnapshot, getServiceKey } from "@/lib/utils";
 
 export default function BookingConfirmation({
   data,
@@ -13,62 +13,41 @@ export default function BookingConfirmation({
   const formData = data || {};
 
   const inquirerType = String(formData.inquirerType || "client").toLowerCase();
-  const inquirerName = inquirerType === "agent" ? (formData.agentName || formData.guestName || "") : (formData.guestName || "");
+  const isAgent = inquirerType === "agent";
+  const inquirerName = isAgent
+    ? (formData.agentName || formData.guestName || "")
+    : (formData.guestName || "");
   const inquirerEmail = formData.email || "";
   const inquirerPhone = formData.phoneNumber || "";
+  const inquirerAddress = formData.address || "";
 
   const guestName = formData.stayingGuestName || formData.guestName || "-";
-  const guestEmail = formData.stayingGuestEmail || "";
-  const guestPhone = formData.stayingGuestPhone || "";
-  const clientAddress = formData.address || "";
-
-  const normalizeService = (entry) => {
-    if (!entry) return null;
-    if (typeof entry === "string") {
-      return { key: entry, name: entry, cost: 0 };
-    }
-    const key = entry.id || entry.name || "";
-    const name = entry.name || entry.id || key;
-    const cost = Number(entry.cost || 0);
-    return { key, name, cost };
-  };
-
-  const resolveService = (service) => {
-    if (!service) return null;
-    const found = (resortExtraServices || []).find(
-      (svc) => svc.id === service.key || svc.name === service.key
-    );
-    if (found) {
-      return {
-        key: service.key,
-        name: found.name || service.name,
-        cost: Number(found.cost || service.cost || 0),
-      };
-    }
-    return service;
-  };
+  const guestEmail = isAgent ? "" : (formData.stayingGuestEmail || inquirerEmail || "-");
+  const guestPhone = isAgent ? "" : (formData.stayingGuestPhone || inquirerPhone || "-");
+  const guestAddress = isAgent ? "" : (inquirerAddress || "-");
 
   const selectedServices = Array.isArray(formData.resortServices)
     ? formData.resortServices
-        .map(normalizeService)
+        .map((entry) => {
+          if (!entry) return null;
+          if (typeof entry === "object") {
+            const key = getServiceKey(entry);
+            if (!key) return null;
+            const snapshot = buildServiceSnapshot(key, resortExtraServices);
+            return {
+              id: key,
+              name: entry.name || snapshot.name,
+              cost: Number(entry.cost ?? entry.price ?? snapshot.cost ?? 0),
+            };
+          }
+          return buildServiceSnapshot(entry, resortExtraServices);
+        })
         .filter(Boolean)
-        .map(resolveService)
     : [];
 
-  const serviceTotal = useMemo(
-    () =>
-      (selectedServices || []).reduce(
-        (sum, entry) => sum + Number(entry?.cost || 0),
-        0
-      ),
-    [selectedServices]
-  );
   const resortRental = Number(resortPrice || 0);
-  const computedTotal = resortRental + serviceTotal;
-  const balanceDue = useMemo(
-    () => Math.max(0, computedTotal - Number(formData.downpayment || 0)),
-    [computedTotal, formData.downpayment]
-  );
+  const totalDue = Number(formData.totalAmount || 0);
+  const balanceDue = Math.max(0, totalDue - Number(formData.downpayment || 0));
 
   const resortInitials = (resortName || "Resort")
     .split(" ")
@@ -85,7 +64,10 @@ export default function BookingConfirmation({
     || Number(formData.adultCount || 0) + Number(formData.childrenCount || 0);
 
   return (
-    <div className="max-w-[210mm] min-h-[297mm] mx-auto mt-10 mb-28 bg-white shadow-2xl border border-slate-200 rounded-[18px] px-10 py-12 docx-sheet">
+    <div
+      id="booking-confirmation-sheet"
+      className="bg-white shadow-2xl border border-slate-200 rounded-[18px] px-10 py-12 docx-sheet"
+    >
       <div className="flex flex-col items-center text-center border-b border-slate-200 pb-6 gap-3">
         {resortProfileImage ? (
           <img
@@ -110,27 +92,7 @@ export default function BookingConfirmation({
           <section className="space-y-3">
             <h2 className=" mt-5 text-xs font-black uppercase tracking-wider text-slate-500">Contact Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Guest Name">
-                <div className="text-sm font-bold text-slate-700">{guestName}</div>
-              </Field>
-
-              {guestEmail ? (
-                <Field label="Guest Email">
-                  <div className="text-sm font-bold text-slate-700">{guestEmail}</div>
-                </Field>
-              ) : null}
-
-              {guestPhone ? (
-                <Field label="Guest Phone">
-                  <div className="text-sm font-bold text-slate-700">{guestPhone}</div>
-                </Field>
-              ) : null}
-
-                  <Field label="Guest Address">
-                    <div className="text-sm font-bold text-slate-700">{clientAddress || "-"}</div>
-                  </Field>
-
-              {inquirerType === "agent" ? (
+              {isAgent ? (
                 <>
                   <Field label="Inquirer Name">
                     <div className="text-sm font-bold text-slate-700">{inquirerName || "-"}</div>
@@ -141,8 +103,35 @@ export default function BookingConfirmation({
                   <Field label="Inquirer Phone">
                     <div className="text-sm font-bold text-slate-700">{inquirerPhone || "-"}</div>
                   </Field>
+                  <Field label="Inquirer Address">
+                    <div className="text-sm font-bold text-slate-700">{inquirerAddress || "-"}</div>
+                  </Field>
+                  <Field label="Guest Name">
+                    <div className="text-sm font-bold text-slate-700">{guestName}</div>
+                  </Field>
+                  <Field label="Guest Email">
+                    <div className="text-sm font-bold text-slate-700">{formData.stayingGuestEmail || "-"}</div>
+                  </Field>
+                  <Field label="Guest Phone">
+                    <div className="text-sm font-bold text-slate-700">{formData.stayingGuestPhone || "-"}</div>
+                  </Field>
                 </>
-              ) : null}
+              ) : (
+                <>
+                  <Field label="Guest Name">
+                    <div className="text-sm font-bold text-slate-700">{guestName}</div>
+                  </Field>
+                  <Field label="Guest Email">
+                    <div className="text-sm font-bold text-slate-700">{guestEmail || "-"}</div>
+                  </Field>
+                  <Field label="Guest Phone">
+                    <div className="text-sm font-bold text-slate-700">{guestPhone || "-"}</div>
+                  </Field>
+                  <Field label="Guest Address">
+                    <div className="text-sm font-bold text-slate-700">{guestAddress || "-"}</div>
+                  </Field>
+                </>
+              )}
             </div>
           </section>
 
@@ -212,13 +201,13 @@ export default function BookingConfirmation({
                   )}
                   <div className="flex items-center justify-between border-t border-slate-200 pt-2">
                     <span className="font-bold">Total due</span>
-                    <span className="font-black">PHP {computedTotal.toLocaleString()}</span>
+                    <span className="font-black">PHP {totalDue.toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Payment Details</p>
                   <div className="flex items-center justify-between">
-                    <span>Downpayment</span>
+                    <span>Total Paid</span>
                     <span className="font-bold">PHP {Number(formData.downpayment || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -241,30 +230,7 @@ export default function BookingConfirmation({
             </div>
           </section>
 
-        </div>
-      <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:right-auto bg-blue-600 hover:bg-blue-700 md:-translate-x-1/2 z-50 flex items-center justify-between gap-3 bg-white/95 backdrop-blur border border-slate-200 shadow-xl rounded-2xl px-4 py-3 print:hidden">
-        <Button type="button" variant="" onClick={() => window.print()}>
-          Download
-        </Button>
       </div>
-      <style jsx global>{`
-        @media print {
-          body {
-            background: #fff !important;
-          }
-          .docx-sheet {
-            margin: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            width: 210mm !important;
-            min-height: 297mm !important;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

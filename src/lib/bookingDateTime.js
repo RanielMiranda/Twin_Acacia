@@ -35,7 +35,7 @@ export function formatTotalStayDays(checkInDate, checkOutDate) {
 
 export function isCheckoutOverdueRow(row, nowMs = Date.now()) {
   const checkoutDate = row.end_date || row.start_date || row.booking_form?.checkOutDate || row.booking_form?.checkInDate;
-  const checkoutTime = row.check_out_time || row.booking_form?.checkOutTime || "11:00";
+  const checkoutTime = row.check_out_time || row.booking_form?.checkOutTime || "17:00";
   const checkoutMs = toDateTimeMs(checkoutDate, checkoutTime, "23:59");
   if (checkoutMs === null) return false;
   return checkoutMs < nowMs;

@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { Printer, Download, Ticket } from "lucide-react";
+import { Download, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function TicketHeaderSection({ bookingId, canAccessEntryPass, onPrintEntryPass, onDownloadTicket, viewerRole }) {
+const TicketHeaderSection = React.memo(function TicketHeaderSection({ bookingId, canAccessEntryPass, onDownloadTicket, viewerRole }) {
   const portalLabel = viewerRole === "agent" ? "Agent Portal" : "Client Portal";
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 no-print">
@@ -24,14 +24,6 @@ export function TicketHeaderSection({ bookingId, canAccessEntryPass, onPrintEntr
           disabled={!canAccessEntryPass}
           variant="outline"
           className="rounded-full px-6 flex items-center justify-center border-slate-200 font-bold text-xs uppercase tracking-wider h-12 bg-white shadow-sm"
-          onClick={onPrintEntryPass}
-        >
-          <Printer size={16} className="mr-2" /> Print Entry Pass
-        </Button>
-        <Button
-          disabled={!canAccessEntryPass}
-          variant="outline"
-          className="rounded-full px-6 flex items-center justify-center border-slate-200 font-bold text-xs uppercase tracking-wider h-12 bg-white shadow-sm"
           onClick={onDownloadTicket}
         >
           <Download size={16} className="mr-2" /> Download Ticket
@@ -39,4 +31,6 @@ export function TicketHeaderSection({ bookingId, canAccessEntryPass, onPrintEntr
       </div>
     </div>
   );
-}
+});
+
+export { TicketHeaderSection };

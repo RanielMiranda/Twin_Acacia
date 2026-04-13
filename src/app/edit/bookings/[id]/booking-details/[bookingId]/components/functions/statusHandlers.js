@@ -1,14 +1,21 @@
+import { CheckCircle2, AlertTriangle, XCircle, Mail } from "lucide-react";
 import { generateConfirmationStub } from "@/lib/bookingFlow";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
 import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { PREVIOUS_STATUS } from "../bookingEditorConfig";
 import { notifyCaretakerOnBookingConfirmed } from "@/lib/caretakerNotifications";
-import { getStorageFolderFromPublicUrl } from "@/lib/utils";
+import { deleteSupabasePublicUrls, getStorageFolderFromPublicUrl } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 function getProofFolder(draft) {
   const explicit = draft?.paymentProofFolder;
   if (explicit) return explicit;
-  const urlCandidate = Array.isArray(draft?.paymentProofUrls) ? draft.paymentProofUrls[0] : draft?.paymentProofUrl;
+  const urlCandidate =
+    Array.isArray(draft?.paymentProofLog)
+      ? draft.paymentProofLog
+          .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+          .filter(Boolean)[0]
+      : null;
   return getStorageFolderFromPublicUrl(urlCandidate);
 }
 
@@ -20,8 +27,11 @@ export async function handleSetStatusAction({
   nextStatus,
   booking,
   resortName,
+  resortExtraServices = [],
   persist,
   onStayConfirmed,
+  toast,
+  actorMeta,
 }) {
   if (actionBusy) return;
   const wasConfirmed = String(draft.status || "").toLowerCase().includes("confirm");
@@ -77,12 +87,23 @@ export async function handleSetStatusAction({
       });
       onStayConfirmed?.(message);
       try {
-        await fetch("/api/booking/notify-caretakers", {
+        const response = await fetch("/api/booking/notify-caretakers", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ bookingId: booking.id }),
         });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result?.ok === false) {
+          toast?.({
+            message: `Error: ${result?.error || response.statusText || "Caretaker notification failed."}`,
+            color: "red",
+          });
+        }
       } catch (error) {
+        toast?.({
+          message: `Error: ${error?.message || "Caretaker notification failed."}`,
+          color: "red",
+        });
         console.error("Caretaker SMS failed:", error?.message || error);
       }
     }
@@ -168,23 +189,37 @@ export async function handleApproveInquiryAction({
         toast?.({
           message: result?.error || "Failed to send approval email.",
           color: "red",
+          icon: XCircle,
         });
         console.error("Approved inquiry email failed:", result?.error || response.statusText);
       } else if (result?.skipped) {
         toast?.({
           message: "Approval email was already sent for this booking.",
           color: "amber",
+          icon: AlertTriangle,
         });
       } else {
+        const sentClient = result?.sent?.client;
+        const sentAgent = result?.sent?.agent;
+        let message = "Approval email sent.";
+        if (sentClient && sentAgent) {
+          message = "Approval emails sent to client and agent.";
+        } else if (sentClient) {
+          message = "Approval email sent to client.";
+        } else if (sentAgent) {
+          message = "Approval email sent to agent.";
+        }
         toast?.({
-          message: "Approval email sent to client.",
+          message,
           color: "green",
+          icon: Mail,
         });
       }
     } catch (error) {
       toast?.({
         message: "Failed to send approval email.",
         color: "red",
+        icon: XCircle,
       });
       console.error("Approved inquiry email failed:", error?.message || error);
     }
@@ -226,10 +261,31 @@ export async function handleVerifyProofAction({
   setActionBusy(true);
   try {
     const proofFolder = getProofFolder(draft);
+    const submittedUrls = Array.isArray(draft.paymentProofLog)
+      ? draft.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : [])).filter(Boolean)
+      : [];
+    const loggedUrls = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean);
+    const missingUrls = submittedUrls.filter((url) => !loggedUrls.includes(url));
+    const submitLogEntry =
+      missingUrls.length > 0
+        ? {
+            at: draft.paymentSubmittedAt || new Date().toISOString(),
+            action: "submit_payment_proof",
+            paymentMethod: draft.pendingPaymentMethod || draft.paymentMethod,
+            amount: Number(draft.pendingDownpayment || 0),
+            folder: proofFolder,
+            urls: missingUrls,
+            note: draft.pendingPaymentNote || "",
+          }
+        : null;
+
     const nextLogEntry = {
       at: new Date().toISOString(),
       action: "payment_verified",
       folder: proofFolder,
+      note: draft.pendingPaymentNote || "",
     };
 
     const approvedAmount = Number(draft.pendingDownpayment || 0);
@@ -251,13 +307,13 @@ export async function handleVerifyProofAction({
       paymentMethod: nextMethod,
       pendingDownpayment: 0,
       pendingPaymentMethod: null,
+      pendingPaymentNote: "",
       paymentPendingApproval: false,
-      paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
+      paymentProofLog: Array.isArray(draft.paymentProofLog)
+        ? [...draft.paymentProofLog, ...(submitLogEntry ? [submitLogEntry] : []), nextLogEntry]
+        : [...(submitLogEntry ? [submitLogEntry] : []), nextLogEntry],
       // Keep proof urls for audit/log viewing (do not delete the image immediately)
-      status:
-        draft.status === "Pending Payment"
-          ? "Confirmed"
-          : draft.status,
+      status: draft.status,
     };
     setDraft(next);
     await persist(next);
@@ -294,24 +350,42 @@ export async function handleDeclineProofAction({
   setActionBusy(true);
   try {
     const proofFolder = getProofFolder(draft);
+    const logUrls = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
+      .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+      .filter(Boolean);
+    const urlsToDelete = Array.from(new Set([...logUrls]));
+    if (urlsToDelete.length > 0) {
+      try {
+        await deleteSupabasePublicUrls(supabase, urlsToDelete);
+      } catch (error) {
+        console.error("Failed to delete proof images:", error?.message || error);
+      }
+    }
+
     const nextLogEntry = {
       at: new Date().toISOString(),
       action: "payment_declined",
       folder: proofFolder,
+      note: draft.pendingPaymentNote || "",
     };
+    const cleanedLog = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : []).map((entry) => {
+      if (!Array.isArray(entry?.urls) || entry.urls.length === 0) return entry;
+      return {
+        ...entry,
+        urls: entry.urls.filter((url) => !urlsToDelete.includes(url)),
+      };
+    });
 
     const next = {
       ...draft,
       paymentPendingApproval: false,
       pendingDownpayment: 0,
       pendingPaymentMethod: null,
+      pendingPaymentNote: "",
       paymentSubmittedAt: null,
       paymentVerified: false,
       paymentVerifiedAt: null,
-      paymentProofLog: Array.isArray(draft.paymentProofLog) ? [...draft.paymentProofLog, nextLogEntry] : [nextLogEntry],
-      // Keep proof URLs in logs, but clear the current proof to allow re-upload.
-      paymentProofUrl: null,
-      paymentProofUrls: [],
+      paymentProofLog: [...cleanedLog, nextLogEntry],
     };
     setDraft(next);
     await persist(next);

@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { buildSupportConversationItems, getSupportConversationLabel, isResolvedConversationItem } from "@/lib/supportConversation";
 
-export function TicketSupportDeskCardSection({
+const TicketSupportDeskCardSection = React.memo(function TicketSupportDeskCardSection({
   resort,
   loadingMessages,
   messages,
@@ -72,7 +72,7 @@ export function TicketSupportDeskCardSection({
                       ? isResolvedConversationItem(msg)
                         ? "bg-emerald-50 text-emerald-700 ml-8 border border-emerald-200"
                         : "bg-amber-50 text-amber-700 ml-8 border border-amber-200"
-                      : "bg-blue-50 text-blue-700 ml-8"
+                      : "bg-blue-50 text-blue-600 ml-8"
                     : "bg-white text-slate-700 mr-8 border border-slate-100"
                 }`}
               >
@@ -106,4 +106,6 @@ export function TicketSupportDeskCardSection({
       </div>
     </Card>
   );
-}
+});
+
+export { TicketSupportDeskCardSection };

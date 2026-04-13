@@ -15,7 +15,7 @@ export default function AdminLayout({ children }) {
   return (
     <div style={{ "--editor-primary": primaryColor }}>
       {isAdmin ? <AdminTopBar /> : <OwnerTopBar />}
-      <div className="pt-2">
+      <div className="pt-2 mt-10">
         <div className="editor-theme">{children}</div>
       </div>
     </div>

@@ -62,6 +62,15 @@ alter table public.bookings
   add column if not exists sleeping_guests integer not null default 0,
   add column if not exists room_count integer not null default 1,
   add column if not exists inquirer_type boolean not null default false,
+  add column if not exists guest_name text,
+  add column if not exists agent_name text,
+  add column if not exists staying_guest_name text,
+  add column if not exists staying_guest_email text,
+  add column if not exists staying_guest_phone text,
+  add column if not exists inquirer_email text,
+  add column if not exists inquirer_phone text,
+  add column if not exists inquirer_address text,
+  add column if not exists room_name text,
   add column if not exists resort_service_ids text[] not null default '{}';
 
 create table if not exists public.booking_transactions (
@@ -120,6 +129,14 @@ set
   sleeping_guests = coalesce((booking_form->>'sleepingGuests')::int, sleeping_guests),
   room_count = coalesce((booking_form->>'roomCount')::int, room_count),
   inquirer_type = coalesce((booking_form->>'inquirerType') = 'agent', inquirer_type),
+  guest_name = coalesce(booking_form->>'guestName', guest_name),
+  agent_name = coalesce(booking_form->>'agentName', agent_name),
+  staying_guest_name = coalesce(booking_form->>'stayingGuestName', staying_guest_name),
+  staying_guest_email = coalesce(booking_form->>'stayingGuestEmail', staying_guest_email),
+  staying_guest_phone = coalesce(booking_form->>'stayingGuestPhone', staying_guest_phone),
+  inquirer_email = coalesce(booking_form->>'email', inquirer_email),
+  inquirer_phone = coalesce(booking_form->>'phoneNumber', inquirer_phone),
+  room_name = coalesce(booking_form->>'roomName', room_name),
   resort_service_ids = coalesce(
     (
       select array_agg(service_key) filter (where service_key is not null and service_key <> '')
@@ -599,7 +616,12 @@ create policy resort_caretakers_all_access on public.resort_caretakers
 -- ==========================================
 alter table public.resorts
   add column if not exists payment_image_url text,
-  add column if not exists bank_payment_image_url text;
+  add column if not exists bank_payment_image_url text,
+  add column if not exists gcash_account_name text,
+  add column if not exists gcash_account_number text,
+  add column if not exists bank_name text,
+  add column if not exists bank_account_name text,
+  add column if not exists bank_account_number text;
 
 alter table public.resorts
   add column if not exists "rulesAndRegulations" text,

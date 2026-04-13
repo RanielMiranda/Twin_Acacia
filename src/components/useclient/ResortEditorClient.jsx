@@ -25,6 +25,11 @@ const RESORT_DB_COLUMNS = [
   "profileImage",
   "payment_image_url",
   "bank_payment_image_url",
+  "gcash_account_name",
+  "gcash_account_number",
+  "bank_name",
+  "bank_account_name",
+  "bank_account_number",
   "description",
   "extraServices",
   "facilities",
@@ -134,12 +139,12 @@ export function ResortEditorProvider({ children }) {
   }, [draftScope, setDraftScope]);
 
   const loadResort = useCallback(
-    async (identifier, isId = true) => {
+    async (identifier, isId = true, preferDraft = true) => {
       if (!identifier) return;
       const scope = isId ? `id:${identifier}` : `name:${identifier}`;
       setDraftScope(scope);
       const identifierText = String(identifier).trim();
-      if (typeof window !== "undefined") {
+      if (preferDraft && typeof window !== "undefined") {
         try {
           const cachedDraft = readDraftByScope(scope);
           const draftMatchesTarget = isId

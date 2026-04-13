@@ -4,28 +4,25 @@ import { createServiceSupabaseClient } from "@/lib/server/serviceSupabase";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function buildBaseUrl(request) {
-  const forwardedProto = request.headers.get("x-forwarded-proto");
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  if (forwardedProto && forwardedHost) {
-    return `${forwardedProto}://${forwardedHost}`;
-  }
-  return request.nextUrl.origin;
-}
-
-function buildCaretakerMessage({ booking, resortName, ticketUrl }) {
+function buildCaretakerMessage({ booking, resortName }) {
   const form = booking.booking_form || {};
   const guestName = form.guestName || "Guest";
   const entryCode = form.confirmationStub?.code || "Pending";
   const checkInDate = form.checkInDate || booking.start_date || "TBD";
   const checkOutDate = form.checkOutDate || booking.end_date || checkInDate || "TBD";
   const stayRange = [checkInDate, checkOutDate].filter(Boolean).join(" to ") || "Dates pending";
+  const checkInTime = form.checkInTime || booking.check_in_time || "";
+  const checkOutTime = form.checkOutTime || booking.check_out_time || "";
+  const roomLabel = Array.isArray(form.assignedRoomNames) && form.assignedRoomNames.length > 0
+    ? form.assignedRoomNames.join(", ")
+    : form.roomName || "Room pending";
+  const stayTimes = [checkInTime, checkOutTime].filter(Boolean).join(" - ");
   return [
     `Confirmed stay for booking ${booking.id} at ${resortName || "resort"}.`,
     `Guest: ${guestName}.`,
     `Entry Code: ${entryCode}.`,
-    `Stay: ${stayRange}.`,
-    ticketUrl ? `Ticket: ${ticketUrl}` : null,
+    `Room: ${roomLabel}.`,
+    `Stay: ${stayRange}${stayTimes ? ` (${stayTimes})` : ""}.`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -52,7 +49,7 @@ export async function POST(request) {
   const supabase = createServiceSupabaseClient();
   const { data: booking, error: bookingError } = await supabase
     .from("bookings")
-    .select("id, resort_id, start_date, end_date, booking_form")
+    .select("id, resort_id, start_date, end_date, check_in_time, check_out_time, booking_form")
     .eq("id", bookingId)
     .single();
 
@@ -75,17 +72,12 @@ export async function POST(request) {
     return NextResponse.json({ ok: false, error: caretakersError.message }, { status: 500 });
   }
 
-  const ticketToken = booking.booking_form?.ticketAccessToken;
-  const ticketUrl = `${buildBaseUrl(request)}/ticket/${booking.id}${
-    ticketToken ? `?token=${encodeURIComponent(ticketToken)}` : ""
-  }`;
   const message = buildCaretakerMessage({
     booking,
     resortName: resort?.name,
-    ticketUrl,
   });
 
-  const senderName = process.env.SEMAPHORE_SENDER_NAME;
+  const senderName = resort?.name || process.env.SEMAPHORE_SENDER_NAME;
   const recipients = (caretakers || [])
     .map((entry) => String(entry.phone || "").trim())
     .filter(Boolean);

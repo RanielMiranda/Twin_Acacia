@@ -34,6 +34,9 @@ function LoginPageContent() {
     setIsLoading(true);
     try {
       const account = await signIn(formData.email, formData.password);
+      if (!account) {
+        throw new Error("Account not found or password is incorrect.");
+      }
       if (!account.setup_complete && account.setup_token) {
         router.push(`/auth/setup-resort?token=${encodeURIComponent(account.setup_token)}`);
         return;

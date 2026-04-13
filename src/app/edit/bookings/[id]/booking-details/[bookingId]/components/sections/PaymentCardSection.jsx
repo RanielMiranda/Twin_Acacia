@@ -1,7 +1,15 @@
 import React from "react";
 import { ReceiptText } from "lucide-react";
 
-export default function PaymentCardSection({ isEditing, draft, setField, balance, statusPhases, paymentChannels, status }) {
+export default function PaymentCardSection({
+  isEditing,
+  draft,
+  setField,
+  balance,
+  statusPhases,
+  paymentChannels,
+  status,
+}) {
   return (
     <div className="bg-slate-900 text-white p-8 rounded-[2rem] shadow-2xl space-y-6 relative overflow-hidden">
       <div className="absolute -top-4 -right-4 p-4 opacity-5"><ReceiptText size={120} /></div>

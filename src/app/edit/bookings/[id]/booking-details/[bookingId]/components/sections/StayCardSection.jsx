@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { User, MapPin, Mail, Phone, Calendar } from "lucide-react";
+import { User, Mail, Phone, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InfoItem, SectionLabel } from "../BookingEditorAtoms";
 import DateRangeField from "@/app/(main)/components/search/calendar/DateRangeField";
@@ -26,7 +26,6 @@ export default function StayCardSection({
   const contactPhone = draft.phoneNumber || "No phone";
   const guestEmail = draft.stayingGuestEmail || "No email";
   const guestPhone = draft.stayingGuestPhone || "No phone";
-  const guestAddress = draft.address || "No address";
   const parseUtcDate = (value) => (value ? new Date(`${value}T00:00:00Z`) : null);
   const rangeStart = parseUtcDate(draft.checkInDate);
   const rangeEnd = parseUtcDate(draft.checkOutDate);
@@ -140,13 +139,6 @@ export default function StayCardSection({
                       onChange={(e) => setField("stayingGuestPhone", e.target.value)}
                       placeholder="Guest phone"
                     />
-                    <input
-                      type="text"
-                      className="text-xs font-medium rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-blue-100 md:col-span-2"
-                      value={draft.address || ""}
-                      onChange={(e) => setField("address", e.target.value)}
-                      placeholder="Guest address (optional)"
-                    />
                   </div>
                 </>
               ) : (
@@ -160,10 +152,6 @@ export default function StayCardSection({
                     <span className="inline-flex items-center gap-1">
                       <Phone size={12} />
                       {guestPhone}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin size={12} />
-                      {guestAddress}
                     </span>
                   </div>
                 </>

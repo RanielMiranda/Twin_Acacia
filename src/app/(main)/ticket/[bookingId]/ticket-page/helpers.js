@@ -27,7 +27,6 @@ export const buildStayInfoPayload = (booking, form, resort) => {
       : (booking.room_ids || [])
           ?.map((roomId) => (resort?.rooms || []).find((room) => room.id === roomId)?.name)
           .filter(Boolean)) || [];
-  const entryCode = form.confirmationStub?.code || `TKT-${String(booking.id).slice(-6).toUpperCase()}`;
 
-  return { approvedByName, assignedRoomNames, entryCode };
+  return { approvedByName, assignedRoomNames };
 };

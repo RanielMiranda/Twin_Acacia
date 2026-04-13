@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import ContactModal from "@/components/ui/modals/ContactModal";
 
 export default function Footer() {
@@ -6,10 +6,17 @@ export default function Footer() {
 
   return (
     <>
-      <footer id="about" className="bg-gray-950 text-gray-400">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-3">
+      <footer id="about" className="border-t border-slate-200 bg-[linear-gradient(180deg,#eff6ff_0%,#f8fafc_100%)] text-slate-500">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-10 md:grid-cols-3">
           <div>
-            <h3 className="mb-4 font-medium text-white">Contact</h3>
+            <h3 className="mb-4 text-lg font-semibold text-slate-950">Twin Acacia</h3>
+            <p className="max-w-xs text-sm leading-6 text-slate-600">
+              Resort browsing, availability checks, and inquiry flow designed to feel clean and ready for launch.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="mb-4 font-medium text-slate-950">Contact</h3>
             <ul className="space-y-2 text-sm">
               <li>Calamba, Philippines</li>
               <li>+63 11 111 1111</li>
@@ -18,36 +25,23 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 font-medium text-white">Follow Us</h3>
-            <div className="flex space-x-4">
-              <a href="#" className="transition hover:text-sky-400">Facebook</a>
-              <a href="#" className="transition hover:text-sky-400">Instagram</a>
-            </div>
-          </div>
-
-          <div>
-            <h2 className="mb-4 text-lg font-semibold text-white">Contact Us</h2>
-            <p className="mb-5 text-sm text-gray-500">
-              Have questions about availability, amenities, or group bookings? Send us a
-              message and we will get back to you.
+            <h2 className="mb-4 text-lg font-semibold text-slate-950">Contact Us</h2>
+            <p className="mb-5 text-sm text-slate-500">
+              Have questions about availability, amenities, or group bookings? Send us a message and we will get back to you.
             </p>
 
             <button
               onClick={() => setOpen(true)}
-              className="rounded-lg bg-sky-500 px-6 py-3 font-medium text-white transition hover:bg-sky-600"
+              className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white transition hover:-translate-y-0.5 hover:bg-blue-700"
             >
               Send a Message
             </button>
           </div>
         </div>
 
-        <div className="border-t border-gray-800">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between px-6 py-4 text-xs text-gray-500 md:flex-row">
+        <div className="border-t border-slate-200">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between px-6 py-4 text-xs text-slate-500 md:flex-row">
             <p>(c) {new Date().getFullYear()} Twin Acacia. All rights reserved.</p>
-            <div className="mt-3 space-x-4 md:mt-0">
-              <a href="#" className="transition hover:text-sky-400">Privacy Policy</a>
-              <a href="#" className="transition hover:text-sky-400">Terms of Service</a>
-            </div>
           </div>
         </div>
       </footer>

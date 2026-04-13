@@ -66,7 +66,7 @@ export default function Page() {
       return;
     }
     setResortData(data || null);
-  }, [OWNER_RESORT_ID, toast]);
+  }, [OWNER_RESORT_ID]);
 
   const loadBookingsAlertCount = useCallback(async () => {
     if (!OWNER_RESORT_ID) {
@@ -74,13 +74,20 @@ export default function Page() {
       return;
     }
     let total = 0;
-    const { count: inquiryCount, error: inquiryErr } = await supabase
+    const { count: actionableBookingCount, error: bookingErr } = await supabase
       .from("bookings")
       .select("id", { count: "exact", head: true })
       .eq("resort_id", OWNER_RESORT_ID)
-      .in("status", ["Inquiry", "Approved Inquiry", "Pending Payment", "Pending"]);
+      .in("status", [
+        "Inquiry",
+        "Approved Inquiry",
+        "Pending Payment",
+        "Pending",
+        "Pending Checkout",
+        "Pending checkout",
+      ]);
 
-    if (!inquiryErr) total += Number(inquiryCount || 0);
+    if (!bookingErr) total += Number(actionableBookingCount || 0);
 
     const { count: openIssueCount, error: issueErr } = await supabase
       .from("ticket_issues")
@@ -160,7 +167,7 @@ export default function Page() {
       unread: row.sender_role === "admin" && row.status !== "resolved",
     }));
     setAdminMessages(rows);
-  }, [OWNER_RESORT_ID]);
+  }, [OWNER_RESORT_ID, toast]);
 
   const handleOpenAdminModal = async () => {
     await loadOwnerAdminMessages();
@@ -212,7 +219,7 @@ export default function Page() {
   }, [loadBookingsAlertCount, loadDashboardStatus, loadOwnerAdminMessages, loadResortData]);
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 pb-12 px-4 md:px-8">
+    <div className="min-h-screen bg-slate-50 pt-14 pb-12 px-4 md:px-8">
       <div className="max-w-6xl mx-auto">
         
         {/* Header */}
@@ -237,8 +244,7 @@ export default function Page() {
             />
           </div>
 
-          {/* 2. Bookings Card: Top Right (Height 3)
-              This pushes things down in its own column without affecting the left side */}
+          {/* 2. Bookings Card */}
           <div className="lg:col-span-1">
             <BookingsCard
               alertCount={bookingsAlertCount}
@@ -252,10 +258,7 @@ export default function Page() {
             />
           </div>
 
-          {/* 3. Resort Card: "The Spacer" 
-              Because we are using 'items-start' and no row-wrappers, 
-              this card moves up to immediately touch the Visibility card.
-          */}
+          {/* 3. Resort Card */}
           <div className="lg:col-span-2 lg:-mt-10 transition-all">
             <ResortCard 
               resort={resortData}

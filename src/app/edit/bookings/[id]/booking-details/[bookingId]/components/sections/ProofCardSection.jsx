@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Image as ImageIcon, ExternalLink, CheckCircle } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Image as ImageIcon, ExternalLink, CheckCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "../BookingEditorAtoms";
 import { supabase } from "@/lib/supabase";
@@ -9,69 +9,109 @@ export default function ProofCardSection({
   proofPreviewUrls,
   draft,
   resolveSignedProofUrl,
+  resortPaymentImageUrl,
+  resortBankPaymentImageUrl,
+  gcashAccountName,
+  gcashAccountNumber,
+  bankName,
+  bankAccountName,
+  bankAccountNumber,
 }) {
   const [folderProofUrls, setFolderProofUrls] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const proofFolder = useMemo(() => {
     if (draft?.paymentProofFolder) return draft.paymentProofFolder;
     const urlCandidate =
       (Array.isArray(proofPreviewUrls) && proofPreviewUrls.length > 0 && proofPreviewUrls[0]) ||
-      (Array.isArray(draft.paymentProofUrls) && draft.paymentProofUrls.length > 0 && draft.paymentProofUrls[0]) ||
-      draft.paymentProofUrl;
+      (Array.isArray(draft.paymentProofLog) && draft.paymentProofLog.length > 0
+        ? draft.paymentProofLog.flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : [])).filter(Boolean)[0]
+        : null);
     return getStorageFolderFromPublicUrl(urlCandidate);
-  }, [draft?.paymentProofFolder, draft?.paymentProofUrl, draft?.paymentProofUrls, proofPreviewUrls]);
+  }, [draft?.paymentProofFolder, draft?.paymentProofLog, proofPreviewUrls]);
 
-  useEffect(() => {
+  const refreshFolderProofs = useCallback(async () => {
     if (!proofFolder) return;
-
     let cancelled = false;
-    const loadAll = async () => {
-      try {
-        const urls = [];
-        const limit = 1000;
-        let offset = 0;
+    setIsRefreshing(true);
+    try {
+      const urls = [];
+      const limit = 1000;
+      let offset = 0;
 
-        while (true) {
-          const { data: items, error } = await supabase.storage.from(BUCKET_NAME).list(proofFolder, {
-            limit,
-            offset,
-            sortBy: { column: "name", order: "asc" },
-          });
-          if (error || cancelled) break;
-          if (!items || items.length === 0) break;
+      while (true) {
+        const { data: items, error } = await supabase.storage.from(BUCKET_NAME).list(proofFolder, {
+          limit,
+          offset,
+          sortBy: { column: "name", order: "asc" },
+        });
+        if (error || cancelled) break;
+        if (!items || items.length === 0) break;
 
-          urls.push(...items.map((item) => getPublicUrl(`${proofFolder}/${item.name}`)));
-          if (items.length < limit) break;
-          offset += limit;
-        }
-
-        if (!cancelled) setFolderProofUrls(urls);
-      } catch {
-        // ignore
+        urls.push(...items.map((item) => getPublicUrl(`${proofFolder}/${item.name}`)));
+        if (items.length < limit) break;
+        offset += limit;
       }
-    };
 
-    loadAll();
+      if (!cancelled) setFolderProofUrls(urls);
+    } catch {
+      // ignore
+    } finally {
+      if (!cancelled) setIsRefreshing(false);
+    }
     return () => {
       cancelled = true;
     };
   }, [proofFolder]);
+
+  useEffect(() => {
+    if (!proofFolder) return;
+    refreshFolderProofs();
+  }, [proofFolder, refreshFolderProofs]);
 
   const proofUrls =
     folderProofUrls.length > 0
       ? folderProofUrls
       : Array.isArray(proofPreviewUrls) && proofPreviewUrls.length > 0
       ? proofPreviewUrls
-      : Array.isArray(draft.paymentProofUrls)
-      ? draft.paymentProofUrls
-      : [];
+      : (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
+          .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+          .filter(Boolean);
 
-  const proofLogUrls = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
-    .flatMap((entry) => (Array.isArray(entry.urls) ? entry.urls : []))
+  const proofLogItems = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
+    .flatMap((entry) =>
+      Array.isArray(entry?.urls)
+        ? entry.urls
+            .filter(Boolean)
+            .map((url) => ({ url, note: entry?.note ? String(entry.note).trim() : "" }))
+        : []
+    );
+
+  const proofNoteByUrl = proofLogItems.reduce((acc, item) => {
+    if (!acc[item.url] && item.note) acc[item.url] = item.note;
+    return acc;
+  }, {});
+
+  const orderedUrls = [];
+  const seen = new Set();
+  const pushUrl = (url) => {
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    orderedUrls.push(url);
+  };
+  (proofUrls || []).forEach(pushUrl);
+  proofLogItems.forEach((item) => pushUrl(item.url));
+
+  const pendingNote = draft.pendingPaymentNote && String(draft.pendingPaymentNote).trim();
+  const proofItems = orderedUrls.map((url) => ({
+    url,
+    note: proofNoteByUrl[url] || (pendingNote && (proofUrls || []).includes(url) ? pendingNote : ""),
+  }));
+  const hasProof = proofItems.length > 0;
+  const proofNotes = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
+    .map((entry) => (entry?.note ? String(entry.note).trim() : ""))
     .filter(Boolean);
-
-  const allProofUrls = Array.from(new Set([...(proofUrls || []), ...proofLogUrls]));
-  const hasProof = allProofUrls.length > 0;
+  const latestProofNote = (draft.pendingPaymentNote && String(draft.pendingPaymentNote).trim()) || proofNotes[proofNotes.length - 1] || "";
 
   return (
     <div
@@ -81,44 +121,67 @@ export default function ProofCardSection({
     >
       <div className="flex justify-between items-center mb-6">
         <SectionLabel icon={<ImageIcon size={14} />} label="Proof of Payment" />
-        {hasProof ? (
-          <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-1 rounded-md animate-pulse">RECEIVED</span>
-        ) : (
-          <span className="bg-slate-200 text-slate-500 text-[9px] font-black px-2 py-1 rounded-md">AWAITING</span>
-        )}
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 rounded-full text-[10px] flex items-center justify-center"
+            onClick={refreshFolderProofs}
+            disabled={isRefreshing}
+          >
+            <RefreshCw size={12} className={isRefreshing ? "animate-spin mr-1" : "mr-1"} />
+            {isRefreshing ? "Refreshing" : "Refresh"}
+          </Button>
+          {hasProof ? (
+            <span className="bg-emerald-500 text-white text-[9px] font-black px-2 py-1 rounded-md animate-pulse">RECEIVED</span>
+          ) : (
+            <span className="bg-slate-200 text-slate-500 text-[9px] font-black px-2 py-1 rounded-md">AWAITING</span>
+          )}
+        </div>
       </div>
 
       {hasProof ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            {allProofUrls.map((proofUrl, index) => (
-              <div
-                key={`${proofUrl}-${index}`}
-                className="relative group cursor-pointer overflow-hidden rounded-2xl border border-slate-100"
-              >
-                <img
-                  src={proofUrl}
-                  alt={`Payment receipt ${index + 1}`}
-                  className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
-                  onError={resolveSignedProofUrl}
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button variant="secondary" size="sm" className="rounded-full text-xs" onClick={() => window.open(proofUrl)}>
-                    View Fullscreen <ExternalLink size={12} className="ml-2" />
-                  </Button>
+            {proofItems.map((proof, index) => (
+              <div key={`${proof.url}-${index}`} className="space-y-2">
+                <div className="relative group cursor-pointer overflow-hidden rounded-2xl border border-slate-100">
+                  <img
+                    src={proof.url}
+                    alt={`Payment receipt ${index + 1}`}
+                    className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                    onError={resolveSignedProofUrl}
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button variant="secondary" size="sm" className="rounded-full text-xs" onClick={() => window.open(proof.url)}>
+                      View Fullscreen <ExternalLink size={12} className="ml-2" />
+                    </Button>
+                  </div>
                 </div>
+                {proof.note ? (
+                  <div className="text-[10px] text-slate-600 font-semibold">
+                    {proof.note}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
           <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
             <p className="text-[10px] text-emerald-700 font-bold mb-1">Owner Verification</p>
             <p className="text-[10px] text-emerald-700/80 mb-2">
-              {allProofUrls.length} proof image{allProofUrls.length === 1 ? "" : "s"} uploaded by client.
+              {proofItems.length} proof image{proofItems.length === 1 ? "" : "s"} uploaded by client.
             </p>
             {draft.paymentPendingApproval && Number(draft.pendingDownpayment || 0) > 0 ? (
               <p className="text-[10px] text-emerald-700/80 mb-2">
                 Pending approval: PHP {Number(draft.pendingDownpayment || 0).toLocaleString()} ({draft.pendingPaymentMethod || "Pending"})
               </p>
+            ) : null}
+            {latestProofNote ? (
+              <div className="mt-2 rounded-lg border border-emerald-100 bg-white/70 px-3 py-2">
+                <p className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest mb-1">Client Note</p>
+                <p className="text-[10px] text-emerald-700/90">{latestProofNote}</p>
+              </div>
             ) : null}
             {!draft.paymentPendingApproval ? (
               <div className="flex items-center gap-2 text-xs font-black text-emerald-600 uppercase tracking-tighter">
