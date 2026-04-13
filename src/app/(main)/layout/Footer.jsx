@@ -11,7 +11,7 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-lg font-semibold text-slate-950">Twin Acacia</h3>
             <p className="max-w-xs text-sm leading-6 text-slate-600">
-              Resort browsing, availability checks, and inquiry flow designed to feel clean and ready for launch.
+              Browse resorts, check availability, and send inquiries through a simple and seamless booking experience.
             </p>
           </div>
 
