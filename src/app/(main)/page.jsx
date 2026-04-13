@@ -21,6 +21,7 @@ const ResortSection = dynamic(() => import("./components/resort/ResortSection"),
 export default function Page() {
   return (
     <div className="bg-[linear-gradient(180deg,#f8fbff_0%,#eef4f8_32%,#f8fafc_100%)] text-slate-900">
+      <meta name="google-site-verification" content="HkXf6t9_jc0ayRXuLVQWGumEq05K6yjHwLMNX-MoCKk" />
       <HeroBanner />
       
       <div id="resorts">
