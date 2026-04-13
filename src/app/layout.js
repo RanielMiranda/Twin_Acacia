@@ -7,6 +7,12 @@ import { SupportProvider } from "@/components/useclient/SupportClient";
 import { AccountsProvider } from "@/components/useclient/AccountsClient";
 import { ToastProvider } from "@/components/ui/toast/ToastProvider";
 
+export const metadata = {
+  verification: {
+    google: "HkXf6t9_jc0ayRXuLVQWGumEq05K6yjHwLMNX-MoCKk",
+  },
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
