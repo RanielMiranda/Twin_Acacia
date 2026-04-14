@@ -408,12 +408,23 @@ export default function BookingDetailsPage() {
         if (typeof window === "undefined") return;
         const token = effectiveBookingForm?.ticketAccessToken
           || booking?.bookingForm?.ticketAccessToken
-          || booking?.booking_form?.ticketAccessToken
           || booking?.booking_form?.ticket_access_token
           || "";
         const publicHost = process.env.NEXT_PUBLIC_PUBLIC_HOST?.trim();
         const baseUrl = publicHost || window.location.origin;
         const url = `${baseUrl}/ticket/${booking.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+        window.open(url, "_blank", "noopener,noreferrer");
+      }}
+      onOpenAgentTicket={() => {
+        if (typeof window === "undefined") return;
+        const agentToken = effectiveBookingForm?.agentTicketAccessToken
+          || booking?.bookingForm?.agentTicketAccessToken
+          || booking?.booking_form?.agent_ticket_access_token
+          || "";
+        if (!agentToken) return;
+        const publicHost = process.env.NEXT_PUBLIC_PUBLIC_HOST?.trim();
+        const baseUrl = publicHost || window.location.origin;
+        const url = `${baseUrl}/ticket/${booking.id}?token=${encodeURIComponent(agentToken)}`;
         window.open(url, "_blank", "noopener,noreferrer");
       }}
       onOpenBooking={(targetId) => router.push(`/edit/bookings/${id}/booking-details/${targetId}`)}

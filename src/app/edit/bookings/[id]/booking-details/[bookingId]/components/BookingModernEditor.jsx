@@ -37,6 +37,7 @@ export default function BookingModernEditor({
   onDelete,
   onOpenForm,
   onOpenTicket,
+  onOpenAgentTicket,
   onOpenBooking,
   onOpenCalendar,
   messages,
@@ -459,7 +460,7 @@ export default function BookingModernEditor({
           </button>
 
           <div className="flex flex-wrap gap-2 sm:gap-3 items-center justify-start sm:justify-center">
-            {status === "Approved Inquiry" && (
+            {status !== "Inquiry" && (
               <Button
                 variant="outline"
                 onClick={handleResendApprovalEmail}
@@ -474,6 +475,11 @@ export default function BookingModernEditor({
             <Button variant="outline" onClick={onOpenTicket} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
               <Ticket size={16} className="mr-2" /> Client Ticket
             </Button>
+            {draft.inquirerType === "agent" && onOpenAgentTicket && (
+              <Button variant="outline" onClick={onOpenAgentTicket} className="rounded-full w-full sm:w-auto flex items-center justify-center bg-white shadow-sm border-slate-200 hover:bg-slate-50 font-bold text-xs px-4 sm:px-6">
+                <Ticket size={16} className="mr-2" /> Agent Ticket
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => {
