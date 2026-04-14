@@ -28,6 +28,7 @@ export default function Page() {
   const [adminMessages, setAdminMessages] = useState([]);
   const [bookingsAlertCount, setBookingsAlertCount] = useState(0);
   const [resortData, setResortData] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { activeAccount } = useAccounts();
@@ -272,7 +273,11 @@ export default function Page() {
               }}
               onPreview={() => {
                 if (!resortData?.name) return;
-                router.push(`/resort/${encodeURIComponent(resortData.name)}`);
+                setPreviewLoading(true);
+                const { protocol, hostname, port } = window.location;
+                const baseDomain = hostname.replace(/^portal\./, "");
+                const url = `${protocol}//${baseDomain}${port ? `:${port}` : ""}/resort/${encodeURIComponent(resortData.name)}`;
+                window.location.href = url;
               }}
             />
           </div>
@@ -302,6 +307,14 @@ export default function Page() {
         onSendMessage={handleSendAdminMessage}
       />      
       <Toast />
+      {previewLoading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-4 shadow-xl">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-slate-700 font-medium">Loading resort preview...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

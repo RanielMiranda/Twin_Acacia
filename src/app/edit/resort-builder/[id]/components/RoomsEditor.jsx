@@ -43,7 +43,7 @@ const BlurTextArea = ({ value, onChange, ...props }) => {
 };
 
 // --- Sortable Tag Component ---
-function SortableRoomTag({ id, tag, onRemove, onUpdate }) {
+function SortableRoomTag({ id, tag, index, onRemove, onUpdate }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const [localVal, setLocalVal] = useState(() => tag ?? "");
 
@@ -112,12 +112,17 @@ export default function RoomsEditor() {
 
   const handleTagDragEnd = (event, roomId) => {
     const { active, over } = event;
-    if (active.id !== over?.id) {
-      const room = rooms.find(r => r.id === roomId);
-      const oldIndex = room.tags.indexOf(active.data.current?.tag || room.tags[parseInt(active.id.split('-').pop())]);
-      const newIndex = room.tags.indexOf(over.data.current?.tag || room.tags[parseInt(over.id.split('-').pop())]);
-      handleRoomUpdate(roomId, { tags: arrayMove(room.tags, oldIndex, newIndex) });
-    }
+    if (!over || active.id === over.id) return;
+    
+    const room = rooms.find(r => r.id === roomId);
+    if (!room || !room.tags) return;
+    
+    const oldIndex = parseInt(active.id.split('-').pop());
+    const newIndex = parseInt(over.id.split('-').pop());
+    
+    if (isNaN(oldIndex) || isNaN(newIndex)) return;
+    
+    handleRoomUpdate(roomId, { tags: arrayMove(room.tags, oldIndex, newIndex) });
   };
 
   const handleUpload = (e, roomId) => {
@@ -289,6 +294,7 @@ export default function RoomsEditor() {
                         <SortableRoomTag 
                           key={`tag-${room.id}-${i}`}
                           id={`tag-${room.id}-${i}`}
+                          index={i}
                           tag={tag}
                           onUpdate={(val) => {
                             const newTags = [...room.tags];
