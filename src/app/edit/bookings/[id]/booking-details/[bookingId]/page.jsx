@@ -154,7 +154,7 @@ export default function BookingDetailsPage() {
         { event: "*", schema: "public", table: "bookings", filter: `id=eq.${booking.id}` },
         () => {
           refreshBookingById(booking.id);
-          loadProofData(booking.id, { force: true });
+          loadProofData(booking.id, { force: true, noThrottle: true });
         }
       )
       .on(
@@ -246,9 +246,9 @@ export default function BookingDetailsPage() {
   };
 
   const lastProofFetchAtRef = useRef(0);
-  const loadProofData = async (activeBookingId, { force = false } = {}) => {
+  const loadProofData = async (activeBookingId, { force = false, noThrottle = false } = {}) => {
     const now = Date.now();
-    if (!force && now - lastProofFetchAtRef.current < 30_000) return;
+    if (!force && !noThrottle && now - lastProofFetchAtRef.current < 30_000) return;
     lastProofFetchAtRef.current = now;
     try {
       const { data, error } = await supabase
@@ -457,7 +457,7 @@ export default function BookingDetailsPage() {
       onPaymentProofUpdated={() => {
         if (booking?.id) {
           refreshBookingById(booking.id);
-          loadProofData(booking.id, { force: true });
+          loadProofData(booking.id, { force: true, noThrottle: true });
         }
       }}
       onEditingChange={setIsEditing}

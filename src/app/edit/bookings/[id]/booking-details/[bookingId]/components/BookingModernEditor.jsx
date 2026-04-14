@@ -87,17 +87,19 @@ export default function BookingModernEditor({
   }, [isEditing, onEditingChange]);
 
   useEffect(() => {
-    if (!isEditing && booking?.id) {
-      const freshDraft = buildDraftFromBooking(booking);
-      setDraft(freshDraft);
-      setAssignedRoomIds(booking.roomIds || []);
-      setProofPreviewUrls(
-        (freshDraft.paymentProofLog || [])
-          .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
-          .filter(Boolean)
-      );
-    }
-  }, [booking, isEditing]);
+    if (!booking?.id) return;
+    const freshDraft = buildDraftFromBooking(booking);
+    setDraft((prev) => {
+      if (isEditing) return prev;
+      return freshDraft;
+    });
+    setAssignedRoomIds(booking.roomIds || []);
+    setProofPreviewUrls(
+      (freshDraft.paymentProofLog || [])
+        .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+        .filter(Boolean)
+    );
+  }, [booking]);
 
   const dynamicConflicts = React.useMemo(() => {
     const probe = {
@@ -196,17 +198,24 @@ export default function BookingModernEditor({
       guestCount: draft.guestCount,
       setDraft,
     });
-  }, [draft.adultCount, draft.childrenCount, draft.guestCount]);
-
-  useEffect(() => {
-    if (isEditing) return;
-    const next = loadDraftFromStorage({ booking, inlineDraftKey, isEditing: false });
-    setDraft(next);
-  }, [booking, inlineDraftKey]);
+}, [draft.adultCount, draft.childrenCount, draft.guestCount]);
 
   const proofSource = proofOverrideForm || draft;
   const paymentReviewPending =
     (proofOverrideForm?.paymentPendingApproval ?? draft.paymentPendingApproval) === true;
+
+  useEffect(() => {
+    if (!proofOverrideForm) return;
+    setDraft((prev) => ({
+      ...prev,
+      paymentPendingApproval: proofOverrideForm.paymentPendingApproval ?? prev.paymentPendingApproval,
+      pendingDownpayment: proofOverrideForm.pendingDownpayment ?? prev.pendingDownpayment,
+      pendingPaymentMethod: proofOverrideForm.pendingPaymentMethod ?? prev.pendingPaymentMethod,
+      pendingPaymentNote: proofOverrideForm.pendingPaymentNote ?? prev.pendingPaymentNote,
+      paymentProofLog: proofOverrideForm.paymentProofLog ?? prev.paymentProofLog,
+      paymentSubmittedAt: proofOverrideForm.paymentSubmittedAt ?? prev.paymentSubmittedAt,
+    }));
+  }, [proofOverrideForm]);
 
   useEffect(() => {
     if (!proofOverrideForm || isEditing) return;
