@@ -85,7 +85,7 @@ export default function HeroBanner() {
             Resort stays made simple
           </div>
           <h1 className="mt-6 max-w-2xl text-5xl font-semibold leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
-            Find the right resort for your next stay.
+            Find the right resort for your next stay near Calamba Laguna.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 md:text-lg">
             Explore resort listings with cleaner presentation, clearer availability cues, and a faster path to inquiry.
