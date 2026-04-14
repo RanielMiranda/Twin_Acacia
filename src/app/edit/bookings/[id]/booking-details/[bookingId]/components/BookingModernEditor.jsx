@@ -84,6 +84,20 @@ export default function BookingModernEditor({
   useEffect(() => {
     onEditingChange?.(isEditing);
   }, [isEditing, onEditingChange]);
+
+  useEffect(() => {
+    if (!isEditing && booking?.id) {
+      const freshDraft = buildDraftFromBooking(booking);
+      setDraft(freshDraft);
+      setAssignedRoomIds(booking.roomIds || []);
+      setProofPreviewUrls(
+        (freshDraft.paymentProofLog || [])
+          .flatMap((entry) => (Array.isArray(entry?.urls) ? entry.urls : []))
+          .filter(Boolean)
+      );
+    }
+  }, [booking, isEditing]);
+
   const dynamicConflicts = React.useMemo(() => {
     const probe = {
       id: booking.id,
