@@ -120,8 +120,6 @@ function SetupResortPageContent() {
               onChange={(value) => setForm((prev) => ({ ...prev, confirmPassword: value }))}
             />
 
-            <TermsCheckbox />
-
             <div className="bottom-0 bg-slate-50 pt-4 pb-6 mt-auto">
               <Button
                 disabled={isSubmitting}
@@ -207,17 +205,6 @@ function PasswordField({ label, value, onChange }) {
           placeholder="••••••••"
         />
       </div>
-    </div>
-  );
-}
-
-function TermsCheckbox() {
-  return (
-    <div className="flex items-start gap-3 px-1">
-      <input type="checkbox" required className="mt-1 w-5 h-5 rounded-lg border-slate-200 text-blue-600 focus:ring-blue-500" />
-      <p className="text-sm text-slate-500 font-medium leading-relaxed">
-        I agree to platform terms and account setup policy.
-      </p>
     </div>
   );
 }

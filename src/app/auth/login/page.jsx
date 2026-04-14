@@ -111,7 +111,7 @@ function LoginPageContent() {
                 <input
                   type="email"
                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none focus:bg-white transition-all"
-                  placeholder="admin@twinacacia.com"
+                  placeholder="example@gmail.com"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
