@@ -12,12 +12,6 @@
 - Verify Resend email sending after domain is verified (`RESEND_API`, `RESEND_FROM_EMAIL`).
 - Verify Resend email content for: inquiry approval + account setup invites.
 
-## Booking Automation
-- Configure Supabase cron to call `/api/internal/booking-status` with Authorization header.
-- Confirm cron schedule + automation endpoint works in production.
-- Verify booking status transitions (Confirmed → Ongoing → Pending Checkout).
-- Confirm toast icons appear correctly on Resort Detail, Booking Details, and Booking Console pages.
-
 ## Update Contacts Footer & TopBar 
 - Update contact modal to contact admin email
 - update the contact info

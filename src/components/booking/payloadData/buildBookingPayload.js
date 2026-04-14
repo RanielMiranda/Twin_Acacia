@@ -36,7 +36,7 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
 
   const submittedTotal = Number(submittedData.totalAmount);
   const computedTotal = computeBookingTotalAmount({
-    basePrice: resort?.price,
+    basePrice: resort?.price || 0,
     serviceSnapshots,
   });
 
