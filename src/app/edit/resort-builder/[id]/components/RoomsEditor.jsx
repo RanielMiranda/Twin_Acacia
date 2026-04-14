@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useResort } from "@/components/useclient/ContextEditor";
 
 // --- DND Kit Imports ---
@@ -44,8 +44,15 @@ const BlurTextArea = ({ value, onChange, ...props }) => {
 
 // --- Sortable Tag Component ---
 function SortableRoomTag({ id, tag, index, onRemove, onUpdate }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id,
+    data: { sortable: { index } }
+  });
   const [localVal, setLocalVal] = useState(() => tag ?? "");
+
+  useEffect(() => {
+    setLocalVal(tag ?? "");
+  }, [tag]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -57,6 +64,7 @@ function SortableRoomTag({ id, tag, index, onRemove, onUpdate }) {
     <div
       ref={setNodeRef}
       style={style}
+      data-index={index}
       className={`group relative bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:bg-blue-50 hover:text-blue-700 transition-all border border-transparent ${isDragging ? "shadow-md ring-2 ring-blue-400 opacity-50" : ""}`}
     >
       <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-blue-600">
@@ -70,7 +78,7 @@ function SortableRoomTag({ id, tag, index, onRemove, onUpdate }) {
         onBlur={() => onUpdate(localVal)}
         onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
       />
-      <X size={12} className="cursor-pointer text-slate-400 hover:text-red-500" onClick={onRemove} />
+      <X size={12} className="cursor-pointer text-slate-400 hover:text-red-500" onClick={() => onRemove(index)} />
     </div>
   );
 }
@@ -117,10 +125,11 @@ export default function RoomsEditor() {
     const room = rooms.find(r => r.id === roomId);
     if (!room || !room.tags) return;
     
-    const oldIndex = parseInt(active.id.split('-').pop());
-    const newIndex = parseInt(over.id.split('-').pop());
+    const oldIndex = active.data.current?.sortable?.index ?? parseInt(active.id.split('-').pop());
+    const newIndex = over.data.current?.sortable?.index ?? parseInt(over.id.split('-').pop());
     
-    if (isNaN(oldIndex) || isNaN(newIndex)) return;
+    if (oldIndex === undefined || newIndex === undefined || isNaN(oldIndex) || isNaN(newIndex)) return;
+    if (oldIndex === newIndex) return;
     
     handleRoomUpdate(roomId, { tags: arrayMove(room.tags, oldIndex, newIndex) });
   };
@@ -289,7 +298,10 @@ export default function RoomsEditor() {
                 <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Room Amenities — Drag to Reorder</p>
                 <div className="flex flex-wrap gap-2 items-center">
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleTagDragEnd(e, room.id)}>
-                    <SortableContext items={(room.tags || []).map((_, i) => `tag-${room.id}-${i}`)} strategy={horizontalListSortingStrategy}>
+                    <SortableContext 
+                      items={(room.tags || []).map((_, i) => ({ id: `tag-${room.id}-${i}`, index: i }))} 
+                      strategy={horizontalListSortingStrategy}
+                    >
                       {room.tags?.map((tag, i) => (
                         <SortableRoomTag 
                           key={`tag-${room.id}-${i}`}
@@ -301,7 +313,10 @@ export default function RoomsEditor() {
                             newTags[i] = val;
                             handleRoomUpdate(room.id, { tags: newTags });
                           }}
-                          onRemove={() => handleRoomUpdate(room.id, { tags: room.tags.filter((_, idx) => idx !== i) })}
+                          onRemove={(removeIndex) => {
+                            const newTags = room.tags.filter((_, idx) => idx !== removeIndex);
+                            handleRoomUpdate(room.id, { tags: newTags });
+                          }}
                         />
                       ))}
                     </SortableContext>
