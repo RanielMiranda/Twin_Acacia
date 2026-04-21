@@ -41,6 +41,17 @@ export default function StayCardSection({
   const formatWeekday = (date) =>
     date ? date.toLocaleDateString("default", { weekday: "short" }) : "";
 
+  const formatTime12h = (timeValue) => {
+    if (!timeValue) return "";
+    const [rawHours, rawMinutes] = String(timeValue).split(":");
+    const hours = Number(rawHours);
+    if (!Number.isFinite(hours)) return timeValue;
+    const minutes = rawMinutes ?? "00";
+    const suffix = hours >= 12 ? "pm" : "am";
+    const hour12 = hours % 12 || 12;
+    return `${hour12}:${minutes} ${suffix}`;
+  };
+
   const toIsoDate = (date) => (date ? date.toISOString().slice(0, 10) : "");
   const setCheckInDate = (date) => {
     if (!date) {
@@ -230,8 +241,8 @@ export default function StayCardSection({
         />
         <InfoItem label="Pax" value={draft.guestCount} editing={isEditing} type="number" onChange={(val) => setField("guestCount", Number(val) || 0)} />
         <InfoItem label="Sleeping" value={draft.sleepingGuests || 0} editing={isEditing} type="number" onChange={(val) => setField("sleepingGuests", Number(val) || 0)} />
-        <InfoItem label="Time In" value={draft.checkInTime} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
-        <InfoItem label="Time Out" value={draft.checkOutTime} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
+        <InfoItem label="Time In" value={isEditing ? draft.checkInTime : formatTime12h(draft.checkInTime)} editing={isEditing} type="time" onChange={(val) => setField("checkInTime", val)} />
+        <InfoItem label="Time Out" value={isEditing ? draft.checkOutTime : formatTime12h(draft.checkOutTime)} editing={isEditing} type="time" onChange={(val) => setField("checkOutTime", val)} />
         <InfoItem label="Adults" value={draft.adultCount || 0} editing={isEditing} type="number" onChange={(val) => setField("adultCount", Number(val) || 0)} />
         <InfoItem label="Children" value={draft.childrenCount || 0} editing={isEditing} type="number" onChange={(val) => setField("childrenCount", Number(val) || 0)} />
         <InfoItem label="Approved By" value={approvedByName} />
