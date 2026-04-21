@@ -15,15 +15,18 @@ export async function middleware(request) {
 
   const hostHeader = request.headers.get("host") || "";
   const host = hostHeader.split(":")[0].toLowerCase();
-  const portalHost =
-    (process.env.PORTAL_HOST || "").toLowerCase().trim() ||
-    (host.startsWith("portal.") ? host : "");
-  const isPortalHost =
-    !!portalHost &&
-    (host === portalHost ||
-      host === "portal.localhost" ||
-      host === "portal.127.0.0.1" ||
-      host === "portal.0.0.0.0");
+
+  // Portal subdomain routing is currently disabled.
+  // const portalHost =
+  //   (process.env.PORTAL_HOST || "").toLowerCase().trim() ||
+  //   (host.startsWith("portal.") ? host : "");
+  // const isPortalHost =
+  //   !!portalHost &&
+  //   (host === portalHost ||
+  //     host === "portal.localhost" ||
+  //     host === "portal.127.0.0.1" ||
+  //     host === "portal.0.0.0.0");
+  const isPortalHost = false;
 
   const session = await getSessionFromRequest(request);
   const appAuth = !!session;
@@ -34,14 +37,7 @@ export async function middleware(request) {
   const isAuthRoute = pathname.startsWith("/auth");
   const isLoginPage = pathname === "/auth/login";
 
-  if (isPortalHost) {
-    if (pathname === "/" || (!isAuthRoute && !isAdminRoute && !isOwnerRoute && !isEditRoute)) {
-      return NextResponse.redirect(new URL("/auth/login", request.url));
-    }
-  } else if (isAdminRoute || isOwnerRoute || isEditRoute || isLoginPage) {
-    const redirectTarget = portalHost ? `https://${portalHost}/auth/login` : "/auth/login";
-    return NextResponse.redirect(new URL(redirectTarget, request.url));
-  }
+  // Portal-only redirect behavior is disabled; keep all routes on the same host.
 
   if (isLoginPage && appAuth && ["admin", "owner"].includes(appRole)) {
     const target = appRole === "admin" ? "/admin/dashboard" : "/owner/dashboard";
@@ -50,12 +46,10 @@ export async function middleware(request) {
 
   if (isAdminRoute || isOwnerRoute || isEditRoute) {
     if (!appAuth) {
-      const redirectTarget = isPortalHost ? "/auth/login" : "/";
-      return NextResponse.redirect(new URL(redirectTarget, request.url));
+      return NextResponse.redirect(new URL("/auth/login", request.url));
     }
     if (!["admin", "owner"].includes(appRole)) {
-      const redirectTarget = isPortalHost ? "/auth/login" : "/";
-      return NextResponse.redirect(new URL(redirectTarget, request.url));
+      return NextResponse.redirect(new URL("/auth/login", request.url));
     }
     if (isAdminRoute && appRole === "owner") {
       return NextResponse.redirect(new URL("/owner/dashboard", request.url));
