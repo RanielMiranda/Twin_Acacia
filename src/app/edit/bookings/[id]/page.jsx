@@ -30,6 +30,7 @@ import BookingSummaryCards from "./components/BookingSummaryCards";
 import Toast from "@/components/ui/toast/Toast"
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import ManualBookingModal from "./components/ManualBookingModal";
+import PresetInquiryButton from "./components/PresetInquiryButton";
 export default function BookingManagementPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -276,6 +277,11 @@ export default function BookingManagementPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <PresetInquiryButton
+              resort={currentResort}
+              onCreate={handleCreateBooking}
+              disabled={addingBooking}
+            />
             <Button
               type="button"
               onClick={() => setIsAddBookingOpen(true)}
