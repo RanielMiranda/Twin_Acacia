@@ -14,6 +14,7 @@ export function useTicketActions({
   viewerRole,
   paymentMethod,
   downpayment,
+  requiredDownpaymentRemaining,
   paymentNote,
   proofFiles,
   fetchTicket,
@@ -84,6 +85,9 @@ export function useTicketActions({
 
   const handleSubmitDownpayment = async () => {
     if (!booking) return;
+    const normalizedStatus = String(booking.status || "").toLowerCase();
+    const isInitialDownpaymentStage =
+      normalizedStatus === "approved inquiry" || normalizedStatus === "pending payment";
     if (booking.booking_form?.paymentPendingApproval) {
       toast({
         message: "Your previous payment submission is still waiting for owner approval.",
@@ -93,6 +97,22 @@ export function useTicketActions({
     }
     if (!Array.isArray(proofFiles) || proofFiles.length === 0) {
       toast({ message: "Please attach at least one proof of payment image before submitting.", color: "red" });
+      return;
+    }
+    const normalizedDownpayment = Number(downpayment || 0);
+    if (normalizedDownpayment <= 0) {
+      toast({ message: "Enter a payment amount before submitting.", color: "red" });
+      return;
+    }
+    if (
+      isInitialDownpaymentStage &&
+      Number(requiredDownpaymentRemaining || 0) > 0 &&
+      normalizedDownpayment > Number(requiredDownpaymentRemaining || 0)
+    ) {
+      toast({
+        message: `First payment cannot exceed the required downpayment of PHP ${Number(requiredDownpaymentRemaining || 0).toLocaleString()}.`,
+        color: "amber",
+      });
       return;
     }
     setIsSubmitting(true);
@@ -106,8 +126,9 @@ export function useTicketActions({
       const proofLogEntry = {
         at: new Date().toISOString(),
         action: "submit_payment_proof",
+        label: "Required downpayment submitted",
         paymentMethod,
-        amount: Number(downpayment || 0),
+        amount: normalizedDownpayment,
         folder: nextProofFolder,
         urls: uploadedProofUrls,
         note: paymentNote?.trim() || "",
@@ -116,7 +137,7 @@ export function useTicketActions({
       const bookingForm = {
         ...(booking.booking_form || {}),
         pendingPaymentMethod: paymentMethod,
-        pendingDownpayment: Number(downpayment || 0),
+        pendingDownpayment: normalizedDownpayment,
         pendingPaymentNote: paymentNote?.trim() || "",
         paymentPendingApproval: true,
         paymentVerified: false,
@@ -126,7 +147,6 @@ export function useTicketActions({
         paymentSubmittedAt: new Date().toISOString(),
       };
 
-      const normalizedStatus = String(booking.status || "").toLowerCase();
       const nextStatus =
         normalizedStatus.includes("inquiry") || normalizedStatus === "approved inquiry"
           ? "Pending Payment"

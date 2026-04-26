@@ -1,7 +1,7 @@
 import { CheckCircle2, AlertTriangle, XCircle, Mail } from "lucide-react";
 import { generateConfirmationStub } from "@/lib/bookingFlow";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
-import { getCheckoutMismatchMessage, isCheckoutAmountSettled } from "@/lib/bookingPayments";
+import { getCheckoutMismatchMessage, getRequiredDownpaymentRemaining, isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { PREVIOUS_STATUS } from "../bookingEditorConfig";
 import { notifyCaretakerOnBookingConfirmed } from "@/lib/caretakerNotifications";
 import { deleteSupabasePublicUrls, getStorageFolderFromPublicUrl } from "@/lib/utils";
@@ -37,8 +37,13 @@ export async function handleSetStatusAction({
   const wasConfirmed = String(draft.status || "").toLowerCase().includes("confirm");
   if (nextStatus === "Confirmed") {
     const totalPaid = Number(draft.downpayment || 0) + Number(draft.pendingDownpayment || 0);
-    if (totalPaid <= 0) {
-      window.alert("Cannot confirm: please request and receive a downpayment first.");
+    const requiredRemaining = getRequiredDownpaymentRemaining({
+      requiredAmount: Number(draft.downpaymentRequiredAmount || 0),
+      paidAmount: Number(draft.downpayment || 0),
+      pendingAmount: Number(draft.pendingDownpayment || 0),
+    });
+    if (requiredRemaining > 0 || totalPaid <= 0) {
+      window.alert("Cannot confirm: required downpayment has not been completed yet.");
       return;
     }
   }
@@ -273,6 +278,7 @@ export async function handleVerifyProofAction({
         ? {
             at: draft.paymentSubmittedAt || new Date().toISOString(),
             action: "submit_payment_proof",
+            label: "Required downpayment submitted",
             paymentMethod: draft.pendingPaymentMethod || draft.paymentMethod,
             amount: Number(draft.pendingDownpayment || 0),
             folder: proofFolder,
@@ -284,6 +290,7 @@ export async function handleVerifyProofAction({
     const nextLogEntry = {
       at: new Date().toISOString(),
       action: "payment_verified",
+      label: "Verified Downpayment",
       folder: proofFolder,
       note: draft.pendingPaymentNote || "",
     };
@@ -325,7 +332,7 @@ export async function handleVerifyProofAction({
           method: nextMethod || "Pending",
           amount: approvedAmount,
           balance_after: Math.max(0, totalAmount - nextDownpayment),
-          note: "Payment approved",
+          note: "Verified Downpayment",
         });
       } catch {
         // Non-blocking: transaction logs are best-effort.
@@ -365,6 +372,7 @@ export async function handleDeclineProofAction({
     const nextLogEntry = {
       at: new Date().toISOString(),
       action: "payment_declined",
+      label: "Required downpayment declined",
       folder: proofFolder,
       note: draft.pendingPaymentNote || "",
     };

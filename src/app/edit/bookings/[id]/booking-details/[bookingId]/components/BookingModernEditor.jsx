@@ -29,6 +29,7 @@ import { handleCancelInlineAction, handleSaveInlineAction, loadDraftFromStorage,
 import { handleApproveInquiryAction, handleDeclineAction, handleDeclineProofAction, handleRequestPaymentAction, handleRevertStepAction, handleSetStatusAction, handleVerifyProofAction } from "./functions/statusHandlers";
 import { isRoomConflictingForBooking, resolveApprovedByName } from "./functions/utilHandlers";
 import { isCheckoutAmountSettled } from "@/lib/bookingPayments";
+import { getRequiredDownpaymentRemaining, resolveDownpaymentRequirement } from "@/lib/bookingPayments";
 export default function BookingModernEditor({
   booking,
   resortName,
@@ -64,6 +65,7 @@ export default function BookingModernEditor({
   bankName,
   bankAccountName,
   bankAccountNumber,
+  resortDownpaymentPercentage = 0,
   onPaymentProofUpdated,
   onEditingChange,
   proofOverrideForm,
@@ -269,8 +271,21 @@ export default function BookingModernEditor({
   const hasProof = Array.isArray(proofSource.paymentProofLog)
     ? proofSource.paymentProofLog.some((entry) => Array.isArray(entry?.urls) && entry.urls.length > 0)
     : false;
-  const effectivePaid = Number(draft.downpayment || 0) + (status === "Confirmed" ? Number(draft.pendingDownpayment || 0) : 0);
+  const paidAmount = Number(draft.downpayment || 0);
+  const pendingAmount = Number(draft.pendingDownpayment || 0);
+  const effectivePaid = paidAmount + (status === "Confirmed" ? pendingAmount : 0);
   const balance = Math.max(0, Number(draft.totalAmount || 0) - effectivePaid);
+  const downpaymentRequirement = resolveDownpaymentRequirement({
+    bookingForm: draft,
+    totalAmount: draft.totalAmount,
+    resortDownpaymentPercentage,
+  });
+  const configuredRequiredDownpayment = Number(downpaymentRequirement.requiredAmount || 0);
+  const requiredDownpaymentRemaining = getRequiredDownpaymentRemaining({
+    requiredAmount: configuredRequiredDownpayment,
+    paidAmount,
+    pendingAmount: status === "Confirmed" ? 0 : pendingAmount,
+  });
   const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;
   const hasDeadline = paymentDeadlineDate && !Number.isNaN(paymentDeadlineDate.getTime());
   const isDeadlineExpired = hasDeadline && paymentDeadlineDate.getTime() < renderedAt;
@@ -279,10 +294,25 @@ export default function BookingModernEditor({
   const dbAudits = Array.isArray(statusAudits) ? statusAudits : [];
   const approvedByName = resolveApprovedByName({ bookingFormAudits, dbAudits });
 
-  const setField = (field, value) => setDraft((prev) => ({ ...prev, [field]: value }));
+  const setField = (field, value) =>
+    setDraft((prev) => ({ ...prev, [field]: value }));
+
+  const setDownpaymentRequirement = (value) =>
+    setDraft((prev) => ({
+      ...prev,
+      downpaymentRequiredAmount: value,
+      downpaymentRequirementSource: "manual_override",
+    }));
 
   const persist = async (nextDraft) => {
-    const payload = buildPersistPayload({ booking, nextDraft, assignedRoomIds, resortRooms, actorMeta });
+    const payload = buildPersistPayload({
+      booking,
+      nextDraft,
+      assignedRoomIds,
+      resortRooms,
+      resortDownpaymentPercentage,
+      actorMeta,
+    });
     await Promise.resolve(onSave(payload));
   };
 
@@ -569,7 +599,10 @@ export default function BookingModernEditor({
               isEditing={isEditing}
               draft={draft}
               setField={setField}
+              setDownpaymentRequirement={setDownpaymentRequirement}
               balance={balance}
+              configuredRequiredDownpayment={configuredRequiredDownpayment}
+              displayedRequiredDownpayment={requiredDownpaymentRemaining}
               status={status}
               statusPhases={STATUS_PHASES}
               paymentChannels={PAYMENT_CHANNELS}

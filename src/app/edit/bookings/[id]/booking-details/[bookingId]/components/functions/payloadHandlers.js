@@ -1,3 +1,5 @@
+import { resolveDownpaymentRequirement } from "@/lib/bookingPayments";
+
 export function buildStatusAudit({
   booking,
   nextDraft,
@@ -46,6 +48,7 @@ export function buildPersistPayload({
   nextDraft,
   assignedRoomIds,
   resortRooms,
+  resortDownpaymentPercentage = 0,
   actorMeta,
 }) {
   const selectedRoomNames = (resortRooms || [])
@@ -83,6 +86,11 @@ export function buildPersistPayload({
     email: inquirerEmail,
     phoneNumber: inquirerPhone,
   };
+  const downpaymentRequirement = resolveDownpaymentRequirement({
+    bookingForm: sanitizedDraft,
+    totalAmount: sanitizedDraft.totalAmount,
+    resortDownpaymentPercentage,
+  });
 
   return {
     ...booking,
@@ -111,6 +119,8 @@ export function buildPersistPayload({
     bookingForm: {
       ...(booking.bookingForm || {}),
       ...sanitizedDraft,
+      downpaymentRequiredAmount: downpaymentRequirement.requiredAmount,
+      downpaymentRequirementSource: downpaymentRequirement.source,
       checkInDate: normalizedCheckInDate,
       checkOutDate: normalizedCheckOutDate,
       roomCount: assignedRoomIds.length || nextDraft.roomCount || booking.roomIds?.length || 1,

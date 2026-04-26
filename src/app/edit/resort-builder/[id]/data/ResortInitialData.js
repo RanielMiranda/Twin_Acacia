@@ -25,6 +25,7 @@ const resortInitialData = {
         forAsLowAs: 0,
         customOfferLabel: "",
         customOfferPrice: 0,
+        downpaymentPercentage: 20,
       },
     },
     theme: {

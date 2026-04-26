@@ -454,6 +454,7 @@ export default function BookingDetailsPage() {
       bankName={currentResort?.bank_name}
       bankAccountName={currentResort?.bank_account_name}
       bankAccountNumber={currentResort?.bank_account_number}
+      resortDownpaymentPercentage={currentResort?.description?.meta?.pricing?.downpaymentPercentage || 0}
       onPaymentProofUpdated={() => {
         if (booking?.id) {
           refreshBookingById(booking.id);

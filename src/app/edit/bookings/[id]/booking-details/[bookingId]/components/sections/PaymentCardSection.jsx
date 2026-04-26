@@ -5,7 +5,10 @@ export default function PaymentCardSection({
   isEditing,
   draft,
   setField,
+  setDownpaymentRequirement,
   balance,
+  configuredRequiredDownpayment,
+  displayedRequiredDownpayment,
   statusPhases,
   paymentChannels,
   status,
@@ -23,11 +26,25 @@ export default function PaymentCardSection({
       </div>
       <div className="space-y-3 pt-4 border-t border-white/10 text-sm">
         <div className="flex justify-between items-center gap-2">
-          <span className="text-slate-400">Total Paid Balance</span>
+          <span className="text-slate-400">Already Paid</span>
           {isEditing ? (
             <input type="number" min="0" className="bg-transparent border-b border-white/20 outline-none text-right font-bold" value={draft.downpayment || 0} onChange={(e) => setField("downpayment", Number(e.target.value) || 0)} />
           ) : (
             <span className="font-bold">PHP {Number(draft.downpayment || 0).toLocaleString()}</span>
+          )}
+        </div>
+        <div className="flex justify-between items-center gap-2">
+          <span className="text-emerald-300">Downpayment Required</span>
+          {isEditing ? (
+            <input
+              type="number"
+              min="0"
+              className="bg-transparent border-b border-emerald-300/40 outline-none text-right font-bold text-emerald-300"
+              value={draft.downpaymentRequiredAmount ?? configuredRequiredDownpayment ?? 0}
+              onChange={(e) => setDownpaymentRequirement(Number(e.target.value) || 0)}
+            />
+          ) : (
+            <span className="font-bold text-emerald-300">PHP {Number(displayedRequiredDownpayment || 0).toLocaleString()}</span>
           )}
         </div>
         {status !== "Confirmed" && draft.paymentPendingApproval && Number(draft.pendingDownpayment || 0) > 0 ? (

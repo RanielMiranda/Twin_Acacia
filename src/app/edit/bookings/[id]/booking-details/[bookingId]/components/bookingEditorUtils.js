@@ -1,3 +1,5 @@
+import { resolveDownpaymentRequirement } from "@/lib/bookingPayments";
+
 export function buildDraftFromBooking(booking) {
   const form = booking.bookingForm || {};
   const adults = Number(booking.adultCount ?? form.adultCount ?? 0);
@@ -10,6 +12,11 @@ export function buildDraftFromBooking(booking) {
     booking.roomCount ?? form.roomCount ?? booking.roomIds?.length ?? 1
   );
   const totalAmount = Number(booking.totalAmount ?? form.totalAmount ?? 0);
+  const downpaymentRequirement = resolveDownpaymentRequirement({
+    bookingForm: form,
+    totalAmount,
+    resortDownpaymentPercentage: 0,
+  });
   const paymentVerified = !!form.paymentVerified;
   const paymentPendingApproval = !!form.paymentPendingApproval && !paymentVerified;
   const pendingDownpayment = paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
@@ -72,6 +79,8 @@ export function buildDraftFromBooking(booking) {
     checkOutTime: form.checkOutTime || booking.checkOutTime || "17:00",
     paymentMethod: form.paymentMethod || "Pending",
     downpayment: Number(form.downpayment || 0),
+    downpaymentRequiredAmount: downpaymentRequirement.requiredAmount,
+    downpaymentRequirementSource: downpaymentRequirement.source,
     pendingDownpayment,
     pendingPaymentMethod,
     pendingPaymentNote,

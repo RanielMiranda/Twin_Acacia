@@ -151,6 +151,9 @@ export default function ProfileEditor() {
               <div className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
                 Average rate: ₱{Number(resort.price || 0).toLocaleString()}
               </div>
+              <div className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700">
+                Default downpayment: {Number(pricingMeta.downpaymentPercentage || 0)}%
+              </div>
             </div>
 
             <input
@@ -265,6 +268,17 @@ export default function ProfileEditor() {
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
                   value={Number(pricingMeta.customOfferPrice || 0)}
                   onChange={(e) => setPricingMeta("customOfferPrice", Number(e.target.value) || 0)}
+                />
+              </label>
+              <label className="block text-xs font-semibold text-slate-500">
+                Default Downpayment Requirement (%)
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                  value={Number(pricingMeta.downpaymentPercentage || 0)}
+                  onChange={(e) => setPricingMeta("downpaymentPercentage", Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
                 />
               </label>
             </div>

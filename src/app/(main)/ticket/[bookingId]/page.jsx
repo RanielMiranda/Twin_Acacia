@@ -16,6 +16,7 @@ import { TicketLoadingSkeleton } from "./ticket-page/TicketLoadingSkeleton";
 import { useTicketData } from "./ticket-page/useTicketData";
 import { useTicketActions } from "./ticket-page/useTicketActions";
 import { useTicketImageActions } from "./ticket-page/useTicketImageActions";
+import { computeRequiredDownpayment, getRequiredDownpaymentRemaining } from "@/lib/bookingPayments";
 
 const TicketPaymentCardSection = dynamic(
   () => import("./components").then((mod) => mod.TicketPaymentCardSection),
@@ -91,9 +92,36 @@ export default function ClientTicketPage() {
     };
   }, [booking]);
   const paymentMethod = paymentDraft.method ?? (form.paymentMethod === "Bank" ? "Bank" : DEFAULT_PAYMENT_METHOD);
-  const downpayment = paymentDraft.downpayment ?? Number(form.downpayment || 0);
+  const paid = Number(form.downpayment || 0);
+  const pendingPaid = form.paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
+  const normalizedStatus = String(booking?.status || "").toLowerCase();
+  const isInitialDownpaymentStage =
+    normalizedStatus === "approved inquiry" || normalizedStatus === "pending payment";
+  const requiredDownpayment = Number(
+    form.downpaymentRequiredAmount ||
+      computeRequiredDownpayment({
+        totalAmount: Number(form.totalAmount || 0),
+        percentage: Number(resort?.description?.meta?.pricing?.downpaymentPercentage || 0),
+      })
+  );
+  const requiredDownpaymentRemaining = getRequiredDownpaymentRemaining({
+    requiredAmount: requiredDownpayment,
+    paidAmount: paid,
+    pendingAmount: pendingPaid,
+  });
+  const downpayment =
+    paymentDraft.downpayment ??
+    (isInitialDownpaymentStage && requiredDownpaymentRemaining > 0
+      ? requiredDownpaymentRemaining
+      : Math.max(0, Number(form.totalAmount || 0) - paid - pendingPaid));
   const setPaymentMethod = (method) => setPaymentDraft((prev) => ({ ...prev, method }));
   const setDownpayment = (value) => setPaymentDraft((prev) => ({ ...prev, downpayment: value }));
+  React.useEffect(() => {
+    setPaymentDraft((prev) => {
+      if (prev.downpayment != null) return prev;
+      return { ...prev, downpayment };
+    });
+  }, [downpayment]);
 
   const {
     isSubmitting,
@@ -112,6 +140,7 @@ export default function ClientTicketPage() {
     viewerRole,
     paymentMethod,
     downpayment,
+    requiredDownpaymentRemaining,
     paymentNote,
     proofFiles,
     fetchTicket,
@@ -138,8 +167,6 @@ export default function ClientTicketPage() {
   if (!booking) return <div className="p-10 text-center text-slate-500">Ticket not found.</div>;
 
   const totalAmount = Number(form.totalAmount || 0);
-  const paid = Number(form.downpayment || 0);
-  const pendingPaid = form.paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
   const effectivePaid = paid + pendingPaid;
   const balance = Math.max(0, totalAmount - effectivePaid);
   const proofLogItems = Array.isArray(form.paymentProofLog)
@@ -220,6 +247,8 @@ export default function ClientTicketPage() {
         pendingPaid={pendingPaid}
         paymentPendingApproval={!!form.paymentPendingApproval}
         balance={balance}
+        requiredDownpayment={requiredDownpaymentRemaining}
+        requiredDownpaymentRemaining={requiredDownpaymentRemaining}
         paymentMethod={paymentMethod}
         setPaymentMethod={setPaymentMethod}
         downpayment={downpayment}

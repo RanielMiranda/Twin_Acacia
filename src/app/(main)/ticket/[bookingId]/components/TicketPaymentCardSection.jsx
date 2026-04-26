@@ -12,6 +12,8 @@ const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
   pendingPaid = 0,
   paymentPendingApproval = false,
   balance,
+  requiredDownpayment = 0,
+  requiredDownpaymentRemaining = 0,
   paymentMethod,
   setPaymentMethod,
   downpayment,
@@ -176,6 +178,7 @@ const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
               <input
                 className="w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
                 type="number"
+                max={requiredDownpaymentRemaining > 0 ? Number(requiredDownpaymentRemaining) : undefined}
                 value={downpayment}
                 onChange={(e) => setDownpayment(Number(e.target.value))}
                 disabled={locked}
@@ -266,6 +269,10 @@ const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
               <div className="flex justify-between text-xs">
                 <span className="text-slate-400">Already Paid</span>
                 <span className="font-bold">₱{Number(paid || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-emerald-400">Downpayment Required</span>
+                <span className="font-bold text-emerald-300">₱{Number(requiredDownpayment || 0).toLocaleString()}</span>
               </div>
               {paymentPendingApproval && Number(pendingPaid || 0) > 0 && (
                 <div className="flex justify-between text-xs">

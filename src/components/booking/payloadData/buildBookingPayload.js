@@ -1,4 +1,5 @@
 import { buildServiceSnapshots, computeBookingTotalAmount } from "@/lib/utils";
+import { resolveDownpaymentRequirement } from "@/lib/bookingPayments";
 
 export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) {
   const selectedServiceKeys = Array.isArray(submittedData.selectedServices)
@@ -39,6 +40,13 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
     basePrice: resort?.price || 0,
     serviceSnapshots,
   });
+  const totalAmount =
+    Number.isFinite(submittedTotal) && submittedTotal > 0 ? submittedTotal : computedTotal;
+  const downpaymentRequirement = resolveDownpaymentRequirement({
+    bookingForm: submittedData,
+    totalAmount,
+    resortDownpaymentPercentage: resort?.description?.meta?.pricing?.downpaymentPercentage || 0,
+  });
 
   const bookingForm = {
     inquirerType,
@@ -73,7 +81,9 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
     status: submittedData.status || "Inquiry",
     paymentMethod: submittedData.paymentMethod || "Pending",
     downpayment: Number(submittedData.downpayment || 0),
-    totalAmount: Number.isFinite(submittedTotal) && submittedTotal > 0 ? submittedTotal : computedTotal,
+    totalAmount,
+    downpaymentRequiredAmount: downpaymentRequirement.requiredAmount,
+    downpaymentRequirementSource: downpaymentRequirement.source,
     resortServices: serviceSnapshots,
   };
 
