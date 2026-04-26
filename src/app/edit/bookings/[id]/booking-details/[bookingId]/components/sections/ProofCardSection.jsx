@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Image as ImageIcon, ExternalLink, CheckCircle, RefreshCw } from "lucide-react";
+import { Image as ImageIcon, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "../BookingEditorAtoms";
 import { supabase } from "@/lib/supabase";
@@ -112,26 +112,6 @@ export default function ProofCardSection({
     .map((entry) => (entry?.note ? String(entry.note).trim() : ""))
     .filter(Boolean);
   const latestProofNote = (draft.pendingPaymentNote && String(draft.pendingPaymentNote).trim()) || proofNotes[proofNotes.length - 1] || "";
-  const paymentActivity = (Array.isArray(draft.paymentProofLog) ? draft.paymentProofLog : [])
-    .map((entry) => {
-      const label =
-        entry?.label ||
-        (entry?.action === "submit_payment_proof"
-          ? "Required downpayment submitted"
-          : entry?.action === "payment_verified"
-            ? "Verified Downpayment"
-            : entry?.action === "payment_declined"
-              ? "Required downpayment declined"
-              : "");
-      if (!label) return null;
-      return {
-        label,
-        at: entry?.at,
-      };
-    })
-    .filter(Boolean)
-    .slice()
-    .reverse();
 
   return (
     <div
@@ -201,21 +181,6 @@ export default function ProofCardSection({
               <div className="mt-2 rounded-lg border border-emerald-100 bg-white/70 px-3 py-2">
                 <p className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest mb-1">Client Note</p>
                 <p className="text-[10px] text-emerald-700/90">{latestProofNote}</p>
-              </div>
-            ) : null}
-            {!draft.paymentPendingApproval ? (
-              <div className="flex items-center gap-2 text-xs font-black text-emerald-600 uppercase tracking-tighter">
-                <CheckCircle size={14} />
-                Payment Accepted
-              </div>
-            ) : null}
-            {paymentActivity.length > 0 ? (
-              <div className="mt-3 space-y-1">
-                {paymentActivity.map((entry, index) => (
-                  <p key={`${entry.label}-${entry.at || index}`} className="text-[10px] text-emerald-700/80">
-                    {entry.label}{entry.at ? ` - ${new Date(entry.at).toLocaleString()}` : ""}
-                  </p>
-                ))}
               </div>
             ) : null}
           </div>

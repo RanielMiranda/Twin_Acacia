@@ -393,6 +393,7 @@ export async function handleDeclineProofAction({
       paymentSubmittedAt: null,
       paymentVerified: false,
       paymentVerifiedAt: null,
+      paymentProofFolder: null,
       paymentProofLog: [...cleanedLog, nextLogEntry],
     };
     setDraft(next);

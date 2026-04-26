@@ -13,18 +13,20 @@ export function SectionLabel({ icon, label }) {
 }
 
 export function InfoItem({ label, value, editing = false, onChange, type = "text" }) {
+  const displayValue = value === 0 ? "0" : value || "-";
+  const inputValue = value === 0 ? "0" : value || "";
   return (
     <div>
       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
       {editing ? (
         <input
           type={type}
-          value={value || ""}
+          value={inputValue}
           onChange={(e) => onChange?.(e.target.value)}
           className="text-sm font-bold text-slate-900 border-b border-slate-200 outline-none w-full"
         />
       ) : (
-        <p className="text-sm font-bold text-slate-900 truncate">{value || "-"}</p>
+        <p className="text-sm font-bold text-slate-900 truncate">{displayValue}</p>
       )}
     </div>
   );
