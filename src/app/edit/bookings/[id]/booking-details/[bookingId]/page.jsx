@@ -42,7 +42,12 @@ export default function BookingDetailsPage() {
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [realtimeAvailable, setRealtimeAvailable] = useState(false);
+  const isEditingRef = useRef(false);
   const lastOwnerReplySentAtRef = useRef(0);
+
+  useEffect(() => {
+    isEditingRef.current = isEditing;
+  }, [isEditing]);
 
   const hashString = (value) => {
     let hash = 0;
@@ -136,23 +141,30 @@ export default function BookingDetailsPage() {
   }, [booking?.id]);
 
   useEffect(() => {
-    if (!booking?.id) return;
+    if (!booking?.id || isEditing) return;
     const channel = supabase
       .channel(`booking-live-${booking.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "ticket_messages", filter: `booking_id=eq.${booking.id}` },
-        () => loadSupportData(booking.id)
+        () => {
+          if (isEditingRef.current) return;
+          loadSupportData(booking.id);
+        }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "ticket_issues", filter: `booking_id=eq.${booking.id}` },
-        () => loadSupportData(booking.id)
+        () => {
+          if (isEditingRef.current) return;
+          loadSupportData(booking.id);
+        }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "bookings", filter: `id=eq.${booking.id}` },
         () => {
+          if (isEditingRef.current) return;
           refreshBookingById(booking.id);
           loadProofData(booking.id, { force: true, noThrottle: true });
         }
@@ -160,12 +172,18 @@ export default function BookingDetailsPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "booking_status_audit", filter: `booking_id=eq.${booking.id}` },
-        () => loadStatusAudits(booking.id)
+        () => {
+          if (isEditingRef.current) return;
+          loadStatusAudits(booking.id);
+        }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "booking_transactions", filter: `booking_id=eq.${booking.id}` },
-        () => loadStatusAudits(booking.id)
+        () => {
+          if (isEditingRef.current) return;
+          loadStatusAudits(booking.id);
+        }
       )
       .subscribe((status) => {
         setRealtimeAvailable(status === "SUBSCRIBED");
@@ -174,7 +192,7 @@ export default function BookingDetailsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [booking?.id]);
+  }, [booking?.id, isEditing]);
 
   useEffect(() => {
     if (!booking?.id || isEditing || realtimeAvailable) return undefined;
@@ -397,7 +415,11 @@ export default function BookingDetailsPage() {
       booking={{ ...booking, bookingForm: effectiveBookingForm }}
       resortName={currentResort?.name}
       onBack={() => router.push(`/edit/bookings/${id}`)}
-      onSave={(next) => updateBookingById(booking.id, next)}
+      onSave={async (next) => {
+        await updateBookingById(booking.id, next);
+        await refreshBookingById(booking.id);
+        router.refresh();
+      }}
       onDelete={cancelBookingWithConfirmation}
       onOpenForm={() => {
         if (typeof window === "undefined") return;

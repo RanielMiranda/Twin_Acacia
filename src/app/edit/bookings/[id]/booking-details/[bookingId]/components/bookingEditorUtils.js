@@ -1,4 +1,5 @@
 import { resolveDownpaymentRequirement } from "@/lib/bookingPayments";
+import { buildServiceSnapshots, resolveBookingBaseAmount } from "@/lib/utils";
 
 export function buildDraftFromBooking(booking) {
   const form = booking.bookingForm || {};
@@ -12,6 +13,14 @@ export function buildDraftFromBooking(booking) {
     booking.roomCount ?? form.roomCount ?? booking.roomIds?.length ?? 1
   );
   const totalAmount = Number(booking.totalAmount ?? form.totalAmount ?? 0);
+  const serviceSnapshots = buildServiceSnapshots(
+    Array.isArray(form.resortServices)
+      ? form.resortServices
+      : Array.isArray(booking.resortServiceIds)
+        ? booking.resortServiceIds
+        : [],
+    []
+  );
   const downpaymentRequirement = resolveDownpaymentRequirement({
     bookingForm: form,
     totalAmount,
@@ -79,6 +88,11 @@ export function buildDraftFromBooking(booking) {
     checkOutTime: form.checkOutTime || booking.checkOutTime || "17:00",
     paymentMethod: form.paymentMethod || "Pending",
     downpayment: Number(form.downpayment || 0),
+    baseAmount: resolveBookingBaseAmount({
+      bookingForm: form,
+      resortPrice: booking.totalAmount ?? 0,
+      serviceSnapshots,
+    }),
     downpaymentRequiredAmount: downpaymentRequirement.requiredAmount,
     downpaymentRequirementSource: downpaymentRequirement.source,
     pendingDownpayment,
@@ -92,15 +106,10 @@ export function buildDraftFromBooking(booking) {
     paymentVerified,
     paymentVerifiedAt: form.paymentVerifiedAt || null,
     confirmationStub: form.confirmationStub || null,
-    resortServices: Array.isArray(booking.resortServiceIds)
-      ? booking.resortServiceIds.filter(Boolean)
-      : Array.isArray(form.resortServices)
-        ? form.resortServices
-            .map((entry) => {
-              if (entry && typeof entry === "object") return entry.id || entry.name || "";
-              return entry || "";
-            })
-            .filter(Boolean)
+    resortServices: Array.isArray(form.resortServices)
+      ? form.resortServices.filter(Boolean)
+      : Array.isArray(booking.resortServiceIds)
+        ? booking.resortServiceIds.filter(Boolean)
         : [],
   };
 }

@@ -2,13 +2,13 @@ import { buildServiceSnapshots, computeBookingTotalAmount } from "@/lib/utils";
 import { resolveDownpaymentRequirement } from "@/lib/bookingPayments";
 
 export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) {
-  const selectedServiceKeys = Array.isArray(submittedData.selectedServices)
-    ? submittedData.selectedServices
-        .map((item) => (item && typeof item === "object" ? item.id || item.name : item))
-        .filter(Boolean)
+  const selectedServices = Array.isArray(submittedData.selectedServices)
+    ? submittedData.selectedServices.filter(Boolean)
     : [];
-
-  const serviceSnapshots = buildServiceSnapshots(selectedServiceKeys, resort.extraServices || []);
+  const selectedServiceKeys = selectedServices
+    .map((item) => (item && typeof item === "object" ? item.id || item.name : item))
+    .filter(Boolean);
+  const serviceSnapshots = buildServiceSnapshots(selectedServices, resort.extraServices || []);
 
   const selectedRoomIds = Array.isArray(submittedData.selectedRoomIds)
     ? submittedData.selectedRoomIds.map((id) => String(id)).filter(Boolean)
@@ -36,10 +36,8 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
   const isAgent = inquirerType === "agent";
 
   const submittedTotal = Number(submittedData.totalAmount);
-  const computedTotal = computeBookingTotalAmount({
-    basePrice: resort?.price || 0,
-    serviceSnapshots,
-  });
+  const baseAmount = Number(resort?.price || 0);
+  const computedTotal = computeBookingTotalAmount({ basePrice: baseAmount, serviceSnapshots });
   const totalAmount =
     Number.isFinite(submittedTotal) && submittedTotal > 0 ? submittedTotal : computedTotal;
   const downpaymentRequirement = resolveDownpaymentRequirement({
@@ -81,6 +79,7 @@ export function normalizeBookingSubmission({ resort = {}, submittedData = {} }) 
     status: submittedData.status || "Inquiry",
     paymentMethod: submittedData.paymentMethod || "Pending",
     downpayment: Number(submittedData.downpayment || 0),
+    baseAmount,
     totalAmount,
     downpaymentRequiredAmount: downpaymentRequirement.requiredAmount,
     downpaymentRequirementSource: downpaymentRequirement.source,

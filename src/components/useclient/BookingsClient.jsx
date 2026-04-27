@@ -122,7 +122,7 @@ function toRow(booking, resortId) {
     pax: _discardPax,
     sleepingGuests: _discardSleepingGuests,
     roomCount: _discardRoomCount,
-    resortServices: _discardResortServices,
+    resortServices: _preserveResortServices,
     inquirerType: _discardInquirerType,
     status: _discardStatus,
     checkInDate: _discardCheckInDate,
@@ -172,6 +172,7 @@ function toRow(booking, resortId) {
     booking_form: {
       ...formWithoutDuplicates,
       inquirerType: form.inquirerType || booking.inquirerType || "client",
+      resortServices: Array.isArray(form.resortServices) ? form.resortServices.filter(Boolean) : [],
     },
   };
 }

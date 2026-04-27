@@ -30,6 +30,7 @@ import { handleApproveInquiryAction, handleDeclineAction, handleDeclineProofActi
 import { isRoomConflictingForBooking, resolveApprovedByName } from "./functions/utilHandlers";
 import { isCheckoutAmountSettled } from "@/lib/bookingPayments";
 import { getRequiredDownpaymentRemaining, resolveDownpaymentRequirement } from "@/lib/bookingPayments";
+import { computeSelectedServicesTotal } from "@/lib/utils";
 export default function BookingModernEditor({
   booking,
   resortName,
@@ -287,6 +288,8 @@ export default function BookingModernEditor({
     pendingAmount: status === "Confirmed" ? 0 : pendingAmount,
   });
   const paymentDeadlineDate = draft.paymentDeadline ? new Date(draft.paymentDeadline) : null;
+  const serviceCosts = computeSelectedServicesTotal(Array.isArray(draft.resortServices) ? draft.resortServices : []);
+  const totalRate = Math.max(0, Number(draft.baseAmount || 0));
   const hasDeadline = paymentDeadlineDate && !Number.isNaN(paymentDeadlineDate.getTime());
   const isDeadlineExpired = hasDeadline && paymentDeadlineDate.getTime() < renderedAt;
   const showDecisionActions = ["inquiry", "approved inquiry", "pending payment", "pending checkout", "declined"].includes(normalizedStatus);
@@ -554,6 +557,7 @@ export default function BookingModernEditor({
               draft={draft}
               setField={setField}
               status={status}
+              statusPhases={STATUS_PHASES}
             />
 
             <div>
@@ -601,6 +605,8 @@ export default function BookingModernEditor({
               setField={setField}
               setDownpaymentRequirement={setDownpaymentRequirement}
               balance={balance}
+              totalRate={totalRate}
+              serviceCosts={serviceCosts}
               configuredRequiredDownpayment={configuredRequiredDownpayment}
               displayedRequiredDownpayment={requiredDownpaymentRemaining}
               status={status}

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { buildServiceSnapshot, getServiceKey } from "@/lib/utils";
+import React from "react";
+import { buildServiceSnapshot, computeServiceCost, formatServiceScheduleLabel, getServiceKey, normalizeServicePricingType } from "@/lib/utils";
 
 export default function BookingConfirmation({
   data,
@@ -33,12 +33,7 @@ export default function BookingConfirmation({
           if (typeof entry === "object") {
             const key = getServiceKey(entry);
             if (!key) return null;
-            const snapshot = buildServiceSnapshot(key, resortExtraServices);
-            return {
-              id: key,
-              name: entry.name || snapshot.name,
-              cost: Number(entry.cost ?? entry.price ?? snapshot.cost ?? 0),
-            };
+            return buildServiceSnapshot(entry, resortExtraServices);
           }
           return buildServiceSnapshot(entry, resortExtraServices);
         })
@@ -189,8 +184,13 @@ export default function BookingConfirmation({
                   {(selectedServices || []).length > 0 ? (
                     selectedServices.map((service, index) => (
                       <div key={`${service?.name || "service"}-${index}`} className="flex items-center justify-between">
-                        <span>{service?.name || "Service"}</span>
-                        <span className="font-bold">PHP {Number(service?.cost || 0).toLocaleString()}</span>
+                        <div>
+                          <span>{service?.name || "Service"}</span>
+                          {normalizeServicePricingType(service) === "hourly" ? (
+                            <p className="text-[11px] text-slate-500">{formatServiceScheduleLabel(service) || "Schedule not set"}</p>
+                          ) : null}
+                        </div>
+                        <span className="font-bold">PHP {Number(computeServiceCost(service) || 0).toLocaleString()}</span>
                       </div>
                     ))
                   ) : (

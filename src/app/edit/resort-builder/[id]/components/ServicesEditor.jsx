@@ -24,9 +24,10 @@ const withServiceIds = (services = []) =>
   services.map((service, index) => ({
     ...service,
     id: service.id || `service-${index}`,
+    pricingType: service.pricingType === "hourly" ? "hourly" : "flat",
+    cost: Number(service.cost || 0),
+    hourlyRate: Number(service.hourlyRate || 0),
   }));
-
-/* ---------------- SORTABLE ROW ---------------- */
 
 function SortableRow({
   service,
@@ -48,69 +49,76 @@ function SortableRow({
     transition,
   };
 
+  const isHourly = service.pricingType === "hourly";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="grid grid-cols-12 px-6 py-4 border-t border-slate-100 hover:bg-blue-50/40 transition group items-center bg-white"
+      className="grid grid-cols-12 items-center border-t border-slate-100 bg-white px-6 py-4 transition group hover:bg-blue-50/40"
     >
-      {/* Drag Handle */}
       <div
         {...listeners}
-        className="col-span-1 cursor-grab active:cursor-grabbing text-slate-400 select-none"
+        className="col-span-1 cursor-grab select-none text-slate-400 active:cursor-grabbing"
       >
-        ☰
+        ::
       </div>
 
-      {/* Service Name */}
       <div className="col-span-2">
         <input
-          className="w-full font-semibold bg-transparent border-none p-0 focus:ring-0 focus:text-blue-600"
+          className="w-full border-none bg-transparent p-0 font-semibold focus:ring-0 focus:text-blue-600"
           value={service.name}
-          onChange={(e) =>
-            updateServiceLocal(index, "name", e.target.value)
-          }
+          onChange={(e) => updateServiceLocal(index, "name", e.target.value)}
           onBlur={commitService}
         />
       </div>
 
-      {/* Description */}
       <div className="col-span-6">
         <input
-          className="w-full text-sm text-slate-500 bg-transparent border-none p-0 focus:ring-0"
+          className="w-full border-none bg-transparent p-0 text-sm text-slate-500 focus:ring-0"
           value={service.description}
-          onChange={(e) =>
-            updateServiceLocal(index, "description", e.target.value)
-          }
+          onChange={(e) => updateServiceLocal(index, "description", e.target.value)}
           onBlur={commitService}
           placeholder="Description..."
         />
       </div>
 
-      {/* Price */}
-      <div className="col-span-2 text-right flex justify-end items-center font-bold text-blue-600">
-        <span className="mr-1">₱</span>
-        <input
-          type="number"
-          className="w-20 text-right bg-transparent border-none p-0 focus:ring-0"
-          value={service.cost}
-          onChange={(e) =>
-            updateServiceLocal(
-              index,
-              "cost",
-              parseInt(e.target.value) || 0
-            )
-          }
-          onBlur={commitService}
-        />
+      <div className="col-span-3 flex flex-col items-end gap-1 text-right font-bold text-blue-600">
+        <div className="flex items-center justify-end gap-2">
+          <span className="mr-1 text-xs font-bold text-slate-400">PHP</span>
+          <input
+            type="number"
+            className="w-20 border-none bg-transparent p-0 text-right focus:ring-0"
+            value={isHourly ? service.hourlyRate : service.cost}
+            onChange={(e) =>
+              updateServiceLocal(
+                index,
+                isHourly ? "hourlyRate" : "cost",
+                parseInt(e.target.value, 10) || 0
+              )
+            }
+            onBlur={commitService}
+          />
+          <select
+            className="w-[92px] rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600"
+            value={service.pricingType}
+            onChange={(e) => updateServiceLocal(index, "pricingType", e.target.value)}
+            onBlur={commitService}
+          >
+            <option value="flat">Flat</option>
+            <option value="hourly">Hourly</option>
+          </select>
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+          {isHourly ? "Per hour" : "Flat rate"}
+        </span>
       </div>
 
-      {/* Delete Button */}
       <div className="col-span-1 flex justify-end">
         <button
           onClick={() => removeService(index)}
-          className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition"
+          className="text-slate-300 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
         >
           <Trash2 size={16} />
         </button>
@@ -118,8 +126,6 @@ function SortableRow({
     </div>
   );
 }
-
-/* ---------------- MAIN COMPONENT ---------------- */
 
 export default function ServicesEditor() {
   const { resort, updateResort } = useResort();
@@ -141,7 +147,9 @@ export default function ServicesEditor() {
         id: crypto.randomUUID(),
         name: "New Service",
         description: "",
+        pricingType: "flat",
         cost: 0,
+        hourlyRate: 0,
       },
     ];
     setLocalServices(updated);
@@ -168,20 +176,14 @@ export default function ServicesEditor() {
     }
   };
 
-  /* DND Setup */
   const sensors = useSensors(useSensor(PointerSensor));
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-
     if (!over || active.id === over.id) return;
 
-    const oldIndex = services.findIndex(
-      (s) => s.id === active.id
-    );
-    const newIndex = services.findIndex(
-      (s) => s.id === over.id
-    );
+    const oldIndex = services.findIndex((s) => s.id === active.id);
+    const newIndex = services.findIndex((s) => s.id === over.id);
 
     const reordered = arrayMove(services, oldIndex, newIndex);
     setLocalServices(reordered);
@@ -189,29 +191,27 @@ export default function ServicesEditor() {
   };
 
   return (
-    <div id="extra-services" className="max-w-6xl mx-auto mt-10 px-4">
-      <div className="flex items-center justify-between mb-4">
+    <div id="extra-services" className="mx-auto mt-10 max-w-6xl px-4">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Extra Services</h2>
         <Button
           onClick={addService}
-          className="rounded-full hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+          className="flex items-center justify-center rounded-full bg-blue-600 text-white hover:scale-105 hover:bg-blue-700"
         >
           <Plus size={16} className="mr-2" />
           Add Service
         </Button>
       </div>
 
-      <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
-        {/* Header */}
-        <div className="grid grid-cols-12 bg-slate-50 text-sm font-semibold text-slate-600 px-6 py-4">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="grid grid-cols-12 bg-slate-50 px-6 py-4 text-sm font-semibold text-slate-600">
           <div className="col-span-1"></div>
           <div className="col-span-2">Service</div>
-          <div className="col-span-6">Description</div>
-          <div className="col-span-2 text-right">Price (₱)</div>
+          <div className="col-span-5">Description</div>
+          <div className="col-span-3 text-right">Pricing</div>
           <div className="col-span-1"></div>
         </div>
 
-        {/* Draggable List */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -234,11 +234,10 @@ export default function ServicesEditor() {
           </SortableContext>
         </DndContext>
 
-        {/* Add Another */}
         <div className="border-t border-slate-100 px-6 py-3">
           <button
             onClick={addService}
-            className="text-sm hover:scale-105 text-blue-600 font-semibold hover:text-blue-700 transition"
+            className="text-sm font-semibold text-blue-600 transition hover:scale-105 hover:text-blue-700"
           >
             + Add another service
           </button>

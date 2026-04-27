@@ -35,7 +35,13 @@ const resortInitialData = {
   },
 
   extraServices: [
-    { name: "Service", description: "Example Description", cost: 3500 },
+    {
+      name: "Service",
+      description: "Example Description",
+      pricingType: "flat",
+      cost: 3500,
+      hourlyRate: 0,
+    },
   ],
 
   facilities: [

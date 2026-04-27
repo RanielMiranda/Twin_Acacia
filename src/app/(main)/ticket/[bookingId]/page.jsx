@@ -17,6 +17,7 @@ import { useTicketData } from "./ticket-page/useTicketData";
 import { useTicketActions } from "./ticket-page/useTicketActions";
 import { useTicketImageActions } from "./ticket-page/useTicketImageActions";
 import { computeRequiredDownpayment, getRequiredDownpaymentRemaining } from "@/lib/bookingPayments";
+import { computeSelectedServicesTotal } from "@/lib/utils";
 
 const TicketPaymentCardSection = dynamic(
   () => import("./components").then((mod) => mod.TicketPaymentCardSection),
@@ -76,6 +77,7 @@ export default function ClientTicketPage() {
       pax: guestCount,
       sleepingGuests: Number(booking.sleeping_guests ?? rawForm.sleepingGuests ?? 0),
       roomCount: Number(booking.room_count ?? rawForm.roomCount ?? booking.room_ids?.length ?? 1),
+      baseAmount: Number(rawForm.baseAmount ?? resort?.price ?? 0),
       stayingGuestName:
         rawForm.stayingGuestName || (inquirerType === "client" ? rawForm.guestName || "" : ""),
       stayingGuestEmail:
@@ -90,7 +92,7 @@ export default function ClientTicketPage() {
               .map((id) => ({ id, name: id, cost: 0 }))
           : [],
     };
-  }, [booking]);
+  }, [booking, resort]);
   const paymentMethod = paymentDraft.method ?? (form.paymentMethod === "Bank" ? "Bank" : DEFAULT_PAYMENT_METHOD);
   const paid = Number(form.downpayment || 0);
   const pendingPaid = form.paymentPendingApproval ? Number(form.pendingDownpayment || 0) : 0;
@@ -167,6 +169,8 @@ export default function ClientTicketPage() {
   if (!booking) return <div className="p-10 text-center text-slate-500">Ticket not found.</div>;
 
   const totalAmount = Number(form.totalAmount || 0);
+  const totalRate = Number(form.baseAmount || 0);
+  const serviceCosts = computeSelectedServicesTotal(Array.isArray(form.resortServices) ? form.resortServices : []);
   const effectivePaid = paid + pendingPaid;
   const balance = Math.max(0, totalAmount - effectivePaid);
   const proofLogItems = Array.isArray(form.paymentProofLog)
@@ -243,6 +247,8 @@ export default function ClientTicketPage() {
 
       <TicketPaymentCardSection
         totalAmount={totalAmount}
+        totalRate={totalRate}
+        serviceCosts={serviceCosts}
         paid={paid}
         pendingPaid={pendingPaid}
         paymentPendingApproval={!!form.paymentPendingApproval}

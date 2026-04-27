@@ -2,7 +2,7 @@ import React from "react";
 import { User, Mail, Phone, MapPin } from "lucide-react";
 import { StatusBadge } from "../BookingEditorAtoms";
 
-export default function ClientCardSection({ resortName, isEditing, draft, setField, status }) {
+export default function ClientCardSection({ resortName, isEditing, draft, setField, status, statusPhases = [] }) {
   const inquirerType = (draft.inquirerType || "client").toString().toLowerCase();
   const agentName = draft.agentName || draft.guestName || "Agent";
   const contactDisplayName = inquirerType === "agent" ? agentName : (draft.guestName || "Client");
@@ -131,7 +131,24 @@ export default function ClientCardSection({ resortName, isEditing, draft, setFie
           </div>
         </div>
       </div>
-      <StatusBadge status={status} />
+      <div className="shrink-0">
+        {isEditing ? (
+          <div className="space-y-2">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</p>
+            <select
+              className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100"
+              value={status}
+              onChange={(e) => setField("status", e.target.value)}
+            >
+              {statusPhases.map((phase) => (
+                <option key={phase} value={phase}>{phase}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <StatusBadge status={status} />
+        )}
+      </div>
     </div>
   );
 }

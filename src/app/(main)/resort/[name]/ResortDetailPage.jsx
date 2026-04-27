@@ -13,7 +13,6 @@ import { buildRequestedRange, getUnavailableRoomIds } from "@/lib/availability";
 import { normalizeBookingSubmission } from "@/components/booking/payloadData/buildBookingPayload";
 import { supabase } from "@/lib/supabase";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
-import { buildServiceSnapshots } from "@/lib/utils";
 import HeroSection from "./rooms/HeroSection";
 import ProfileSection from "./rooms/ProfileSection";
 import RoomsSection from "./rooms/RoomsSection";
@@ -190,14 +189,6 @@ export default function ResortDetailPage({ name }) {
     let succeeded = false;
 
     try {
-      const selectedServiceKeys = Array.isArray(submittedData.selectedServices)
-        ? submittedData.selectedServices
-            .map((item) => (item && typeof item === "object" ? item.id || item.name : item))
-            .filter(Boolean)
-        : [];
-
-      buildServiceSnapshots(selectedServiceKeys, resort.extraServices);
-
       const bookingId = Date.now().toString();
       const ticketAccessToken = generateTicketAccessToken();
       const ticketAccessExpiresAt = getTicketAccessExpiry(30);

@@ -40,6 +40,16 @@ export default function StayCardSection({
       : "";
   const formatWeekday = (date) =>
     date ? date.toLocaleDateString("default", { weekday: "short" }) : "";
+  const formatLongDate = (value) => {
+    if (!value) return "";
+    const parsed = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return parsed.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   const formatTime12h = (timeValue) => {
     if (!timeValue) return "";
@@ -221,8 +231,8 @@ export default function StayCardSection({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {!isEditing ? (
           <>
-            <InfoItem label="Check-In Date" value={draft.checkInDate} />
-            <InfoItem label="Check-Out Date" value={draft.checkOutDate} />
+            <InfoItem label="Check-In Date" value={formatLongDate(draft.checkInDate)} />
+            <InfoItem label="Check-Out Date" value={formatLongDate(draft.checkOutDate)} />
             <InfoItem label="Check-In Day" value={formatWeekdayLabel(draft.checkInDate)} />
             <InfoItem label="Check-Out Day" value={formatWeekdayLabel(draft.checkOutDate)} />
           </>

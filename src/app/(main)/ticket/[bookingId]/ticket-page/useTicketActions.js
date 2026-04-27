@@ -2,7 +2,15 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME, convertImageFileToWebp, toSafeSegment, buildServiceSnapshots, computeBookingTotalAmount } from "@/lib/utils";
+import {
+  BUCKET_NAME,
+  convertImageFileToWebp,
+  toSafeSegment,
+  buildServiceSnapshots,
+  computeBookingTotalAmount,
+  computeServiceCost,
+  resolveBookingBaseAmount,
+} from "@/lib/utils";
 import { isMissingSupportTableError } from "./helpers";
 import { useSupport } from "@/components/useclient/SupportClient";
 
@@ -279,7 +287,13 @@ export function useTicketActions({
       toast({ message: "Please wait a few seconds before sending another add-on request.", color: "amber" });
       return;
     }
-    const normalizedServiceKeys = (services || [])
+    const normalizedServices = (services || [])
+      .map((service) => {
+        if (service && typeof service === "object") return service;
+        return { id: service, name: service };
+      })
+      .filter((service) => (service?.id || service?.name));
+    const normalizedServiceKeys = normalizedServices
       .map((service) => {
         if (service && typeof service === "object") return service.id || service.name || "";
         return service || "";
@@ -287,14 +301,20 @@ export function useTicketActions({
       .map((serviceId) => String(serviceId || "").trim())
       .filter(Boolean);
     const serviceSnapshots = buildServiceSnapshots(
-      normalizedServiceKeys,
+      normalizedServices,
       Array.isArray(resort?.extraServices) ? resort.extraServices : []
     );
 
     setIsSavingAddOns(true);
     try {
       lastAddOnsSentAtRef.current = now;
-      const baseRate = Number(booking.booking_form?.totalAmount || 0) || Number(resort?.price || 0);
+      const baseRate = resolveBookingBaseAmount({
+        bookingForm: booking.booking_form || {},
+        resortPrice: Number(resort?.price || 0),
+        serviceSnapshots: Array.isArray(booking.booking_form?.resortServices)
+          ? booking.booking_form.resortServices
+          : [],
+      });
       const computedTotal = computeBookingTotalAmount({
         basePrice: baseRate,
         serviceSnapshots,
@@ -302,6 +322,7 @@ export function useTicketActions({
 
       const bookingForm = {
         ...(booking.booking_form || {}),
+        baseAmount: baseRate,
         totalAmount: computedTotal,
         resortServices: serviceSnapshots,
         addOnsUpdatedAt: new Date().toISOString(),
@@ -327,7 +348,9 @@ export function useTicketActions({
           message:
             serviceSnapshots.length > 0
               ? `Requested add-on update: ${serviceSnapshots
-                  .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
+                  .map((service) =>
+                    `${service.name} (PHP ${Number(computeServiceCost(service) || 0).toLocaleString()})`
+                  )
                   .join(", ")}`
               : "Requested add-on update: cleared requested add-ons.",
           idempotency_key: buildMessageIdempotencyKey(
@@ -360,7 +383,9 @@ export function useTicketActions({
         const message =
           serviceSnapshots.length > 0
             ? `Requested add-on update: ${serviceSnapshots
-                .map((service) => `${service.name} (PHP ${Number(service.cost || 0).toLocaleString()})`)
+                .map((service) =>
+                  `${service.name} (PHP ${Number(computeServiceCost(service) || 0).toLocaleString()})`
+                )
                 .join(", ")}`
             : "Requested add-on update: cleared requested add-ons.";
 

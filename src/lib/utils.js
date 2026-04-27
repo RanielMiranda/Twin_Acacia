@@ -139,26 +139,153 @@ export function parseMoney(value) {
   return Number.isFinite(num) ? num : 0;
 }
 
+export function normalizeServicePricingType(service) {
+  const raw = String(service?.pricingType || "").trim().toLowerCase();
+  return raw === "hourly" ? "hourly" : "flat";
+}
+
+export function getServiceUnitLabel(service) {
+  return normalizeServicePricingType(service) === "hourly" ? "/ hour" : "";
+}
+
+export function getServiceBaseRate(service) {
+  if (!service) return 0;
+  if (normalizeServicePricingType(service) === "hourly") {
+    return parseMoney(service.hourlyRate ?? service.cost ?? service.price ?? 0);
+  }
+  return parseMoney(service.cost ?? service.price ?? 0);
+}
+
+export function parseTimeToMinutes(timeValue) {
+  if (!timeValue || typeof timeValue !== "string") return null;
+  const [rawHours, rawMinutes] = timeValue.split(":");
+  const hours = Number(rawHours);
+  const minutes = Number(rawMinutes ?? 0);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return (hours * 60) + minutes;
+}
+
+export function computeScheduleSlotHours(slot) {
+  const startMinutes = parseTimeToMinutes(slot?.startTime);
+  const endMinutes = parseTimeToMinutes(slot?.endTime);
+  if (startMinutes == null || endMinutes == null) return 0;
+  if (endMinutes <= startMinutes) {
+    return ((24 * 60) - startMinutes + endMinutes) / 60;
+  }
+  return (endMinutes - startMinutes) / 60;
+}
+
+export function normalizeServiceScheduleSlots(service) {
+  const rawSlots = Array.isArray(service?.scheduleSlots) && service.scheduleSlots.length > 0
+    ? service.scheduleSlots
+    : (service?.startTime || service?.endTime || service?.serviceDate)
+      ? [{
+          date: service?.serviceDate || "",
+          startTime: service?.startTime || "",
+          endTime: service?.endTime || "",
+        }]
+      : [];
+
+  const normalized = rawSlots.map((slot, index) => ({
+    id: slot?.id || `slot-${index + 1}`,
+    date: slot?.date || "",
+    startTime: slot?.startTime || "",
+    endTime: slot?.endTime || "",
+    hours: computeScheduleSlotHours(slot),
+  }));
+
+  return normalized;
+}
+
+export function computeHourlyServiceHours(service) {
+  const scheduleSlots = normalizeServiceScheduleSlots(service);
+  if (scheduleSlots.length > 0) {
+    return scheduleSlots.reduce((sum, slot) => sum + computeScheduleSlotHours(slot), 0);
+  }
+  const directHours = Math.max(0, Number(service?.requestedHours || 0));
+  if (directHours > 0) return directHours;
+  return computeScheduleSlotHours(service);
+}
+
+export function computeServiceCost(service) {
+  if (!service) return 0;
+  const pricingType = normalizeServicePricingType(service);
+  const baseRate = getServiceBaseRate(service);
+  if (pricingType === "hourly") {
+    return baseRate * computeHourlyServiceHours(service);
+  }
+  return baseRate;
+}
+
 export function getServiceKey(service) {
   if (!service) return "";
   if (typeof service === "string") return service;
   return service.id || service.name || "";
 }
 
-export function buildServiceSnapshot(key, extraServices = []) {
-  const normalizedKey = String(key || "");
+export function buildServiceSnapshot(serviceInput, extraServices = []) {
+  const normalizedKey = String(getServiceKey(serviceInput) || "");
   const found = (extraServices || []).find(
     (s) => s && (String(s.id) === normalizedKey || String(s.name) === normalizedKey)
   );
-  const name = found?.name || normalizedKey;
-  const cost = parseMoney(found?.cost ?? found?.price ?? 0);
-  return { id: normalizedKey, name, cost };
+  const incoming = serviceInput && typeof serviceInput === "object" ? serviceInput : {};
+  const pricingType = normalizeServicePricingType(incoming?.pricingType ? incoming : found);
+  const scheduleSlots = pricingType === "hourly"
+    ? normalizeServiceScheduleSlots({
+        ...found,
+        ...incoming,
+      })
+    : [];
+  const requestedHours =
+    pricingType === "hourly"
+      ? computeHourlyServiceHours({
+          ...found,
+          ...incoming,
+          scheduleSlots,
+        })
+      : 0;
+  const hourlyRate = pricingType === "hourly"
+    ? getServiceBaseRate({
+        pricingType,
+        hourlyRate: incoming.hourlyRate ?? found?.hourlyRate,
+        cost: incoming.cost ?? found?.cost,
+        price: incoming.price ?? found?.price,
+      })
+    : 0;
+  const flatCost = pricingType === "flat"
+    ? getServiceBaseRate({
+        pricingType,
+        cost: incoming.cost ?? found?.cost,
+        price: incoming.price ?? found?.price,
+      })
+    : 0;
+  const snapshot = {
+    id: normalizedKey,
+    name: incoming?.name || found?.name || normalizedKey,
+    description: incoming?.description || found?.description || "",
+    pricingType,
+    hourlyRate,
+    requestedHours,
+    serviceDate: incoming?.serviceDate || scheduleSlots[0]?.date || "",
+    startTime: incoming?.startTime || scheduleSlots[0]?.startTime || "",
+    endTime: incoming?.endTime || scheduleSlots[0]?.endTime || "",
+    scheduleSlots,
+    cost: flatCost,
+    unitCost: pricingType === "hourly" ? hourlyRate : flatCost,
+  };
+  const computedCost = computeServiceCost(snapshot);
+  return {
+    ...snapshot,
+    computedCost,
+    totalCost: computedCost,
+    cost: computedCost,
+  };
 }
 
-export function buildServiceSnapshots(serviceKeys = [], extraServices = []) {
-  const keys = Array.isArray(serviceKeys) ? serviceKeys : [];
-  return keys
-    .map((key) => buildServiceSnapshot(key, extraServices))
+export function buildServiceSnapshots(serviceEntries = [], extraServices = []) {
+  const entries = Array.isArray(serviceEntries) ? serviceEntries : [];
+  return entries
+    .map((entry) => buildServiceSnapshot(entry, extraServices))
     .filter((s) => s && s.id);
 }
 
@@ -167,6 +294,49 @@ export function computeBookingTotalAmount({ basePrice = 0, selectedServiceKeys =
   const serviceTotal = (serviceSnapshots && serviceSnapshots.length > 0
     ? serviceSnapshots
     : (selectedServiceKeys || []).map((key) => buildServiceSnapshot(key, extraServices)))
-    .reduce((sum, snapshot) => sum + parseMoney(snapshot?.cost || 0), 0);
+    .reduce((sum, snapshot) => sum + computeServiceCost(snapshot), 0);
   return base + serviceTotal;
+}
+
+export function computeSelectedServicesTotal(serviceSnapshots = []) {
+  return (Array.isArray(serviceSnapshots) ? serviceSnapshots : []).reduce(
+    (sum, snapshot) => sum + computeServiceCost(snapshot),
+    0
+  );
+}
+
+export function resolveBookingBaseAmount({ bookingForm = {}, resortPrice = 0, serviceSnapshots = [] }) {
+  const explicitBase = parseMoney(bookingForm?.baseAmount);
+  if (explicitBase > 0) return explicitBase;
+  const totalAmount = parseMoney(bookingForm?.totalAmount);
+  const selectedServicesTotal = computeSelectedServicesTotal(serviceSnapshots);
+  if (totalAmount > 0) {
+    return Math.max(0, totalAmount - selectedServicesTotal);
+  }
+  return parseMoney(resortPrice);
+}
+
+export function formatServiceScheduleLabel(service) {
+  const slots = normalizeServiceScheduleSlots(service);
+  if (slots.length === 0) return "";
+  return slots
+    .map((slot) => {
+      const dateLabel = slot.date
+        ? new Date(`${slot.date}T00:00:00`).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Date not set";
+      const timeLabel = slot.startTime && slot.endTime ? `${slot.startTime} - ${slot.endTime}` : "Time not set";
+      const hoursLabel = slot.hours > 0 ? `${slot.hours}h` : "0h";
+      return `${dateLabel}, ${timeLabel} (${hoursLabel})`;
+    })
+    .join("; ");
+}
+
+export function hasServiceScheduleData(service) {
+  return normalizeServiceScheduleSlots(service).some(
+    (slot) => Boolean(slot.date || slot.startTime || slot.endTime)
+  );
 }

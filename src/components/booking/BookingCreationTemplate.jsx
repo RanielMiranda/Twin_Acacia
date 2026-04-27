@@ -3,6 +3,17 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { X, Calendar, User, CheckCircle2, ArrowRight, ArrowLeft, Phone, MapPin, Clock, PlusCircle, Check, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  buildServiceSnapshot,
+  computeServiceCost,
+  computeScheduleSlotHours,
+  formatServiceScheduleLabel,
+  getServiceBaseRate,
+  getServiceKey,
+  getServiceUnitLabel,
+  normalizeServiceScheduleSlots,
+  normalizeServicePricingType,
+} from "@/lib/utils";
 
 const buildInitialFormData = ({
   destination = "",
@@ -274,15 +285,72 @@ export default function BookingCreationTemplate({
     setFormData((prev) => ({ ...prev, guestName: nextName }));
   }, [formData.agentName, formData.guestName, formData.inquirerType]);
 
+  const normalizeSelectedServices = (services) =>
+    (Array.isArray(services) ? services : [])
+      .map((entry) => buildServiceSnapshot(entry, resort?.extraServices || []))
+      .filter(Boolean);
+
+  const selectedServiceSnapshots = normalizeSelectedServices(formData.selectedServices);
+
   const toggleService = (service) => {
     const serviceKey = getServiceKey(service);
     if (!serviceKey) return;
-    setFormData((prev) => ({
-      ...prev,
-      selectedServices: prev.selectedServices.includes(serviceKey)
-        ? prev.selectedServices.filter((s) => s !== serviceKey)
-        : [...prev.selectedServices, serviceKey],
-    }));
+    setFormData((prev) => {
+      const current = normalizeSelectedServices(prev.selectedServices);
+      const exists = current.some((entry) => getServiceKey(entry) === serviceKey);
+      return {
+        ...prev,
+        selectedServices: exists
+          ? current.filter((entry) => getServiceKey(entry) !== serviceKey)
+          : [...current, buildServiceSnapshot(service, resort?.extraServices || [])],
+      };
+    });
+  };
+
+  const updateSelectedService = (serviceKey, updates) => {
+    setFormData((prev) => {
+      const current = normalizeSelectedServices(prev.selectedServices);
+      return {
+        ...prev,
+        selectedServices: current.map((entry) =>
+          getServiceKey(entry) === serviceKey
+            ? buildServiceSnapshot({ ...entry, ...updates }, resort?.extraServices || [])
+            : entry
+        ),
+      };
+    });
+  };
+
+  const addSelectedServiceSlot = (serviceKey) => {
+    const target = selectedServiceSnapshots.find((entry) => getServiceKey(entry) === serviceKey);
+    if (!target) return;
+    const existingSlots = normalizeServiceScheduleSlots(target);
+    const nextSlots = [
+      ...existingSlots,
+      {
+        id: `slot-${Date.now()}`,
+        date: formData.checkInDate || "",
+        startTime: "",
+        endTime: "",
+      },
+    ];
+    updateSelectedService(serviceKey, { scheduleSlots: nextSlots });
+  };
+
+  const updateSelectedServiceSlot = (serviceKey, slotId, field, value) => {
+    const target = selectedServiceSnapshots.find((entry) => getServiceKey(entry) === serviceKey);
+    if (!target) return;
+    const nextSlots = normalizeServiceScheduleSlots(target).map((slot) =>
+      slot.id === slotId ? { ...slot, [field]: value } : slot
+    );
+    updateSelectedService(serviceKey, { scheduleSlots: nextSlots });
+  };
+
+  const removeSelectedServiceSlot = (serviceKey, slotId) => {
+    const target = selectedServiceSnapshots.find((entry) => getServiceKey(entry) === serviceKey);
+    if (!target) return;
+    const nextSlots = normalizeServiceScheduleSlots(target).filter((slot) => slot.id !== slotId);
+    updateSelectedService(serviceKey, { scheduleSlots: nextSlots });
   };
 
   const toggleRoomSelection = (room) => {
@@ -315,12 +383,6 @@ export default function BookingCreationTemplate({
     onClose?.();
   };
 
-  const getServiceKey = (service) => {
-    if (!service) return "";
-    if (typeof service === "string") return service;
-    return service.id || service.name || "";
-  };
-
   const resolveServiceName = (key) => {
     if (!key) return "";
     const found = (resort?.extraServices || []).find(
@@ -349,9 +411,7 @@ export default function BookingCreationTemplate({
             ...formData,
           };
 
-    const normalizedServices = (formData.selectedServices || [])
-      .map((item) => getServiceKey(item))
-      .filter(Boolean);
+    const normalizedServices = normalizeSelectedServices(formData.selectedServices);
 
     const normalized =
       selectedRoomIds.length > 0
@@ -658,27 +718,39 @@ export default function BookingCreationTemplate({
                 <p className="text-sm text-slate-500 mb-2">Select additional services you might need:</p>
                 {resort?.extraServices && resort.extraServices.length > 0 ? (
                   resort.extraServices.map((service, idx) => (
-                    <button
+                    <div
                       key={idx}
                       onClick={() => toggleService(service)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleService(service);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                       className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
-                        formData.selectedServices.includes(getServiceKey(service))
+                        selectedServiceSnapshots.some((entry) => getServiceKey(entry) === getServiceKey(service))
                           ? "border-blue-600 bg-blue-50"
                           : "border-slate-100 bg-white hover:border-slate-200"
                       }`}
                     >
                       <div className="flex flex-col items-start">
-                        <span className={`font-bold text-sm ${formData.selectedServices.includes(getServiceKey(service)) ? "text-blue-700" : "text-slate-700"}`}>
+                        <span className={`font-bold text-sm ${selectedServiceSnapshots.some((entry) => getServiceKey(entry) === getServiceKey(service)) ? "text-blue-700" : "text-slate-700"}`}>
                           {service.name}
                         </span>
-                        {(service.cost || service.price) ? <span className="text-xs text-slate-400">PHP {service.cost || service.price}</span> : null}
+                        {getServiceBaseRate(service) ? (
+                          <span className="text-xs text-slate-400">
+                            PHP {getServiceBaseRate(service).toLocaleString()}{getServiceUnitLabel(service)}
+                          </span>
+                        ) : null}
                       </div>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
-                        formData.selectedServices.includes(getServiceKey(service)) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-300"
+                        selectedServiceSnapshots.some((entry) => getServiceKey(entry) === getServiceKey(service)) ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-300"
                       }`}>
                         <Check size={14} strokeWidth={4} />
                       </div>
-                    </button>
+                    </div>
                   ))
                 ) : (
                   <div className="p-8 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
@@ -686,6 +758,84 @@ export default function BookingCreationTemplate({
                   </div>
                 )}
               </div>
+              {selectedServiceSnapshots
+                .filter((service) => normalizeServicePricingType(service) === "hourly")
+                .map((service) => (
+                  <div key={`${service.id}-hours`} className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{service.name}</p>
+                        <p className="text-xs text-slate-500">
+                          PHP {Number(service.hourlyRate || 0).toLocaleString()} per hour
+                        </p>
+                      </div>
+                      <p className="text-sm font-black text-blue-600">
+                        PHP {computeServiceCost(service).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="mt-3 space-y-3">
+                      {normalizeServiceScheduleSlots(service).map((slot, slotIndex) => (
+                        <div key={slot.id} className="rounded-2xl border border-blue-100 bg-white px-4 py-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                              Schedule {slotIndex + 1}
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-slate-500">
+                                {computeScheduleSlotHours(slot).toLocaleString()} hours
+                              </span>
+                              {normalizeServiceScheduleSlots(service).length > 1 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => removeSelectedServiceSlot(service.id, slot.id)}
+                                  className="text-xs font-bold text-rose-600 hover:text-rose-700"
+                                >
+                                  Remove
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                            <div className="space-y-1">
+                              <label className="ml-1 text-xs font-black uppercase text-slate-400">Date</label>
+                              <input
+                                type="date"
+                                value={slot.date || ""}
+                                onChange={(e) => updateSelectedServiceSlot(service.id, slot.id, "date", e.target.value)}
+                                className="w-full rounded-xl bg-white px-4 py-3 outline-none ring-1 ring-blue-100 focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="ml-1 text-xs font-black uppercase text-slate-400">Start time</label>
+                              <input
+                                type="time"
+                                value={slot.startTime || ""}
+                                onChange={(e) => updateSelectedServiceSlot(service.id, slot.id, "startTime", e.target.value)}
+                                className="w-full rounded-xl bg-white px-4 py-3 outline-none ring-1 ring-blue-100 focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="ml-1 text-xs font-black uppercase text-slate-400">End time</label>
+                              <input
+                                type="time"
+                                value={slot.endTime || ""}
+                                onChange={(e) => updateSelectedServiceSlot(service.id, slot.id, "endTime", e.target.value)}
+                                className="w-full rounded-xl bg-white px-4 py-3 outline-none ring-1 ring-blue-100 focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addSelectedServiceSlot(service.id)}
+                        className="text-xs font-black uppercase tracking-[0.18em] text-blue-600 hover:text-blue-700"
+                      >
+                        + Add another day
+                      </button>
+                    </div>
+                  </div>
+                ))}
               {showMessage ? (
                 <div className="space-y-1 mt-4">
                   <label className="text-xs font-black uppercase text-slate-400 ml-1">Message section</label>
@@ -745,7 +895,15 @@ export default function BookingCreationTemplate({
                         <SummaryItem
                           icon={PlusCircle}
                           label="Add-ons"
-                          value={formData.selectedServices.length > 0 ? formData.selectedServices.map(resolveServiceName).join(", ") : "None"}
+                          value={selectedServiceSnapshots.length > 0
+                            ? selectedServiceSnapshots
+                                .map((service) =>
+                                  normalizeServicePricingType(service) === "hourly"
+                                    ? `${service.name} (${formatServiceScheduleLabel(service) || "No schedule"} - PHP ${computeServiceCost(service).toLocaleString()})`
+                                    : `${service.name} (PHP ${computeServiceCost(service).toLocaleString()})`
+                                )
+                                .join(", ")
+                            : "None"}
                         />
                       ) : null}
                     </div>
