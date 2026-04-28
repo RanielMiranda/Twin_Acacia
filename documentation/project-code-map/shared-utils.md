@@ -34,7 +34,12 @@ This folder hosts shared helpers used across both client and server code.
 
 ### `ticketAccess.js`
 - Ticket link token generation and validation.
-- `generateTicketAccessToken()`, `getTicketAccessExpiry()`.
+- `generateTicketAccessToken()`, `getTicketAccessExpiry()`, `getTicketTokenRole()`, `isTicketTokenValid()`.
+
+### `generateShortBookingReference.js` (NEW)
+- Generates compact booking reference numbers for tickets.
+- Format: `{2 resort initials (A-Z)}-{2-digit random 00-99}` (e.g., `RN-07`, `PA-42`).
+- Used during inquiry creation in `ResortDetailPage.jsx`; stored in `booking_form.referenceNumber`.
 
 ### `caretakerNotifications.js`
 - Builds SMS body and helper functions for caretaker notifications.

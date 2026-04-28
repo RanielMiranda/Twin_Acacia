@@ -8,12 +8,13 @@ import { usePathname } from "next/navigation";
 export default function MainLayout({ children }) {
   const pathname = usePathname();
   const isResortDetail = pathname?.startsWith("/resort/");
+  const isTicketPage = pathname?.startsWith("/ticket/");
 
   return (
     <>
       <TopBar />
       <main className={isResortDetail ? "mt-16" : "mt-10"}>{children}</main>
-      <Footer />
+      {!isTicketPage && <Footer />}
       <Analytics />
     </>
   );

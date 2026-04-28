@@ -16,7 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getTransformedSupabaseImageUrl } from "@/lib/utils";
 
-const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
+const PaymentSection = React.memo(function PaymentSection({
   totalAmount,
   totalRate = 0,
   serviceCosts = 0,
@@ -93,7 +93,7 @@ const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
   }, [submittedProofItems]);
 
   return (
-    <Card className="rounded-[2.5rem] border-slate-100 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] md:p-8">
+    <Card className="rounded-[2.5rem] bg-white border-slate-100 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.04)] md:p-8">
       <h3 className="mb-6 flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-emerald-600 md:mb-8">
         <CreditCard size={18} /> Payment & Verification
       </h3>
@@ -431,4 +431,4 @@ const TicketPaymentCardSection = React.memo(function TicketPaymentCardSection({
   );
 });
 
-export { TicketPaymentCardSection };
+export { PaymentSection };

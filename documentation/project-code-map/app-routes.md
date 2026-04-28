@@ -5,7 +5,10 @@ This project uses Next.js App Router with folder-based routing. Below is the cur
 ## `(main)` — Public facing
 - `/` — Home page (search + resort results)
 - `/resort/[name]` — Resort detail page (availability, rooms, contact owner inquiry)
-- `/ticket/[bookingId]` — Ticket page (booking details + messaging)
+
+## `ticket` — Client ticket pages (standalone layout)
+- `/ticket/[bookingId]` — Ticket page (booking details, payment, messaging)
+- `/ticket/[bookingId]/form` — Read-only booking form (opened via "View Form")
 
 ## `auth`
 - `/auth/login` — Login

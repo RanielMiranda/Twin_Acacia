@@ -13,6 +13,7 @@ import { buildRequestedRange, getUnavailableRoomIds } from "@/lib/availability";
 import { normalizeBookingSubmission } from "@/components/booking/payloadData/buildBookingPayload";
 import { supabase } from "@/lib/supabase";
 import { generateTicketAccessToken, getTicketAccessExpiry } from "@/lib/ticketAccess";
+import { generateShortBookingReference } from "@/lib/generateShortBookingReference";
 import HeroSection from "./rooms/HeroSection";
 import ProfileSection from "./rooms/ProfileSection";
 import RoomsSection from "./rooms/RoomsSection";
@@ -200,12 +201,16 @@ export default function ResortDetailPage({ name }) {
         submittedData,
       });
 
+      // Generate short reference number
+      const shortReference = generateShortBookingReference(resort.name);
+
       const bookingFormWithTokens = {
         ...bookingForm,
         ticketAccessToken,
         ticketAccessExpiresAt,
         agentTicketAccessToken,
         agentTicketAccessExpiresAt,
+        referenceNumber: shortReference,
       };
 
       const { error } = await supabase.from("bookings").upsert({

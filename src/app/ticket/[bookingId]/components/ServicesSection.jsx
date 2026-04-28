@@ -16,7 +16,7 @@ import {
   normalizeServicePricingType,
 } from "@/lib/utils";
 
-const TicketAddOnsCardSection = React.memo(function TicketAddOnsCardSection({
+const ServicesSection = React.memo(function ServicesSection({
   initialServices = [],
   availableServices = [],
   onSubmit,
@@ -101,7 +101,7 @@ const TicketAddOnsCardSection = React.memo(function TicketAddOnsCardSection({
   };
 
   return (
-    <Card className="p-6 md:p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-5">
+    <Card className="p-6 md:p-8 bg-white border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-5">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
           <Briefcase size={18} /> Add-ons
@@ -292,4 +292,4 @@ const TicketAddOnsCardSection = React.memo(function TicketAddOnsCardSection({
   );
 });
 
-export { TicketAddOnsCardSection };
+export { ServicesSection };

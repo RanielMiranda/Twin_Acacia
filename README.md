@@ -7,6 +7,10 @@ It provides a public booking experience, a dedicated owner/admin portal, and ope
 ## Key Features
 - Public resort browsing and booking inquiries
 - Ticket pages for clients/agents with messaging and payment proof uploads
+  - Short reference numbers (e.g., `RN-07`) for easy identification
+  - Dedicated contact card with resort info, rules, and terms
+  - Section sub-navigation for quick access
+  - "View Form" button to see original booking details
 - Booking console for owners (confirmed -> ongoing -> checkout workflow)
 - Automated booking status transitions
 - Admin console for accounts and resort management

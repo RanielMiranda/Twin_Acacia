@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { buildSupportConversationItems, getSupportConversationLabel, isResolvedConversationItem } from "@/lib/supportConversation";
 
-const TicketSupportDeskCardSection = React.memo(function TicketSupportDeskCardSection({
+const SupportSection = React.memo(function SupportSection({
   resort,
   loadingMessages,
   messages,
@@ -26,7 +26,7 @@ const TicketSupportDeskCardSection = React.memo(function TicketSupportDeskCardSe
   });
 
   return (
-    <Card className="p-8 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-6">
+    <Card className="p-8 bg-white border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-6">
       <div className="flex justify-between items-start">
         <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
           <MessageSquare size={18} className="text-blue-600" /> Support Desk
@@ -39,25 +39,13 @@ const TicketSupportDeskCardSection = React.memo(function TicketSupportDeskCardSe
             aria-label="Refresh support messages"
           >
             <RefreshCw size={16} className={loadingMessages ? "animate-spin" : ""} />
-            <p className = "text-xs">Refresh</p>
+            <p className="text-xs">Refresh</p>
           </button>
-          <a
-            href={`tel:${resort?.contactPhone}`}
-            className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-600 transition-colors"
-          >
-            <Phone size={16} />
-          </a>
-          <a
-            href={`mailto:${resort?.contactEmail}`}
-            className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-600 transition-colors"
-          >
-            <Mail size={16} />
-          </a>
         </div>
       </div>
 
       <div className="space-y-4">
-        <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 max-h-56 overflow-auto space-y-2">
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 max-h-56 overflow-auto space-y-2">
           {loadingMessages ? (
             <p className="text-xs text-slate-400">Loading conversation...</p>
           ) : conversationItems.length === 0 ? (
@@ -108,4 +96,4 @@ const TicketSupportDeskCardSection = React.memo(function TicketSupportDeskCardSe
   );
 });
 
-export { TicketSupportDeskCardSection };
+export { SupportSection };

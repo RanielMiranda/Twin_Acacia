@@ -3,10 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import ContactModal from "@/components/ui/modals/ContactModal";
 
 export default function TopBar() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -51,7 +49,6 @@ export default function TopBar() {
             <div className="hidden min-w-0 flex-1 items-center justify-end gap-2 lg:flex">
               <button onClick={scrollToResorts} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">Resorts</button>
               <button onClick={scrollToAbout} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">About</button>
-              {/* comment this out */}
               <Link
                 href="/auth/login"
                 className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50"
@@ -63,19 +60,12 @@ export default function TopBar() {
             <div className="hidden items-center gap-3 md:flex">
               <button onClick={scrollToResorts} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">Resorts</button>
               <button onClick={scrollToAbout} className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950">About</button>
-              {/* comment this out */}
               <Link
                 href="/auth/login"
                 className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50"
               >
                 Login
               </Link>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-700"
-              >
-                Contact
-              </button>
             </div>
           )}
 
@@ -91,7 +81,6 @@ export default function TopBar() {
           <div className="flex flex-col gap-3 px-4">
             <button onClick={scrollToResorts} className="rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50">Resorts</button>
             <button onClick={scrollToAbout} className="rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50">About</button>
-            {/* comment this out */}
             <Link
               href="/auth/login"
               onClick={() => setIsMenuOpen(false)}
@@ -99,29 +88,9 @@ export default function TopBar() {
             >
               Login
             </Link>
-            {isResortDetail ? null : (
-              <button
-                onClick={() => {
-                  setIsModalOpen(true);
-                  setIsMenuOpen(false);
-                }}
-                className="rounded-2xl bg-blue-600 px-4 py-3 text-left text-sm font-semibold text-white"
-              >
-                Contact
-              </button>
-            )}
           </div>
         </div>
       </div>
-
-      {!isResortDetail ? (
-        <ContactModal
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          panelClass="bg-white text-black"
-          overlayClass="bg-black/70 backdrop-blur-sm"
-        />
-      ) : null}
     </>
   );
 }

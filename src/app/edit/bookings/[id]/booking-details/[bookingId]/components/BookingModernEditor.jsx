@@ -420,17 +420,17 @@ export default function BookingModernEditor({
   };
 
   const handleRequestPayment = async () => {
-    await handleRequestPaymentAction({ actionBusy, setActionBusy, draft, setDraft, persist });
-  };
-
-  const handleApproveInquiry = async () => {
     if (hasConflicts) {
       toast({
-        message: "Approval blocked: this booking conflicts with existing reservations.",
+        message: "Payment request blocked: this booking conflicts with existing reservations.",
         color: "amber",
       });
       return;
     }
+    await handleRequestPaymentAction({ actionBusy, setActionBusy, draft, setDraft, persist });
+  };
+
+  const handleApproveInquiry = async () => {
     await handleApproveInquiryAction({
       actionBusy,
       setActionBusy,

@@ -2,9 +2,9 @@
 
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { TicketRow } from "./TicketRow";
+import { TicketRow } from "./Row";
 
-const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection({
+const InfoSection = React.memo(function InfoSection({
   id = "ticket-stay-card",
   form,
   booking,
@@ -21,7 +21,7 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
   return (
     <Card
       id={id}
-      className="p-8 md:p-10 border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] relative overflow-hidden"
+      className="p-8 md:p-10 bg-white border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] relative overflow-hidden"
     >
       <h2 className="text-sm font-black text-blue-600 uppercase tracking-[0.2em] mb-6 border-b border-slate-50 pb-4">
         Stay Information
@@ -42,7 +42,7 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
         <TicketRow label="Adults" value={form?.adultCount ?? 0} />
         <TicketRow label="Children" value={form?.childrenCount ?? 0} />
         <TicketRow label="Sleeping" value={form?.sleepingGuests ?? 0} />
-              
+               
         <TicketRow label="Status" value={booking?.status || "Inquiry"} isStatus />                 
         <TicketRow
           label="Check-In"
@@ -63,4 +63,4 @@ const TicketStayInfoCardSection = React.memo(function TicketStayInfoCardSection(
   );
 });
 
-export { TicketStayInfoCardSection };
+export { InfoSection };

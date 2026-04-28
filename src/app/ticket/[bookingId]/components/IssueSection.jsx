@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-const TicketIssueCardSection = React.memo(function TicketIssueCardSection({
+const IssueSection = React.memo(function IssueSection({
   issueSubject,
   setIssueSubject,
   issueMessage,
@@ -14,7 +14,7 @@ const TicketIssueCardSection = React.memo(function TicketIssueCardSection({
   isSendingIssue,
 }) {
   return (
-    <Card className="p-8 border-rose-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-4">
+    <Card className="p-8 bg-white border-rose-100 shadow-[0_20px_50px_rgba(0,0,0,0.04)] rounded-[2.5rem] space-y-4">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
           <AlertTriangle size={18} />
@@ -52,4 +52,4 @@ const TicketIssueCardSection = React.memo(function TicketIssueCardSection({
   );
 });
 
-export { TicketIssueCardSection };
+export { IssueSection };
